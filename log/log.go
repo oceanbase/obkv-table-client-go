@@ -20,7 +20,7 @@ import (
 
 var (
 	globalMutex         sync.Mutex
-	defaultGlobalLogger = NewLogger(os.Stderr, InfoLevel, WithCaller(true))
+	defaultGlobalLogger = NewLogger(os.Stderr, InfoLevel, AddCaller())
 )
 
 type Level zapcore.Level
@@ -101,6 +101,7 @@ var (
 )
 
 var (
+	AddCaller     = zap.AddCaller
 	WithCaller    = zap.WithCaller
 	AddStacktrace = zap.AddStacktrace
 	AddCallerSkip = zap.AddCallerSkip
@@ -108,7 +109,7 @@ var (
 
 func init() {
 	globalMutex.Lock()
-	defaultGlobalLogger = NewLogger(os.Stderr, InfoLevel, AddCallerSkip(1))
+	defaultGlobalLogger = NewLogger(os.Stderr, InfoLevel, AddCaller())
 	globalMutex.Unlock()
 }
 
