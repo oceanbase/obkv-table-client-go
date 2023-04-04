@@ -62,8 +62,13 @@ func (c *ObPartDescCommon) ToString() string {
 	// rowKeyElement to string
 	var rowKeyElementStr string
 	rowKeyElementStr = rowKeyElementStr + "{"
+	var i = 0
 	for k, v := range c.rowKeyElement {
-		rowKeyElementStr += "m[" + k + "]=" + strconv.Itoa(v) + ", "
+		if i > 0 {
+			rowKeyElementStr += ", "
+		}
+		i++
+		rowKeyElementStr += "m[" + k + "]=" + strconv.Itoa(v)
 	}
 	rowKeyElementStr += "}"
 
@@ -103,9 +108,9 @@ func (d ObRangePartDesc) setPartColumns(partColumns []protocol.ObColumn) {
 	d.comm.partColumns = partColumns
 }
 
-func (d *ObRangePartDesc) setOrderedCompareColumns(orderedPartColumn []protocol.ObColumn) {
-	d.orderedCompareColumns = orderedPartColumn
-}
+//func (d *ObRangePartDesc) setOrderedCompareColumns(orderedPartColumn []protocol.ObColumn) {
+//	d.orderedCompareColumns = orderedPartColumn
+//}
 
 func (d ObRangePartDesc) ToString() string {
 	// orderedCompareColumns to string
@@ -172,8 +177,13 @@ func (d ObHashPartDesc) ToString() string {
 	// partNameIdMap to string
 	var partNameIdMapStr string
 	partNameIdMapStr = partNameIdMapStr + "{"
+	var i = 0
 	for k, v := range d.partNameIdMap {
-		partNameIdMapStr += "m[" + k + "]=" + strconv.Itoa(int(v)) + ", "
+		if i > 0 {
+			partNameIdMapStr += ", "
+		}
+		i++
+		partNameIdMapStr += "m[" + k + "]=" + strconv.Itoa(int(v))
 	}
 	partNameIdMapStr += "}"
 
@@ -209,8 +219,13 @@ func (d ObKeyPartDesc) ToString() string {
 	// partNameIdMap to string
 	var partNameIdMapStr string
 	partNameIdMapStr = partNameIdMapStr + "{"
+	var i = 0
 	for k, v := range d.partNameIdMap {
-		partNameIdMapStr += "m[" + k + "]=" + strconv.Itoa(int(v)) + ", "
+		if i > 0 {
+			partNameIdMapStr += ", "
+		}
+		i++
+		partNameIdMapStr += "m[" + k + "]=" + strconv.Itoa(int(v))
 	}
 	partNameIdMapStr += "}"
 	return "ObKeyPartDesc{" +
@@ -241,13 +256,14 @@ type ObPartitionLevel struct {
 }
 
 func newObPartitionLevel(index int) ObPartitionLevel {
-	if index == partLevelZeroIndex {
+	switch index {
+	case partLevelZeroIndex:
 		return ObPartitionLevel{partLevelZero, partLevelZeroIndex}
-	} else if index == partLevelOneIndex {
+	case partLevelOneIndex:
 		return ObPartitionLevel{partLevelOne, partLevelOneIndex}
-	} else if index == partLevelTwoIndex {
+	case partLevelTwoIndex:
 		return ObPartitionLevel{partLevelTwo, partLevelTwoIndex}
-	} else {
+	default:
 		return ObPartitionLevel{partLevelUnknown, partLevelUnknownIndex}
 	}
 }

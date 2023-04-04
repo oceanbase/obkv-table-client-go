@@ -29,8 +29,15 @@ func (m *ObObjMeta) getEncodeSize() int {
 }
 
 func (m *ObObjMeta) ToString() string {
+	// objType to string
+	var objTypeStr string
+	if m.objType != nil {
+		objTypeStr = m.objType.ToString()
+	} else {
+		objTypeStr = "nil"
+	}
 	return "ObObjMeta{" +
-		"objType:" + m.objType.ToString() + ", " +
+		"objType:" + objTypeStr + ", " +
 		"csLevel:" + m.csLevel.ToString() + ", " +
 		"csType:" + m.csType.ToString() + ", " +
 		"scale:" + strconv.Itoa(int(m.scale)) +

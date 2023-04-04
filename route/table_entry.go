@@ -72,31 +72,46 @@ func (p *ObPartitionInfo) ToString() string {
 
 	// partTabletIdMap to string
 	var partTabletIdMapStr string
+	var i = 0
 	partTabletIdMapStr = partTabletIdMapStr + "{"
 	for k, v := range p.partTabletIdMap {
-		partTabletIdMapStr += "m[" + strconv.Itoa(int(k)) + "]=" + strconv.Itoa(int(v)) + ", "
+		if i > 0 {
+			partTabletIdMapStr += ", "
+		}
+		i++
+		partTabletIdMapStr += "m[" + strconv.Itoa(int(k)) + "]=" + strconv.Itoa(int(v))
 	}
 	partTabletIdMapStr += "}"
 
 	// partNameIdMap to string
 	var partNameIdMapStr string
+	i = 0
 	partNameIdMapStr = partNameIdMapStr + "{"
 	for k, v := range p.partNameIdMap {
-		partNameIdMapStr += "m[" + k + "]=" + strconv.Itoa(int(v)) + ", "
+		if i > 0 {
+			partNameIdMapStr += ", "
+		}
+		i++
+		partNameIdMapStr += "m[" + k + "]=" + strconv.Itoa(int(v))
 	}
 	partNameIdMapStr += "}"
 
 	// rowKeyElement to string
 	var rowKeyElementStr string
 	rowKeyElementStr = rowKeyElementStr + "{"
+	i = 0
 	for k, v := range p.rowKeyElement {
-		rowKeyElementStr += "m[" + k + "]=" + strconv.Itoa(v) + ", "
+		if i > 0 {
+			rowKeyElementStr += ", "
+		}
+		i++
+		rowKeyElementStr += "m[" + k + "]=" + strconv.Itoa(v)
 	}
 	rowKeyElementStr += "}"
 
 	// firstPartDesc to string
 	var firstPartDescStr string
-	if p.level.index >= partLevelOneIndex {
+	if p.firstPartDesc != nil {
 		firstPartDescStr = p.firstPartDesc.ToString()
 	} else {
 		firstPartDescStr = "nil"
@@ -104,7 +119,7 @@ func (p *ObPartitionInfo) ToString() string {
 
 	// subPartDesc to string
 	var subPartDescStr string
-	if p.level.index == partLevelTwoIndex {
+	if p.subPartDesc != nil {
 		subPartDescStr = p.firstPartDesc.ToString()
 	} else {
 		subPartDescStr = "nil"
@@ -161,9 +176,14 @@ func newObPartLocationEntry(partNum int) *ObPartLocationEntry {
 
 func (e *ObPartLocationEntry) ToString() string {
 	var partitionLocationStr string
+	var i = 0
 	partitionLocationStr = partitionLocationStr + "{"
 	for k, v := range e.partLocations {
-		partitionLocationStr += "m[" + strconv.Itoa(k) + "]=" + v.ToString() + ", "
+		if i > 0 {
+			partitionLocationStr += ", "
+		}
+		i++
+		partitionLocationStr += "m[" + strconv.Itoa(k) + "]=" + v.ToString()
 	}
 	partitionLocationStr += "}"
 	return "ObPartLocationEntry{" +
@@ -196,46 +216,6 @@ type ObTableEntry struct {
 	partitionInfo     *ObPartitionInfo
 	tableLocation     *ObTableLocation
 	partLocationEntry *ObPartLocationEntry
-}
-
-func (e *ObTableEntry) TableEntryKey() ObTableEntryKey {
-	return e.tableEntryKey
-}
-
-func (e *ObTableEntry) SetTableEntryKey(tableEntryKey ObTableEntryKey) {
-	e.tableEntryKey = tableEntryKey
-}
-
-func (e *ObTableEntry) RefreshTimeMills() int64 {
-	return e.refreshTimeMills
-}
-
-func (e *ObTableEntry) SetRefreshTimeMills(refreshTimeMills int64) {
-	e.refreshTimeMills = refreshTimeMills
-}
-
-func (e *ObTableEntry) ReplicaNum() int {
-	return e.replicaNum
-}
-
-func (e *ObTableEntry) SetReplicaNum(replicaNum int) {
-	e.replicaNum = replicaNum
-}
-
-func (e *ObTableEntry) PartNum() int {
-	return e.partNum
-}
-
-func (e *ObTableEntry) SetPartNum(partNum int) {
-	e.partNum = partNum
-}
-
-func (e *ObTableEntry) TableId() uint64 {
-	return e.tableId
-}
-
-func (e *ObTableEntry) SetTableId(tableId uint64) {
-	e.tableId = tableId
 }
 
 func (e *ObTableEntry) IsPartitionTable() bool {
