@@ -53,6 +53,7 @@ func (c *ObColumn) ColumnName() string {
 }
 
 func (c *ObColumn) ToString() string {
+	// isGenColumn to string
 	var isGenColumnStr string
 	if c.isGenColumn {
 		isGenColumnStr = "true"
@@ -60,6 +61,15 @@ func (c *ObColumn) ToString() string {
 		isGenColumnStr = "false"
 	}
 
+	// objType to string
+	var objTypeStr string
+	if c.objType != nil {
+		objTypeStr = c.objType.ToString()
+	} else {
+		objTypeStr = "nil"
+	}
+
+	// columnExpress to string
 	var columnExpressStr string
 	if c.isGenColumn {
 		columnExpressStr = c.columnExpress.ToString()
@@ -69,7 +79,7 @@ func (c *ObColumn) ToString() string {
 	return "ObColumn{" +
 		"columnName:" + c.columnName + ", " +
 		"index:" + strconv.Itoa(c.index) + ", " +
-		"objType:" + c.objType.ToString() + ", " +
+		"objType:" + objTypeStr + ", " +
 		"collationType:" + c.collationType.ToString() + ", " +
 		"refColumnNames:" + "[" + strings.Join(c.refColumnNames, ",") + "]" + ", " +
 		"isGenColumn:" + isGenColumnStr + ", " +

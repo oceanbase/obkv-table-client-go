@@ -155,22 +155,6 @@ type ObUserAuth struct {
 	password string
 }
 
-func (a *ObUserAuth) Password() string {
-	return a.password
-}
-
-func (a *ObUserAuth) SetPassword(password string) {
-	a.password = password
-}
-
-func (a *ObUserAuth) UserName() string {
-	return a.userName
-}
-
-func (a *ObUserAuth) SetUserName(userName string) {
-	a.userName = userName
-}
-
 func (a *ObUserAuth) ToString() string {
 	return "ObUserAuth{" +
 		"userName:" + a.userName + ", " +
@@ -224,7 +208,7 @@ func GetTableEntryFromRemote(
 		log.Warn("failed to get table entry from result set", log.String("key", key.ToString()))
 		return nil, err
 	}
-	entry.SetTableEntryKey(*key)
+	entry.tableEntryKey = *key
 
 	// 4. Fetch partition info
 	if entry.IsPartitionTable() {

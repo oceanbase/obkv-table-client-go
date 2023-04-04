@@ -18,22 +18,16 @@ func (t *ObCollationType) ToString() string {
 	switch t.value {
 	case csTypeUtf8mb4GeneralCi:
 		collationTypeStr = "csTypeUtf8mb4GeneralCi"
-		break
 	case csTypeUtf8mb4Bin:
 		collationTypeStr = "csTypeUtf8mb4Bin"
-		break
 	case csTypeBinary:
 		collationTypeStr = "csTypeBinary"
-		break
 	case csTypeCollationFree:
 		collationTypeStr = "csTypeCollationFree"
-		break
 	case csTypeMax:
 		collationTypeStr = "csTypeMax"
-		break
 	default:
 		collationTypeStr = "csTypeInvalid"
-		break
 	}
 	return "ObCollationType{" +
 		"collationType:" + collationTypeStr +
@@ -79,28 +73,20 @@ func (l *ObCollationLevel) ToString() string {
 	switch l.value {
 	case csLevelExplicit:
 		collationLevelStr = "csLevelExplicit"
-		break
 	case csLevelNone:
 		collationLevelStr = "csLevelNone"
-		break
 	case csLevelImplicit:
 		collationLevelStr = "csLevelImplicit"
-		break
 	case csLevelSysConst:
 		collationLevelStr = "csLevelSysConst"
-		break
 	case csLevelCoercible:
 		collationLevelStr = "csLevelCoercible"
-		break
 	case csLevelNumeric:
 		collationLevelStr = "csLevelNumeric"
-		break
 	case csLevelIgnorable:
 		collationLevelStr = "csLevelIgnorable"
-		break
 	default:
 		collationLevelStr = "csLevelInvalid"
-		break
 	}
 	return "ObCollationLevel{" +
 		"collationLevel:" + collationLevelStr +

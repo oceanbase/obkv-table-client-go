@@ -1,7 +1,6 @@
 package route
 
 import (
-	"math"
 	"strconv"
 	"strings"
 )
@@ -12,48 +11,17 @@ type ObServerAddr struct {
 	svrPort int
 }
 
-func (a *ObServerAddr) SvrPort() int {
-	return a.svrPort
-}
-
-func (a *ObServerAddr) SetSvrPort(svrPort int) {
-	a.svrPort = svrPort
-}
-
-func (a *ObServerAddr) SqlPort() int {
-	return a.sqlPort
-}
-
-func (a *ObServerAddr) SetSqlPort(sqlPort int) {
-	a.sqlPort = sqlPort
-}
-
-func (a *ObServerAddr) Ip() string {
-	return a.ip
-}
-
-func (a *ObServerAddr) SetIp(ip string) {
-	a.ip = ip
-}
-
 func (a *ObServerAddr) ToString() string {
 	return "ObServerAddr{" +
 		"ip:" + a.ip + ", " +
 		"sqlPort:" + strconv.Itoa(a.sqlPort) + ", " +
-		"svrPort" + strconv.Itoa(a.svrPort) +
+		"svrPort:" + strconv.Itoa(a.svrPort) +
 		"}"
 }
 
-// ObServerInfo status
-const (
-	Active   = 1
-	InActive = 2
-	Deleting = 3
-)
-
 type ObServerInfo struct {
 	stopTime int64
-	status   string
+	status   string // Active/InActive/Deleting
 }
 
 func (i *ObServerInfo) isActive() bool {
@@ -96,11 +64,11 @@ func (r *ObServerRole) isLeader() bool {
 
 func newObServerRole(index int) ObServerRole {
 	if index == ServerRoleLeaderIndex {
-		return ObServerRole{ServerRoleLeader, ServerRoleInvalidIndex}
+		return ObServerRole{ServerRoleLeader, ServerRoleLeaderIndex}
 	} else if index == ServerRoleFollowerIndex {
 		return ObServerRole{ServerRoleFollower, ServerRoleFollowerIndex}
 	} else {
-		return ObServerRole{ServerRoleInvalid, ServerRoleFollowerIndex}
+		return ObServerRole{ServerRoleInvalid, ServerRoleInvalidIndex}
 	}
 }
 
@@ -121,10 +89,10 @@ const (
 
 // ObReplicaType index
 const (
+	ReplicaTypeInvalidIndex  = -1
 	ReplicaTypeFullIndex     = 0
 	ReplicaTypeLogOnlyIndex  = 5
 	ReplicaTypeReadOnlyIndex = 16
-	ReplicaTypeInvalidIndex  = math.MaxInt
 )
 
 type ObReplicaType struct {
