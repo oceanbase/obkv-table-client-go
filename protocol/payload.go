@@ -30,6 +30,6 @@ type Payload interface {
 	Timeout() time.Duration
 	SetTimeout(duration time.Duration)
 
-	Credential() []byte
-	SetCredential(credential []byte)
+	Credential() string
+	SetCredential(credential string)
 }

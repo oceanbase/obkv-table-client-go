@@ -13,7 +13,7 @@ type LoginResponse struct {
 	reserved2          int64
 
 	serverVersion string
-	credential    []byte
+	credential    string
 	tenantId      uint64
 	userId        int64
 	databaseId    int64
@@ -26,7 +26,7 @@ func NewLoginResponse() *LoginResponse {
 		reserved1:          0,
 		reserved2:          0,
 		serverVersion:      "",
-		credential:         nil,
+		credential:         "",
 		tenantId:           0,
 		userId:             0,
 		databaseId:         0,
@@ -102,11 +102,11 @@ func (r *LoginResponse) SessionId() uint64 {
 func (r *LoginResponse) SetSessionId(sessionId uint64) {
 }
 
-func (r *LoginResponse) Credential() []byte {
+func (r *LoginResponse) Credential() string {
 	return r.credential
 }
 
-func (r *LoginResponse) SetCredential(credential []byte) {
+func (r *LoginResponse) SetCredential(credential string) {
 	r.credential = credential
 }
 
@@ -123,7 +123,7 @@ func (r *LoginResponse) Decode(buffer *bytes.Buffer) {
 	_ = util.DecodeVi64(buffer) // reserved2
 
 	r.serverVersion = util.DecodeVString(buffer)
-	r.credential = util.DecodeBytes(buffer)
+	r.credential = util.DecodeVString(buffer)
 
 	r.tenantId = uint64(util.DecodeVi64(buffer))
 	r.userId = util.DecodeVi64(buffer)

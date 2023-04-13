@@ -199,11 +199,11 @@ func (r *LoginRequest) SetSessionId(sessionId uint64) {
 	return
 }
 
-func (r *LoginRequest) Credential() []byte {
-	return nil
+func (r *LoginRequest) Credential() string {
+	return ""
 }
 
-func (r *LoginRequest) SetCredential(credential []byte) {
+func (r *LoginRequest) SetCredential(credential string) {
 	return
 }
 

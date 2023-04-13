@@ -45,7 +45,7 @@ type Connection struct {
 	uuid           uuid.UUID
 	traceIdCounter atomic.Uint32
 
-	credential []byte
+	credential string
 	tenantId   uint64
 }
 
@@ -79,6 +79,7 @@ func (c *Connection) Login() {
 		fmt.Println(err.Error())
 		return
 	}
+	// TODO active = true
 }
 
 func (c *Connection) Execute(ctx context.Context, request protocol.Payload, response protocol.Payload) error {
@@ -89,13 +90,7 @@ func (c *Connection) Execute(ctx context.Context, request protocol.Payload, resp
 
 	payloadBuf := c.encodePayload(request)
 
-	fmt.Println(payloadBuf)
-	fmt.Println(string(payloadBuf))
-
 	rpcHeaderBuf := c.encodeRpcHeader(request, payloadBuf)
-
-	fmt.Println(rpcHeaderBuf)
-	fmt.Println(string(rpcHeaderBuf))
 
 	done := make(chan *Call, 1)
 	call := new(Call)
@@ -121,10 +116,11 @@ func (c *Connection) Execute(ctx context.Context, request protocol.Payload, resp
 	contentBuf := call.Content
 	contentBuffer := bytes.NewBuffer(contentBuf)
 
-	fmt.Println(contentBuf)
-	fmt.Println(string(contentBuf))
-
 	c.decodeRpcHeader(contentBuffer)
+
+	payloadBuf = contentBuffer.Bytes()
+
+	contentBuffer.Next(10) // TODO rpcResponseCode
 
 	c.decodePayload(response, contentBuffer)
 
@@ -217,6 +213,7 @@ func (c *Connection) sendPacket(call *Call, seq uint32, rpcHeaderBuf []byte, pay
 		c.mutex.Unlock()
 		call.Error = err
 		call.done()
+		c.Close() // TODO
 	}
 	// write success
 }

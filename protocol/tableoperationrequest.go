@@ -2,7 +2,7 @@ package protocol
 
 type TableOperationRequest struct {
 	*UniVersionHeader
-	credential           []uint8
+	credential           string
 	tableName            string
 	tableId              int64
 	partitionId          int64
