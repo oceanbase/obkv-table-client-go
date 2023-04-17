@@ -120,7 +120,15 @@ func (c *Connection) Execute(ctx context.Context, request protocol.Payload, resp
 
 	payloadBuf = contentBuffer.Bytes()
 
-	contentBuffer.Next(10) // TODO rpcResponseCode
+	// TODO rpcResponseCode
+	rpcResponseCode := protocol.NewRpcResponseCode()
+
+	rpcResponseCode.Decode(contentBuffer)
+
+	if rpcResponseCode.Code() != protocol.ObSuccess {
+		fmt.Printf("failed to rpc response code not success, code: %d\n", rpcResponseCode.Code())
+		return errors.Errorf("rpc response code not success,code : %d", rpcResponseCode.Code())
+	}
 
 	c.decodePayload(response, contentBuffer)
 
