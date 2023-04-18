@@ -1,7 +1,7 @@
 package protocol
 
 type ObGeneratedColumnSimpleFunc interface {
-	ToString() string
+	String() string
 	getRefColumnNames() []string
 }
 

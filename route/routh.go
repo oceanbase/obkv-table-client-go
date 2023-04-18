@@ -4,9 +4,12 @@ import (
 	"errors"
 	"github.com/oceanbase/obkv-table-client-go/log"
 	"github.com/oceanbase/obkv-table-client-go/protocol"
+	"github.com/oceanbase/obkv-table-client-go/util"
 	"math"
+	"sort"
 	"strconv"
 	"strings"
+	"sync"
 	"time"
 )
 
@@ -21,34 +24,34 @@ const (
 		"A.sql_port as sql_port, A.table_id as table_id, A.role as role, A.replica_num as replica_num, A.part_num as part_num, " +
 		"B.svr_port as svr_port, B.status as status, B.stop_time as stop_time, A.spare1 as replica_type " +
 		"FROM oceanbase.__all_virtual_proxy_schema A inner join oceanbase.__all_server B on A.svr_ip = B.svr_ip " +
-		"and A.sql_port = B.inner_port WHERE tenant_name = ? and database_name=? and table_name = ?;"
+		"and A.sql_port = B.inner_port WHERE tenant_name = ? and database_name = ? and table_name = ?;"
 	DummyLocationSqlV4 = "SELECT /*+READ_CONSISTENCY(WEAK)*/ A.tablet_id as tablet_id, A.svr_ip as svr_ip, " +
 		"A.sql_port as sql_port, A.table_id as table_id, A.role as role, A.replica_num as replica_num, A.part_num as part_num, " +
 		"B.svr_port as svr_port, B.status as status, B.stop_time as stop_time, A.spare1 as replica_type " +
 		"FROM oceanbase.__all_virtual_proxy_schema A inner join oceanbase.__all_server B on A.svr_ip = B.svr_ip " +
-		"and A.sql_port = B.inner_port WHERE tenant_name = ? and database_name=? and table_name = ?;"
+		"and A.sql_port = B.inner_port WHERE tenant_name = ? and database_name = ? and table_name = ?;"
 
 	LocationSql = "SELECT /*+READ_CONSISTENCY(WEAK)*/ A.partition_id as partition_id, A.svr_ip as svr_ip, " +
 		"A.sql_port as sql_port, A.table_id as table_id, A.role as role, A.replica_num as replica_num, A.part_num as part_num, " +
 		"B.svr_port as svr_port, B.status as status, B.stop_time as stop_time, A.spare1 as replica_type " +
 		"FROM oceanbase.__all_virtual_proxy_schema A inner join oceanbase.__all_server B on A.svr_ip = B.svr_ip " +
-		"and A.sql_port = B.inner_port WHERE tenant_name = ? and database_name=? and table_name = ? and partition_id = 0;"
+		"and A.sql_port = B.inner_port WHERE tenant_name = ? and database_name = ? and table_name = ? and partition_id = 0;"
 	LocationSqlV4 = "SELECT /*+READ_CONSISTENCY(WEAK)*/ A.tablet_id as tablet_id, A.svr_ip as svr_ip, " +
 		"A.sql_port as sql_port, A.table_id as table_id, A.role as role, A.replica_num as replica_num, A.part_num as part_num, " +
 		"B.svr_port as svr_port, B.status as status, B.stop_time as stop_time, A.spare1 as replica_type " +
 		"FROM oceanbase.__all_virtual_proxy_schema A inner join oceanbase.__all_server B on A.svr_ip = B.svr_ip " +
-		"and A.sql_port = B.inner_port WHERE tenant_name = ? and database_name=? and table_name = ? and tablet_id = 0;"
+		"and A.sql_port = B.inner_port WHERE tenant_name = ? and database_name = ? and table_name = ? and tablet_id = 0;"
 
 	PartitionLocationSql = "SELECT /*+READ_CONSISTENCY(WEAK)*/ A.partition_id as partition_id, A.svr_ip as svr_ip, " +
 		"A.sql_port as sql_port, A.table_id as table_id, A.role as role, A.replica_num as replica_num, A.part_num as part_num, " +
 		"B.svr_port as svr_port, B.status as status, B.stop_time as stop_time, A.spare1 as replica_type " +
 		"FROM oceanbase.__all_virtual_proxy_schema A inner join oceanbase.__all_server B on A.svr_ip = B.svr_ip " +
-		"and A.sql_port = B.inner_port WHERE tenant_name = ? and database_name=? and table_name = ? and partition_id in"
+		"and A.sql_port = B.inner_port WHERE tenant_name = ? and database_name = ? and table_name = ? and partition_id in"
 	PartitionLocationSqlV4 = "SELECT /*+READ_CONSISTENCY(WEAK)*/ A.tablet_id as tablet_id, A.svr_ip as svr_ip, " +
 		"A.sql_port as sql_port, A.table_id as table_id, A.role as role, A.replica_num as replica_num, A.part_num as part_num, " +
 		"B.svr_port as svr_port, B.status as status, B.stop_time as stop_time, A.spare1 as replica_type " +
 		"FROM oceanbase.__all_virtual_proxy_schema A inner join oceanbase.__all_server B on A.svr_ip = B.svr_ip " +
-		"and A.sql_port = B.inner_port WHERE tenant_name = ? and database_name=? and table_name = ? and tablet_id in"
+		"and A.sql_port = B.inner_port WHERE tenant_name = ? and database_name = ? and table_name = ? and tablet_id in"
 
 	PartitionInfoSql = "SELECT /*+READ_CONSISTENCY(WEAK)*/ part_level, part_num, part_type, part_space, part_expr, " +
 		"part_range_type, sub_part_num, sub_part_type, sub_part_space, sub_part_range_type, sub_part_expr, part_key_name, " +
@@ -65,12 +68,13 @@ const (
 		"FROM oceanbase.__all_virtual_proxy_partition WHERE tenant_name = ? and table_id = ? LIMIT ?;"
 
 	SubPartitionSql = "SELECT /*+READ_CONSISTENCY(WEAK)*/ sub_part_id, part_name, high_bound_val " +
-		"FROM oceanbase.__all_virtual_proxy_sub_partition WHERE table_id = ? and part_id = ? LIMIT ?;"
+		"FROM oceanbase.__all_virtual_proxy_sub_partition WHERE table_id = ? LIMIT ?;"
 	SubPartitionSqlV4 = "SELECT /*+READ_CONSISTENCY(WEAK)*/ sub_part_id, part_name, tablet_id, high_bound_val " +
 		"FROM oceanbase.__all_virtual_proxy_sub_partition WHERE tenant_name = ? and table_id = ? LIMIT ?;"
 )
 
 var (
+	proxySqlGuard             sync.Mutex
 	proxyDummyLocationSql     string
 	proxyLocationSql          string
 	proxyPartitionLocationSql string
@@ -80,6 +84,7 @@ var (
 )
 
 func InitSql(obVersion float32) {
+	proxySqlGuard.Lock()
 	if obVersion >= 4 {
 		proxyDummyLocationSql = DummyLocationSqlV4
 		proxyLocationSql = LocationSqlV4
@@ -95,13 +100,12 @@ func InitSql(obVersion float32) {
 		proxyFirstPartitionSql = FirstPartitionSql
 		proxySubPartitionSql = SubPartitionSql
 	}
+	proxySqlGuard.Unlock()
 }
-
-var ObVersion float32 = 0.0
 
 // GetObVersionFromRemote get OceanBase cluster version by sql
 // called when client init
-func GetObVersionFromRemote(addr *ObServerAddr, sysUA *ObUserAuth) error {
+func GetObVersionFromRemote(addr *ObServerAddr, sysUA *ObUserAuth) (float32, error) {
 	// 1. Get db handle.
 	db, err := NewDB(
 		sysUA.userName,
@@ -112,9 +116,9 @@ func GetObVersionFromRemote(addr *ObServerAddr, sysUA *ObUserAuth) error {
 	)
 	if err != nil {
 		log.Warn("failed to new db",
-			log.String("sysUA", sysUA.ToString()),
-			log.String("addr", addr.ToString()))
-		return err
+			log.String("sysUA", sysUA.String()),
+			log.String("addr", addr.String()))
+		return 0.0, err
 	}
 	defer func() {
 		_ = db.Close()
@@ -124,7 +128,7 @@ func GetObVersionFromRemote(addr *ObServerAddr, sysUA *ObUserAuth) error {
 	stmt, err := db.Prepare(ObVersionSql)
 	if err != nil {
 		log.Warn("fail to prepare get observer version sql", log.String("sql", ObVersionSql))
-		return err
+		return 0.0, err
 	}
 
 	// 3. Get result from query row.
@@ -132,7 +136,7 @@ func GetObVersionFromRemote(addr *ObServerAddr, sysUA *ObUserAuth) error {
 	err = stmt.QueryRow().Scan(&obVersionStr)
 	if err != nil {
 		log.Warn("fail to get observer version from query result", log.String("sql", ObVersionSql))
-		return err
+		return 0.0, err
 	}
 
 	// 4. parse ob version string
@@ -144,10 +148,10 @@ func GetObVersionFromRemote(addr *ObServerAddr, sysUA *ObUserAuth) error {
 	ver, err := strconv.Atoi(str)
 	if err != nil {
 		log.Warn("fail to convert string to int", log.String("str", str))
-		return err
+		return 0.0, err
 	}
-	ObVersion = float32(ver) / 1000.0 // ObVersion = 4.1
-	return nil
+	res := float32(ver) / 1000.0 // ObVersion = 4.1
+	return res, nil
 }
 
 type ObUserAuth struct {
@@ -155,7 +159,11 @@ type ObUserAuth struct {
 	password string
 }
 
-func (a *ObUserAuth) ToString() string {
+func NewObUserAuth(userName string, password string) *ObUserAuth {
+	return &ObUserAuth{userName, password}
+}
+
+func (a *ObUserAuth) String() string {
 	return "ObUserAuth{" +
 		"userName:" + a.userName + ", " +
 		"password:" + a.password +
@@ -176,8 +184,8 @@ func GetTableEntryFromRemote(
 	)
 	if err != nil {
 		log.Warn("failed to new db",
-			log.String("sysUA", sysUA.ToString()),
-			log.String("addr", addr.ToString()))
+			log.String("sysUA", sysUA.String()),
+			log.String("addr", addr.String()))
 		return nil, err
 	}
 	defer func() {
@@ -205,7 +213,7 @@ func GetTableEntryFromRemote(
 	// 3. Create table entry by parsing query result set.
 	entry, err := getTableEntryFromResultSet(rows)
 	if err != nil {
-		log.Warn("failed to get table entry from result set", log.String("key", key.ToString()))
+		log.Warn("failed to get table entry from result set", log.String("key", key.String()))
 		return nil, err
 	}
 	entry.tableEntryKey = *key
@@ -219,23 +227,24 @@ func GetTableEntryFromRemote(
 				log.Uint64("tableId", entry.tableId))
 			return nil, err
 		}
+		entry.partitionInfo = info
 
 		// 4.1. Fetch first partition info
-		if info.level.index > 1 {
-			err = fetchFirstPart(db, info.firstPartDesc.getPartFuncType(), entry)
+		if info.level.index >= 1 {
+			err = fetchFirstPart(db, info.firstPartDesc.partFuncType(), entry)
 			if err != nil {
 				log.Warn("failed to fetch first partition info",
-					log.String("entry", entry.ToString()))
+					log.String("entry", entry.String()))
 				return nil, err
 			}
 		}
 
 		// 4.2. Fetch sub partition info
 		if info.level.index == 2 {
-			err = fetchSubPart(db, info.subPartDesc.getPartFuncType(), entry)
+			err = fetchSubPart(db, info.subPartDesc.partFuncType(), entry)
 			if err != nil {
-				log.Warn("failed to fetch first partition info",
-					log.String("entry", entry.ToString()))
+				log.Warn("failed to fetch sub partition info",
+					log.String("entry", entry.String()))
 				return nil, err
 			}
 		}
@@ -244,9 +253,9 @@ func GetTableEntryFromRemote(
 	}
 
 	// 5. Get partition location entry
-	partLocationEntry, err := getPartLocationEntryFromRemote(db, key, entry.partNum)
+	partLocationEntry, err := getPartLocationEntryFromRemote(db, entry)
 	if err != nil {
-		log.Warn("failed to get table entry location", log.String("entry", entry.ToString()))
+		log.Warn("failed to get table entry location", log.String("entry", entry.String()))
 		return nil, err
 	}
 	entry.partLocationEntry = partLocationEntry
@@ -296,7 +305,7 @@ func getTableEntryFromResultSet(rows *Rows) (*ObTableEntry, error) {
 		svrInfo := ObServerInfo{stopTime: stopTime, status: status}
 		replica := &ObReplicaLocation{addr: svrAddr, info: svrInfo, role: svrRole, replicaType: svrReplicaType}
 		if !replica.isValid() {
-			log.Warn("replica is invalid", log.String("replica", replica.ToString()))
+			log.Warn("replica is invalid", log.String("replica", replica.String()))
 			return nil, errors.New("replica is invalid")
 		}
 		tableLocation.replicaLocations = append(tableLocation.replicaLocations, *replica)
@@ -311,20 +320,24 @@ func getTableEntryFromResultSet(rows *Rows) (*ObTableEntry, error) {
 	return entry, nil
 }
 
-func getPartLocationEntryFromRemote(db *DB, key *ObTableEntryKey, partNum int) (*ObPartLocationEntry, error) {
+func getPartLocationEntryFromRemote(db *DB, entry *ObTableEntry) (*ObPartLocationEntry, error) {
 	// 1. Create inStatement "(0,1,2...partNum);".
-	var inStatement string
-	inStatement += "("
-	for i := 0; i < partNum; i++ { // entry.partNum >= 1
-		if i > 0 {
-			inStatement += ", "
+	partIds := make([]int, 0, entry.partNum)
+	if util.ObVersion() >= 4 && entry.IsPartitionTable() {
+		for _, v := range entry.partitionInfo.partTabletIdMap {
+			partIds = append(partIds, int(v))
 		}
-		inStatement += strconv.Itoa(i)
+		sort.Ints(partIds) // partIds doesn't have to be ascending, so do sort
+	} else {
+		for i := 0; i < entry.partNum; i++ {
+			partIds = append(partIds, i)
+		}
 	}
-	inStatement += ");"
+	inStatement := CreateInStatement(partIds)
 
 	// 2. Do query with specific tenant name，database name and table name.
 	sql := proxyPartitionLocationSql + inStatement
+	key := entry.tableEntryKey
 	rows, err := db.Query(sql, key.tenantName, key.databaseName, key.tableName)
 	if err != nil {
 		log.Warn("failed to do query", log.String("sql", sql))
@@ -381,6 +394,7 @@ func getPartLocationEntryFromResultSet(rows *Rows) (*ObPartLocationEntry, error)
 
 		// create ObPartLocationEntry
 		if isFirstRow {
+			isFirstRow = false
 			partitionEntry = newObPartLocationEntry(partNum)
 		}
 
@@ -392,10 +406,10 @@ func getPartLocationEntryFromResultSet(rows *Rows) (*ObPartLocationEntry, error)
 		replica := &ObReplicaLocation{addr: svrAddr, info: svrInfo, role: svrRole, replicaType: svrReplicaType}
 
 		// 2. find or create location, then add replica location
-		location, ok := partitionEntry.partLocations[partitionId]
+		location, ok := partitionEntry.partLocations[int64(partitionId)]
 		if !ok {
 			location = new(ObPartitionLocation)
-			partitionEntry.partLocations[partitionId] = location
+			partitionEntry.partLocations[int64(partitionId)] = location
 		}
 		location.addReplicaLocation(replica)
 	}
@@ -406,7 +420,7 @@ func getPartitionInfoFromRemote(db *DB, tenantName string, tableId uint64) (*ObP
 	// 1. Do query with specific tenant name(ob version > 4), table id and limit.
 	var rows *Rows
 	var err error
-	if ObVersion >= 4 {
+	if util.ObVersion() >= 4 {
 		rows, err = db.Query(proxyPartitionInfoSql, tenantName, tableId, math.MaxInt64)
 	} else {
 		rows, err = db.Query(proxyPartitionInfoSql, tableId, math.MaxInt64)
@@ -479,7 +493,7 @@ func getPartitionInfoFromResultSet(rows *Rows) (*ObPartitionInfo, error) {
 			isFirstRow = false
 			info.level = newObPartitionLevel(partLevel)
 			// build first part
-			if info.level.index >= partLevelOneIndex {
+			if info.level.index >= PartLevelOneIndex {
 				firstPartDesc, err := buildPartDesc(
 					partNum,
 					partType,
@@ -495,7 +509,7 @@ func getPartitionInfoFromResultSet(rows *Rows) (*ObPartitionInfo, error) {
 			}
 
 			// build sub part
-			if info.level.index == partLevelTwoIndex {
+			if info.level.index == PartLevelTwoIndex {
 				subPartDesc, err := buildPartDesc(
 					subPartNum,
 					subPartType,
@@ -512,6 +526,7 @@ func getPartitionInfoFromResultSet(rows *Rows) (*ObPartitionInfo, error) {
 		}
 
 		partKeyExtra = strings.ReplaceAll(partKeyExtra, "`", "") // '`' is not supported by druid
+		partKeyExtra = strings.ReplaceAll(partKeyExtra, " ", "") // ' ' should be removed
 		var column *protocol.ObColumn
 		if partKeyExtra != "" {
 			// todo: support generate column
@@ -529,32 +544,36 @@ func getPartitionInfoFromResultSet(rows *Rows) (*ObPartitionInfo, error) {
 				protocol.NewObCollationType(spare1),
 			)
 		}
-		info.partColumns = append(info.partColumns, *column)
+		info.partColumns = append(info.partColumns, column)
 	}
+	info.partTabletIdMap = make(map[int64]int64, partNum)
+	info.partNameIdMap = make(map[string]int64, partNum)
 
-	if info.level.index >= partLevelOneIndex {
-		if info.firstPartDesc.getPartFuncType().isListPart() ||
-			info.firstPartDesc.getPartFuncType().isRangePart() {
-			orderedPartedColumns1 := getOrderedPartColumns(info.partColumns, info.firstPartDesc)
-			// set the property of first part
-			err := setPartDescProperty(info.firstPartDesc, info.partColumns, orderedPartedColumns1)
-			if err != nil {
-				log.Warn("failed to ser first part property", log.String("part info", info.ToString()))
-				return nil, err
-			}
+	var orderedPartedColumns1 []*protocol.ObColumn
+	if info.level.index >= PartLevelOneIndex {
+		if info.firstPartDesc.partFuncType().isListPart() ||
+			info.firstPartDesc.partFuncType().isRangePart() {
+			orderedPartedColumns1 = getOrderedPartColumns(info.partColumns, info.firstPartDesc)
+		}
+		// set the property of first part
+		err := setPartDescProperty(info.firstPartDesc, info.partColumns, orderedPartedColumns1)
+		if err != nil {
+			log.Warn("failed to ser first part property", log.String("part info", info.String()))
+			return nil, err
 		}
 	}
 
-	if info.level.index == partLevelTwoIndex {
-		if info.firstPartDesc.getPartFuncType().isListPart() ||
-			info.firstPartDesc.getPartFuncType().isRangePart() {
-			orderedPartedColumns2 := getOrderedPartColumns(info.partColumns, info.subPartDesc)
-			// set the property of sub part
-			err := setPartDescProperty(info.subPartDesc, info.partColumns, orderedPartedColumns2)
-			if err != nil {
-				log.Warn("failed to ser sub part property", log.String("part info", info.ToString()))
-				return nil, err
-			}
+	var orderedPartedColumns2 []*protocol.ObColumn
+	if info.level.index == PartLevelTwoIndex {
+		if info.firstPartDesc.partFuncType().isListPart() ||
+			info.firstPartDesc.partFuncType().isRangePart() {
+			orderedPartedColumns2 = getOrderedPartColumns(info.partColumns, info.subPartDesc)
+		}
+		// set the property of sub part
+		err := setPartDescProperty(info.subPartDesc, info.partColumns, orderedPartedColumns2)
+		if err != nil {
+			log.Warn("failed to ser sub part property", log.String("part info", info.String()))
+			return nil, err
 		}
 	}
 
@@ -562,10 +581,10 @@ func getPartitionInfoFromResultSet(rows *Rows) (*ObPartitionInfo, error) {
 }
 
 func getOrderedPartColumns(
-	partitionKeyColumns []protocol.ObColumn,
-	partDesc ObPartDesc) []protocol.ObColumn {
-	columns := make([]protocol.ObColumn, 0, len(partitionKeyColumns))
-	for _, partColumnName := range partDesc.getOrderedPartColumnNames() {
+	partitionKeyColumns []*protocol.ObColumn,
+	partDesc ObPartDesc) []*protocol.ObColumn {
+	columns := make([]*protocol.ObColumn, 0, len(partitionKeyColumns))
+	for _, partColumnName := range partDesc.orderedPartColumnNames() {
 		for _, keyColumn := range partitionKeyColumns {
 			if strings.EqualFold(keyColumn.ColumnName(), partColumnName) {
 				columns = append(columns, keyColumn)
@@ -577,31 +596,30 @@ func getOrderedPartColumns(
 
 func setPartDescProperty(
 	partDesc ObPartDesc,
-	partColumns []protocol.ObColumn,
-	orderedCompareColumns []protocol.ObColumn) error {
+	partColumns []*protocol.ObColumn,
+	orderedCompareColumns []*protocol.ObColumn) error {
 	partDesc.setPartColumns(partColumns)
-	if partDesc.getPartFuncType().isKeyPart() {
+	if partDesc.partFuncType().isKeyPart() {
 		if len(partColumns) == 0 {
-			log.Warn("part column is empty", log.String("part desc", partDesc.ToString()))
+			log.Warn("part column is empty", log.String("part desc", partDesc.String()))
 			return errors.New("part column is empty")
 		}
-	} else if partDesc.getPartFuncType().isListPart() {
+	} else if partDesc.partFuncType().isListPart() {
 		// todo: list part is not support now
-		log.Warn("list part is not support now", log.String("part desc", partDesc.ToString()))
+		log.Warn("list part is not support now", log.String("part desc", partDesc.String()))
 		return errors.New("list part is not support now")
-	} else if partDesc.getPartFuncType().isRangePart() {
-		if rangeDesc, ok := partDesc.(ObRangePartDesc); ok {
+	} else if partDesc.partFuncType().isRangePart() {
+		if rangeDesc, ok := partDesc.(*ObRangePartDesc); ok {
 			rangeDesc.orderedCompareColumns = orderedCompareColumns
 		} else {
-			log.Warn("failed to convert to ObRangePartDesc", log.String("part desc", partDesc.ToString()))
+			log.Warn("failed to convert to ObRangePartDesc", log.String("part desc", partDesc.String()))
 			return errors.New("failed to convert to ObRangePartDesc")
 		}
 	}
 	return nil
 }
 
-func buildPartDesc(
-	partNum int,
+func buildPartDesc(partNum int,
 	partType int,
 	partSpace int,
 	partExpr string,
@@ -609,9 +627,12 @@ func buildPartDesc(
 	partFuncType := newObPartFuncType(partType)
 	partExpr = strings.ReplaceAll(partExpr, "`", "") // '`' is not supported by druid
 	if partFuncType.isRangePart() {
-		rangeDesc := new(ObRangePartDesc)
-		rangeDesc.comm.partFuncType = partFuncType
-		rangeDesc.comm.partExpr = partExpr
+		rangeDesc := newObRangePartDesc()
+		rangeDesc.partNum = partNum
+		rangeDesc.PartFuncType = partFuncType
+		rangeDesc.PartExpr = partExpr
+		rangeDesc.partSpace = partSpace
+		rangeDesc.setOrderedPartColumnNames(partExpr)
 		for _, typeStr := range strings.Split(partRangeType, ",") { // todo: @林径 确认空格
 			typeValue, err := strconv.Atoi(typeStr)
 			if err != nil {
@@ -627,27 +648,29 @@ func buildPartDesc(
 		}
 		return rangeDesc, nil
 	} else if partFuncType.isHashPart() {
-		hashDesc := new(ObHashPartDesc)
-		hashDesc.comm.partFuncType = partFuncType
-		hashDesc.comm.partExpr = partExpr
+		hashDesc := newObHashPartDesc()
 		hashDesc.partNum = partNum
+		hashDesc.PartFuncType = partFuncType
+		hashDesc.PartExpr = partExpr
+		hashDesc.setOrderedPartColumnNames(partExpr)
 		hashDesc.partSpace = partSpace
-		if ObVersion < 4 {
+		if util.ObVersion() < 4 {
 			hashDesc.partNameIdMap = buildDefaultPartNameIdMap(partNum)
 		}
 		return hashDesc, nil
 	} else if partFuncType.isKeyPart() {
-		keyDesc := new(ObKeyPartDesc)
-		keyDesc.comm.partFuncType = partFuncType
-		keyDesc.comm.partExpr = partExpr
+		keyDesc := newObKeyPartDesc()
 		keyDesc.partNum = partNum
+		keyDesc.PartFuncType = partFuncType
+		keyDesc.PartExpr = partExpr
+		keyDesc.setOrderedPartColumnNames(partExpr)
 		keyDesc.partSpace = partSpace
-		if ObVersion < 4 {
+		if util.ObVersion() < 4 {
 			keyDesc.partNameIdMap = buildDefaultPartNameIdMap(partNum)
 		}
 		return keyDesc, nil
 	} else {
-		log.Warn("invalid part type", log.String("part type", partFuncType.ToString()))
+		log.Warn("invalid part type", log.String("part type", partFuncType.String()))
 		return nil, errors.New("invalid part type")
 	}
 }
@@ -664,14 +687,14 @@ func fetchFirstPart(db *DB, partFuncType ObPartFuncType, entry *ObTableEntry) er
 	key := entry.tableEntryKey
 	var rows *Rows
 	var err error
-	if ObVersion >= 4 {
+	if util.ObVersion() >= 4 {
 		rows, err = db.Query(proxyFirstPartitionSql, key.tenantName, entry.tableId, math.MaxInt64)
 	} else {
 		rows, err = db.Query(proxyFirstPartitionSql, entry.tableId, math.MaxInt64)
 	}
 	if err != nil {
 		log.Warn("failed to db query",
-			log.Float32("ob version", ObVersion),
+			log.Float32("ob version", util.ObVersion()),
 			log.String("tenant name", key.tenantName),
 			log.Uint64("tableId", entry.tableId))
 		return err
@@ -683,30 +706,31 @@ func fetchFirstPart(db *DB, partFuncType ObPartFuncType, entry *ObTableEntry) er
 	var (
 		partId       int64
 		partName     string
-		highBoundVal string
+		highBoundVal interface{}
 		tabletId     int64
 		subPartNum   int
 	)
 	var idx int64 = 0
 	for rows.Next() {
-		if ObVersion >= 4 {
+		if util.ObVersion() >= 4 {
 			err = rows.Scan(&partId, &partName, &tabletId, &highBoundVal, &subPartNum)
 		} else {
 			err = rows.Scan(&partId, &partName, &highBoundVal)
 		}
 		if err != nil {
-			log.Warn("failed to scan row", log.Float32("ob version", ObVersion))
+			log.Warn("failed to scan row", log.Float32("ob version", util.ObVersion()))
 			return err
 		}
 
 		if partFuncType.isRangePart() {
 			// todo: handle range bounds
+			// highBoundVal may be is nil
 		} else if partFuncType.isListPart() {
 			// todo: not support list part now
-			log.Warn("not support list part now", log.String("partFuncType", partFuncType.ToString()))
+			log.Warn("not support list part now", log.String("partFuncType", partFuncType.String()))
 			err = errors.New("not support list part now")
 			return err
-		} else if ObVersion >= 4 && (partFuncType.isKeyPart() || partFuncType.isHashPart()) {
+		} else if util.ObVersion() >= 4 && (partFuncType.isKeyPart() || partFuncType.isHashPart()) {
 			entry.partitionInfo.partTabletIdMap[idx] = tabletId
 			idx++
 		}
@@ -718,14 +742,14 @@ func fetchSubPart(db *DB, partFuncType ObPartFuncType, entry *ObTableEntry) erro
 	key := entry.tableEntryKey
 	var rows *Rows
 	var err error
-	if ObVersion >= 4 {
+	if util.ObVersion() >= 4 {
 		rows, err = db.Query(proxySubPartitionSql, key.tenantName, entry.tableId, math.MaxInt64)
 	} else {
-		rows, err = db.Query(proxySubPartitionSql, entry.tableId, -1, math.MaxInt64)
+		rows, err = db.Query(proxySubPartitionSql, entry.tableId, math.MaxInt64)
 	}
 	if err != nil {
 		log.Warn("failed to db query",
-			log.Float32("ob version", ObVersion),
+			log.Float32("ob version", util.ObVersion()),
 			log.String("tenant name", key.tenantName),
 			log.Uint64("tableId", entry.tableId))
 		return err
@@ -737,18 +761,18 @@ func fetchSubPart(db *DB, partFuncType ObPartFuncType, entry *ObTableEntry) erro
 	var (
 		subPartId    int64
 		partName     string
-		highBoundVal string
+		highBoundVal interface{} // maybe is sql type NULL
 		tabletId     int64
 	)
 	var idx int64 = 0
 	for rows.Next() {
-		if ObVersion >= 4 {
+		if util.ObVersion() >= 4 {
 			err = rows.Scan(&subPartId, &partName, &tabletId, &highBoundVal)
 		} else {
 			err = rows.Scan(&subPartId, &partName, &highBoundVal)
 		}
 		if err != nil {
-			log.Warn("failed to scan row", log.Float32("ob version", ObVersion))
+			log.Warn("failed to scan row", log.Float32("ob version", util.ObVersion()))
 			err = errors.New("failed to scan row")
 			return err
 		}
@@ -757,10 +781,10 @@ func fetchSubPart(db *DB, partFuncType ObPartFuncType, entry *ObTableEntry) erro
 			// todo: handle range bounds
 		} else if partFuncType.isListPart() {
 			// todo: not support list part now
-			log.Warn("not support list part now", log.String("partFuncType", partFuncType.ToString()))
+			log.Warn("not support list part now", log.String("partFuncType", partFuncType.String()))
 			err = errors.New("not support list part now")
 			return err
-		} else if ObVersion >= 4 && (partFuncType.isKeyPart() || partFuncType.isHashPart()) {
+		} else if util.ObVersion() >= 4 && (partFuncType.isKeyPart() || partFuncType.isHashPart()) {
 			entry.partitionInfo.partTabletIdMap[idx] = tabletId
 			idx++
 		}

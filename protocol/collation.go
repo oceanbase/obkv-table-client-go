@@ -13,7 +13,7 @@ type ObCollationType struct {
 	value int
 }
 
-func (t *ObCollationType) ToString() string {
+func (t *ObCollationType) String() string {
 	var collationTypeStr string
 	switch t.value {
 	case csTypeUtf8mb4GeneralCi:
@@ -68,7 +68,7 @@ type ObCollationLevel struct {
 	value int
 }
 
-func (l *ObCollationLevel) ToString() string {
+func (l *ObCollationLevel) String() string {
 	var collationLevelStr string
 	switch l.value {
 	case csLevelExplicit:

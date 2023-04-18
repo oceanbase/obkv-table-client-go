@@ -4,8 +4,43 @@ import (
 	"bytes"
 	"errors"
 	"github.com/oceanbase/obkv-table-client-go/log"
+	"github.com/oceanbase/obkv-table-client-go/util"
+	"math"
 	"strconv"
+	"time"
 )
+
+type ObVString struct {
+	stringVal   string
+	bytesVal    []byte
+	encodeBytes []byte
+}
+
+func (v *ObVString) String() string {
+	return "ObVString{" +
+		"stringVal:" + v.stringVal + ", " +
+		"bytesVal:" + string(v.bytesVal) + ", " +
+		"encodeBytes:" + string(v.encodeBytes) +
+		"}"
+}
+
+type ObBytesString struct {
+	bytesVal []byte
+}
+
+func (v *ObBytesString) String() string {
+	return "ObBytesString{" +
+		"bytesVal:" + string(v.bytesVal) +
+		"}"
+}
+
+func newObBytesString(bytesVal []byte) *ObBytesString {
+	return &ObBytesString{bytesVal: bytesVal}
+}
+
+func newObBytesStringFromString(str string) *ObBytesString {
+	return &ObBytesString{util.StringToBytes(str)}
+}
 
 type ObObjMeta struct {
 	objType ObObjType
@@ -28,20 +63,95 @@ func (m *ObObjMeta) getEncodeSize() int {
 	return 4
 }
 
-func (m *ObObjMeta) ToString() string {
+func (m *ObObjMeta) String() string {
 	// objType to string
 	var objTypeStr string
 	if m.objType != nil {
-		objTypeStr = m.objType.ToString()
+		objTypeStr = m.objType.String()
 	} else {
 		objTypeStr = "nil"
 	}
 	return "ObObjMeta{" +
 		"objType:" + objTypeStr + ", " +
-		"csLevel:" + m.csLevel.ToString() + ", " +
-		"csType:" + m.csType.ToString() + ", " +
+		"csLevel:" + m.csLevel.String() + ", " +
+		"csType:" + m.csType.String() + ", " +
 		"scale:" + strconv.Itoa(int(m.scale)) +
 		"}"
+}
+
+func ParseToLong(obj interface{}) (interface{}, error) {
+	if v, ok := obj.(string); ok {
+		i, err := strconv.Atoi(v)
+		if err != nil {
+			log.Warn("failed to convert string to int", log.String("obj", v))
+			return nil, err
+		}
+		return int64(i), nil
+	} else if v, ok := obj.(ObVString); ok {
+		i, err := strconv.Atoi(v.stringVal)
+		if err != nil {
+			log.Warn("failed to convert ObVString to int", log.String("obj", v.String()))
+			return nil, err
+		}
+		return int64(i), nil
+	} else if v, ok := obj.(int64); ok {
+		return v, nil
+	} else if v, ok := obj.(int); ok {
+		return int64(v), nil
+	} else if v, ok := obj.(int32); ok {
+		return int64(v), nil
+	} else if v, ok := obj.(int16); ok {
+		return int64(v), nil
+	} else if v, ok := obj.(int8); ok {
+		return int64(v), nil
+	} else {
+		return nil, errors.New("invalid type to convert to long")
+	}
+}
+
+func parseTimestamp(obj interface{}) (time.Time, error) {
+	if v, ok := obj.(time.Time); ok {
+		return v, nil
+	} else if v, ok := obj.(string); ok {
+		return time.Parse("2006-01-02 15:04:01", v) // UTC
+	} else {
+		log.Warn("unexpected type to timestamp")
+		return time.Time{}, errors.New("unexpected type to timestamp")
+	}
+}
+
+func parseTextToComparable(obj interface{}, csType ObCollationType) (interface{}, error) {
+	if csType.value == csTypeBinary {
+		if v, ok := obj.(ObBytesString); ok {
+			return v, nil
+		} else if v, ok := obj.([]byte); ok {
+			return *newObBytesString(v), nil
+		} else if v, ok := obj.(string); ok {
+			return *newObBytesStringFromString(v), nil
+		} else if v, ok := obj.(ObVString); ok {
+			return *newObBytesString(v.bytesVal), nil
+		} else {
+			log.Warn("unexpected type")
+			return nil, errors.New("unexpected obj type")
+		}
+	} else {
+		if v, ok := obj.(string); ok {
+			return v, nil
+		} else if _, ok := obj.(ObBytesString); ok {
+			// todo:impl
+			//return Serialization.decodeVString(((ObBytesString) object).bytes);
+			return nil, errors.New("need impl Serialization.decodeVString")
+		} else if _, ok := obj.([]byte); ok {
+			// todo:impl
+			//return Serialization.decodeVString(((ObBytesString) object).bytes);
+			return nil, errors.New("need impl Serialization.decodeVString")
+		} else if v, ok := obj.(ObVString); ok {
+			return *newObBytesStringFromString(v.stringVal), nil
+		} else {
+			log.Warn("unexpected type")
+			return nil, errors.New("unexpected obj type")
+		}
+	}
 }
 
 const (
@@ -80,12 +190,12 @@ const (
 )
 
 type ObObjType interface {
-	ToString() string
+	String() string
 	encode(obj interface{}) ([]byte, error)
 	decode(buf bytes.Buffer, csType ObCollationType) interface{}
 	getEncodeSize(obj interface{}) int
 	getDefaultObjMeta() ObObjMeta
-	parseToComparable() (interface{}, error)
+	parseToComparable(obj interface{}, csType ObCollationType) (interface{}, error)
 	getValue() int
 }
 
@@ -166,7 +276,7 @@ type ObNullType struct {
 	value int // ObNullTypeValue
 }
 
-func (t ObNullType) ToString() string {
+func (t ObNullType) String() string {
 	return "ObObjType{" +
 		"type:" + "ObNullType" +
 		"}"
@@ -192,7 +302,7 @@ func (t ObNullType) getDefaultObjMeta() ObObjMeta {
 	}
 }
 
-func (t ObNullType) parseToComparable() (interface{}, error) {
+func (t ObNullType) parseToComparable(obj interface{}, csType ObCollationType) (interface{}, error) {
 	return nil, nil
 }
 
@@ -204,7 +314,7 @@ type ObTinyIntType struct {
 	value int // ObTinyIntTypeValue
 }
 
-func (t ObTinyIntType) ToString() string {
+func (t ObTinyIntType) String() string {
 	return "ObObjType{" +
 		"type:" + "ObTinyIntType" +
 		"}"
@@ -233,9 +343,23 @@ func (t ObTinyIntType) getDefaultObjMeta() ObObjMeta {
 	}
 }
 
-func (t ObTinyIntType) parseToComparable() (interface{}, error) {
-	// todo:imp
-	return nil, errors.New("not implement")
+func (t ObTinyIntType) parseToComparable(obj interface{}, csType ObCollationType) (interface{}, error) {
+	value, err := ParseToLong(obj)
+	if err != nil {
+		log.Warn("failed to parse to long or null")
+		return nil, err
+	}
+	if v, ok := value.(int64); ok {
+		if v >= math.MinInt8 && v <= math.MaxInt8 {
+			return byte(v), nil
+		} else {
+			log.Warn("value out of range", log.Int64("value", v))
+			return nil, err
+		}
+	} else {
+		log.Warn("failed to convert value to int64")
+		return nil, errors.New("failed to convert value to int64")
+	}
 }
 
 func (t ObTinyIntType) getValue() int {
@@ -246,7 +370,7 @@ type ObSmallIntType struct {
 	value int // ObSmallIntTypeValue
 }
 
-func (t ObSmallIntType) ToString() string {
+func (t ObSmallIntType) String() string {
 	return "ObObjType{" +
 		"type:" + "ObSmallIntType" +
 		"}"
@@ -275,9 +399,23 @@ func (t ObSmallIntType) getDefaultObjMeta() ObObjMeta {
 	}
 }
 
-func (t ObSmallIntType) parseToComparable() (interface{}, error) {
-	// todo:imp
-	return nil, errors.New("not implement")
+func (t ObSmallIntType) parseToComparable(obj interface{}, csType ObCollationType) (interface{}, error) {
+	value, err := ParseToLong(obj)
+	if err != nil {
+		log.Warn("failed to parse to long or null")
+		return nil, err
+	}
+	if v, ok := value.(int64); ok {
+		if v >= math.MinInt16 && v <= math.MaxInt16 {
+			return int16(v), nil
+		} else {
+			log.Warn("value out of range", log.Int64("value", v))
+			return nil, err
+		}
+	} else {
+		log.Warn("failed to convert value to int64")
+		return nil, errors.New("failed to convert value to int64")
+	}
 }
 
 func (t ObSmallIntType) getValue() int {
@@ -288,7 +426,7 @@ type ObMediumIntType struct {
 	value int // ObMediumIntTypeValue
 }
 
-func (t ObMediumIntType) ToString() string {
+func (t ObMediumIntType) String() string {
 	return "ObObjType{" +
 		"type:" + "ObMediumIntType" +
 		"}"
@@ -317,9 +455,8 @@ func (t ObMediumIntType) getDefaultObjMeta() ObObjMeta {
 	}
 }
 
-func (t ObMediumIntType) parseToComparable() (interface{}, error) {
-	// todo:imp
-	return nil, errors.New("not implement")
+func (t ObMediumIntType) parseToComparable(obj interface{}, csType ObCollationType) (interface{}, error) {
+	return nil, errors.New("ObMediumIntType is not supported")
 }
 
 func (t ObMediumIntType) getValue() int {
@@ -330,7 +467,7 @@ type ObInt32Type struct {
 	value int // ObInt32TypeValue
 }
 
-func (t ObInt32Type) ToString() string {
+func (t ObInt32Type) String() string {
 	return "ObObjType{" +
 		"type:" + "ObInt32Type" +
 		"}"
@@ -359,9 +496,23 @@ func (t ObInt32Type) getDefaultObjMeta() ObObjMeta {
 	}
 }
 
-func (t ObInt32Type) parseToComparable() (interface{}, error) {
-	// todo:imp
-	return nil, errors.New("not implement")
+func (t ObInt32Type) parseToComparable(obj interface{}, csType ObCollationType) (interface{}, error) {
+	value, err := ParseToLong(obj)
+	if err != nil {
+		log.Warn("failed to parse to long or null")
+		return nil, err
+	}
+	if v, ok := value.(int64); ok {
+		if v >= math.MinInt32 && v <= math.MaxInt32 {
+			return int32(v), nil
+		} else {
+			log.Warn("value out of range", log.Int64("value", v))
+			return nil, err
+		}
+	} else {
+		log.Warn("failed to convert value to int64")
+		return nil, errors.New("failed to convert value to int64")
+	}
 }
 
 func (t ObInt32Type) getValue() int {
@@ -372,7 +523,7 @@ type ObInt64Type struct {
 	value int // ObInt64TypeValue
 }
 
-func (t ObInt64Type) ToString() string {
+func (t ObInt64Type) String() string {
 	return "ObObjType{" +
 		"type:" + "ObInt64Type" +
 		"}"
@@ -401,9 +552,8 @@ func (t ObInt64Type) getDefaultObjMeta() ObObjMeta {
 	}
 }
 
-func (t ObInt64Type) parseToComparable() (interface{}, error) {
-	// todo:imp
-	return nil, errors.New("not implement")
+func (t ObInt64Type) parseToComparable(obj interface{}, csType ObCollationType) (interface{}, error) {
+	return ParseToLong(obj)
 }
 
 func (t ObInt64Type) getValue() int {
@@ -414,7 +564,7 @@ type ObUTinyIntType struct {
 	value int // ObUTinyIntTypeValue
 }
 
-func (t ObUTinyIntType) ToString() string {
+func (t ObUTinyIntType) String() string {
 	return "ObObjType{" +
 		"type:" + "ObUTinyIntType" +
 		"}"
@@ -443,9 +593,23 @@ func (t ObUTinyIntType) getDefaultObjMeta() ObObjMeta {
 	}
 }
 
-func (t ObUTinyIntType) parseToComparable() (interface{}, error) {
-	// todo:imp
-	return nil, errors.New("not implement")
+func (t ObUTinyIntType) parseToComparable(obj interface{}, csType ObCollationType) (interface{}, error) {
+	value, err := ParseToLong(obj)
+	if err != nil {
+		log.Warn("failed to parse to long or null")
+		return nil, err
+	}
+	if v, ok := value.(int64); ok {
+		if v >= 0 && v <= math.MaxUint8 {
+			return int16(v), nil
+		} else {
+			log.Warn("value out of range", log.Int64("value", v))
+			return nil, err
+		}
+	} else {
+		log.Warn("failed to convert value to int64")
+		return nil, errors.New("failed to convert value to int64")
+	}
 }
 
 func (t ObUTinyIntType) getValue() int {
@@ -456,7 +620,7 @@ type ObUSmallIntType struct {
 	value int // ObUSmallIntTypeValue
 }
 
-func (t ObUSmallIntType) ToString() string {
+func (t ObUSmallIntType) String() string {
 	return "ObObjType{" +
 		"type:" + "ObUSmallIntType" +
 		"}"
@@ -485,9 +649,23 @@ func (t ObUSmallIntType) getDefaultObjMeta() ObObjMeta {
 	}
 }
 
-func (t ObUSmallIntType) parseToComparable() (interface{}, error) {
-	// todo:imp
-	return nil, errors.New("not implement")
+func (t ObUSmallIntType) parseToComparable(obj interface{}, csType ObCollationType) (interface{}, error) {
+	value, err := ParseToLong(obj)
+	if err != nil {
+		log.Warn("failed to parse to long or null")
+		return nil, err
+	}
+	if v, ok := value.(int64); ok {
+		if v >= 0 && v <= math.MaxUint16 {
+			return int32(v), nil
+		} else {
+			log.Warn("value out of range", log.Int64("value", v))
+			return nil, err
+		}
+	} else {
+		log.Warn("failed to convert value to int64")
+		return nil, errors.New("failed to convert value to int64")
+	}
 }
 
 func (t ObUSmallIntType) getValue() int {
@@ -498,7 +676,7 @@ type ObUMediumIntType struct {
 	value int // ObUMediumIntTypeValue
 }
 
-func (t ObUMediumIntType) ToString() string {
+func (t ObUMediumIntType) String() string {
 	return "ObObjType{" +
 		"type:" + "ObUMediumIntType" +
 		"}"
@@ -527,9 +705,24 @@ func (t ObUMediumIntType) getDefaultObjMeta() ObObjMeta {
 	}
 }
 
-func (t ObUMediumIntType) parseToComparable() (interface{}, error) {
-	// todo:imp
-	return nil, errors.New("not implement")
+func (t ObUMediumIntType) parseToComparable(obj interface{}, csType ObCollationType) (interface{}, error) {
+	value, err := ParseToLong(obj)
+	if err != nil {
+		log.Warn("failed to parse to long or null")
+		return nil, err
+	}
+	if v, ok := value.(int64); ok {
+		const Uint24Max = (1 << 24) - 1
+		if v >= 0 && v <= Uint24Max {
+			return int32(v), nil
+		} else {
+			log.Warn("value out of range", log.Int64("value", v))
+			return nil, err
+		}
+	} else {
+		log.Warn("failed to convert value to int64")
+		return nil, errors.New("failed to convert value to int64")
+	}
 }
 
 func (t ObUMediumIntType) getValue() int {
@@ -540,7 +733,7 @@ type ObUInt32Type struct {
 	value int // ObUInt32TypeValue
 }
 
-func (t ObUInt32Type) ToString() string {
+func (t ObUInt32Type) String() string {
 	return "ObObjType{" +
 		"type:" + "ObUInt32Type" +
 		"}"
@@ -569,9 +762,23 @@ func (t ObUInt32Type) getDefaultObjMeta() ObObjMeta {
 	}
 }
 
-func (t ObUInt32Type) parseToComparable() (interface{}, error) {
-	// todo:imp
-	return nil, errors.New("not implement")
+func (t ObUInt32Type) parseToComparable(obj interface{}, csType ObCollationType) (interface{}, error) {
+	value, err := ParseToLong(obj)
+	if err != nil {
+		log.Warn("failed to parse to long or null")
+		return nil, err
+	}
+	if v, ok := value.(int64); ok {
+		if v >= 0 && v <= math.MaxUint32 {
+			return int64(v), nil
+		} else {
+			log.Warn("value out of range", log.Int64("value", v))
+			return nil, err
+		}
+	} else {
+		log.Warn("failed to convert value to int64")
+		return nil, errors.New("failed to convert value to int64")
+	}
 }
 
 func (t ObUInt32Type) getValue() int {
@@ -582,7 +789,7 @@ type ObUInt64Type struct {
 	value int // ObUInt64TypeValue
 }
 
-func (t ObUInt64Type) ToString() string {
+func (t ObUInt64Type) String() string {
 	return "ObObjType{" +
 		"type:" + "ObUInt64Type" +
 		"}"
@@ -611,9 +818,8 @@ func (t ObUInt64Type) getDefaultObjMeta() ObObjMeta {
 	}
 }
 
-func (t ObUInt64Type) parseToComparable() (interface{}, error) {
-	// todo:imp
-	return nil, errors.New("not implement")
+func (t ObUInt64Type) parseToComparable(obj interface{}, csType ObCollationType) (interface{}, error) {
+	return ParseToLong(obj)
 }
 
 func (t ObUInt64Type) getValue() int {
@@ -624,7 +830,7 @@ type ObFloatType struct {
 	value int // ObFloatTypeValue
 }
 
-func (t ObFloatType) ToString() string {
+func (t ObFloatType) String() string {
 	return "ObObjType{" +
 		"type:" + "ObFloatType" +
 		"}"
@@ -653,9 +859,27 @@ func (t ObFloatType) getDefaultObjMeta() ObObjMeta {
 	}
 }
 
-func (t ObFloatType) parseToComparable() (interface{}, error) {
-	// todo:imp
-	return nil, errors.New("not implement")
+func (t ObFloatType) parseToComparable(obj interface{}, csType ObCollationType) (interface{}, error) {
+	if v, ok := obj.(float32); ok {
+		return v, nil
+	} else if v, ok := obj.(string); ok {
+		f, err := strconv.ParseFloat(v, 32)
+		if err != nil {
+			log.Warn("failed to convert string to float32", log.String("obj", v))
+			return nil, err
+		}
+		return float32(f), nil
+	} else if v, ok := obj.(ObVString); ok {
+		f, err := strconv.ParseFloat(v.stringVal, 32)
+		if err != nil {
+			log.Warn("failed to convert string to float", log.String("obj", v.stringVal))
+			return nil, err
+		}
+		return float32(f), nil
+	} else {
+		log.Warn("unexpected type")
+		return nil, errors.New("unexpected type")
+	}
 }
 
 func (t ObFloatType) getValue() int {
@@ -666,7 +890,7 @@ type ObDoubleType struct {
 	value int // ObDoubleTypeValue
 }
 
-func (t ObDoubleType) ToString() string {
+func (t ObDoubleType) String() string {
 	return "ObObjType{" +
 		"type:" + "ObDoubleType" +
 		"}"
@@ -695,9 +919,27 @@ func (t ObDoubleType) getDefaultObjMeta() ObObjMeta {
 	}
 }
 
-func (t ObDoubleType) parseToComparable() (interface{}, error) {
-	// todo:imp
-	return nil, errors.New("not implement")
+func (t ObDoubleType) parseToComparable(obj interface{}, csType ObCollationType) (interface{}, error) {
+	if v, ok := obj.(float64); ok {
+		return v, nil
+	} else if v, ok := obj.(string); ok {
+		f, err := strconv.ParseFloat(v, 64)
+		if err != nil {
+			log.Warn("failed to convert string to float64", log.String("obj", v))
+			return nil, err
+		}
+		return f, nil
+	} else if v, ok := obj.(ObVString); ok {
+		f, err := strconv.ParseFloat(v.stringVal, 64)
+		if err != nil {
+			log.Warn("failed to convert string to float64", log.String("obj", v.stringVal))
+			return nil, err
+		}
+		return f, nil
+	} else {
+		log.Warn("unexpected type")
+		return nil, errors.New("unexpected type")
+	}
 }
 
 func (t ObDoubleType) getValue() int {
@@ -708,7 +950,7 @@ type ObUFloatType struct {
 	value int // ObUFloatTypeValue
 }
 
-func (t ObUFloatType) ToString() string {
+func (t ObUFloatType) String() string {
 	return "ObObjType{" +
 		"type:" + "ObUFloatType" +
 		"}"
@@ -737,9 +979,8 @@ func (t ObUFloatType) getDefaultObjMeta() ObObjMeta {
 	}
 }
 
-func (t ObUFloatType) parseToComparable() (interface{}, error) {
-	// todo:imp
-	return nil, errors.New("not implement")
+func (t ObUFloatType) parseToComparable(obj interface{}, csType ObCollationType) (interface{}, error) {
+	return nil, errors.New("ObUFloatType is not supported")
 }
 
 func (t ObUFloatType) getValue() int {
@@ -750,7 +991,7 @@ type ObUDoubleType struct {
 	value int // ObUDoubleTypeValue
 }
 
-func (t ObUDoubleType) ToString() string {
+func (t ObUDoubleType) String() string {
 	return "ObObjType{" +
 		"type:" + "ObUDoubleType" +
 		"}"
@@ -779,9 +1020,8 @@ func (t ObUDoubleType) getDefaultObjMeta() ObObjMeta {
 	}
 }
 
-func (t ObUDoubleType) parseToComparable() (interface{}, error) {
-	// todo:imp
-	return nil, errors.New("not implement")
+func (t ObUDoubleType) parseToComparable(obj interface{}, csType ObCollationType) (interface{}, error) {
+	return nil, errors.New("ObUDoubleType is not supported")
 }
 
 func (t ObUDoubleType) getValue() int {
@@ -792,7 +1032,7 @@ type ObNumberType struct {
 	value int // ObNumberTypeValue
 }
 
-func (t ObNumberType) ToString() string {
+func (t ObNumberType) String() string {
 	return "ObObjType{" +
 		"type:" + "ObNumberType" +
 		"}"
@@ -821,9 +1061,8 @@ func (t ObNumberType) getDefaultObjMeta() ObObjMeta {
 	}
 }
 
-func (t ObNumberType) parseToComparable() (interface{}, error) {
-	// todo:imp
-	return nil, errors.New("not implement")
+func (t ObNumberType) parseToComparable(obj interface{}, csType ObCollationType) (interface{}, error) {
+	return nil, errors.New("ObNumberType is not supported")
 }
 
 func (t ObNumberType) getValue() int {
@@ -834,7 +1073,7 @@ type ObUNumberType struct {
 	value int // ObUNumberTypeValue
 }
 
-func (t ObUNumberType) ToString() string {
+func (t ObUNumberType) String() string {
 	return "ObObjType{" +
 		"type:" + "ObUNumberType" +
 		"}"
@@ -863,9 +1102,8 @@ func (t ObUNumberType) getDefaultObjMeta() ObObjMeta {
 	}
 }
 
-func (t ObUNumberType) parseToComparable() (interface{}, error) {
-	// todo:imp
-	return nil, errors.New("not implement")
+func (t ObUNumberType) parseToComparable(obj interface{}, csType ObCollationType) (interface{}, error) {
+	return nil, errors.New("ObUNumberType is not supported")
 }
 
 func (t ObUNumberType) getValue() int {
@@ -876,7 +1114,7 @@ type ObDateTimeType struct {
 	value int // ObDateTimeTypeValue
 }
 
-func (t ObDateTimeType) ToString() string {
+func (t ObDateTimeType) String() string {
 	return "ObObjType{" +
 		"type:" + "ObDateTimeType" +
 		"}"
@@ -905,9 +1143,8 @@ func (t ObDateTimeType) getDefaultObjMeta() ObObjMeta {
 	}
 }
 
-func (t ObDateTimeType) parseToComparable() (interface{}, error) {
-	// todo:imp
-	return nil, errors.New("not implement")
+func (t ObDateTimeType) parseToComparable(obj interface{}, csType ObCollationType) (interface{}, error) {
+	return parseTimestamp(obj)
 }
 
 func (t ObDateTimeType) getValue() int {
@@ -918,7 +1155,7 @@ type ObTimestampType struct {
 	value int // ObTimestampTypeValue
 }
 
-func (t ObTimestampType) ToString() string {
+func (t ObTimestampType) String() string {
 	return "ObObjType{" +
 		"type:" + "ObTimestampType" +
 		"}"
@@ -947,9 +1184,8 @@ func (t ObTimestampType) getDefaultObjMeta() ObObjMeta {
 	}
 }
 
-func (t ObTimestampType) parseToComparable() (interface{}, error) {
-	// todo:imp
-	return nil, errors.New("not implement")
+func (t ObTimestampType) parseToComparable(obj interface{}, csType ObCollationType) (interface{}, error) {
+	return parseTimestamp(obj)
 }
 
 func (t ObTimestampType) getValue() int {
@@ -960,7 +1196,7 @@ type ObDateType struct {
 	value int // ObDateTypeValue
 }
 
-func (t ObDateType) ToString() string {
+func (t ObDateType) String() string {
 	return "ObObjType{" +
 		"type:" + "ObDateType" +
 		"}"
@@ -989,9 +1225,15 @@ func (t ObDateType) getDefaultObjMeta() ObObjMeta {
 	}
 }
 
-func (t ObDateType) parseToComparable() (interface{}, error) {
-	// todo:imp
-	return nil, errors.New("not implement")
+func (t ObDateType) parseToComparable(obj interface{}, csType ObCollationType) (interface{}, error) {
+	if v, ok := obj.(time.Time); ok {
+		return v, nil
+	} else if v, ok := obj.(string); ok {
+		return time.ParseInLocation("YYYY-MM-DD", v, time.Local)
+	} else {
+		log.Warn("unexpected type")
+		return time.Time{}, errors.New("unexpected type")
+	}
 }
 
 func (t ObDateType) getValue() int {
@@ -1002,7 +1244,7 @@ type ObTimeType struct {
 	value int // ObTimeTypeValue
 }
 
-func (t ObTimeType) ToString() string {
+func (t ObTimeType) String() string {
 	return "ObObjType{" +
 		"type:" + "ObTimeType" +
 		"}"
@@ -1031,9 +1273,8 @@ func (t ObTimeType) getDefaultObjMeta() ObObjMeta {
 	}
 }
 
-func (t ObTimeType) parseToComparable() (interface{}, error) {
-	// todo:imp
-	return nil, errors.New("not implement")
+func (t ObTimeType) parseToComparable(obj interface{}, csType ObCollationType) (interface{}, error) {
+	return nil, errors.New("ObTimeType is not supported")
 }
 
 func (t ObTimeType) getValue() int {
@@ -1044,7 +1285,7 @@ type ObYearType struct {
 	value int // ObYearTypeValue
 }
 
-func (t ObYearType) ToString() string {
+func (t ObYearType) String() string {
 	return "ObObjType{" +
 		"type:" + "ObYearType" +
 		"}"
@@ -1073,9 +1314,8 @@ func (t ObYearType) getDefaultObjMeta() ObObjMeta {
 	}
 }
 
-func (t ObYearType) parseToComparable() (interface{}, error) {
-	// todo:imp
-	return nil, errors.New("not implement")
+func (t ObYearType) parseToComparable(obj interface{}, csType ObCollationType) (interface{}, error) {
+	return nil, errors.New("ObYearType is not supported")
 }
 
 func (t ObYearType) getValue() int {
@@ -1086,7 +1326,7 @@ type ObVarcharType struct {
 	value int // ObVarcharTypeValue
 }
 
-func (t ObVarcharType) ToString() string {
+func (t ObVarcharType) String() string {
 	return "ObObjType{" +
 		"type:" + "ObVarcharType" +
 		"}"
@@ -1115,9 +1355,8 @@ func (t ObVarcharType) getDefaultObjMeta() ObObjMeta {
 	}
 }
 
-func (t ObVarcharType) parseToComparable() (interface{}, error) {
-	// todo:imp
-	return nil, errors.New("not implement")
+func (t ObVarcharType) parseToComparable(obj interface{}, csType ObCollationType) (interface{}, error) {
+	return parseTextToComparable(obj, csType)
 }
 
 func (t ObVarcharType) getValue() int {
@@ -1128,7 +1367,7 @@ type ObCharType struct {
 	value int // ObCharTypeValue
 }
 
-func (t ObCharType) ToString() string {
+func (t ObCharType) String() string {
 	return "ObObjType{" +
 		"type:" + "ObCharType" +
 		"}"
@@ -1157,9 +1396,8 @@ func (t ObCharType) getDefaultObjMeta() ObObjMeta {
 	}
 }
 
-func (t ObCharType) parseToComparable() (interface{}, error) {
-	// todo:imp
-	return nil, errors.New("not implement")
+func (t ObCharType) parseToComparable(obj interface{}, csType ObCollationType) (interface{}, error) {
+	return parseTextToComparable(obj, csType)
 }
 
 func (t ObCharType) getValue() int {
@@ -1170,7 +1408,7 @@ type ObHexStringType struct {
 	value int // ObHexStringTypeValue
 }
 
-func (t ObHexStringType) ToString() string {
+func (t ObHexStringType) String() string {
 	return "ObObjType{" +
 		"type:" + "ObHexStringType" +
 		"}"
@@ -1199,9 +1437,8 @@ func (t ObHexStringType) getDefaultObjMeta() ObObjMeta {
 	}
 }
 
-func (t ObHexStringType) parseToComparable() (interface{}, error) {
-	// todo:imp
-	return nil, errors.New("not implement")
+func (t ObHexStringType) parseToComparable(obj interface{}, csType ObCollationType) (interface{}, error) {
+	return nil, errors.New("ObHexStringType is not supported")
 }
 
 func (t ObHexStringType) getValue() int {
@@ -1212,7 +1449,7 @@ type ObExtendType struct {
 	value int // ObExtendTypeValue
 }
 
-func (t ObExtendType) ToString() string {
+func (t ObExtendType) String() string {
 	return "ObObjType{" +
 		"type:" + "ObExtendType" +
 		"}"
@@ -1241,9 +1478,8 @@ func (t ObExtendType) getDefaultObjMeta() ObObjMeta {
 	}
 }
 
-func (t ObExtendType) parseToComparable() (interface{}, error) {
-	// todo:imp
-	return nil, errors.New("not implement")
+func (t ObExtendType) parseToComparable(obj interface{}, csType ObCollationType) (interface{}, error) {
+	return nil, errors.New("ObExtendType is not supported")
 }
 
 func (t ObExtendType) getValue() int {
@@ -1254,7 +1490,7 @@ type ObUnknownType struct {
 	value int // ObUnknownTypeValue
 }
 
-func (t ObUnknownType) ToString() string {
+func (t ObUnknownType) String() string {
 	return "ObObjType{" +
 		"type:" + "ObUnknownType" +
 		"}"
@@ -1283,9 +1519,8 @@ func (t ObUnknownType) getDefaultObjMeta() ObObjMeta {
 	}
 }
 
-func (t ObUnknownType) parseToComparable() (interface{}, error) {
-	// todo:imp
-	return nil, errors.New("not implement")
+func (t ObUnknownType) parseToComparable(obj interface{}, csType ObCollationType) (interface{}, error) {
+	return nil, errors.New("ObUnknownType is not supported")
 }
 
 func (t ObUnknownType) getValue() int {
@@ -1296,7 +1531,7 @@ type ObTinyTextType struct {
 	value int // ObTinyTextTypeValue
 }
 
-func (t ObTinyTextType) ToString() string {
+func (t ObTinyTextType) String() string {
 	return "ObObjType{" +
 		"type:" + "ObTinyTextType" +
 		"}"
@@ -1325,9 +1560,8 @@ func (t ObTinyTextType) getDefaultObjMeta() ObObjMeta {
 	}
 }
 
-func (t ObTinyTextType) parseToComparable() (interface{}, error) {
-	// todo:imp
-	return nil, errors.New("not implement")
+func (t ObTinyTextType) parseToComparable(obj interface{}, csType ObCollationType) (interface{}, error) {
+	return parseTextToComparable(obj, csType)
 }
 
 func (t ObTinyTextType) getValue() int {
@@ -1338,7 +1572,7 @@ type ObTextType struct {
 	value int // ObTextTypeValue
 }
 
-func (t ObTextType) ToString() string {
+func (t ObTextType) String() string {
 	return "ObObjType{" +
 		"type:" + "ObTextType" +
 		"}"
@@ -1367,9 +1601,8 @@ func (t ObTextType) getDefaultObjMeta() ObObjMeta {
 	}
 }
 
-func (t ObTextType) parseToComparable() (interface{}, error) {
-	// todo:imp
-	return nil, errors.New("not implement")
+func (t ObTextType) parseToComparable(obj interface{}, csType ObCollationType) (interface{}, error) {
+	return parseTextToComparable(obj, csType)
 }
 
 func (t ObTextType) getValue() int {
@@ -1380,7 +1613,7 @@ type ObMediumTextType struct {
 	value int // ObMediumTextTypeValue
 }
 
-func (t ObMediumTextType) ToString() string {
+func (t ObMediumTextType) String() string {
 	return "ObObjType{" +
 		"type:" + "ObMediumTextType" +
 		"}"
@@ -1409,9 +1642,8 @@ func (t ObMediumTextType) getDefaultObjMeta() ObObjMeta {
 	}
 }
 
-func (t ObMediumTextType) parseToComparable() (interface{}, error) {
-	// todo:imp
-	return nil, errors.New("not implement")
+func (t ObMediumTextType) parseToComparable(obj interface{}, csType ObCollationType) (interface{}, error) {
+	return parseTextToComparable(obj, csType)
 }
 
 func (t ObMediumTextType) getValue() int {
@@ -1422,7 +1654,7 @@ type ObLongTextType struct {
 	value int // ObLongTextTypeValue
 }
 
-func (t ObLongTextType) ToString() string {
+func (t ObLongTextType) String() string {
 	return "ObObjType{" +
 		"type:" + "ObLongTextType" +
 		"}"
@@ -1451,9 +1683,8 @@ func (t ObLongTextType) getDefaultObjMeta() ObObjMeta {
 	}
 }
 
-func (t ObLongTextType) parseToComparable() (interface{}, error) {
-	// todo:imp
-	return nil, errors.New("not implement")
+func (t ObLongTextType) parseToComparable(obj interface{}, csType ObCollationType) (interface{}, error) {
+	return parseTextToComparable(obj, csType)
 }
 
 func (t ObLongTextType) getValue() int {
@@ -1464,7 +1695,7 @@ type ObBitType struct {
 	value int // ObBitTypeValue
 }
 
-func (t ObBitType) ToString() string {
+func (t ObBitType) String() string {
 	return "ObObjType{" +
 		"type:" + "ObBitType" +
 		"}"
@@ -1493,9 +1724,8 @@ func (t ObBitType) getDefaultObjMeta() ObObjMeta {
 	}
 }
 
-func (t ObBitType) parseToComparable() (interface{}, error) {
-	// todo:imp
-	return nil, errors.New("not implement")
+func (t ObBitType) parseToComparable(obj interface{}, csType ObCollationType) (interface{}, error) {
+	return nil, errors.New("ObBitType is not supported")
 }
 
 func (t ObBitType) getValue() int {
