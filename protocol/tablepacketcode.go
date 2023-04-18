@@ -4,7 +4,7 @@ import (
 	"github.com/pkg/errors"
 )
 
-type TablePacketCode int
+type TablePacketCode int32
 
 const (
 	Login TablePacketCode = iota
@@ -35,7 +35,7 @@ const (
 	pCodeErrorPacket  uint32 = 0x010
 )
 
-var tablePacketCodeStrings = [...]string{
+var tablePacketCodeStrings = []string{
 	Login:        loginStr,
 	Execute:      executeStr,
 	BatchExecute: batchExecuteStr,
@@ -44,7 +44,7 @@ var tablePacketCodeStrings = [...]string{
 	Error:        errorStr,
 }
 
-var tablePacketCodePCodes = [...]uint32{
+var tablePacketCodePCodes = []uint32{
 	Login:        pCodeLogin,
 	Execute:      pCodeExecute,
 	BatchExecute: pCodeBatchExecute,
@@ -57,11 +57,8 @@ func (c TablePacketCode) Value() uint32 {
 	return tablePacketCodePCodes[c]
 }
 
-func (c TablePacketCode) String() string {
-	return tablePacketCodeStrings[c]
-}
-
-func (c TablePacketCode) FromPCode(pCode uint32) (TablePacketCode, error) {
+// ValueOf TODO use map optimize
+func (c TablePacketCode) ValueOf(pCode uint32) (TablePacketCode, error) {
 	switch pCode {
 	case pCodeLogin:
 		return Login, nil
@@ -77,4 +74,8 @@ func (c TablePacketCode) FromPCode(pCode uint32) (TablePacketCode, error) {
 		return Error, nil
 	}
 	return NoSuch, errors.New("no such this code")
+}
+
+func (c TablePacketCode) String() string {
+	return tablePacketCodeStrings[c]
 }

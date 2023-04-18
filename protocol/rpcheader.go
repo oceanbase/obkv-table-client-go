@@ -48,12 +48,12 @@ const (
 type CompressType int32
 
 const (
-	Invalid CompressType = iota
-	None
-	LZ4
-	Snappy
-	Zlib
-	Zstd
+	CompressTypeInvalid CompressType = iota
+	CompressTypeNone
+	CompressTypeLZ4
+	CompressTypeSnappy
+	CompressTypeZlib
+	CompressTypeZstd
 )
 
 type RpcHeader struct {
@@ -101,7 +101,7 @@ func NewRpcHeader() *RpcHeader {
 		timestamp:       time.Now().Unix(),
 		rpcCostTime:     NewRpcCostTime(),
 		dstClusterId:    -1,
-		compressType:    Invalid,
+		compressType:    CompressTypeInvalid,
 		originalLen:     0,
 		srcClusterId:    -1,
 		unisVersion:     0,

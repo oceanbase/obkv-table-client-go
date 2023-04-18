@@ -1,11 +1,7 @@
 package protocol
 
-type ObRowKey struct {
-	// keys[]
-}
-
 type TableEntity struct {
 	*UniVersionHeader
-	rouKey *ObRowKey
-	// properties map[string]*ObObject
+	rouKey     *RowKey
+	properties map[string]*Object
 }
