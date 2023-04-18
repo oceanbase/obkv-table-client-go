@@ -1,8 +1,10 @@
 package route
 
 import (
+	"math/rand"
 	"strconv"
 	"strings"
+	"sync/atomic"
 )
 
 type ObServerAddr struct {
@@ -11,7 +13,19 @@ type ObServerAddr struct {
 	svrPort int
 }
 
-func (a *ObServerAddr) ToString() string {
+func (a *ObServerAddr) SvrPort() int {
+	return a.svrPort
+}
+
+func (a *ObServerAddr) Ip() string {
+	return a.ip
+}
+
+func NewObServerAddr(ip string, sqlPort int, svrPort int) *ObServerAddr {
+	return &ObServerAddr{ip, sqlPort, svrPort}
+}
+
+func (a *ObServerAddr) String() string {
 	return "ObServerAddr{" +
 		"ip:" + a.ip + ", " +
 		"sqlPort:" + strconv.Itoa(a.sqlPort) + ", " +
@@ -24,11 +38,11 @@ type ObServerInfo struct {
 	status   string // Active/InActive/Deleting
 }
 
-func (i *ObServerInfo) isActive() bool {
+func (i *ObServerInfo) IsActive() bool {
 	return i.stopTime == 0 && strings.EqualFold(i.status, "active") // ignore case
 }
 
-func (i *ObServerInfo) ToString() string {
+func (i *ObServerInfo) String() string {
 	return "ObServerInfo{" +
 		"stopTime:" + strconv.Itoa(int(i.stopTime)) + ", " +
 		"status:" + i.status +
@@ -72,7 +86,7 @@ func newObServerRole(index int) ObServerRole {
 	}
 }
 
-func (r *ObServerRole) ToString() string {
+func (r *ObServerRole) String() string {
 	return "ObServerRole{" +
 		"name:" + r.name + ", " +
 		"index:" + strconv.Itoa(r.index) +
@@ -112,9 +126,46 @@ func newObReplicaType(index int) ObReplicaType {
 	}
 }
 
-func (r *ObReplicaType) ToString() string {
+func (r *ObReplicaType) String() string {
 	return "ObReplicaType{" +
 		"name:" + r.name + ", " +
 		"index:" + strconv.Itoa(r.index) +
+		"}"
+}
+
+type ObServerRoster struct {
+	maxPriority int32
+	roster      []*ObServerAddr
+	// todo: serverLdc
+}
+
+func (r *ObServerRoster) Reset(servers []*ObServerAddr) {
+	atomic.StoreInt32(&r.maxPriority, 0)
+	r.roster = servers
+}
+
+func (r *ObServerRoster) GetServer() *ObServerAddr {
+	// todo: adapt java
+	idx := rand.Intn(len(r.roster))
+	return r.roster[idx]
+}
+
+func (r *ObServerRoster) String() string {
+	var rostersStr string
+	rostersStr = rostersStr + "["
+	for i := 0; i < len(r.roster); i++ {
+		if i > 0 {
+			rostersStr += ", "
+		}
+		if r.roster[i] != nil {
+			rostersStr += r.roster[i].String()
+		} else {
+			rostersStr += "nil"
+		}
+	}
+	rostersStr += "]"
+	return "ObServerRoster{" +
+		"maxPriority:" + strconv.Itoa(int(r.maxPriority)) + ", " +
+		"roster:" + rostersStr +
 		"}"
 }

@@ -2,8 +2,54 @@ package util
 
 import (
 	"bytes"
+	"fmt"
+	"strconv"
 	"unsafe"
 )
+
+func InterfaceToString(i interface{}) string {
+	switch v := i.(type) {
+	case string:
+		return v
+	case int:
+		return strconv.Itoa(v)
+	case bool:
+		return strconv.FormatBool(v)
+	case float32:
+		return strconv.FormatFloat(float64(v), 'f', -1, 32)
+	case float64:
+		return strconv.FormatFloat(v, 'f', -1, 64)
+	case complex64:
+		return fmt.Sprintf("(%f+%fi)", real(v), imag(v))
+	case complex128:
+		return fmt.Sprintf("(%f+%fi)", real(v), imag(v))
+	case byte:
+		return string(v)
+	case rune:
+		return string(v)
+	case error:
+		return v.Error()
+	case fmt.Stringer:
+		return v.String()
+	case uintptr, unsafe.Pointer:
+		return fmt.Sprintf("%p", v)
+	default:
+		return fmt.Sprintf("%v", v)
+	}
+}
+
+func StringArrayToString(strArr []string) string {
+	var str string
+	str = str + "["
+	for i := 0; i < len(strArr); i++ {
+		if i > 0 {
+			str += ", "
+		}
+		str += strArr[i]
+	}
+	str += "]"
+	return str
+}
 
 func SkipBytes(buffer *bytes.Buffer, skipLen int) {
 	if skipLen > 0 {
