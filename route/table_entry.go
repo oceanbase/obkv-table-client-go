@@ -1,7 +1,11 @@
 package route
 
 import (
+	"errors"
+	"github.com/oceanbase/obkv-table-client-go/log"
 	"github.com/oceanbase/obkv-table-client-go/protocol"
+	"github.com/oceanbase/obkv-table-client-go/table"
+	"github.com/oceanbase/obkv-table-client-go/util"
 	"strconv"
 )
 
@@ -12,20 +16,28 @@ type ObReplicaLocation struct {
 	replicaType ObReplicaType
 }
 
+func (l *ObReplicaLocation) Info() ObServerInfo {
+	return l.info
+}
+
+func (l *ObReplicaLocation) Addr() *ObServerAddr {
+	return &l.addr
+}
+
 func (l *ObReplicaLocation) isValid() bool {
-	return !l.role.isInvalid() && l.info.isActive()
+	return !l.role.isInvalid() && l.info.IsActive()
 }
 
 func (l *ObReplicaLocation) isLeader() bool {
 	return l.role.isLeader()
 }
 
-func (l *ObReplicaLocation) ToString() string {
+func (l *ObReplicaLocation) String() string {
 	return "ObReplicaLocation{" +
-		"addr:" + l.addr.ToString() + ", " +
-		"info:" + l.info.ToString() + ", " +
-		"role:" + l.role.ToString() + ", " +
-		"replicaType:" + l.replicaType.ToString() +
+		"addr:" + l.addr.String() + ", " +
+		"info:" + l.info.String() + ", " +
+		"role:" + l.role.String() + ", " +
+		"replicaType:" + l.replicaType.String() +
 		"}"
 }
 
@@ -33,14 +45,18 @@ type ObTableLocation struct {
 	replicaLocations []ObReplicaLocation
 }
 
-func (l *ObTableLocation) ToString() string {
+func (l *ObTableLocation) ReplicaLocations() []ObReplicaLocation {
+	return l.replicaLocations
+}
+
+func (l *ObTableLocation) String() string {
 	var replicaLocationsStr string
 	replicaLocationsStr = replicaLocationsStr + "["
 	for i := 0; i < len(l.replicaLocations); i++ {
 		if i > 0 {
 			replicaLocationsStr += ", "
 		}
-		replicaLocationsStr += l.replicaLocations[i].ToString()
+		replicaLocationsStr += l.replicaLocations[i].String()
 	}
 	replicaLocationsStr += "]"
 	return "ObTableLocation{" +
@@ -52,13 +68,33 @@ type ObPartitionInfo struct {
 	level           ObPartitionLevel
 	firstPartDesc   ObPartDesc
 	subPartDesc     ObPartDesc
-	partColumns     []protocol.ObColumn
+	partColumns     []*protocol.ObColumn
 	partTabletIdMap map[int64]int64
 	partNameIdMap   map[string]int64
-	rowKeyElement   map[string]int
 }
 
-func (p *ObPartitionInfo) ToString() string {
+func (p *ObPartitionInfo) SubPartDesc() ObPartDesc {
+	return p.subPartDesc
+}
+
+func (p *ObPartitionInfo) FirstPartDesc() ObPartDesc {
+	return p.firstPartDesc
+}
+
+func (p *ObPartitionInfo) Level() ObPartitionLevel {
+	return p.level
+}
+
+func (p *ObPartitionInfo) setRowKeyElement(rowKeyElement *table.ObRowkeyElement) {
+	if p.firstPartDesc != nil {
+		p.firstPartDesc.setRowKeyElement(rowKeyElement)
+	}
+	if p.subPartDesc != nil {
+		p.subPartDesc.setRowKeyElement(rowKeyElement)
+	}
+}
+
+func (p *ObPartitionInfo) String() string {
 	// partColumns to string
 	var partColumnsStr string
 	partColumnsStr = partColumnsStr + "["
@@ -66,7 +102,7 @@ func (p *ObPartitionInfo) ToString() string {
 		if i > 0 {
 			partColumnsStr += ", "
 		}
-		partColumnsStr += p.partColumns[i].ToString()
+		partColumnsStr += p.partColumns[i].String()
 	}
 	partColumnsStr += "]"
 
@@ -96,23 +132,10 @@ func (p *ObPartitionInfo) ToString() string {
 	}
 	partNameIdMapStr += "}"
 
-	// rowKeyElement to string
-	var rowKeyElementStr string
-	rowKeyElementStr = rowKeyElementStr + "{"
-	i = 0
-	for k, v := range p.rowKeyElement {
-		if i > 0 {
-			rowKeyElementStr += ", "
-		}
-		i++
-		rowKeyElementStr += "m[" + k + "]=" + strconv.Itoa(v)
-	}
-	rowKeyElementStr += "}"
-
 	// firstPartDesc to string
 	var firstPartDescStr string
 	if p.firstPartDesc != nil {
-		firstPartDescStr = p.firstPartDesc.ToString()
+		firstPartDescStr = p.firstPartDesc.String()
 	} else {
 		firstPartDescStr = "nil"
 	}
@@ -120,19 +143,18 @@ func (p *ObPartitionInfo) ToString() string {
 	// subPartDesc to string
 	var subPartDescStr string
 	if p.subPartDesc != nil {
-		subPartDescStr = p.firstPartDesc.ToString()
+		subPartDescStr = p.firstPartDesc.String()
 	} else {
 		subPartDescStr = "nil"
 	}
 
 	return "ObPartitionInfo{" +
-		"level:" + p.level.ToString() + ", " +
+		"level:" + p.level.String() + ", " +
 		"firstPartDesc:" + firstPartDescStr + ", " +
 		"subPartDesc:" + subPartDescStr + ", " +
 		"partColumns:" + partColumnsStr + ", " +
 		"partTabletIdMap:" + partTabletIdMapStr + ", " +
-		"partNameIdMap:" + partNameIdMapStr + ", " +
-		"rowKeyElement:" + rowKeyElementStr +
+		"partNameIdMap:" + partNameIdMapStr +
 		"}"
 }
 
@@ -148,33 +170,41 @@ func (l *ObPartitionLocation) addReplicaLocation(replica *ObReplicaLocation) {
 	l.replicas = append(l.replicas, *replica)
 }
 
-func (l *ObPartitionLocation) ToString() string {
+func (l *ObPartitionLocation) getReplica(route *ObServerRoute) *ObReplicaLocation {
+	if route.readConsistency == ObReadConsistencyStrong {
+		return &l.leader
+	}
+	// todo:weak read by LDC
+	return &l.leader
+}
+
+func (l *ObPartitionLocation) String() string {
 	var replicasStr string
 	replicasStr = replicasStr + "["
 	for i := 0; i < len(l.replicas); i++ {
 		if i > 0 {
 			replicasStr += ", "
 		}
-		replicasStr += l.replicas[i].ToString()
+		replicasStr += l.replicas[i].String()
 	}
 	replicasStr += "]"
 	return "ObPartitionLocation{" +
-		"leader:" + l.leader.ToString() + ", " +
+		"leader:" + l.leader.String() + ", " +
 		"replicas:" + replicasStr +
 		"}"
 }
 
 type ObPartLocationEntry struct {
-	partLocations map[int]*ObPartitionLocation
+	partLocations map[int64]*ObPartitionLocation
 }
 
 func newObPartLocationEntry(partNum int) *ObPartLocationEntry {
 	entry := new(ObPartLocationEntry)
-	entry.partLocations = make(map[int]*ObPartitionLocation, partNum)
+	entry.partLocations = make(map[int64]*ObPartitionLocation, partNum)
 	return entry
 }
 
-func (e *ObPartLocationEntry) ToString() string {
+func (e *ObPartLocationEntry) String() string {
 	var partitionLocationStr string
 	var i = 0
 	partitionLocationStr = partitionLocationStr + "{"
@@ -183,7 +213,12 @@ func (e *ObPartLocationEntry) ToString() string {
 			partitionLocationStr += ", "
 		}
 		i++
-		partitionLocationStr += "m[" + strconv.Itoa(k) + "]=" + v.ToString()
+		partitionLocationStr += "m[" + strconv.Itoa(int(k)) + "]="
+		if v != nil {
+			partitionLocationStr += v.String()
+		} else {
+			partitionLocationStr += "nil"
+		}
 	}
 	partitionLocationStr += "}"
 	return "ObPartLocationEntry{" +
@@ -198,7 +233,15 @@ type ObTableEntryKey struct {
 	tableName    string
 }
 
-func (k *ObTableEntryKey) ToString() string {
+func NewObTableEntryKey(
+	clusterName string,
+	tenantName string,
+	databaseName string,
+	tableName string) *ObTableEntryKey {
+	return &ObTableEntryKey{clusterName, tenantName, databaseName, tableName}
+}
+
+func (k *ObTableEntryKey) String() string {
 	return "ObTableEntryKey{" +
 		"clusterName:" + k.clusterName + ", " +
 		"tenantNane:" + k.databaseName + ", " +
@@ -218,15 +261,27 @@ type ObTableEntry struct {
 	partLocationEntry *ObPartLocationEntry
 }
 
+func (e *ObTableEntry) TableLocation() *ObTableLocation {
+	return e.tableLocation
+}
+
+func (e *ObTableEntry) TableId() uint64 {
+	return e.tableId
+}
+
+func (e *ObTableEntry) PartitionInfo() *ObPartitionInfo {
+	return e.partitionInfo
+}
+
 func (e *ObTableEntry) IsPartitionTable() bool {
 	return e.partNum > 1
 }
 
-func (e *ObTableEntry) ToString() string {
+func (e *ObTableEntry) String() string {
 	// partitionInfo to string
 	var partitionInfoStr string
 	if e.partitionInfo != nil {
-		partitionInfoStr = e.partitionInfo.ToString()
+		partitionInfoStr = e.partitionInfo.String()
 	} else {
 		partitionInfoStr = "nil"
 	}
@@ -234,7 +289,7 @@ func (e *ObTableEntry) ToString() string {
 	// tableLocation to string
 	var tableLocationStr string
 	if e.tableLocation != nil {
-		tableLocationStr = e.tableLocation.ToString()
+		tableLocationStr = e.tableLocation.String()
 	} else {
 		tableLocationStr = "nil"
 	}
@@ -242,7 +297,7 @@ func (e *ObTableEntry) ToString() string {
 	// partLocationEntry to string
 	var partLocationEntryStr string
 	if e.partLocationEntry != nil {
-		partLocationEntryStr = e.partLocationEntry.ToString()
+		partLocationEntryStr = e.partLocationEntry.String()
 	} else {
 		partLocationEntryStr = "nil"
 	}
@@ -251,9 +306,82 @@ func (e *ObTableEntry) ToString() string {
 		"partNum:" + strconv.Itoa(int(e.partNum)) + ", " +
 		"replicaNum:" + strconv.Itoa(int(e.replicaNum)) + ", " +
 		"refreshTimeMills:" + strconv.Itoa(int(e.refreshTimeMills)) + ", " +
-		"tableEntryKey:" + e.tableEntryKey.ToString() + ", " +
+		"tableEntryKey:" + e.tableEntryKey.String() + ", " +
 		"partitionInfo:" + partitionInfoStr + ", " +
 		"tableLocation:" + tableLocationStr + ", " +
 		"partitionEntry:" + partLocationEntryStr +
 		"}"
+}
+
+func (e *ObTableEntry) extractSubpartIdx(id int64) int64 {
+	// equal id & (^(0xffffffffffffffff << ObPartIdShift)) & (^(0xffffffffffffffff << ObPartIdBitNum))
+	return id & ObSubPartIdMask
+}
+
+func (e *ObTableEntry) getPartitionLocation(partId int64, route *ObServerRoute) (*ObReplicaLocation, error) {
+	if util.ObVersion() >= 4 && e.IsPartitionTable() {
+		tabletId, ok := e.partitionInfo.partTabletIdMap[partId]
+		if !ok {
+			log.Warn("tablet id not found",
+				log.Int64("part id", partId),
+				log.String("part info", e.partitionInfo.String()))
+			return nil, errors.New("tablet id not found")
+		}
+		partLoc, ok := e.partLocationEntry.partLocations[tabletId]
+		if !ok {
+			log.Warn("part location not found",
+				log.Int64("tabletId", tabletId),
+				log.String("part entry", e.partLocationEntry.String()))
+			return nil, errors.New("part location not found")
+		}
+		return partLoc.getReplica(route), nil
+	} else {
+		partLoc, ok := e.partLocationEntry.partLocations[partId]
+		if !ok {
+			log.Warn("part location not found",
+				log.Int64("partId", partId),
+				log.String("part entry", e.partLocationEntry.String()))
+			return nil, errors.New("part location not found")
+		}
+		return partLoc.getReplica(route), nil
+	}
+}
+
+func (e *ObTableEntry) GetPartitionReplicaLocation(partId int64, route *ObServerRoute) (*ObReplicaLocation, error) {
+	logicId := partId
+	if e.partitionInfo != nil && e.partitionInfo.level.index == PartLevelTwoIndex {
+		logicId = e.extractSubpartIdx(partId)
+	}
+	return e.getPartitionLocation(logicId, route)
+}
+
+func (e *ObTableEntry) SetRowKeyElement(rowKeyElement *table.ObRowkeyElement) {
+	if e.partitionInfo != nil {
+		e.partitionInfo.setRowKeyElement(rowKeyElement)
+	}
+}
+
+const (
+	ObReadConsistencyStrong = 0
+	ObReadConsistencyWeak   = 1
+)
+
+type ObReadConsistency int
+
+type ObServerRoute struct {
+	readConsistency ObReadConsistency
+}
+
+func (r *ObServerRoute) String() string {
+	return "ObServerRoute{" +
+		"readConsistency:" + strconv.Itoa(int(r.readConsistency)) +
+		"}"
+}
+
+func NewObServerRoute(readOnly bool) *ObServerRoute {
+	if readOnly {
+		// todo: adapt java client
+		return &ObServerRoute{ObReadConsistencyWeak}
+	}
+	return &ObServerRoute{ObReadConsistencyStrong}
 }
