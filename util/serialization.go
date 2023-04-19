@@ -2,6 +2,7 @@ package util
 
 import (
 	"bytes"
+	"math"
 )
 
 const (
@@ -58,8 +59,20 @@ func NeedLengthByVi64(value int64) (needLength int) {
 	return needLength
 }
 
+func NeedLengthByVf32(value float32) (needLength int) {
+	return NeedLengthByVi32(int32(math.Float32bits(value)))
+}
+
+func NeedLengthByVf64(value float64) (needLength int) {
+	return NeedLengthByVi64(int64(math.Float64bits(value)))
+}
+
 func NeedLengthByVString(str string) (needLength int) {
 	return NeedLengthByVi64(int64(len(str))) + len(str) + 1
+}
+
+func NeedLengthByBytesString(bys []byte) (needLength int) {
+	return NeedLengthByVi64(int64(len(bys))) + len(bys) + 1
 }
 
 func NeedLengthByBytes(bys []byte) (needLength int) {
@@ -88,6 +101,14 @@ func EncodeVi64(buf []byte, value int64) {
 	buf[index] = byte(unsignedValue & 0x7f)
 }
 
+func EncodeVf32(buf []byte, value float32) {
+	EncodeVi32(buf, int32(math.Float32bits(value)))
+}
+
+func EncodeVf64(buf []byte, value float64) {
+	EncodeVi64(buf, int64(math.Float64bits(value)))
+}
+
 func EncodeVString(buf []byte, str string) {
 	// encode string header
 	var strLen = len(str)
@@ -98,6 +119,18 @@ func EncodeVString(buf []byte, str string) {
 	var strBytes = StringToBytes(str)
 	copy(buf[strHeadNeedLength:endIndex], strBytes)
 	// copy string end
+	buf[endIndex] = end
+}
+
+func EncodeBytesString(buf []byte, bys []byte) {
+	// encode bytes header
+	var bytesLen = len(bys)
+	var bytesHeadNeedLength = NeedLengthByVi64(int64(bytesLen))
+	EncodeVi64(buf[:bytesHeadNeedLength], int64(bytesLen))
+	// copy bytes body
+	var endIndex = len(buf) - 1
+	copy(buf[bytesHeadNeedLength:endIndex], bys)
+	// copy bytes end
 	buf[endIndex] = end
 }
 
@@ -142,6 +175,14 @@ func DecodeVi64(buffer *bytes.Buffer) int64 {
 	return int64(ret)
 }
 
+func DecodeVf32(buffer *bytes.Buffer) float32 {
+	return math.Float32frombits(uint32(DecodeVi32(buffer)))
+}
+
+func DecodeVf64(buffer *bytes.Buffer) float64 {
+	return math.Float64frombits(uint64(DecodeVi64(buffer)))
+}
+
 func DecodeVString(buffer *bytes.Buffer) string {
 	// decode string header
 	strLen := DecodeVi32(buffer)
@@ -151,6 +192,17 @@ func DecodeVString(buffer *bytes.Buffer) string {
 	// skip the end byte '0'
 	SkipBytes(buffer, 1)
 	return BytesToString(strBodyBuf)
+}
+
+func DecodeBytesString(buffer *bytes.Buffer) []byte {
+	// decode bytes header
+	bytesLen := DecodeVi32(buffer)
+	// copy bytes body
+	bytesBodyBuf := make([]byte, bytesLen)
+	copy(bytesBodyBuf, buffer.Next(int(bytesLen)))
+	// skip the end byte '0'
+	SkipBytes(buffer, 1)
+	return bytesBodyBuf
 }
 
 func DecodeBytes(buffer *bytes.Buffer) []byte {

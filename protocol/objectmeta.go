@@ -2,6 +2,9 @@ package protocol
 
 import (
 	"bytes"
+	"time"
+
+	"github.com/pkg/errors"
 
 	"github.com/oceanbase/obkv-table-client-go/util"
 )
@@ -20,180 +23,155 @@ func NewObjectMeta(objType ObjType, csLevel CollationLevel, csType CollationType
 type ObjType interface {
 	Encode(buf []byte, value interface{})
 	Decode(buffer *bytes.Buffer, csType CollationType) interface{}
-	EncodedSize() int
+	EncodedSize(value interface{}) int
 	DefaultObjMeta() *ObjectMeta
 	Value() ObjTypeValue
 }
 
-func NewObjType(value ObjTypeValue) ObjType {
+func DefaultObjMeta(value interface{}) (*ObjectMeta, error) {
+	if value == nil {
+		return ObjTypes[ObjTypeNullTypeValue].DefaultObjMeta(), nil
+	}
+	switch value.(type) {
+	case bool:
+		return ObjTypes[ObjTypeTinyIntTypeValue].DefaultObjMeta(), nil
+	case int8:
+		return ObjTypes[ObjTypeTinyIntTypeValue].DefaultObjMeta(), nil
+	case uint8:
+		return ObjTypes[ObjTypeUTinyIntTypeValue].DefaultObjMeta(), nil
+	case int16:
+		return ObjTypes[ObjTypeSmallIntTypeValue].DefaultObjMeta(), nil
+	case uint16:
+		return ObjTypes[ObjTypeUSmallIntTypeValue].DefaultObjMeta(), nil
+	case int32:
+		return ObjTypes[ObjTypeInt32TypeValue].DefaultObjMeta(), nil
+	case uint32:
+		return ObjTypes[ObjTypeUInt32TypeValue].DefaultObjMeta(), nil
+	case int64:
+		return ObjTypes[ObjTypeInt64TypeValue].DefaultObjMeta(), nil
+	case uint64:
+		return ObjTypes[ObjTypeUInt64TypeValue].DefaultObjMeta(), nil
+	case float32:
+		return ObjTypes[ObjTypeFloatTypeValue].DefaultObjMeta(), nil
+	case float64:
+		return ObjTypes[ObjTypeDoubleTypeValue].DefaultObjMeta(), nil
+	case string:
+		return ObjTypes[ObjTypeVarcharTypeValue].DefaultObjMeta(), nil
+	case []byte:
+		return ObjTypes[ObjTypeVarcharTypeValue].DefaultObjMeta(), nil
+	case time.Duration:
+		return ObjTypes[ObjTypeDateTimeTypeValue].DefaultObjMeta(), nil
+	default:
+		return nil, errors.Errorf("not match objmeta, value: %s", value)
+	}
+}
+
+func NewObjType(value ObjTypeValue) (ObjType, error) {
 	switch value {
 	case ObjTypeNullTypeValue:
-		return &NullType{
-			value: value,
-		}
+		return &NullType{value: value}, nil
 	case ObjTypeTinyIntTypeValue:
-		return &TinyIntType{
-			value: value,
-		}
+		return &TinyIntType{value: value}, nil
 	case ObjTypeSmallIntTypeValue:
-		return &SmallIntType{
-			value: value,
-		}
+		return &SmallIntType{value: value}, nil
 	case ObjTypeMediumIntTypeValue:
-		return &MediumIntType{
-			value: value,
-		}
+		return &MediumIntType{value: value}, nil
 	case ObjTypeInt32TypeValue:
-		return &Int32Type{
-			value: value,
-		}
+		return &Int32Type{value: value}, nil
 	case ObjTypeInt64TypeValue:
-		return &Int64Type{
-			value: value,
-		}
+		return &Int64Type{value: value}, nil
 	case ObjTypeUTinyIntTypeValue:
-		return &UTinyIntType{
-			value: value,
-		}
+		return &UTinyIntType{value: value}, nil
 	case ObjTypeUSmallIntTypeValue:
-		return &USmallIntType{
-			value: value,
-		}
+		return &USmallIntType{value: value}, nil
 	case ObjTypeUMediumIntTypeValue:
-		return &UMediumIntType{
-			value: value,
-		}
+		return &UMediumIntType{value: value}, nil
 	case ObjTypeUInt32TypeValue:
-		return &UInt32Type{
-			value: value,
-		}
+		return &UInt32Type{value: value}, nil
 	case ObjTypeUInt64TypeValue:
-		return &UInt64Type{
-			value: value,
-		}
+		return &UInt64Type{value: value}, nil
 	case ObjTypeFloatTypeValue:
-		return &FloatType{
-			value: value,
-		}
+		return &FloatType{value: value}, nil
 	case ObjTypeDoubleTypeValue:
-		return &DoubleType{
-			value: value,
-		}
+		return &DoubleType{value: value}, nil
 	case ObjTypeUFloatTypeValue:
-		return &UFloatType{
-			value: value,
-		}
+		return &UFloatType{value: value}, nil
 	case ObjTypeUDoubleTypeValue:
-		return &UDoubleType{
-			value: value,
-		}
+		return &UDoubleType{value: value}, nil
 	case ObjTypeNumberTypeValue:
-		return &NumberType{
-			value: value,
-		}
+		return &NumberType{value: value}, nil
 	case ObjTypeUNumberTypeValue:
-		return &UNumberType{
-			value: value,
-		}
+		return &UNumberType{value: value}, nil
 	case ObjTypeDateTimeTypeValue:
-		return &DateTimeType{
-			value: value,
-		}
+		return &DateTimeType{value: value}, nil
 	case ObjTypeTimestampTypeValue:
-		return &TimestampType{
-			value: value,
-		}
+		return &TimestampType{value: value}, nil
 	case ObjTypeDateTypeValue:
-		return &DateType{
-			value: value,
-		}
+		return &DateType{value: value}, nil
 	case ObjTypeTimeTypeValue:
-		return &TimeType{
-			value: value,
-		}
+		return &TimeType{value: value}, nil
 	case ObjTypeYearTypeValue:
-		return &YearType{
-			value: value,
-		}
+		return &YearType{value: value}, nil
 	case ObjTypeVarcharTypeValue:
-		return &VarcharType{
-			value: value,
-		}
+		return &VarcharType{value: value}, nil
 	case ObjTypeCharTypeValue:
-		return &CharType{
-			value: value,
-		}
+		return &CharType{value: value}, nil
 	case ObjTypeHexStringTypeValue:
-		return &HexStringType{
-			value: value,
-		}
+		return &HexStringType{value: value}, nil
 	case ObjTypeExtendTypeValue:
-		return &ExtendType{
-			value: value,
-		}
+		return &ExtendType{value: value}, nil
 	case ObjTypeUnknownTypeValue:
-		return &UnknownType{
-			value: value,
-		}
+		return &UnknownType{value: value}, nil
 	case ObjTypeTinyTextTypeValue:
-		return &TinyTextType{
-			value: value,
-		}
+		return &TinyTextType{value: value}, nil
 	case ObjTypeTextTypeValue:
-		return &TextType{
-			value: value,
-		}
+		return &TextType{value: value}, nil
 	case ObjTypeMediumTextTypeValue:
-		return &MediumTextType{
-			value: value,
-		}
+		return &MediumTextType{value: value}, nil
 	case ObjTypeLongTextTypeValue:
-		return &LongTextType{
-			value: value,
-		}
+		return &LongTextType{value: value}, nil
 	case ObjTypeBitTypeValue:
-		return &BitType{
-			value: value,
-		}
+		return &BitType{value: value}, nil
+	default:
+		return nil, errors.Errorf("not match objtype, value: %d", value)
 	}
-	return nil
 }
 
 type ObjTypeValue int32
 
 var ObjTypes = []ObjType{
-	ObjTypeNullTypeValue:       NewObjType(ObjTypeNullTypeValue),
-	ObjTypeTinyIntTypeValue:    NewObjType(ObjTypeSmallIntTypeValue),
-	ObjTypeSmallIntTypeValue:   NewObjType(ObjTypeSmallIntTypeValue),
-	ObjTypeMediumIntTypeValue:  NewObjType(ObjTypeMediumIntTypeValue),
-	ObjTypeInt32TypeValue:      NewObjType(ObjTypeInt32TypeValue),
-	ObjTypeInt64TypeValue:      NewObjType(ObjTypeInt64TypeValue),
-	ObjTypeUTinyIntTypeValue:   NewObjType(ObjTypeUTinyIntTypeValue),
-	ObjTypeUSmallIntTypeValue:  NewObjType(ObjTypeUSmallIntTypeValue),
-	ObjTypeUMediumIntTypeValue: NewObjType(ObjTypeUMediumIntTypeValue),
-	ObjTypeUInt32TypeValue:     NewObjType(ObjTypeUInt32TypeValue),
-	ObjTypeUInt64TypeValue:     NewObjType(ObjTypeUInt64TypeValue),
-	ObjTypeFloatTypeValue:      NewObjType(ObjTypeFloatTypeValue),
-	ObjTypeDoubleTypeValue:     NewObjType(ObjTypeDoubleTypeValue),
-	ObjTypeUFloatTypeValue:     NewObjType(ObjTypeUFloatTypeValue),
-	ObjTypeUDoubleTypeValue:    NewObjType(ObjTypeUDoubleTypeValue),
-	ObjTypeNumberTypeValue:     NewObjType(ObjTypeNumberTypeValue),
-	ObjTypeUNumberTypeValue:    NewObjType(ObjTypeUNumberTypeValue),
-	ObjTypeDateTimeTypeValue:   NewObjType(ObjTypeDateTimeTypeValue),
-	ObjTypeTimestampTypeValue:  NewObjType(ObjTypeTimestampTypeValue),
-	ObjTypeDateTypeValue:       NewObjType(ObjTypeDateTypeValue),
-	ObjTypeTimeTypeValue:       NewObjType(ObjTypeTimeTypeValue),
-	ObjTypeYearTypeValue:       NewObjType(ObjTypeYearTypeValue),
-	ObjTypeVarcharTypeValue:    NewObjType(ObjTypeVarcharTypeValue),
-	ObjTypeCharTypeValue:       NewObjType(ObjTypeCharTypeValue),
-	ObjTypeHexStringTypeValue:  NewObjType(ObjTypeHexStringTypeValue),
-	ObjTypeExtendTypeValue:     NewObjType(ObjTypeExtendTypeValue),
-	ObjTypeUnknownTypeValue:    NewObjType(ObjTypeUnknownTypeValue),
-	ObjTypeTinyTextTypeValue:   NewObjType(ObjTypeTinyTextTypeValue),
-	ObjTypeTextTypeValue:       NewObjType(ObjTypeTextTypeValue),
-	ObjTypeMediumTextTypeValue: NewObjType(ObjTypeMediumTextTypeValue),
-	ObjTypeLongTextTypeValue:   NewObjType(ObjTypeLongTextTypeValue),
-	ObjTypeBitTypeValue:        NewObjType(ObjTypeBitTypeValue),
+	ObjTypeNullTypeValue:       &NullType{value: ObjTypeNullTypeValue},
+	ObjTypeTinyIntTypeValue:    &TinyIntType{value: ObjTypeTinyIntTypeValue},
+	ObjTypeSmallIntTypeValue:   &SmallIntType{value: ObjTypeSmallIntTypeValue},
+	ObjTypeMediumIntTypeValue:  &MediumIntType{value: ObjTypeMediumIntTypeValue},
+	ObjTypeInt32TypeValue:      &Int32Type{value: ObjTypeInt32TypeValue},
+	ObjTypeInt64TypeValue:      &Int64Type{value: ObjTypeInt64TypeValue},
+	ObjTypeUTinyIntTypeValue:   &UTinyIntType{value: ObjTypeUTinyIntTypeValue},
+	ObjTypeUSmallIntTypeValue:  &USmallIntType{value: ObjTypeUSmallIntTypeValue},
+	ObjTypeUMediumIntTypeValue: &UMediumIntType{value: ObjTypeUMediumIntTypeValue},
+	ObjTypeUInt32TypeValue:     &UInt32Type{value: ObjTypeUInt32TypeValue},
+	ObjTypeUInt64TypeValue:     &UInt64Type{value: ObjTypeUInt64TypeValue},
+	ObjTypeFloatTypeValue:      &FloatType{value: ObjTypeFloatTypeValue},
+	ObjTypeDoubleTypeValue:     &DoubleType{value: ObjTypeDoubleTypeValue},
+	ObjTypeUFloatTypeValue:     &UFloatType{value: ObjTypeUFloatTypeValue},
+	ObjTypeUDoubleTypeValue:    &UDoubleType{value: ObjTypeUDoubleTypeValue},
+	ObjTypeNumberTypeValue:     &NumberType{value: ObjTypeNumberTypeValue},
+	ObjTypeUNumberTypeValue:    &UNumberType{value: ObjTypeUNumberTypeValue},
+	ObjTypeDateTimeTypeValue:   &DateTimeType{value: ObjTypeDateTimeTypeValue},
+	ObjTypeTimestampTypeValue:  &TimestampType{value: ObjTypeTimestampTypeValue},
+	ObjTypeDateTypeValue:       &DateType{value: ObjTypeDateTypeValue},
+	ObjTypeTimeTypeValue:       &TimeType{value: ObjTypeTimeTypeValue},
+	ObjTypeYearTypeValue:       &YearType{value: ObjTypeYearTypeValue},
+	ObjTypeVarcharTypeValue:    &VarcharType{value: ObjTypeVarcharTypeValue},
+	ObjTypeCharTypeValue:       &CharType{value: ObjTypeCharTypeValue},
+	ObjTypeHexStringTypeValue:  &HexStringType{value: ObjTypeHexStringTypeValue},
+	ObjTypeExtendTypeValue:     &ExtendType{value: ObjTypeExtendTypeValue},
+	ObjTypeUnknownTypeValue:    &UnknownType{value: ObjTypeUnknownTypeValue},
+	ObjTypeTinyTextTypeValue:   &TinyTextType{value: ObjTypeTinyTextTypeValue},
+	ObjTypeTextTypeValue:       &TextType{value: ObjTypeTextTypeValue},
+	ObjTypeMediumTextTypeValue: &MediumTextType{value: ObjTypeMediumTextTypeValue},
+	ObjTypeLongTextTypeValue:   &LongTextType{value: ObjTypeLongTextTypeValue},
+	ObjTypeBitTypeValue:        &BitType{value: ObjTypeBitTypeValue},
 }
 
 func (v ObjTypeValue) ValueOf() ObjType {
@@ -271,7 +249,7 @@ func (t *NullType) Decode(buffer *bytes.Buffer, csType CollationType) interface{
 	return nil
 }
 
-func (t *NullType) EncodedSize() int {
+func (t *NullType) EncodedSize(value interface{}) int {
 	return 0
 }
 
@@ -293,10 +271,10 @@ func (t *TinyIntType) Encode(buf []byte, value interface{}) {
 		if v {
 			util.PutUint8(buf, 1)
 		} else {
-			util.PutUint8(buf, 2)
+			util.PutUint8(buf, 0)
 		}
-	case byte:
-		util.PutUint8(buf, v)
+	case int8:
+		util.PutUint8(buf, uint8(v))
 	}
 }
 
@@ -304,7 +282,7 @@ func (t *TinyIntType) Decode(buffer *bytes.Buffer, csType CollationType) interfa
 	return util.Uint8(buffer.Next(1))
 }
 
-func (t *TinyIntType) EncodedSize() int {
+func (t *TinyIntType) EncodedSize(value interface{}) int {
 	return 1
 }
 
@@ -321,23 +299,19 @@ type SmallIntType struct {
 }
 
 func (t *SmallIntType) Encode(buf []byte, value interface{}) {
-	// TODO implement me
-	panic("implement me")
+	util.EncodeVi32(buf, int32(value.(int16)))
 }
 
 func (t *SmallIntType) Decode(buffer *bytes.Buffer, csType CollationType) interface{} {
-	// TODO implement me
-	panic("implement me")
+	return util.DecodeVi32(buffer)
 }
 
-func (t *SmallIntType) EncodedSize() int {
-	// TODO implement me
-	panic("implement me")
+func (t *SmallIntType) EncodedSize(value interface{}) int {
+	return util.NeedLengthByVi32(int32(value.(int16)))
 }
 
 func (t *SmallIntType) DefaultObjMeta() *ObjectMeta {
-	// TODO implement me
-	panic("implement me")
+	return NewObjectMeta(t, csLevelNumeric, csTypeBinary, 10)
 }
 
 func (t *SmallIntType) Value() ObjTypeValue {
@@ -349,23 +323,19 @@ type MediumIntType struct {
 }
 
 func (t *MediumIntType) Encode(buf []byte, value interface{}) {
-	// TODO implement me
-	panic("implement me")
+	util.EncodeVi32(buf, value.(int32))
 }
 
 func (t *MediumIntType) Decode(buffer *bytes.Buffer, csType CollationType) interface{} {
-	// TODO implement me
-	panic("implement me")
+	return util.DecodeVi32(buffer)
 }
 
-func (t *MediumIntType) EncodedSize() int {
-	// TODO implement me
-	panic("implement me")
+func (t *MediumIntType) EncodedSize(value interface{}) int {
+	return util.NeedLengthByVi32(value.(int32))
 }
 
 func (t *MediumIntType) DefaultObjMeta() *ObjectMeta {
-	// TODO implement me
-	panic("implement me")
+	return NewObjectMeta(t, csLevelNumeric, csTypeBinary, 10)
 }
 
 func (t *MediumIntType) Value() ObjTypeValue {
@@ -377,23 +347,19 @@ type Int32Type struct {
 }
 
 func (t *Int32Type) Encode(buf []byte, value interface{}) {
-	// TODO implement me
-	panic("implement me")
+	util.EncodeVi32(buf, value.(int32))
 }
 
 func (t *Int32Type) Decode(buffer *bytes.Buffer, csType CollationType) interface{} {
-	// TODO implement me
-	panic("implement me")
+	return util.DecodeVi32(buffer)
 }
 
-func (t *Int32Type) EncodedSize() int {
-	// TODO implement me
-	panic("implement me")
+func (t *Int32Type) EncodedSize(value interface{}) int {
+	return util.NeedLengthByVi32(value.(int32))
 }
 
 func (t *Int32Type) DefaultObjMeta() *ObjectMeta {
-	// TODO implement me
-	panic("implement me")
+	return NewObjectMeta(t, csLevelNumeric, csTypeBinary, 10)
 }
 
 func (t *Int32Type) Value() ObjTypeValue {
@@ -405,23 +371,19 @@ type Int64Type struct {
 }
 
 func (t *Int64Type) Encode(buf []byte, value interface{}) {
-	// TODO implement me
-	panic("implement me")
+	util.EncodeVi64(buf, value.(int64))
 }
 
 func (t *Int64Type) Decode(buffer *bytes.Buffer, csType CollationType) interface{} {
-	// TODO implement me
-	panic("implement me")
+	return util.DecodeVi64(buffer)
 }
 
-func (t *Int64Type) EncodedSize() int {
-	// TODO implement me
-	panic("implement me")
+func (t *Int64Type) EncodedSize(value interface{}) int {
+	return util.NeedLengthByVi64(value.(int64))
 }
 
 func (t *Int64Type) DefaultObjMeta() *ObjectMeta {
-	// TODO implement me
-	panic("implement me")
+	return NewObjectMeta(t, csLevelNumeric, csTypeBinary, 10)
 }
 
 func (t *Int64Type) Value() ObjTypeValue {
@@ -433,135 +395,115 @@ type UTinyIntType struct {
 }
 
 func (t *UTinyIntType) Encode(buf []byte, value interface{}) {
-	// TODO implement me
-	panic("implement me")
+	util.PutUint8(buf, value.(uint8))
 }
 
 func (t *UTinyIntType) Decode(buffer *bytes.Buffer, csType CollationType) interface{} {
-	// TODO implement me
-	panic("implement me")
+	return util.Uint8(buffer.Next(1))
 }
 
-func (t *UTinyIntType) EncodedSize() int {
-	// TODO implement me
-	panic("implement me")
+func (t *UTinyIntType) EncodedSize(value interface{}) int {
+	return 1
 }
 
 func (t *UTinyIntType) DefaultObjMeta() *ObjectMeta {
-	// TODO implement me
-	panic("implement me")
+	return NewObjectMeta(t, csLevelNumeric, csTypeBinary, 10)
 }
 
 func (t *UTinyIntType) Value() ObjTypeValue {
 	return t.value
 }
 
-type USmallIntType struct {
+type USmallIntType struct { // TODO not support
 	value ObjTypeValue
 }
 
 func (t *USmallIntType) Encode(buf []byte, value interface{}) {
-	// TODO implement me
-	panic("implement me")
+	util.EncodeVi32(buf, int32(value.(uint16)))
 }
 
 func (t *USmallIntType) Decode(buffer *bytes.Buffer, csType CollationType) interface{} {
-	// TODO implement me
-	panic("implement me")
+	return util.DecodeVi32(buffer)
 }
 
-func (t *USmallIntType) EncodedSize() int {
-	// TODO implement me
-	panic("implement me")
+func (t *USmallIntType) EncodedSize(value interface{}) int {
+	return util.NeedLengthByVi32(int32(value.(uint16)))
 }
 
 func (t *USmallIntType) DefaultObjMeta() *ObjectMeta {
-	// TODO implement me
-	panic("implement me")
+	return NewObjectMeta(t, csLevelNumeric, csTypeBinary, 10)
 }
 
 func (t *USmallIntType) Value() ObjTypeValue {
 	return t.value
 }
 
-type UMediumIntType struct {
+type UMediumIntType struct { // TODO not support
 	value ObjTypeValue
 }
 
 func (t *UMediumIntType) Encode(buf []byte, value interface{}) {
-	// TODO implement me
-	panic("implement me")
+	util.EncodeVi32(buf, int32(value.(uint32)))
 }
 
 func (t *UMediumIntType) Decode(buffer *bytes.Buffer, csType CollationType) interface{} {
-	// TODO implement me
-	panic("implement me")
+	return util.DecodeVi32(buffer)
 }
 
-func (t *UMediumIntType) EncodedSize() int {
-	// TODO implement me
-	panic("implement me")
+func (t *UMediumIntType) EncodedSize(value interface{}) int {
+	return util.NeedLengthByVi32(int32(value.(uint32)))
 }
 
 func (t *UMediumIntType) DefaultObjMeta() *ObjectMeta {
-	// TODO implement me
-	panic("implement me")
+	return NewObjectMeta(t, csLevelNumeric, csTypeBinary, 10)
 }
 
 func (t *UMediumIntType) Value() ObjTypeValue {
 	return t.value
 }
 
-type UInt32Type struct {
+type UInt32Type struct { // TODO not support
 	value ObjTypeValue
 }
 
 func (t *UInt32Type) Encode(buf []byte, value interface{}) {
-	// TODO implement me
-	panic("implement me")
+	util.EncodeVi32(buf, int32(value.(uint32)))
 }
 
 func (t *UInt32Type) Decode(buffer *bytes.Buffer, csType CollationType) interface{} {
-	// TODO implement me
-	panic("implement me")
+	return util.DecodeVi32(buffer)
 }
 
-func (t *UInt32Type) EncodedSize() int {
-	// TODO implement me
-	panic("implement me")
+func (t *UInt32Type) EncodedSize(value interface{}) int {
+	return util.NeedLengthByVi32(int32(value.(uint32)))
 }
 
 func (t *UInt32Type) DefaultObjMeta() *ObjectMeta {
-	// TODO implement me
-	panic("implement me")
+	return NewObjectMeta(t, csLevelNumeric, csTypeBinary, 10)
 }
 
 func (t *UInt32Type) Value() ObjTypeValue {
 	return t.value
 }
 
-type UInt64Type struct {
+type UInt64Type struct { // TODO not support
 	value ObjTypeValue
 }
 
 func (t *UInt64Type) Encode(buf []byte, value interface{}) {
-	// TODO implement me
-	panic("implement me")
+	util.EncodeVi64(buf, int64(value.(uint64)))
 }
 
 func (t *UInt64Type) Decode(buffer *bytes.Buffer, csType CollationType) interface{} {
-	// TODO implement me
-	panic("implement me")
+	return util.DecodeVi64(buffer)
 }
 
-func (t *UInt64Type) EncodedSize() int {
-	// TODO implement me
-	panic("implement me")
+func (t *UInt64Type) EncodedSize(value interface{}) int {
+	return util.NeedLengthByVi64(int64(value.(uint64)))
 }
 
 func (t *UInt64Type) DefaultObjMeta() *ObjectMeta {
-	// TODO implement me
-	panic("implement me")
+	return NewObjectMeta(t, csLevelNumeric, csTypeBinary, 10)
 }
 
 func (t *UInt64Type) Value() ObjTypeValue {
@@ -573,23 +515,19 @@ type FloatType struct {
 }
 
 func (t *FloatType) Encode(buf []byte, value interface{}) {
-	// TODO implement me
-	panic("implement me")
+	util.EncodeVf32(buf, value.(float32))
 }
 
 func (t *FloatType) Decode(buffer *bytes.Buffer, csType CollationType) interface{} {
-	// TODO implement me
-	panic("implement me")
+	return util.DecodeVf32(buffer)
 }
 
-func (t *FloatType) EncodedSize() int {
-	// TODO implement me
-	panic("implement me")
+func (t *FloatType) EncodedSize(value interface{}) int {
+	return util.NeedLengthByVf32(value.(float32))
 }
 
 func (t *FloatType) DefaultObjMeta() *ObjectMeta {
-	// TODO implement me
-	panic("implement me")
+	return NewObjectMeta(t, csLevelNumeric, csTypeBinary, 10)
 }
 
 func (t *FloatType) Value() ObjTypeValue {
@@ -601,135 +539,115 @@ type DoubleType struct {
 }
 
 func (t *DoubleType) Encode(buf []byte, value interface{}) {
-	// TODO implement me
-	panic("implement me")
+	util.EncodeVf64(buf, value.(float64))
 }
 
 func (t *DoubleType) Decode(buffer *bytes.Buffer, csType CollationType) interface{} {
-	// TODO implement me
-	panic("implement me")
+	return util.DecodeVf64(buffer)
 }
 
-func (t *DoubleType) EncodedSize() int {
-	// TODO implement me
-	panic("implement me")
+func (t *DoubleType) EncodedSize(value interface{}) int {
+	return util.NeedLengthByVf64(value.(float64))
 }
 
 func (t *DoubleType) DefaultObjMeta() *ObjectMeta {
-	// TODO implement me
-	panic("implement me")
+	return NewObjectMeta(t, csLevelNumeric, csTypeBinary, 10)
 }
 
 func (t *DoubleType) Value() ObjTypeValue {
 	return t.value
 }
 
-type UFloatType struct {
+type UFloatType struct { // TODO not support
 	value ObjTypeValue
 }
 
 func (t *UFloatType) Encode(buf []byte, value interface{}) {
-	// TODO implement me
-	panic("implement me")
+	return
 }
 
 func (t *UFloatType) Decode(buffer *bytes.Buffer, csType CollationType) interface{} {
-	// TODO implement me
-	panic("implement me")
+	return nil
 }
 
-func (t *UFloatType) EncodedSize() int {
-	// TODO implement me
-	panic("implement me")
+func (t *UFloatType) EncodedSize(value interface{}) int {
+	return 0
 }
 
 func (t *UFloatType) DefaultObjMeta() *ObjectMeta {
-	// TODO implement me
-	panic("implement me")
+	return NewObjectMeta(t, csLevelNumeric, csTypeBinary, 10)
 }
 
 func (t *UFloatType) Value() ObjTypeValue {
 	return t.value
 }
 
-type UDoubleType struct {
+type UDoubleType struct { // TODO not support
 	value ObjTypeValue
 }
 
 func (t *UDoubleType) Encode(buf []byte, value interface{}) {
-	// TODO implement me
-	panic("implement me")
+	return
 }
 
 func (t *UDoubleType) Decode(buffer *bytes.Buffer, csType CollationType) interface{} {
-	// TODO implement me
-	panic("implement me")
+	return nil
 }
 
-func (t *UDoubleType) EncodedSize() int {
-	// TODO implement me
-	panic("implement me")
+func (t *UDoubleType) EncodedSize(value interface{}) int {
+	return 0
 }
 
 func (t *UDoubleType) DefaultObjMeta() *ObjectMeta {
-	// TODO implement me
-	panic("implement me")
+	return NewObjectMeta(t, csLevelNumeric, csTypeBinary, 10)
 }
 
 func (t *UDoubleType) Value() ObjTypeValue {
 	return t.value
 }
 
-type NumberType struct {
+type NumberType struct { // TODO not support
 	value ObjTypeValue
 }
 
 func (t *NumberType) Encode(buf []byte, value interface{}) {
-	// TODO implement me
-	panic("implement me")
+	return
 }
 
 func (t *NumberType) Decode(buffer *bytes.Buffer, csType CollationType) interface{} {
-	// TODO implement me
-	panic("implement me")
+	return nil
 }
 
-func (t *NumberType) EncodedSize() int {
-	// TODO implement me
-	panic("implement me")
+func (t *NumberType) EncodedSize(value interface{}) int {
+	return 0
 }
 
 func (t *NumberType) DefaultObjMeta() *ObjectMeta {
-	// TODO implement me
-	panic("implement me")
+	return NewObjectMeta(t, csLevelNumeric, csTypeBinary, 10)
 }
 
 func (t *NumberType) Value() ObjTypeValue {
 	return t.value
 }
 
-type UNumberType struct {
+type UNumberType struct { // TODO not support
 	value ObjTypeValue
 }
 
 func (t *UNumberType) Encode(buf []byte, value interface{}) {
-	// TODO implement me
-	panic("implement me")
+	return
 }
 
 func (t *UNumberType) Decode(buffer *bytes.Buffer, csType CollationType) interface{} {
-	// TODO implement me
-	panic("implement me")
+	return nil
 }
 
-func (t *UNumberType) EncodedSize() int {
-	// TODO implement me
-	panic("implement me")
+func (t *UNumberType) EncodedSize(value interface{}) int {
+	return 0
 }
 
 func (t *UNumberType) DefaultObjMeta() *ObjectMeta {
-	// TODO implement me
-	panic("implement me")
+	return NewObjectMeta(t, csLevelNumeric, csTypeBinary, 10)
 }
 
 func (t *UNumberType) Value() ObjTypeValue {
@@ -741,23 +659,19 @@ type DateTimeType struct {
 }
 
 func (t *DateTimeType) Encode(buf []byte, value interface{}) {
-	// TODO implement me
-	panic("implement me")
+	util.EncodeVi64(buf, int64(value.(time.Duration))) // todo
 }
 
 func (t *DateTimeType) Decode(buffer *bytes.Buffer, csType CollationType) interface{} {
-	// TODO implement me
-	panic("implement me")
+	return util.DecodeVi64(buffer)
 }
 
-func (t *DateTimeType) EncodedSize() int {
-	// TODO implement me
-	panic("implement me")
+func (t *DateTimeType) EncodedSize(value interface{}) int {
+	return util.NeedLengthByVi64(int64(value.(time.Duration)))
 }
 
 func (t *DateTimeType) DefaultObjMeta() *ObjectMeta {
-	// TODO implement me
-	panic("implement me")
+	return NewObjectMeta(t, csLevelNumeric, csTypeBinary, 10)
 }
 
 func (t *DateTimeType) Value() ObjTypeValue {
@@ -769,23 +683,19 @@ type TimestampType struct {
 }
 
 func (t *TimestampType) Encode(buf []byte, value interface{}) {
-	// TODO implement me
-	panic("implement me")
+	util.EncodeVi64(buf, int64(value.(time.Duration))) // todo
 }
 
 func (t *TimestampType) Decode(buffer *bytes.Buffer, csType CollationType) interface{} {
-	// TODO implement me
-	panic("implement me")
+	return util.DecodeVi64(buffer)
 }
 
-func (t *TimestampType) EncodedSize() int {
-	// TODO implement me
-	panic("implement me")
+func (t *TimestampType) EncodedSize(value interface{}) int {
+	return util.NeedLengthByVi64(int64(value.(time.Duration)))
 }
 
 func (t *TimestampType) DefaultObjMeta() *ObjectMeta {
-	// TODO implement me
-	panic("implement me")
+	return NewObjectMeta(t, csLevelNumeric, csTypeBinary, 10)
 }
 
 func (t *TimestampType) Value() ObjTypeValue {
@@ -797,79 +707,67 @@ type DateType struct {
 }
 
 func (t *DateType) Encode(buf []byte, value interface{}) {
-	// TODO implement me
-	panic("implement me")
+	util.EncodeVi64(buf, int64(value.(time.Duration))) // todo
 }
 
 func (t *DateType) Decode(buffer *bytes.Buffer, csType CollationType) interface{} {
-	// TODO implement me
-	panic("implement me")
+	return util.DecodeVi64(buffer)
 }
 
-func (t *DateType) EncodedSize() int {
-	// TODO implement me
-	panic("implement me")
+func (t *DateType) EncodedSize(value interface{}) int {
+	return util.NeedLengthByVi64(int64(value.(time.Duration)))
 }
 
 func (t *DateType) DefaultObjMeta() *ObjectMeta {
-	// TODO implement me
-	panic("implement me")
+	return NewObjectMeta(t, csLevelNumeric, csTypeBinary, 10)
 }
 
 func (t *DateType) Value() ObjTypeValue {
 	return t.value
 }
 
-type TimeType struct {
+type TimeType struct { // TODO not support
 	value ObjTypeValue
 }
 
 func (t *TimeType) Encode(buf []byte, value interface{}) {
-	// TODO implement me
-	panic("implement me")
+	util.EncodeVi64(buf, int64(value.(time.Duration))) // todo
 }
 
 func (t *TimeType) Decode(buffer *bytes.Buffer, csType CollationType) interface{} {
-	// TODO implement me
-	panic("implement me")
+	return util.DecodeVi64(buffer)
 }
 
-func (t *TimeType) EncodedSize() int {
-	// TODO implement me
-	panic("implement me")
+func (t *TimeType) EncodedSize(value interface{}) int {
+	return util.NeedLengthByVi64(int64(value.(time.Duration)))
 }
 
 func (t *TimeType) DefaultObjMeta() *ObjectMeta {
-	// TODO implement me
-	panic("implement me")
+	return NewObjectMeta(t, csLevelNumeric, csTypeBinary, 10)
 }
 
 func (t *TimeType) Value() ObjTypeValue {
 	return t.value
 }
 
-type YearType struct {
+type YearType struct { // TODO not support
 	value ObjTypeValue
 }
 
 func (t *YearType) Encode(buf []byte, value interface{}) {
-	// TODO implement me
-	panic("implement me")
+	util.PutUint8(buf, value.(uint8))
 }
 
 func (t *YearType) Decode(buffer *bytes.Buffer, csType CollationType) interface{} {
-	// TODO implement me
-	panic("implement me")
+	return util.Uint8(buffer.Next(1))
 }
 
-func (t *YearType) EncodedSize() int {
-	// TODO implement me
-	panic("implement me")
+func (t *YearType) EncodedSize(value interface{}) int {
+	return 1
 }
 
 func (t *YearType) DefaultObjMeta() *ObjectMeta {
-	// TODO implement me
-	panic("implement me")
+	return NewObjectMeta(t, csLevelNumeric, csTypeBinary, 10)
 }
 
 func (t *YearType) Value() ObjTypeValue {
@@ -881,51 +779,43 @@ type VarcharType struct {
 }
 
 func (t *VarcharType) Encode(buf []byte, value interface{}) {
-	// TODO implement me
-	panic("implement me")
+	EncodeText(buf, value)
 }
 
 func (t *VarcharType) Decode(buffer *bytes.Buffer, csType CollationType) interface{} {
-	// TODO implement me
-	panic("implement me")
+	return DecodeText(buffer, csType)
 }
 
-func (t *VarcharType) EncodedSize() int {
-	// TODO implement me
-	panic("implement me")
+func (t *VarcharType) EncodedSize(value interface{}) int {
+	return EncodedTextSize(value)
 }
 
 func (t *VarcharType) DefaultObjMeta() *ObjectMeta {
-	// TODO implement me
-	panic("implement me")
+	return NewObjectMeta(t, csLevelExplicit, csTypeUtf8mb4GeneralCi, 10)
 }
 
 func (t *VarcharType) Value() ObjTypeValue {
 	return t.value
 }
 
-type CharType struct {
+type CharType struct { // TODO not support
 	value ObjTypeValue
 }
 
 func (t *CharType) Encode(buf []byte, value interface{}) {
-	// TODO implement me
-	panic("implement me")
+	EncodeText(buf, value)
 }
 
 func (t *CharType) Decode(buffer *bytes.Buffer, csType CollationType) interface{} {
-	// TODO implement me
-	panic("implement me")
+	return DecodeText(buffer, csType)
 }
 
-func (t *CharType) EncodedSize() int {
-	// TODO implement me
-	panic("implement me")
+func (t *CharType) EncodedSize(value interface{}) int {
+	return EncodedTextSize(value)
 }
 
 func (t *CharType) DefaultObjMeta() *ObjectMeta {
-	// TODO implement me
-	panic("implement me")
+	return NewObjectMeta(t, csLevelExplicit, csTypeUtf8mb4GeneralCi, 10)
 }
 
 func (t *CharType) Value() ObjTypeValue {
@@ -937,23 +827,19 @@ type HexStringType struct {
 }
 
 func (t *HexStringType) Encode(buf []byte, value interface{}) {
-	// TODO implement me
-	panic("implement me")
+	return
 }
 
 func (t *HexStringType) Decode(buffer *bytes.Buffer, csType CollationType) interface{} {
-	// TODO implement me
-	panic("implement me")
+	return nil
 }
 
-func (t *HexStringType) EncodedSize() int {
-	// TODO implement me
-	panic("implement me")
+func (t *HexStringType) EncodedSize(value interface{}) int {
+	return 0
 }
 
 func (t *HexStringType) DefaultObjMeta() *ObjectMeta {
-	// TODO implement me
-	panic("implement me")
+	return NewObjectMeta(t, csLevelNumeric, csTypeBinary, 10)
 }
 
 func (t *HexStringType) Value() ObjTypeValue {
@@ -965,23 +851,19 @@ type ExtendType struct {
 }
 
 func (t *ExtendType) Encode(buf []byte, value interface{}) {
-	// TODO implement me
-	panic("implement me")
+	util.EncodeVi64(buf, value.(int64))
 }
 
 func (t *ExtendType) Decode(buffer *bytes.Buffer, csType CollationType) interface{} {
-	// TODO implement me
-	panic("implement me")
+	return util.DecodeVi64(buffer)
 }
 
-func (t *ExtendType) EncodedSize() int {
-	// TODO implement me
-	panic("implement me")
+func (t *ExtendType) EncodedSize(value interface{}) int {
+	return util.NeedLengthByVi64(value.(int64))
 }
 
 func (t *ExtendType) DefaultObjMeta() *ObjectMeta {
-	// TODO implement me
-	panic("implement me")
+	return NewObjectMeta(t, csLevelNumeric, csTypeBinary, 10)
 }
 
 func (t *ExtendType) Value() ObjTypeValue {
@@ -993,23 +875,19 @@ type UnknownType struct {
 }
 
 func (t *UnknownType) Encode(buf []byte, value interface{}) {
-	// TODO implement me
-	panic("implement me")
+	return
 }
 
 func (t *UnknownType) Decode(buffer *bytes.Buffer, csType CollationType) interface{} {
-	// TODO implement me
-	panic("implement me")
+	return nil
 }
 
-func (t *UnknownType) EncodedSize() int {
-	// TODO implement me
-	panic("implement me")
+func (t *UnknownType) EncodedSize(value interface{}) int {
+	return 0
 }
 
 func (t *UnknownType) DefaultObjMeta() *ObjectMeta {
-	// TODO implement me
-	panic("implement me")
+	return NewObjectMeta(t, csLevelNumeric, csTypeBinary, 10)
 }
 
 func (t *UnknownType) Value() ObjTypeValue {
@@ -1021,23 +899,19 @@ type TinyTextType struct {
 }
 
 func (t *TinyTextType) Encode(buf []byte, value interface{}) {
-	// TODO implement me
-	panic("implement me")
+	EncodeText(buf, value)
 }
 
 func (t *TinyTextType) Decode(buffer *bytes.Buffer, csType CollationType) interface{} {
-	// TODO implement me
-	panic("implement me")
+	return DecodeText(buffer, csType)
 }
 
-func (t *TinyTextType) EncodedSize() int {
-	// TODO implement me
-	panic("implement me")
+func (t *TinyTextType) EncodedSize(value interface{}) int {
+	return EncodedTextSize(value)
 }
 
 func (t *TinyTextType) DefaultObjMeta() *ObjectMeta {
-	// TODO implement me
-	panic("implement me")
+	return NewObjectMeta(t, csLevelNumeric, csTypeBinary, 10)
 }
 
 func (t *TinyTextType) Value() ObjTypeValue {
@@ -1049,23 +923,19 @@ type TextType struct {
 }
 
 func (t *TextType) Encode(buf []byte, value interface{}) {
-	// TODO implement me
-	panic("implement me")
+	EncodeText(buf, value)
 }
 
 func (t *TextType) Decode(buffer *bytes.Buffer, csType CollationType) interface{} {
-	// TODO implement me
-	panic("implement me")
+	return DecodeText(buffer, csType)
 }
 
-func (t *TextType) EncodedSize() int {
-	// TODO implement me
-	panic("implement me")
+func (t *TextType) EncodedSize(value interface{}) int {
+	return EncodedTextSize(value)
 }
 
 func (t *TextType) DefaultObjMeta() *ObjectMeta {
-	// TODO implement me
-	panic("implement me")
+	return NewObjectMeta(t, csLevelNumeric, csTypeBinary, 10)
 }
 
 func (t *TextType) Value() ObjTypeValue {
@@ -1077,23 +947,19 @@ type MediumTextType struct {
 }
 
 func (t *MediumTextType) Encode(buf []byte, value interface{}) {
-	// TODO implement me
-	panic("implement me")
+	EncodeText(buf, value)
 }
 
 func (t *MediumTextType) Decode(buffer *bytes.Buffer, csType CollationType) interface{} {
-	// TODO implement me
-	panic("implement me")
+	return DecodeText(buffer, csType)
 }
 
-func (t *MediumTextType) EncodedSize() int {
-	// TODO implement me
-	panic("implement me")
+func (t *MediumTextType) EncodedSize(value interface{}) int {
+	return EncodedTextSize(value)
 }
 
 func (t *MediumTextType) DefaultObjMeta() *ObjectMeta {
-	// TODO implement me
-	panic("implement me")
+	return NewObjectMeta(t, csLevelNumeric, csTypeBinary, 10)
 }
 
 func (t *MediumTextType) Value() ObjTypeValue {
@@ -1105,53 +971,77 @@ type LongTextType struct {
 }
 
 func (t *LongTextType) Encode(buf []byte, value interface{}) {
-	// TODO implement me
-	panic("implement me")
+	EncodeText(buf, value)
 }
 
 func (t *LongTextType) Decode(buffer *bytes.Buffer, csType CollationType) interface{} {
-	// TODO implement me
-	panic("implement me")
+	return DecodeText(buffer, csType)
 }
 
-func (t *LongTextType) EncodedSize() int {
-	// TODO implement me
-	panic("implement me")
+func (t *LongTextType) EncodedSize(value interface{}) int {
+	return EncodedTextSize(value)
 }
 
 func (t *LongTextType) DefaultObjMeta() *ObjectMeta {
-	// TODO implement me
-	panic("implement me")
+	return NewObjectMeta(t, csLevelNumeric, csTypeBinary, 10)
 }
 
 func (t *LongTextType) Value() ObjTypeValue {
 	return t.value
 }
 
-type BitType struct {
+type BitType struct { // TODO not support
 	value ObjTypeValue
 }
 
 func (t *BitType) Encode(buf []byte, value interface{}) {
-	// TODO implement me
-	panic("implement me")
+	util.EncodeVi64(buf, value.(int64))
 }
 
 func (t *BitType) Decode(buffer *bytes.Buffer, csType CollationType) interface{} {
-	// TODO implement me
-	panic("implement me")
+	return util.DecodeVi64(buffer)
 }
 
-func (t *BitType) EncodedSize() int {
-	// TODO implement me
-	panic("implement me")
+func (t *BitType) EncodedSize(value interface{}) int {
+	return util.NeedLengthByVi64(value.(int64))
 }
 
 func (t *BitType) DefaultObjMeta() *ObjectMeta {
-	// TODO implement me
-	panic("implement me")
+	return NewObjectMeta(t, csLevelNumeric, csTypeBinary, 10)
 }
 
 func (t *BitType) Value() ObjTypeValue {
 	return t.value
+}
+
+func EncodeText(buf []byte, value interface{}) {
+	switch v := value.(type) {
+	case string:
+		util.EncodeVString(buf, v)
+	case []byte:
+		util.EncodeBytesString(buf, v)
+	default:
+		// todo do nothing
+		return
+	}
+}
+
+func DecodeText(buffer *bytes.Buffer, csType CollationType) interface{} {
+	if csTypeBinary == csType {
+		return util.DecodeBytesString(buffer)
+	} else {
+		return util.DecodeVString(buffer)
+	}
+}
+
+func EncodedTextSize(value interface{}) int {
+	switch v := value.(type) {
+	case string:
+		return util.NeedLengthByVString(v)
+	case []byte:
+		return util.NeedLengthByBytesString(v)
+	default:
+		// todo do nothing
+		return 0
+	}
 }
