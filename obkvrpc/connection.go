@@ -45,7 +45,7 @@ type Connection struct {
 	uuid           uuid.UUID
 	traceIdCounter atomic.Uint32
 
-	credential string
+	credential []byte
 	tenantId   uint64
 }
 
