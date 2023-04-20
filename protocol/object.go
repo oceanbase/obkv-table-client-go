@@ -34,3 +34,7 @@ func (o *Object) Decode(buffer *bytes.Buffer) {
 	// TODO implement me
 	panic("implement me")
 }
+
+func (o *Object) EncodedLength() int {
+	return o.meta.EncodedLength() + o.meta.ObjType().EncodedLength(o.value)
+}

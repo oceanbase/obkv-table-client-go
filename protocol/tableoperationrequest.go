@@ -111,14 +111,32 @@ func (r *TableOperationRequest) PCode() TablePacketCode {
 	return TableApiExecute
 }
 
-func (r *TableOperationRequest) PayloadLen() int64 {
-	// TODO implement me
-	panic("implement me")
+func (r *TableOperationRequest) PayloadLen() int {
+	return r.PayloadContentLen() + r.UniVersionHeader.UniVersionHeaderLen() // Do not change the order
 }
 
-func (r *TableOperationRequest) PayloadContentLen() int64 {
-	// TODO implement me
-	panic("implement me")
+func (r *TableOperationRequest) PayloadContentLen() int {
+	totalLen := 0
+	if globalVersion >= 4 { // todo version
+		totalLen =
+			util.EncodedLengthByBytesString(r.credential) +
+				util.EncodedLengthByVString(r.tableName) +
+				util.EncodedLengthByVi64(r.tableId) +
+				8 + // todo partitionId
+				5 + // entityType consistencyLevel returnRowKey returnAffectedEntity returnAffectedRows
+				r.tableOperation.PayloadLen()
+	} else {
+		totalLen =
+			util.EncodedLengthByBytesString(r.credential) +
+				util.EncodedLengthByVString(r.tableName) +
+				util.EncodedLengthByVi64(r.tableId) +
+				util.EncodedLengthByVi64(r.partitionId) + // todo partitionId
+				5 + // entityType consistencyLevel returnRowKey returnAffectedEntity returnAffectedRows
+				r.tableOperation.PayloadLen()
+	}
+
+	r.UniVersionHeader.SetContentLength(totalLen)
+	return r.UniVersionHeader.ContentLength()
 }
 
 func (r *TableOperationRequest) Credential() []byte {
@@ -138,7 +156,11 @@ func (r *TableOperationRequest) Encode(buffer *bytes.Buffer) {
 
 	util.EncodeVi64(buffer, r.tableId)
 
-	util.EncodeVi64(buffer, r.partitionId)
+	if globalVersion >= 4 { // todo version
+		util.PutUint64(buffer, uint64(r.partitionId))
+	} else {
+		util.EncodeVi64(buffer, r.partitionId)
+	}
 
 	util.PutUint8(buffer, uint8(r.entityType))
 

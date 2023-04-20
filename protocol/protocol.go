@@ -11,9 +11,9 @@ type Payload interface {
 
 	PCode() TablePacketCode
 
-	PayloadLen() int64
+	PayloadLen() int
 
-	PayloadContentLen() int64
+	PayloadContentLen() int
 
 	TenantId() uint64
 	SetTenantId(tenantId uint64)

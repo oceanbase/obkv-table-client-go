@@ -167,27 +167,24 @@ func (r *LoginRequest) PCode() TablePacketCode {
 	return TableApiLogin
 }
 
-func (r *LoginRequest) PayloadLen() int64 {
-	return r.PayloadContentLen() + int64(r.UniVersionHeader.UniVersionHeaderLen()) // Do not change the order
+func (r *LoginRequest) PayloadLen() int {
+	return r.PayloadContentLen() + r.UniVersionHeader.UniVersionHeaderLen() // Do not change the order
 }
 
-func (r *LoginRequest) PayloadContentLen() int64 {
-	r.UniVersionHeader.calculateLengthOnce.Do(func() {
-		totalLen := 0
-		totalLen += 4 // authMethod clientType clientVersion reversed1
-		totalLen = totalLen +
-			util.EncodedLengthByVi32(r.clientCapabilities) +
-			util.EncodedLengthByVi32(r.maxPacketSize) +
-			util.EncodedLengthByVi32(r.reversed2) +
-			util.EncodedLengthByVi64(r.reversed3) +
-			util.EncodedLengthByVString(r.tenantName) +
-			util.EncodedLengthByVString(r.userName) +
-			util.EncodedLengthByVString(r.passSecret) +
-			util.EncodedLengthByVString(r.passScramble) +
-			util.EncodedLengthByVString(r.databaseName) +
-			util.EncodedLengthByVi64(r.ttlUs)
-		r.UniVersionHeader.SetContentLength(int64(totalLen)) // Set on first acquisition
-	})
+func (r *LoginRequest) PayloadContentLen() int {
+	totalLen := 4 + // authMethod clientType clientVersion reversed1
+		util.EncodedLengthByVi32(r.clientCapabilities) +
+		util.EncodedLengthByVi32(r.maxPacketSize) +
+		util.EncodedLengthByVi32(r.reversed2) +
+		util.EncodedLengthByVi64(r.reversed3) +
+		util.EncodedLengthByVString(r.tenantName) +
+		util.EncodedLengthByVString(r.userName) +
+		util.EncodedLengthByVString(r.passSecret) +
+		util.EncodedLengthByVString(r.passScramble) +
+		util.EncodedLengthByVString(r.databaseName) +
+		util.EncodedLengthByVi64(r.ttlUs)
+
+	r.UniVersionHeader.SetContentLength(totalLen) // Set on first acquisition
 	return r.UniVersionHeader.ContentLength()
 }
 

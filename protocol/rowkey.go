@@ -30,3 +30,13 @@ func (k *RowKey) Decode(buffer *bytes.Buffer) {
 	// TODO implement me
 	panic("implement me")
 }
+
+func (k *RowKey) EncodedLength() int {
+	totalLen := util.EncodedLengthByVi64(int64(len(k.keys)))
+
+	for _, key := range k.keys {
+		totalLen += key.EncodedLength()
+	}
+
+	return totalLen
+}

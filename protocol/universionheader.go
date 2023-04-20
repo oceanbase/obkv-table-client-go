@@ -2,7 +2,6 @@ package protocol
 
 import (
 	"bytes"
-	"sync"
 	"time"
 
 	"github.com/oceanbase/obkv-table-client-go/util"
@@ -11,37 +10,34 @@ import (
 // UniVersionHeader ...
 type UniVersionHeader struct {
 	version       int64
-	contentLength int64
+	contentLength int
 
 	flag      uint16
 	tenantId  uint64
 	sessionId uint64
 	timeout   time.Duration
-
-	calculateLengthOnce sync.Once
 }
 
 func NewUniVersionHeader() *UniVersionHeader {
 	return &UniVersionHeader{
-		version:             1,
-		contentLength:       0,
-		flag:                7,
-		tenantId:            1,
-		sessionId:           0,
-		timeout:             10 * 1000 * time.Millisecond,
-		calculateLengthOnce: sync.Once{},
+		version:       1,
+		contentLength: 0,
+		flag:          7,
+		tenantId:      1,
+		sessionId:     0,
+		timeout:       10 * 1000 * time.Millisecond,
 	}
 }
 
 func (h *UniVersionHeader) UniVersionHeaderLen() int {
-	return util.EncodedLengthByVi64(h.version) + util.EncodedLengthByVi64(h.contentLength)
+	return util.EncodedLengthByVi64(h.version) + util.EncodedLengthByVi64(int64(h.contentLength))
 }
 
-func (h *UniVersionHeader) ContentLength() int64 {
+func (h *UniVersionHeader) ContentLength() int {
 	return h.contentLength
 }
 
-func (h *UniVersionHeader) SetContentLength(contentLength int64) {
+func (h *UniVersionHeader) SetContentLength(contentLength int) {
 	h.contentLength = contentLength
 }
 
@@ -99,10 +95,10 @@ func (h *UniVersionHeader) SetCredential(credential []byte) {
 
 func (h *UniVersionHeader) Encode(buffer *bytes.Buffer) {
 	util.EncodeVi64(buffer, h.version)
-	util.EncodeVi64(buffer, h.contentLength) // payloadLen
+	util.EncodeVi64(buffer, int64(h.contentLength)) // payloadLen
 }
 
 func (h *UniVersionHeader) Decode(buffer *bytes.Buffer) {
 	h.version = util.DecodeVi64(buffer)
-	h.contentLength = util.DecodeVi64(buffer) // payloadLen
+	h.contentLength = int(util.DecodeVi64(buffer)) // payloadLen useless right now
 }

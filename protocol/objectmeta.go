@@ -64,6 +64,10 @@ func (m *ObjectMeta) Decode(buffer *bytes.Buffer) {
 	panic("implement me")
 }
 
+func (m *ObjectMeta) EncodedLength() int {
+	return 4 // objType csLevel csType scale
+}
+
 type ObjType interface {
 	Encode(buffer *bytes.Buffer, value interface{})
 	Decode(buffer *bytes.Buffer, csType CollationType) interface{}

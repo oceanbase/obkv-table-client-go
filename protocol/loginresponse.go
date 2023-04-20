@@ -85,12 +85,12 @@ func (r *LoginResponse) PCode() TablePacketCode {
 	return TableApiLogin
 }
 
-func (r *LoginResponse) PayloadLen() int64 {
+func (r *LoginResponse) PayloadLen() int {
 	// TODO implement me
 	panic("implement me")
 }
 
-func (r *LoginResponse) PayloadContentLen() int64 {
+func (r *LoginResponse) PayloadContentLen() int {
 	// TODO implement me
 	panic("implement me")
 }

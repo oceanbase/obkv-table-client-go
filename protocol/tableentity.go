@@ -28,14 +28,22 @@ func (e *TableEntity) SetProperties(properties map[string]*Object) {
 	e.properties = properties
 }
 
-func (e *TableEntity) PayloadLen() int64 {
-	// TODO implement me
-	panic("implement me")
+func (e *TableEntity) PayloadLen() int {
+	return e.PayloadContentLen() + e.UniVersionHeader.UniVersionHeaderLen() // Do not change the order
 }
 
-func (e *TableEntity) PayloadContentLen() int64 {
-	// TODO implement me
-	panic("implement me")
+func (e *TableEntity) PayloadContentLen() int {
+	totalLen := e.rowKey.EncodedLength()
+
+	totalLen += util.EncodedLengthByVi64(int64(len(e.properties)))
+
+	for key, value := range e.properties {
+		totalLen += util.EncodedLengthByVString(key)
+		totalLen += value.EncodedLength()
+	}
+
+	e.UniVersionHeader.SetContentLength(totalLen)
+	return e.UniVersionHeader.ContentLength()
 }
 
 func (e *TableEntity) Encode(buffer *bytes.Buffer) {

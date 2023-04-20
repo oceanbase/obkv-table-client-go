@@ -41,14 +41,16 @@ func (o *TableOperation) SetEntity(entity *TableEntity) {
 	o.entity = entity
 }
 
-func (o *TableOperation) PayloadLen() int64 {
-	// TODO implement me
-	panic("implement me")
+func (o *TableOperation) PayloadLen() int {
+	return o.PayloadContentLen() + o.UniVersionHeader.UniVersionHeaderLen() // Do not change the order
 }
 
-func (o *TableOperation) PayloadContentLen() int64 {
-	// TODO implement me
-	panic("implement me")
+func (o *TableOperation) PayloadContentLen() int {
+	totalLen := 1 + // opType
+		o.entity.PayloadLen()
+
+	o.UniVersionHeader.SetContentLength(totalLen)
+	return o.UniVersionHeader.ContentLength()
 }
 
 func (o *TableOperation) Encode(buffer *bytes.Buffer) {

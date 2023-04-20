@@ -309,7 +309,7 @@ func (h *RpcHeader) SetClusterNameHash(clusterNameHash int64) {
 func (h *RpcHeader) Encode() []byte {
 	var rpcHeaderBuf []byte
 	// TODO Maybe it would be better to use the version number to judge
-	if globalVersion >= 4 { // v4
+	if globalVersion >= 4 { // todo version
 		rpcHeaderBuf = make([]byte, encodeSizeV4)
 		h.hLen = encodeSizeV4
 	} else { // v3
@@ -340,7 +340,7 @@ func (h *RpcHeader) Encode() []byte {
 	util.PutUint32(rpcHeaderBuffer, uint32(h.compressType))
 	util.PutUint32(rpcHeaderBuffer, uint32(h.originalLen))
 
-	if globalVersion >= 4 {
+	if globalVersion >= 4 { // todo version
 		util.PutUint64(rpcHeaderBuffer, uint64(h.srcClusterId))
 		util.PutUint64(rpcHeaderBuffer, uint64(h.unisVersion))
 		util.PutUint32(rpcHeaderBuffer, uint32(h.requestLevel))
