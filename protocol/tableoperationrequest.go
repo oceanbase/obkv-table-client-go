@@ -2,6 +2,8 @@ package protocol
 
 import (
 	"bytes"
+
+	"github.com/oceanbase/obkv-table-client-go/util"
 )
 
 type TableOperationRequest struct {
@@ -17,6 +19,21 @@ type TableOperationRequest struct {
 	returnAffectedEntity bool
 	returnAffectedRows   bool
 }
+
+type TableEntityType uint8
+
+const (
+	Dynamic TableEntityType = iota
+	KV
+	HKV
+)
+
+type TableConsistencyLevel uint8
+
+const (
+	Strong TableConsistencyLevel = iota
+	Eventual
+)
 
 func (r *TableOperationRequest) TableName() string {
 	return r.tableName
@@ -90,21 +107,6 @@ func (r *TableOperationRequest) SetReturnAffectedRows(returnAffectedRows bool) {
 	r.returnAffectedRows = returnAffectedRows
 }
 
-type TableEntityType int8
-
-const (
-	Dynamic TableEntityType = iota
-	KV
-	HKV
-)
-
-type TableConsistencyLevel int8
-
-const (
-	Strong TableConsistencyLevel = iota
-	Eventual
-)
-
 func (r *TableOperationRequest) PCode() TablePacketCode {
 	return TableApiExecute
 }
@@ -136,36 +138,27 @@ func (r *TableOperationRequest) SetCredential(credential []byte) {
 }
 
 func (r *TableOperationRequest) Encode(buffer *bytes.Buffer) {
-	// var index = 0
-	//
-	// payloadLength := r.PayloadLen()
-	// requestBuf := make([]byte, payloadLength)
-	//
-	// headerLen := r.UniVersionHeader.UniVersionHeaderLen()
-	// r.UniVersionHeader.Encode(requestBuf[:headerLen])
-	// index += headerLen
-	//
-	// needLength := util.NeedLengthByBytesString(r.credential)
-	// util.EncodeBytesString(requestBuf[index:index+needLength], r.credential)
-	// index += needLength
-	//
-	// needLength = util.NeedLengthByVString(r.tableName)
-	// util.EncodeVString(requestBuf[index:index+needLength], r.tableName)
-	// index += needLength
-	//
-	// needLength = util.NeedLengthByVi64(r.tableId)
-	// util.EncodeVi64(requestBuf[index:index+needLength], r.tableId)
-	// index += needLength
-	//
-	// needLength = util.NeedLengthByVi64(r.partitionId)
-	// util.EncodeVi64(requestBuf[index:index+needLength], r.partitionId)
-	// index += needLength
-	//
-	// util.PutUint8(requestBuf[index:index+1], uint8(r.entityType))
-	// index++
+	r.UniVersionHeader.Encode(buffer)
 
-	// tableOperationPayloadLen := r.tableOperation.PayloadLen()
-	// r.tableOperation.Encode()
+	util.EncodeBytesString(buffer, r.credential)
+
+	util.EncodeVString(buffer, r.tableName)
+
+	util.EncodeVi64(buffer, r.tableId)
+
+	util.EncodeVi64(buffer, r.partitionId)
+
+	util.PutUint8(buffer, uint8(r.entityType))
+
+	r.tableOperation.Encode(buffer)
+
+	util.PutUint8(buffer, uint8(r.consistencyLevel))
+
+	util.PutUint8(buffer, util.BoolToByte(r.returnRowKey))
+
+	util.PutUint8(buffer, util.BoolToByte(r.returnAffectedEntity))
+
+	util.PutUint8(buffer, util.BoolToByte(r.returnAffectedRows))
 }
 
 func (r *TableOperationRequest) Decode(buffer *bytes.Buffer) {
