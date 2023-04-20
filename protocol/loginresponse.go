@@ -95,13 +95,6 @@ func (r *LoginResponse) PayloadContentLen() int64 {
 	panic("implement me")
 }
 
-func (r *LoginResponse) SessionId() uint64 {
-	return 0
-}
-
-func (r *LoginResponse) SetSessionId(sessionId uint64) {
-}
-
 func (r *LoginResponse) Credential() []byte {
 	return r.credential
 }

@@ -28,7 +28,7 @@ type Payload interface {
 	SetVersion(version int64)
 
 	Timeout() time.Duration
-	SetTimeout(duration time.Duration)
+	SetTimeout(timeout time.Duration)
 
 	Credential() []byte
 	SetCredential(credential []byte)

@@ -28,37 +28,12 @@ func (e *TableEntity) SetProperties(properties map[string]*Object) {
 	e.properties = properties
 }
 
-func (e *TableEntity) PCode() TablePacketCode {
-	// TODO implement me
-	panic("implement me")
-}
-
 func (e *TableEntity) PayloadLen() int64 {
 	// TODO implement me
 	panic("implement me")
 }
 
 func (e *TableEntity) PayloadContentLen() int64 {
-	// TODO implement me
-	panic("implement me")
-}
-
-func (e *TableEntity) SessionId() uint64 {
-	// TODO implement me
-	panic("implement me")
-}
-
-func (e *TableEntity) SetSessionId(sessionId uint64) {
-	// TODO implement me
-	panic("implement me")
-}
-
-func (e *TableEntity) Credential() []byte {
-	// TODO implement me
-	panic("implement me")
-}
-
-func (e *TableEntity) SetCredential(credential []byte) {
 	// TODO implement me
 	panic("implement me")
 }

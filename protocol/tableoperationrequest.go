@@ -121,14 +121,6 @@ func (r *TableOperationRequest) PayloadContentLen() int64 {
 	panic("implement me")
 }
 
-func (r *TableOperationRequest) SessionId() uint64 {
-	return 0
-}
-
-func (r *TableOperationRequest) SetSessionId(sessionId uint64) {
-	return
-}
-
 func (r *TableOperationRequest) Credential() []byte {
 	return r.credential
 }

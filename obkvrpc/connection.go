@@ -242,10 +242,10 @@ func (c *Connection) encodePayload(payload protocol.Payload) []byte {
 func (c *Connection) encodeRpcHeader(payload protocol.Payload, payloadBuf []byte) []byte {
 	rpcHeader := protocol.NewRpcHeader()
 	rpcHeader.SetPCode(payload.PCode().Value())
-	rpcHeader.SetTimeout(payload.Timeout())
+	rpcHeader.SetFlag(payload.Flag())
 	rpcHeader.SetTenantId(payload.TenantId())
 	rpcHeader.SetSessionId(payload.SessionId())
-	rpcHeader.SetFlag(payload.Flag())
+	rpcHeader.SetTimeout(payload.Timeout())
 	rpcHeader.SetTraceId0(uint64(c.uuid.ID()))
 	rpcHeader.SetTraceId1(uint64(c.traceIdCounter.Add(1)))
 	// TODO To be added

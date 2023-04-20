@@ -41,37 +41,12 @@ func (o *TableOperation) SetEntity(entity *TableEntity) {
 	o.entity = entity
 }
 
-func (o *TableOperation) PCode() TablePacketCode {
-	// TODO implement me
-	panic("implement me")
-}
-
 func (o *TableOperation) PayloadLen() int64 {
 	// TODO implement me
 	panic("implement me")
 }
 
 func (o *TableOperation) PayloadContentLen() int64 {
-	// TODO implement me
-	panic("implement me")
-}
-
-func (o *TableOperation) SessionId() uint64 {
-	// TODO implement me
-	panic("implement me")
-}
-
-func (o *TableOperation) SetSessionId(sessionId uint64) {
-	// TODO implement me
-	panic("implement me")
-}
-
-func (o *TableOperation) Credential() []byte {
-	// TODO implement me
-	panic("implement me")
-}
-
-func (o *TableOperation) SetCredential(credential []byte) {
 	// TODO implement me
 	panic("implement me")
 }

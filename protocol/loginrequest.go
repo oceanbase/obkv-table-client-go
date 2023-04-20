@@ -191,22 +191,6 @@ func (r *LoginRequest) PayloadContentLen() int64 {
 	return r.UniVersionHeader.ContentLength()
 }
 
-func (r *LoginRequest) SessionId() uint64 {
-	return 0
-}
-
-func (r *LoginRequest) SetSessionId(sessionId uint64) {
-	return
-}
-
-func (r *LoginRequest) Credential() []byte {
-	return nil
-}
-
-func (r *LoginRequest) SetCredential(credential []byte) {
-	return
-}
-
 func (r *LoginRequest) Encode(buffer *bytes.Buffer) {
 	r.UniVersionHeader.Encode(buffer)
 
