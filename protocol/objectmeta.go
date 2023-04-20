@@ -21,9 +21,9 @@ func NewObjectMeta(objType ObjType, csLevel CollationLevel, csType CollationType
 }
 
 type ObjType interface {
-	Encode(buf []byte, value interface{})
+	Encode(buffer *bytes.Buffer, value interface{})
 	Decode(buffer *bytes.Buffer, csType CollationType) interface{}
-	EncodedSize(value interface{}) int
+	EncodedLength(value interface{}) int
 	DefaultObjMeta() *ObjectMeta
 	Value() ObjTypeValue
 }
@@ -241,7 +241,7 @@ type NullType struct {
 	value ObjTypeValue
 }
 
-func (t *NullType) Encode(buf []byte, value interface{}) {
+func (t *NullType) Encode(buffer *bytes.Buffer, value interface{}) {
 	return
 }
 
@@ -249,7 +249,7 @@ func (t *NullType) Decode(buffer *bytes.Buffer, csType CollationType) interface{
 	return nil
 }
 
-func (t *NullType) EncodedSize(value interface{}) int {
+func (t *NullType) EncodedLength(value interface{}) int {
 	return 0
 }
 
@@ -265,24 +265,24 @@ type TinyIntType struct {
 	value ObjTypeValue
 }
 
-func (t *TinyIntType) Encode(buf []byte, value interface{}) {
+func (t *TinyIntType) Encode(buffer *bytes.Buffer, value interface{}) {
 	switch v := value.(type) {
 	case bool:
 		if v {
-			util.PutUint8(buf, 1)
+			util.PutUint8(buffer, 1)
 		} else {
-			util.PutUint8(buf, 0)
+			util.PutUint8(buffer, 0)
 		}
 	case int8:
-		util.PutUint8(buf, uint8(v))
+		util.PutUint8(buffer, uint8(v))
 	}
 }
 
 func (t *TinyIntType) Decode(buffer *bytes.Buffer, csType CollationType) interface{} {
-	return util.Uint8(buffer.Next(1))
+	return util.Uint8(buffer)
 }
 
-func (t *TinyIntType) EncodedSize(value interface{}) int {
+func (t *TinyIntType) EncodedLength(value interface{}) int {
 	return 1
 }
 
@@ -298,16 +298,16 @@ type SmallIntType struct {
 	value ObjTypeValue
 }
 
-func (t *SmallIntType) Encode(buf []byte, value interface{}) {
-	util.EncodeVi32(buf, int32(value.(int16)))
+func (t *SmallIntType) Encode(buffer *bytes.Buffer, value interface{}) {
+	util.EncodeVi32(buffer, int32(value.(int16)))
 }
 
 func (t *SmallIntType) Decode(buffer *bytes.Buffer, csType CollationType) interface{} {
 	return util.DecodeVi32(buffer)
 }
 
-func (t *SmallIntType) EncodedSize(value interface{}) int {
-	return util.NeedLengthByVi32(int32(value.(int16)))
+func (t *SmallIntType) EncodedLength(value interface{}) int {
+	return util.EncodedLengthByVi32(int32(value.(int16)))
 }
 
 func (t *SmallIntType) DefaultObjMeta() *ObjectMeta {
@@ -322,16 +322,16 @@ type MediumIntType struct {
 	value ObjTypeValue
 }
 
-func (t *MediumIntType) Encode(buf []byte, value interface{}) {
-	util.EncodeVi32(buf, value.(int32))
+func (t *MediumIntType) Encode(buffer *bytes.Buffer, value interface{}) {
+	util.EncodeVi32(buffer, value.(int32))
 }
 
 func (t *MediumIntType) Decode(buffer *bytes.Buffer, csType CollationType) interface{} {
 	return util.DecodeVi32(buffer)
 }
 
-func (t *MediumIntType) EncodedSize(value interface{}) int {
-	return util.NeedLengthByVi32(value.(int32))
+func (t *MediumIntType) EncodedLength(value interface{}) int {
+	return util.EncodedLengthByVi32(value.(int32))
 }
 
 func (t *MediumIntType) DefaultObjMeta() *ObjectMeta {
@@ -346,16 +346,16 @@ type Int32Type struct {
 	value ObjTypeValue
 }
 
-func (t *Int32Type) Encode(buf []byte, value interface{}) {
-	util.EncodeVi32(buf, value.(int32))
+func (t *Int32Type) Encode(buffer *bytes.Buffer, value interface{}) {
+	util.EncodeVi32(buffer, value.(int32))
 }
 
 func (t *Int32Type) Decode(buffer *bytes.Buffer, csType CollationType) interface{} {
 	return util.DecodeVi32(buffer)
 }
 
-func (t *Int32Type) EncodedSize(value interface{}) int {
-	return util.NeedLengthByVi32(value.(int32))
+func (t *Int32Type) EncodedLength(value interface{}) int {
+	return util.EncodedLengthByVi32(value.(int32))
 }
 
 func (t *Int32Type) DefaultObjMeta() *ObjectMeta {
@@ -370,16 +370,16 @@ type Int64Type struct {
 	value ObjTypeValue
 }
 
-func (t *Int64Type) Encode(buf []byte, value interface{}) {
-	util.EncodeVi64(buf, value.(int64))
+func (t *Int64Type) Encode(buffer *bytes.Buffer, value interface{}) {
+	util.EncodeVi64(buffer, value.(int64))
 }
 
 func (t *Int64Type) Decode(buffer *bytes.Buffer, csType CollationType) interface{} {
 	return util.DecodeVi64(buffer)
 }
 
-func (t *Int64Type) EncodedSize(value interface{}) int {
-	return util.NeedLengthByVi64(value.(int64))
+func (t *Int64Type) EncodedLength(value interface{}) int {
+	return util.EncodedLengthByVi64(value.(int64))
 }
 
 func (t *Int64Type) DefaultObjMeta() *ObjectMeta {
@@ -394,15 +394,15 @@ type UTinyIntType struct {
 	value ObjTypeValue
 }
 
-func (t *UTinyIntType) Encode(buf []byte, value interface{}) {
-	util.PutUint8(buf, value.(uint8))
+func (t *UTinyIntType) Encode(buffer *bytes.Buffer, value interface{}) {
+	util.PutUint8(buffer, value.(uint8))
 }
 
 func (t *UTinyIntType) Decode(buffer *bytes.Buffer, csType CollationType) interface{} {
-	return util.Uint8(buffer.Next(1))
+	return util.Uint8(buffer)
 }
 
-func (t *UTinyIntType) EncodedSize(value interface{}) int {
+func (t *UTinyIntType) EncodedLength(value interface{}) int {
 	return 1
 }
 
@@ -418,16 +418,16 @@ type USmallIntType struct { // TODO not support
 	value ObjTypeValue
 }
 
-func (t *USmallIntType) Encode(buf []byte, value interface{}) {
-	util.EncodeVi32(buf, int32(value.(uint16)))
+func (t *USmallIntType) Encode(buffer *bytes.Buffer, value interface{}) {
+	util.EncodeVi32(buffer, int32(value.(uint16)))
 }
 
 func (t *USmallIntType) Decode(buffer *bytes.Buffer, csType CollationType) interface{} {
 	return util.DecodeVi32(buffer)
 }
 
-func (t *USmallIntType) EncodedSize(value interface{}) int {
-	return util.NeedLengthByVi32(int32(value.(uint16)))
+func (t *USmallIntType) EncodedLength(value interface{}) int {
+	return util.EncodedLengthByVi32(int32(value.(uint16)))
 }
 
 func (t *USmallIntType) DefaultObjMeta() *ObjectMeta {
@@ -442,16 +442,16 @@ type UMediumIntType struct { // TODO not support
 	value ObjTypeValue
 }
 
-func (t *UMediumIntType) Encode(buf []byte, value interface{}) {
-	util.EncodeVi32(buf, int32(value.(uint32)))
+func (t *UMediumIntType) Encode(buffer *bytes.Buffer, value interface{}) {
+	util.EncodeVi32(buffer, int32(value.(uint32)))
 }
 
 func (t *UMediumIntType) Decode(buffer *bytes.Buffer, csType CollationType) interface{} {
 	return util.DecodeVi32(buffer)
 }
 
-func (t *UMediumIntType) EncodedSize(value interface{}) int {
-	return util.NeedLengthByVi32(int32(value.(uint32)))
+func (t *UMediumIntType) EncodedLength(value interface{}) int {
+	return util.EncodedLengthByVi32(int32(value.(uint32)))
 }
 
 func (t *UMediumIntType) DefaultObjMeta() *ObjectMeta {
@@ -466,16 +466,16 @@ type UInt32Type struct { // TODO not support
 	value ObjTypeValue
 }
 
-func (t *UInt32Type) Encode(buf []byte, value interface{}) {
-	util.EncodeVi32(buf, int32(value.(uint32)))
+func (t *UInt32Type) Encode(buffer *bytes.Buffer, value interface{}) {
+	util.EncodeVi32(buffer, int32(value.(uint32)))
 }
 
 func (t *UInt32Type) Decode(buffer *bytes.Buffer, csType CollationType) interface{} {
 	return util.DecodeVi32(buffer)
 }
 
-func (t *UInt32Type) EncodedSize(value interface{}) int {
-	return util.NeedLengthByVi32(int32(value.(uint32)))
+func (t *UInt32Type) EncodedLength(value interface{}) int {
+	return util.EncodedLengthByVi32(int32(value.(uint32)))
 }
 
 func (t *UInt32Type) DefaultObjMeta() *ObjectMeta {
@@ -490,16 +490,16 @@ type UInt64Type struct { // TODO not support
 	value ObjTypeValue
 }
 
-func (t *UInt64Type) Encode(buf []byte, value interface{}) {
-	util.EncodeVi64(buf, int64(value.(uint64)))
+func (t *UInt64Type) Encode(buffer *bytes.Buffer, value interface{}) {
+	util.EncodeVi64(buffer, int64(value.(uint64)))
 }
 
 func (t *UInt64Type) Decode(buffer *bytes.Buffer, csType CollationType) interface{} {
 	return util.DecodeVi64(buffer)
 }
 
-func (t *UInt64Type) EncodedSize(value interface{}) int {
-	return util.NeedLengthByVi64(int64(value.(uint64)))
+func (t *UInt64Type) EncodedLength(value interface{}) int {
+	return util.EncodedLengthByVi64(int64(value.(uint64)))
 }
 
 func (t *UInt64Type) DefaultObjMeta() *ObjectMeta {
@@ -514,16 +514,16 @@ type FloatType struct {
 	value ObjTypeValue
 }
 
-func (t *FloatType) Encode(buf []byte, value interface{}) {
-	util.EncodeVf32(buf, value.(float32))
+func (t *FloatType) Encode(buffer *bytes.Buffer, value interface{}) {
+	util.EncodeVf32(buffer, value.(float32))
 }
 
 func (t *FloatType) Decode(buffer *bytes.Buffer, csType CollationType) interface{} {
 	return util.DecodeVf32(buffer)
 }
 
-func (t *FloatType) EncodedSize(value interface{}) int {
-	return util.NeedLengthByVf32(value.(float32))
+func (t *FloatType) EncodedLength(value interface{}) int {
+	return util.EncodedLengthByVf32(value.(float32))
 }
 
 func (t *FloatType) DefaultObjMeta() *ObjectMeta {
@@ -538,16 +538,16 @@ type DoubleType struct {
 	value ObjTypeValue
 }
 
-func (t *DoubleType) Encode(buf []byte, value interface{}) {
-	util.EncodeVf64(buf, value.(float64))
+func (t *DoubleType) Encode(buffer *bytes.Buffer, value interface{}) {
+	util.EncodeVf64(buffer, value.(float64))
 }
 
 func (t *DoubleType) Decode(buffer *bytes.Buffer, csType CollationType) interface{} {
 	return util.DecodeVf64(buffer)
 }
 
-func (t *DoubleType) EncodedSize(value interface{}) int {
-	return util.NeedLengthByVf64(value.(float64))
+func (t *DoubleType) EncodedLength(value interface{}) int {
+	return util.EncodedLengthByVf64(value.(float64))
 }
 
 func (t *DoubleType) DefaultObjMeta() *ObjectMeta {
@@ -562,7 +562,7 @@ type UFloatType struct { // TODO not support
 	value ObjTypeValue
 }
 
-func (t *UFloatType) Encode(buf []byte, value interface{}) {
+func (t *UFloatType) Encode(buffer *bytes.Buffer, value interface{}) {
 	return
 }
 
@@ -570,7 +570,7 @@ func (t *UFloatType) Decode(buffer *bytes.Buffer, csType CollationType) interfac
 	return nil
 }
 
-func (t *UFloatType) EncodedSize(value interface{}) int {
+func (t *UFloatType) EncodedLength(value interface{}) int {
 	return 0
 }
 
@@ -586,7 +586,7 @@ type UDoubleType struct { // TODO not support
 	value ObjTypeValue
 }
 
-func (t *UDoubleType) Encode(buf []byte, value interface{}) {
+func (t *UDoubleType) Encode(buffer *bytes.Buffer, value interface{}) {
 	return
 }
 
@@ -594,7 +594,7 @@ func (t *UDoubleType) Decode(buffer *bytes.Buffer, csType CollationType) interfa
 	return nil
 }
 
-func (t *UDoubleType) EncodedSize(value interface{}) int {
+func (t *UDoubleType) EncodedLength(value interface{}) int {
 	return 0
 }
 
@@ -610,7 +610,7 @@ type NumberType struct { // TODO not support
 	value ObjTypeValue
 }
 
-func (t *NumberType) Encode(buf []byte, value interface{}) {
+func (t *NumberType) Encode(buffer *bytes.Buffer, value interface{}) {
 	return
 }
 
@@ -618,7 +618,7 @@ func (t *NumberType) Decode(buffer *bytes.Buffer, csType CollationType) interfac
 	return nil
 }
 
-func (t *NumberType) EncodedSize(value interface{}) int {
+func (t *NumberType) EncodedLength(value interface{}) int {
 	return 0
 }
 
@@ -634,7 +634,7 @@ type UNumberType struct { // TODO not support
 	value ObjTypeValue
 }
 
-func (t *UNumberType) Encode(buf []byte, value interface{}) {
+func (t *UNumberType) Encode(buffer *bytes.Buffer, value interface{}) {
 	return
 }
 
@@ -642,7 +642,7 @@ func (t *UNumberType) Decode(buffer *bytes.Buffer, csType CollationType) interfa
 	return nil
 }
 
-func (t *UNumberType) EncodedSize(value interface{}) int {
+func (t *UNumberType) EncodedLength(value interface{}) int {
 	return 0
 }
 
@@ -658,16 +658,16 @@ type DateTimeType struct {
 	value ObjTypeValue
 }
 
-func (t *DateTimeType) Encode(buf []byte, value interface{}) {
-	util.EncodeVi64(buf, int64(value.(time.Duration))) // todo
+func (t *DateTimeType) Encode(buffer *bytes.Buffer, value interface{}) {
+	util.EncodeVi64(buffer, int64(value.(time.Duration))) // todo
 }
 
 func (t *DateTimeType) Decode(buffer *bytes.Buffer, csType CollationType) interface{} {
 	return util.DecodeVi64(buffer)
 }
 
-func (t *DateTimeType) EncodedSize(value interface{}) int {
-	return util.NeedLengthByVi64(int64(value.(time.Duration)))
+func (t *DateTimeType) EncodedLength(value interface{}) int {
+	return util.EncodedLengthByVi64(int64(value.(time.Duration)))
 }
 
 func (t *DateTimeType) DefaultObjMeta() *ObjectMeta {
@@ -682,16 +682,16 @@ type TimestampType struct {
 	value ObjTypeValue
 }
 
-func (t *TimestampType) Encode(buf []byte, value interface{}) {
-	util.EncodeVi64(buf, int64(value.(time.Duration))) // todo
+func (t *TimestampType) Encode(buffer *bytes.Buffer, value interface{}) {
+	util.EncodeVi64(buffer, int64(value.(time.Duration))) // todo
 }
 
 func (t *TimestampType) Decode(buffer *bytes.Buffer, csType CollationType) interface{} {
 	return util.DecodeVi64(buffer)
 }
 
-func (t *TimestampType) EncodedSize(value interface{}) int {
-	return util.NeedLengthByVi64(int64(value.(time.Duration)))
+func (t *TimestampType) EncodedLength(value interface{}) int {
+	return util.EncodedLengthByVi64(int64(value.(time.Duration)))
 }
 
 func (t *TimestampType) DefaultObjMeta() *ObjectMeta {
@@ -706,16 +706,16 @@ type DateType struct {
 	value ObjTypeValue
 }
 
-func (t *DateType) Encode(buf []byte, value interface{}) {
-	util.EncodeVi64(buf, int64(value.(time.Duration))) // todo
+func (t *DateType) Encode(buffer *bytes.Buffer, value interface{}) {
+	util.EncodeVi64(buffer, int64(value.(time.Duration))) // todo
 }
 
 func (t *DateType) Decode(buffer *bytes.Buffer, csType CollationType) interface{} {
 	return util.DecodeVi64(buffer)
 }
 
-func (t *DateType) EncodedSize(value interface{}) int {
-	return util.NeedLengthByVi64(int64(value.(time.Duration)))
+func (t *DateType) EncodedLength(value interface{}) int {
+	return util.EncodedLengthByVi64(int64(value.(time.Duration)))
 }
 
 func (t *DateType) DefaultObjMeta() *ObjectMeta {
@@ -730,16 +730,16 @@ type TimeType struct { // TODO not support
 	value ObjTypeValue
 }
 
-func (t *TimeType) Encode(buf []byte, value interface{}) {
-	util.EncodeVi64(buf, int64(value.(time.Duration))) // todo
+func (t *TimeType) Encode(buffer *bytes.Buffer, value interface{}) {
+	util.EncodeVi64(buffer, int64(value.(time.Duration))) // todo
 }
 
 func (t *TimeType) Decode(buffer *bytes.Buffer, csType CollationType) interface{} {
 	return util.DecodeVi64(buffer)
 }
 
-func (t *TimeType) EncodedSize(value interface{}) int {
-	return util.NeedLengthByVi64(int64(value.(time.Duration)))
+func (t *TimeType) EncodedLength(value interface{}) int {
+	return util.EncodedLengthByVi64(int64(value.(time.Duration)))
 }
 
 func (t *TimeType) DefaultObjMeta() *ObjectMeta {
@@ -754,15 +754,15 @@ type YearType struct { // TODO not support
 	value ObjTypeValue
 }
 
-func (t *YearType) Encode(buf []byte, value interface{}) {
-	util.PutUint8(buf, value.(uint8))
+func (t *YearType) Encode(buffer *bytes.Buffer, value interface{}) {
+	util.PutUint8(buffer, value.(uint8))
 }
 
 func (t *YearType) Decode(buffer *bytes.Buffer, csType CollationType) interface{} {
-	return util.Uint8(buffer.Next(1))
+	return util.Uint8(buffer)
 }
 
-func (t *YearType) EncodedSize(value interface{}) int {
+func (t *YearType) EncodedLength(value interface{}) int {
 	return 1
 }
 
@@ -778,16 +778,16 @@ type VarcharType struct {
 	value ObjTypeValue
 }
 
-func (t *VarcharType) Encode(buf []byte, value interface{}) {
-	EncodeText(buf, value)
+func (t *VarcharType) Encode(buffer *bytes.Buffer, value interface{}) {
+	EncodeText(buffer, value)
 }
 
 func (t *VarcharType) Decode(buffer *bytes.Buffer, csType CollationType) interface{} {
 	return DecodeText(buffer, csType)
 }
 
-func (t *VarcharType) EncodedSize(value interface{}) int {
-	return EncodedTextSize(value)
+func (t *VarcharType) EncodedLength(value interface{}) int {
+	return EncodedLengthByText(value)
 }
 
 func (t *VarcharType) DefaultObjMeta() *ObjectMeta {
@@ -802,16 +802,16 @@ type CharType struct { // TODO not support
 	value ObjTypeValue
 }
 
-func (t *CharType) Encode(buf []byte, value interface{}) {
-	EncodeText(buf, value)
+func (t *CharType) Encode(buffer *bytes.Buffer, value interface{}) {
+	EncodeText(buffer, value)
 }
 
 func (t *CharType) Decode(buffer *bytes.Buffer, csType CollationType) interface{} {
 	return DecodeText(buffer, csType)
 }
 
-func (t *CharType) EncodedSize(value interface{}) int {
-	return EncodedTextSize(value)
+func (t *CharType) EncodedLength(value interface{}) int {
+	return EncodedLengthByText(value)
 }
 
 func (t *CharType) DefaultObjMeta() *ObjectMeta {
@@ -826,7 +826,7 @@ type HexStringType struct {
 	value ObjTypeValue
 }
 
-func (t *HexStringType) Encode(buf []byte, value interface{}) {
+func (t *HexStringType) Encode(buffer *bytes.Buffer, value interface{}) {
 	return
 }
 
@@ -834,7 +834,7 @@ func (t *HexStringType) Decode(buffer *bytes.Buffer, csType CollationType) inter
 	return nil
 }
 
-func (t *HexStringType) EncodedSize(value interface{}) int {
+func (t *HexStringType) EncodedLength(value interface{}) int {
 	return 0
 }
 
@@ -850,16 +850,16 @@ type ExtendType struct {
 	value ObjTypeValue
 }
 
-func (t *ExtendType) Encode(buf []byte, value interface{}) {
-	util.EncodeVi64(buf, value.(int64))
+func (t *ExtendType) Encode(buffer *bytes.Buffer, value interface{}) {
+	util.EncodeVi64(buffer, value.(int64))
 }
 
 func (t *ExtendType) Decode(buffer *bytes.Buffer, csType CollationType) interface{} {
 	return util.DecodeVi64(buffer)
 }
 
-func (t *ExtendType) EncodedSize(value interface{}) int {
-	return util.NeedLengthByVi64(value.(int64))
+func (t *ExtendType) EncodedLength(value interface{}) int {
+	return util.EncodedLengthByVi64(value.(int64))
 }
 
 func (t *ExtendType) DefaultObjMeta() *ObjectMeta {
@@ -874,7 +874,7 @@ type UnknownType struct {
 	value ObjTypeValue
 }
 
-func (t *UnknownType) Encode(buf []byte, value interface{}) {
+func (t *UnknownType) Encode(buffer *bytes.Buffer, value interface{}) {
 	return
 }
 
@@ -882,7 +882,7 @@ func (t *UnknownType) Decode(buffer *bytes.Buffer, csType CollationType) interfa
 	return nil
 }
 
-func (t *UnknownType) EncodedSize(value interface{}) int {
+func (t *UnknownType) EncodedLength(value interface{}) int {
 	return 0
 }
 
@@ -898,16 +898,16 @@ type TinyTextType struct {
 	value ObjTypeValue
 }
 
-func (t *TinyTextType) Encode(buf []byte, value interface{}) {
-	EncodeText(buf, value)
+func (t *TinyTextType) Encode(buffer *bytes.Buffer, value interface{}) {
+	EncodeText(buffer, value)
 }
 
 func (t *TinyTextType) Decode(buffer *bytes.Buffer, csType CollationType) interface{} {
 	return DecodeText(buffer, csType)
 }
 
-func (t *TinyTextType) EncodedSize(value interface{}) int {
-	return EncodedTextSize(value)
+func (t *TinyTextType) EncodedLength(value interface{}) int {
+	return EncodedLengthByText(value)
 }
 
 func (t *TinyTextType) DefaultObjMeta() *ObjectMeta {
@@ -922,16 +922,16 @@ type TextType struct {
 	value ObjTypeValue
 }
 
-func (t *TextType) Encode(buf []byte, value interface{}) {
-	EncodeText(buf, value)
+func (t *TextType) Encode(buffer *bytes.Buffer, value interface{}) {
+	EncodeText(buffer, value)
 }
 
 func (t *TextType) Decode(buffer *bytes.Buffer, csType CollationType) interface{} {
 	return DecodeText(buffer, csType)
 }
 
-func (t *TextType) EncodedSize(value interface{}) int {
-	return EncodedTextSize(value)
+func (t *TextType) EncodedLength(value interface{}) int {
+	return EncodedLengthByText(value)
 }
 
 func (t *TextType) DefaultObjMeta() *ObjectMeta {
@@ -946,16 +946,16 @@ type MediumTextType struct {
 	value ObjTypeValue
 }
 
-func (t *MediumTextType) Encode(buf []byte, value interface{}) {
-	EncodeText(buf, value)
+func (t *MediumTextType) Encode(buffer *bytes.Buffer, value interface{}) {
+	EncodeText(buffer, value)
 }
 
 func (t *MediumTextType) Decode(buffer *bytes.Buffer, csType CollationType) interface{} {
 	return DecodeText(buffer, csType)
 }
 
-func (t *MediumTextType) EncodedSize(value interface{}) int {
-	return EncodedTextSize(value)
+func (t *MediumTextType) EncodedLength(value interface{}) int {
+	return EncodedLengthByText(value)
 }
 
 func (t *MediumTextType) DefaultObjMeta() *ObjectMeta {
@@ -970,16 +970,16 @@ type LongTextType struct {
 	value ObjTypeValue
 }
 
-func (t *LongTextType) Encode(buf []byte, value interface{}) {
-	EncodeText(buf, value)
+func (t *LongTextType) Encode(buffer *bytes.Buffer, value interface{}) {
+	EncodeText(buffer, value)
 }
 
 func (t *LongTextType) Decode(buffer *bytes.Buffer, csType CollationType) interface{} {
 	return DecodeText(buffer, csType)
 }
 
-func (t *LongTextType) EncodedSize(value interface{}) int {
-	return EncodedTextSize(value)
+func (t *LongTextType) EncodedLength(value interface{}) int {
+	return EncodedLengthByText(value)
 }
 
 func (t *LongTextType) DefaultObjMeta() *ObjectMeta {
@@ -994,16 +994,16 @@ type BitType struct { // TODO not support
 	value ObjTypeValue
 }
 
-func (t *BitType) Encode(buf []byte, value interface{}) {
-	util.EncodeVi64(buf, value.(int64))
+func (t *BitType) Encode(buffer *bytes.Buffer, value interface{}) {
+	util.EncodeVi64(buffer, value.(int64))
 }
 
 func (t *BitType) Decode(buffer *bytes.Buffer, csType CollationType) interface{} {
 	return util.DecodeVi64(buffer)
 }
 
-func (t *BitType) EncodedSize(value interface{}) int {
-	return util.NeedLengthByVi64(value.(int64))
+func (t *BitType) EncodedLength(value interface{}) int {
+	return util.EncodedLengthByVi64(value.(int64))
 }
 
 func (t *BitType) DefaultObjMeta() *ObjectMeta {
@@ -1014,12 +1014,12 @@ func (t *BitType) Value() ObjTypeValue {
 	return t.value
 }
 
-func EncodeText(buf []byte, value interface{}) {
+func EncodeText(buffer *bytes.Buffer, value interface{}) {
 	switch v := value.(type) {
 	case string:
-		util.EncodeVString(buf, v)
+		util.EncodeVString(buffer, v)
 	case []byte:
-		util.EncodeBytesString(buf, v)
+		util.EncodeBytesString(buffer, v)
 	default:
 		// todo do nothing
 		return
@@ -1034,12 +1034,12 @@ func DecodeText(buffer *bytes.Buffer, csType CollationType) interface{} {
 	}
 }
 
-func EncodedTextSize(value interface{}) int {
+func EncodedLengthByText(value interface{}) int {
 	switch v := value.(type) {
 	case string:
-		return util.NeedLengthByVString(v)
+		return util.EncodedLengthByVString(v)
 	case []byte:
-		return util.NeedLengthByBytesString(v)
+		return util.EncodedLengthByBytesString(v)
 	default:
 		// todo do nothing
 		return 0

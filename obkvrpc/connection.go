@@ -232,7 +232,10 @@ func (c *Connection) Close() {
 }
 
 func (c *Connection) encodePayload(payload protocol.Payload) []byte {
-	payloadBuf := payload.Encode()
+	payloadLen := payload.PayloadLen()
+	payloadBuf := make([]byte, payloadLen)
+	payloadBuffer := bytes.NewBuffer(payloadBuf)
+	payload.Encode(payloadBuffer)
 	return payloadBuf
 }
 

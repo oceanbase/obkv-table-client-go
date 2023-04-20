@@ -2,7 +2,6 @@ package protocol
 
 import (
 	"bytes"
-	"encoding/binary"
 	"time"
 
 	"github.com/oceanbase/obkv-table-client-go/util"
@@ -12,8 +11,9 @@ import (
 var globalVersion = 4
 
 const (
-	defaultFlag             uint16 = 7
-	defaultOperationTimeout        = 10 * 1000 * time.Millisecond
+	defaultFlag uint16 = 7
+
+	defaultOperationTimeout = 10 * 1000 * time.Millisecond
 
 	headerEncodeSize = 72
 
@@ -311,88 +311,93 @@ func (h *RpcHeader) Encode() []byte {
 	// TODO Maybe it would be better to use the version number to judge
 	if globalVersion >= 4 { // v4
 		rpcHeaderBuf = make([]byte, encodeSizeV4)
+		h.hLen = encodeSizeV4
 	} else { // v3
 		rpcHeaderBuf = make([]byte, encodeSize)
+		h.hLen = encodeSize
 	}
 
-	binary.BigEndian.PutUint32(rpcHeaderBuf[:4], h.pCode)
+	rpcHeaderBuffer := bytes.NewBuffer(rpcHeaderBuf)
+
+	util.PutUint32(rpcHeaderBuffer, h.pCode)
 	// TODO hLen = encodeSizeV4
-	util.PutUint8(rpcHeaderBuf[4:5], encodeSizeV4)
-	util.PutUint8(rpcHeaderBuf[5:6], h.priority)
-	binary.BigEndian.PutUint16(rpcHeaderBuf[6:8], h.flag)
-	binary.BigEndian.PutUint64(rpcHeaderBuf[8:16], uint64(h.checksum))
-	binary.BigEndian.PutUint64(rpcHeaderBuf[16:24], h.tenantId)
-	binary.BigEndian.PutUint64(rpcHeaderBuf[24:32], h.prevTenantId)
-	binary.BigEndian.PutUint64(rpcHeaderBuf[32:40], h.sessionId)
-	binary.BigEndian.PutUint64(rpcHeaderBuf[40:48], h.traceId0)
-	binary.BigEndian.PutUint64(rpcHeaderBuf[48:56], h.traceId1)
-	binary.BigEndian.PutUint64(rpcHeaderBuf[56:64], uint64(h.timeout))
-	binary.BigEndian.PutUint64(rpcHeaderBuf[64:headerEncodeSize], uint64(h.timestamp))
+	util.PutUint8(rpcHeaderBuffer, h.hLen)
+	util.PutUint8(rpcHeaderBuffer, h.priority)
 
-	h.rpcCostTime.Encode(rpcHeaderBuf[headerEncodeSize:encodeSizeWithCostTime])
+	util.PutUint16(rpcHeaderBuffer, h.flag)
+	util.PutUint64(rpcHeaderBuffer, uint64(h.checksum))
+	util.PutUint64(rpcHeaderBuffer, h.tenantId)
+	util.PutUint64(rpcHeaderBuffer, h.prevTenantId)
+	util.PutUint64(rpcHeaderBuffer, h.sessionId)
+	util.PutUint64(rpcHeaderBuffer, h.traceId0)
+	util.PutUint64(rpcHeaderBuffer, h.traceId1)
+	util.PutUint64(rpcHeaderBuffer, uint64(h.timeout))
+	util.PutUint64(rpcHeaderBuffer, uint64(h.timestamp))
 
-	binary.BigEndian.PutUint64(rpcHeaderBuf[encodeSizeWithCostTime:120], uint64(h.dstClusterId))
-	binary.BigEndian.PutUint32(rpcHeaderBuf[120:124], uint32(h.compressType))
-	binary.BigEndian.PutUint32(rpcHeaderBuf[124:encodeSize], uint32(h.originalLen))
+	h.rpcCostTime.Encode(rpcHeaderBuffer)
+
+	util.PutUint64(rpcHeaderBuffer, uint64(h.dstClusterId))
+	util.PutUint32(rpcHeaderBuffer, uint32(h.compressType))
+	util.PutUint32(rpcHeaderBuffer, uint32(h.originalLen))
 
 	if globalVersion >= 4 {
-		binary.BigEndian.PutUint64(rpcHeaderBuf[encodeSize:136], uint64(h.srcClusterId))
-		binary.BigEndian.PutUint64(rpcHeaderBuf[136:144], uint64(h.unisVersion))
-		binary.BigEndian.PutUint32(rpcHeaderBuf[144:148], uint32(h.requestLevel))
-		binary.BigEndian.PutUint64(rpcHeaderBuf[148:156], uint64(h.seqNo))
-		binary.BigEndian.PutUint32(rpcHeaderBuf[156:160], uint32(h.groupId))
-		binary.BigEndian.PutUint64(rpcHeaderBuf[160:168], uint64(h.traceId2))
-		binary.BigEndian.PutUint64(rpcHeaderBuf[168:176], uint64(h.traceId3))
-		binary.BigEndian.PutUint64(rpcHeaderBuf[176:encodeSizeV4], uint64(h.clusterNameHash))
+		util.PutUint64(rpcHeaderBuffer, uint64(h.srcClusterId))
+		util.PutUint64(rpcHeaderBuffer, uint64(h.unisVersion))
+		util.PutUint32(rpcHeaderBuffer, uint32(h.requestLevel))
+		util.PutUint64(rpcHeaderBuffer, uint64(h.seqNo))
+		util.PutUint32(rpcHeaderBuffer, uint32(h.groupId))
+		util.PutUint64(rpcHeaderBuffer, uint64(h.traceId2))
+		util.PutUint64(rpcHeaderBuffer, uint64(h.traceId3))
+		util.PutUint64(rpcHeaderBuffer, uint64(h.clusterNameHash))
 	}
 
 	return rpcHeaderBuf
 }
 
 func (h *RpcHeader) Decode(buffer *bytes.Buffer) {
-	h.pCode = binary.BigEndian.Uint32(buffer.Next(4))
-	h.hLen = util.Uint8(buffer.Next(1))
-	h.priority = util.Uint8(buffer.Next(1))
-	h.flag = binary.BigEndian.Uint16(buffer.Next(2))
-	h.checksum = int64(binary.BigEndian.Uint64(buffer.Next(8)))
-	h.tenantId = binary.BigEndian.Uint64(buffer.Next(8))
-	h.prevTenantId = binary.BigEndian.Uint64(buffer.Next(8))
-	h.sessionId = binary.BigEndian.Uint64(buffer.Next(8))
-	h.traceId0 = binary.BigEndian.Uint64(buffer.Next(8))
-	h.traceId1 = binary.BigEndian.Uint64(buffer.Next(8))
-	h.timeout = time.Duration(binary.BigEndian.Uint64(buffer.Next(8)))
-	h.timestamp = int64(binary.BigEndian.Uint64(buffer.Next(8)))
+	h.pCode = util.Uint32(buffer)
+	h.hLen = util.Uint8(buffer)
+	h.priority = util.Uint8(buffer)
+	h.flag = util.Uint16(buffer)
+	h.checksum = int64(util.Uint64(buffer))
+	h.tenantId = util.Uint64(buffer)
+	h.prevTenantId = util.Uint64(buffer)
+	h.sessionId = util.Uint64(buffer)
+	h.traceId0 = util.Uint64(buffer)
+	h.traceId1 = util.Uint64(buffer)
+	h.timeout = time.Duration(util.Uint64(buffer))
+	h.timestamp = int64(util.Uint64(buffer))
 
 	// TODO Maybe it would be better to use the version number to judge
 	if h.hLen >= encodeSizeV4 {
 		h.rpcCostTime.Decode(buffer)
 
-		h.dstClusterId = int64(binary.BigEndian.Uint64(buffer.Next(8)))
-		h.compressType = CompressType(binary.BigEndian.Uint32(buffer.Next(4)))
-		h.originalLen = int32(binary.BigEndian.Uint32(buffer.Next(4)))
+		h.dstClusterId = int64(util.Uint64(buffer))
+		h.compressType = CompressType(util.Uint32(buffer))
+		h.originalLen = int32(util.Uint32(buffer))
 
-		h.srcClusterId = int64(binary.BigEndian.Uint64(buffer.Next(8)))
-		h.unisVersion = int64(binary.BigEndian.Uint64(buffer.Next(8)))
-		h.requestLevel = int32(binary.BigEndian.Uint32(buffer.Next(4)))
-		h.seqNo = int64(binary.BigEndian.Uint64(buffer.Next(8)))
-		h.groupId = int32(binary.BigEndian.Uint32(buffer.Next(4)))
-		h.traceId2 = int64(binary.BigEndian.Uint64(buffer.Next(8)))
-		h.traceId3 = int64(binary.BigEndian.Uint64(buffer.Next(8)))
-		h.clusterNameHash = int64(binary.BigEndian.Uint64(buffer.Next(8)))
+		h.srcClusterId = int64(util.Uint64(buffer))
+		h.unisVersion = int64(util.Uint64(buffer))
+		h.requestLevel = int32(util.Uint32(buffer))
+		h.seqNo = int64(util.Uint64(buffer))
+		h.groupId = int32(util.Uint32(buffer))
+		h.traceId2 = int64(util.Uint64(buffer))
+		h.traceId3 = int64(util.Uint64(buffer))
+		h.clusterNameHash = int64(util.Uint64(buffer))
 
 		util.SkipBytes(buffer, int(h.hLen-encodeSizeV4))
 	} else if h.hLen >= encodeSize {
 		h.rpcCostTime.Decode(buffer)
 
-		h.dstClusterId = int64(binary.BigEndian.Uint64(buffer.Next(8)))
-		h.compressType = CompressType(binary.BigEndian.Uint32(buffer.Next(4)))
-		h.originalLen = int32(binary.BigEndian.Uint32(buffer.Next(4)))
+		h.dstClusterId = int64(util.Uint64(buffer))
+		h.compressType = CompressType(util.Uint32(buffer))
+		h.originalLen = int32(util.Uint32(buffer))
 
 		util.SkipBytes(buffer, int(h.hLen-encodeSize))
 	} else if h.hLen >= encodeSizeWithCostTimeAndDstClusterId {
 		h.rpcCostTime.Decode(buffer)
 
-		h.dstClusterId = int64(binary.BigEndian.Uint64(buffer.Next(8)))
+		h.dstClusterId = int64(util.Uint64(buffer))
 
 		util.SkipBytes(buffer, int(h.hLen-encodeSizeWithCostTimeAndDstClusterId))
 	} else if h.hLen >= encodeSizeWithCostTime {
@@ -494,24 +499,24 @@ func (t *RpcCostTime) SetRequestArriveTime(requestArriveTime int64) {
 	t.requestArriveTime = requestArriveTime
 }
 
-func (t *RpcCostTime) Encode(buf []byte) {
-	binary.BigEndian.PutUint32(buf[:4], uint32(t.len))
-	binary.BigEndian.PutUint32(buf[4:8], uint32(t.arrivalPushDiff))
-	binary.BigEndian.PutUint32(buf[8:12], uint32(t.pushPopDiff))
-	binary.BigEndian.PutUint32(buf[12:16], uint32(t.popProcessStartDiff))
-	binary.BigEndian.PutUint32(buf[16:20], uint32(t.processStartEndDiff))
-	binary.BigEndian.PutUint32(buf[20:24], uint32(t.processEndResponseDiff))
-	binary.BigEndian.PutUint64(buf[24:32], uint64(t.packetId))
-	binary.BigEndian.PutUint64(buf[32:40], uint64(t.requestArriveTime))
+func (t *RpcCostTime) Encode(buffer *bytes.Buffer) {
+	util.PutUint32(buffer, uint32(t.len))
+	util.PutUint32(buffer, uint32(t.arrivalPushDiff))
+	util.PutUint32(buffer, uint32(t.pushPopDiff))
+	util.PutUint32(buffer, uint32(t.popProcessStartDiff))
+	util.PutUint32(buffer, uint32(t.processStartEndDiff))
+	util.PutUint32(buffer, uint32(t.processEndResponseDiff))
+	util.PutUint64(buffer, uint64(t.packetId))
+	util.PutUint64(buffer, uint64(t.requestArriveTime))
 }
 
 func (t *RpcCostTime) Decode(buffer *bytes.Buffer) {
-	t.len = int32(binary.BigEndian.Uint32(buffer.Next(4)))
-	t.arrivalPushDiff = int32(binary.BigEndian.Uint32(buffer.Next(4)))
-	t.pushPopDiff = int32(binary.BigEndian.Uint32(buffer.Next(4)))
-	t.popProcessStartDiff = int32(binary.BigEndian.Uint32(buffer.Next(4)))
-	t.processStartEndDiff = int32(binary.BigEndian.Uint32(buffer.Next(4)))
-	t.processEndResponseDiff = int32(binary.BigEndian.Uint32(buffer.Next(4)))
-	t.packetId = int64(binary.BigEndian.Uint64(buffer.Next(8)))
-	t.requestArriveTime = int64(binary.BigEndian.Uint64(buffer.Next(8)))
+	t.len = int32(util.Uint32(buffer))
+	t.arrivalPushDiff = int32(util.Uint32(buffer))
+	t.pushPopDiff = int32(util.Uint32(buffer))
+	t.popProcessStartDiff = int32(util.Uint32(buffer))
+	t.processStartEndDiff = int32(util.Uint32(buffer))
+	t.processEndResponseDiff = int32(util.Uint32(buffer))
+	t.packetId = int64(util.Uint64(buffer))
+	t.requestArriveTime = int64(util.Uint64(buffer))
 }

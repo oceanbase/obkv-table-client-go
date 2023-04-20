@@ -66,7 +66,7 @@ func (m *RpcResponseWarningMsg) SetCode(code int32) {
 	m.code = code
 }
 
-func (m *RpcResponseWarningMsg) Encode() []byte {
+func (m *RpcResponseWarningMsg) Encode(buffer *bytes.Buffer) {
 	// TODO implement me
 	panic("implement me")
 }

@@ -1,5 +1,9 @@
 package protocol
 
+import (
+	"bytes"
+)
+
 type TableOperationRequest struct {
 	*UniVersionHeader
 	credential           []byte
@@ -14,87 +18,79 @@ type TableOperationRequest struct {
 	returnAffectedRows   bool
 }
 
-func (t *TableOperationRequest) Credential() []byte {
-	return t.credential
+func (r *TableOperationRequest) TableName() string {
+	return r.tableName
 }
 
-func (t *TableOperationRequest) SetCredential(credential []byte) {
-	t.credential = credential
+func (r *TableOperationRequest) SetTableName(tableName string) {
+	r.tableName = tableName
 }
 
-func (t *TableOperationRequest) TableName() string {
-	return t.tableName
+func (r *TableOperationRequest) TableId() int64 {
+	return r.tableId
 }
 
-func (t *TableOperationRequest) SetTableName(tableName string) {
-	t.tableName = tableName
+func (r *TableOperationRequest) SetTableId(tableId int64) {
+	r.tableId = tableId
 }
 
-func (t *TableOperationRequest) TableId() int64 {
-	return t.tableId
+func (r *TableOperationRequest) PartitionId() int64 {
+	return r.partitionId
 }
 
-func (t *TableOperationRequest) SetTableId(tableId int64) {
-	t.tableId = tableId
+func (r *TableOperationRequest) SetPartitionId(partitionId int64) {
+	r.partitionId = partitionId
 }
 
-func (t *TableOperationRequest) PartitionId() int64 {
-	return t.partitionId
+func (r *TableOperationRequest) EntityType() TableEntityType {
+	return r.entityType
 }
 
-func (t *TableOperationRequest) SetPartitionId(partitionId int64) {
-	t.partitionId = partitionId
+func (r *TableOperationRequest) SetEntityType(entityType TableEntityType) {
+	r.entityType = entityType
 }
 
-func (t *TableOperationRequest) EntityType() TableEntityType {
-	return t.entityType
+func (r *TableOperationRequest) TableOperation() *TableOperation {
+	return r.tableOperation
 }
 
-func (t *TableOperationRequest) SetEntityType(entityType TableEntityType) {
-	t.entityType = entityType
+func (r *TableOperationRequest) SetTableOperation(tableOperation *TableOperation) {
+	r.tableOperation = tableOperation
 }
 
-func (t *TableOperationRequest) TableOperation() *TableOperation {
-	return t.tableOperation
+func (r *TableOperationRequest) ConsistencyLevel() TableConsistencyLevel {
+	return r.consistencyLevel
 }
 
-func (t *TableOperationRequest) SetTableOperation(tableOperation *TableOperation) {
-	t.tableOperation = tableOperation
+func (r *TableOperationRequest) SetConsistencyLevel(consistencyLevel TableConsistencyLevel) {
+	r.consistencyLevel = consistencyLevel
 }
 
-func (t *TableOperationRequest) ConsistencyLevel() TableConsistencyLevel {
-	return t.consistencyLevel
+func (r *TableOperationRequest) ReturnRowKey() bool {
+	return r.returnRowKey
 }
 
-func (t *TableOperationRequest) SetConsistencyLevel(consistencyLevel TableConsistencyLevel) {
-	t.consistencyLevel = consistencyLevel
+func (r *TableOperationRequest) SetReturnRowKey(returnRowKey bool) {
+	r.returnRowKey = returnRowKey
 }
 
-func (t *TableOperationRequest) ReturnRowKey() bool {
-	return t.returnRowKey
+func (r *TableOperationRequest) ReturnAffectedEntity() bool {
+	return r.returnAffectedEntity
 }
 
-func (t *TableOperationRequest) SetReturnRowKey(returnRowKey bool) {
-	t.returnRowKey = returnRowKey
+func (r *TableOperationRequest) SetReturnAffectedEntity(returnAffectedEntity bool) {
+	r.returnAffectedEntity = returnAffectedEntity
 }
 
-func (t *TableOperationRequest) ReturnAffectedEntity() bool {
-	return t.returnAffectedEntity
+func (r *TableOperationRequest) ReturnAffectedRows() bool {
+	return r.returnAffectedRows
 }
 
-func (t *TableOperationRequest) SetReturnAffectedEntity(returnAffectedEntity bool) {
-	t.returnAffectedEntity = returnAffectedEntity
+func (r *TableOperationRequest) SetReturnAffectedRows(returnAffectedRows bool) {
+	r.returnAffectedRows = returnAffectedRows
 }
 
-func (t *TableOperationRequest) ReturnAffectedRows() bool {
-	return t.returnAffectedRows
-}
-
-func (t *TableOperationRequest) SetReturnAffectedRows(returnAffectedRows bool) {
-	t.returnAffectedRows = returnAffectedRows
-}
-
-type TableEntityType int32
+type TableEntityType int8
 
 const (
 	Dynamic TableEntityType = iota
@@ -102,9 +98,77 @@ const (
 	HKV
 )
 
-type TableConsistencyLevel int32
+type TableConsistencyLevel int8
 
 const (
 	Strong TableConsistencyLevel = iota
 	Eventual
 )
+
+func (r *TableOperationRequest) PCode() TablePacketCode {
+	return TableApiExecute
+}
+
+func (r *TableOperationRequest) PayloadLen() int64 {
+	// TODO implement me
+	panic("implement me")
+}
+
+func (r *TableOperationRequest) PayloadContentLen() int64 {
+	// TODO implement me
+	panic("implement me")
+}
+
+func (r *TableOperationRequest) SessionId() uint64 {
+	return 0
+}
+
+func (r *TableOperationRequest) SetSessionId(sessionId uint64) {
+	return
+}
+
+func (r *TableOperationRequest) Credential() []byte {
+	return r.credential
+}
+
+func (r *TableOperationRequest) SetCredential(credential []byte) {
+	r.credential = credential
+}
+
+func (r *TableOperationRequest) Encode(buffer *bytes.Buffer) {
+	// var index = 0
+	//
+	// payloadLength := r.PayloadLen()
+	// requestBuf := make([]byte, payloadLength)
+	//
+	// headerLen := r.UniVersionHeader.UniVersionHeaderLen()
+	// r.UniVersionHeader.Encode(requestBuf[:headerLen])
+	// index += headerLen
+	//
+	// needLength := util.NeedLengthByBytesString(r.credential)
+	// util.EncodeBytesString(requestBuf[index:index+needLength], r.credential)
+	// index += needLength
+	//
+	// needLength = util.NeedLengthByVString(r.tableName)
+	// util.EncodeVString(requestBuf[index:index+needLength], r.tableName)
+	// index += needLength
+	//
+	// needLength = util.NeedLengthByVi64(r.tableId)
+	// util.EncodeVi64(requestBuf[index:index+needLength], r.tableId)
+	// index += needLength
+	//
+	// needLength = util.NeedLengthByVi64(r.partitionId)
+	// util.EncodeVi64(requestBuf[index:index+needLength], r.partitionId)
+	// index += needLength
+	//
+	// util.PutUint8(requestBuf[index:index+1], uint8(r.entityType))
+	// index++
+
+	// tableOperationPayloadLen := r.tableOperation.PayloadLen()
+	// r.tableOperation.Encode()
+}
+
+func (r *TableOperationRequest) Decode(buffer *bytes.Buffer) {
+	// TODO implement me
+	panic("implement me")
+}

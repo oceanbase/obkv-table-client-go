@@ -164,7 +164,7 @@ func (r *LoginRequest) SetTtlUs(ttlUs int64) {
 }
 
 func (r *LoginRequest) PCode() TablePacketCode {
-	return Login
+	return TableApiLogin
 }
 
 func (r *LoginRequest) PayloadLen() int64 {
@@ -176,16 +176,16 @@ func (r *LoginRequest) PayloadContentLen() int64 {
 		totalLen := 0
 		totalLen += 4 // authMethod clientType clientVersion reversed1
 		totalLen = totalLen +
-			util.NeedLengthByVi32(r.clientCapabilities) +
-			util.NeedLengthByVi32(r.maxPacketSize) +
-			util.NeedLengthByVi32(r.reversed2) +
-			util.NeedLengthByVi64(r.reversed3) +
-			util.NeedLengthByVString(r.tenantName) +
-			util.NeedLengthByVString(r.userName) +
-			util.NeedLengthByVString(r.passSecret) +
-			util.NeedLengthByVString(r.passScramble) +
-			util.NeedLengthByVString(r.databaseName) +
-			util.NeedLengthByVi64(r.ttlUs)
+			util.EncodedLengthByVi32(r.clientCapabilities) +
+			util.EncodedLengthByVi32(r.maxPacketSize) +
+			util.EncodedLengthByVi32(r.reversed2) +
+			util.EncodedLengthByVi64(r.reversed3) +
+			util.EncodedLengthByVString(r.tenantName) +
+			util.EncodedLengthByVString(r.userName) +
+			util.EncodedLengthByVString(r.passSecret) +
+			util.EncodedLengthByVString(r.passScramble) +
+			util.EncodedLengthByVString(r.databaseName) +
+			util.EncodedLengthByVi64(r.ttlUs)
 		r.UniVersionHeader.SetContentLength(int64(totalLen)) // Set on first acquisition
 	})
 	return r.UniVersionHeader.ContentLength()
@@ -207,66 +207,28 @@ func (r *LoginRequest) SetCredential(credential []byte) {
 	return
 }
 
-func (r *LoginRequest) Encode() []byte {
-	var index = 0
+func (r *LoginRequest) Encode(buffer *bytes.Buffer) {
+	r.UniVersionHeader.Encode(buffer)
 
-	payloadLength := r.PayloadLen()
-	requestBuf := make([]byte, payloadLength)
+	util.PutUint8(buffer, r.authMethod)
+	util.PutUint8(buffer, r.clientType)
+	util.PutUint8(buffer, r.clientVersion)
+	util.PutUint8(buffer, r.reversed1)
 
-	headerLen := r.UniVersionHeader.UniVersionHeaderLen()
-	r.UniVersionHeader.Encode(requestBuf[:headerLen])
-	index += headerLen
+	util.EncodeVi32(buffer, r.clientCapabilities)
+	util.EncodeVi32(buffer, r.maxPacketSize)
+	util.EncodeVi32(buffer, r.reversed2)
 
-	util.PutUint8(requestBuf[index:index+1], r.authMethod)
-	index++
-	util.PutUint8(requestBuf[index:index+1], r.clientType)
-	index++
-	util.PutUint8(requestBuf[index:index+1], r.clientVersion)
-	index++
-	util.PutUint8(requestBuf[index:index+1], r.reversed1)
-	index++
+	util.EncodeVi64(buffer, r.reversed3)
 
-	needLength := util.NeedLengthByVi32(r.clientCapabilities)
-	util.EncodeVi32(requestBuf[index:index+needLength], r.clientCapabilities)
-	index += needLength
+	// todo some VString convert to bytesString
+	util.EncodeVString(buffer, r.tenantName)
+	util.EncodeVString(buffer, r.userName)
+	util.EncodeVString(buffer, r.passSecret)
+	util.EncodeVString(buffer, r.passScramble)
+	util.EncodeVString(buffer, r.databaseName)
 
-	needLength = util.NeedLengthByVi32(r.maxPacketSize)
-	util.EncodeVi32(requestBuf[index:index+needLength], r.maxPacketSize)
-	index += needLength
-
-	needLength = util.NeedLengthByVi32(r.reversed2)
-	util.EncodeVi32(requestBuf[index:index+needLength], r.reversed2)
-	index += needLength
-
-	needLength = util.NeedLengthByVi64(r.reversed3)
-	util.EncodeVi64(requestBuf[index:index+needLength], r.reversed3)
-	index += needLength
-
-	needLength = util.NeedLengthByVString(r.tenantName)
-	util.EncodeVString(requestBuf[index:index+needLength], r.tenantName)
-	index += needLength
-
-	needLength = util.NeedLengthByVString(r.userName)
-	util.EncodeVString(requestBuf[index:index+needLength], r.userName)
-	index += needLength
-
-	needLength = util.NeedLengthByVString(r.passSecret)
-	util.EncodeVString(requestBuf[index:index+needLength], r.passSecret)
-	index += needLength
-
-	needLength = util.NeedLengthByVString(r.passScramble)
-	util.EncodeVString(requestBuf[index:index+needLength], r.passScramble)
-	index += needLength
-
-	needLength = util.NeedLengthByVString(r.databaseName)
-	util.EncodeVString(requestBuf[index:index+needLength], r.databaseName)
-	index += needLength
-
-	needLength = util.NeedLengthByVi64(r.ttlUs)
-	util.EncodeVi64(requestBuf[index:index+needLength], r.ttlUs)
-	index += needLength
-
-	return requestBuf
+	util.EncodeVi64(buffer, r.ttlUs)
 }
 
 func (r *LoginRequest) Decode(buffer *bytes.Buffer) {

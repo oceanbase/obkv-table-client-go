@@ -82,7 +82,7 @@ func (r *LoginResponse) SetDatabaseId(databaseId int64) {
 }
 
 func (r *LoginResponse) PCode() TablePacketCode {
-	return Login
+	return TableApiLogin
 }
 
 func (r *LoginResponse) PayloadLen() int64 {
@@ -110,7 +110,7 @@ func (r *LoginResponse) SetCredential(credential []byte) {
 	r.credential = credential
 }
 
-func (r *LoginResponse) Encode() []byte {
+func (r *LoginResponse) Encode(buffer *bytes.Buffer) {
 	// TODO implement me
 	panic("implement me")
 }
@@ -119,12 +119,11 @@ func (r *LoginResponse) Decode(buffer *bytes.Buffer) {
 	r.UniVersionHeader.Decode(buffer)
 
 	r.serverCapabilities = util.DecodeVi32(buffer)
-	_ = util.DecodeVi32(buffer) // reserved1
-	_ = util.DecodeVi64(buffer) // reserved2
+	r.reserved1 = util.DecodeVi32(buffer)
+	r.reserved2 = util.DecodeVi64(buffer)
 
 	r.serverVersion = util.DecodeVString(buffer)
 	r.credential = util.DecodeBytesString(buffer)
-
 	r.tenantId = uint64(util.DecodeVi64(buffer))
 	r.userId = util.DecodeVi64(buffer)
 	r.databaseId = util.DecodeVi64(buffer)

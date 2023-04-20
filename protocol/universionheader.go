@@ -39,7 +39,7 @@ func NewUniVersionHeader() *UniVersionHeader {
 }
 
 func (h *UniVersionHeader) UniVersionHeaderLen() int {
-	return util.NeedLengthByVi64(h.version) + util.NeedLengthByVi64(h.contentLength)
+	return util.EncodedLengthByVi64(h.version) + util.EncodedLengthByVi64(h.contentLength)
 }
 
 func (h *UniVersionHeader) Version() int64 {
@@ -106,10 +106,9 @@ func (h *UniVersionHeader) SetTimeout(timeout time.Duration) {
 	h.timeout = timeout
 }
 
-func (h *UniVersionHeader) Encode(buf []byte) {
-	versionLen := util.NeedLengthByVi64(h.version)
-	util.EncodeVi64(buf[:versionLen], h.version)
-	util.EncodeVi64(buf[versionLen:], h.contentLength)
+func (h *UniVersionHeader) Encode(buffer *bytes.Buffer) {
+	util.EncodeVi64(buffer, h.version)
+	util.EncodeVi64(buffer, h.contentLength) // payloadLen
 }
 
 func (h *UniVersionHeader) Decode(buffer *bytes.Buffer) {
