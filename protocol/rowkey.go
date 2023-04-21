@@ -18,6 +18,10 @@ func (k *RowKey) SetKeys(keys []*Object) {
 	k.keys = keys
 }
 
+func (k *RowKey) AppendKey(key *Object) {
+	k.keys = append(k.keys, key)
+}
+
 func (k *RowKey) Encode(buffer *bytes.Buffer) {
 	util.EncodeVi64(buffer, int64(len(k.keys)))
 
@@ -27,8 +31,14 @@ func (k *RowKey) Encode(buffer *bytes.Buffer) {
 }
 
 func (k *RowKey) Decode(buffer *bytes.Buffer) {
-	// TODO implement me
-	panic("implement me")
+	keysLen := util.DecodeVi64(buffer)
+
+	var i int64
+	for i = 0; i < keysLen; i++ {
+		key := NewObject()
+		key.Decode(buffer)
+		k.keys = append(k.keys, key)
+	}
 }
 
 func (k *RowKey) EncodedLength() int {

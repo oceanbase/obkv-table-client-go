@@ -16,7 +16,11 @@ type ObjectMeta struct {
 	scale   byte
 }
 
-func NewObjectMeta(objType ObjType, csLevel CollationLevel, csType CollationType, scale byte) *ObjectMeta {
+func NewObjectMeta() *ObjectMeta {
+	return &ObjectMeta{}
+}
+
+func NewObjectMetaWithParams(objType ObjType, csLevel CollationLevel, csType CollationType, scale byte) *ObjectMeta {
 	return &ObjectMeta{objType: objType, csLevel: csLevel, csType: csType, scale: scale}
 }
 
@@ -60,8 +64,10 @@ func (m *ObjectMeta) Encode(buffer *bytes.Buffer) {
 }
 
 func (m *ObjectMeta) Decode(buffer *bytes.Buffer) {
-	// TODO implement me
-	panic("implement me")
+	m.objType = ObjTypeValue(util.Uint8(buffer)).ValueOf()
+	m.csLevel = CollationLevel(util.Uint8(buffer))
+	m.csType = CollationType(util.Uint8(buffer))
+	m.scale = util.Uint8(buffer)
 }
 
 func (m *ObjectMeta) EncodedLength() int {
@@ -302,7 +308,7 @@ func (t *NullType) EncodedLength(value interface{}) int {
 }
 
 func (t *NullType) DefaultObjMeta() *ObjectMeta {
-	return NewObjectMeta(t, CollationLevelIgnorable, CollationTypeBinary, 10)
+	return NewObjectMetaWithParams(t, CollationLevelIgnorable, CollationTypeBinary, 10)
 }
 
 func (t *NullType) Value() ObjTypeValue {
@@ -335,7 +341,7 @@ func (t *TinyIntType) EncodedLength(value interface{}) int {
 }
 
 func (t *TinyIntType) DefaultObjMeta() *ObjectMeta {
-	return NewObjectMeta(t, CollationLevelNumeric, CollationTypeBinary, 10)
+	return NewObjectMetaWithParams(t, CollationLevelNumeric, CollationTypeBinary, 10)
 }
 
 func (t *TinyIntType) Value() ObjTypeValue {
@@ -359,7 +365,7 @@ func (t *SmallIntType) EncodedLength(value interface{}) int {
 }
 
 func (t *SmallIntType) DefaultObjMeta() *ObjectMeta {
-	return NewObjectMeta(t, CollationLevelNumeric, CollationTypeBinary, 10)
+	return NewObjectMetaWithParams(t, CollationLevelNumeric, CollationTypeBinary, 10)
 }
 
 func (t *SmallIntType) Value() ObjTypeValue {
@@ -383,7 +389,7 @@ func (t *MediumIntType) EncodedLength(value interface{}) int {
 }
 
 func (t *MediumIntType) DefaultObjMeta() *ObjectMeta {
-	return NewObjectMeta(t, CollationLevelNumeric, CollationTypeBinary, 10)
+	return NewObjectMetaWithParams(t, CollationLevelNumeric, CollationTypeBinary, 10)
 }
 
 func (t *MediumIntType) Value() ObjTypeValue {
@@ -407,7 +413,7 @@ func (t *Int32Type) EncodedLength(value interface{}) int {
 }
 
 func (t *Int32Type) DefaultObjMeta() *ObjectMeta {
-	return NewObjectMeta(t, CollationLevelNumeric, CollationTypeBinary, 10)
+	return NewObjectMetaWithParams(t, CollationLevelNumeric, CollationTypeBinary, 10)
 }
 
 func (t *Int32Type) Value() ObjTypeValue {
@@ -431,7 +437,7 @@ func (t *Int64Type) EncodedLength(value interface{}) int {
 }
 
 func (t *Int64Type) DefaultObjMeta() *ObjectMeta {
-	return NewObjectMeta(t, CollationLevelNumeric, CollationTypeBinary, 10)
+	return NewObjectMetaWithParams(t, CollationLevelNumeric, CollationTypeBinary, 10)
 }
 
 func (t *Int64Type) Value() ObjTypeValue {
@@ -455,7 +461,7 @@ func (t *UTinyIntType) EncodedLength(value interface{}) int {
 }
 
 func (t *UTinyIntType) DefaultObjMeta() *ObjectMeta {
-	return NewObjectMeta(t, CollationLevelNumeric, CollationTypeBinary, 10)
+	return NewObjectMetaWithParams(t, CollationLevelNumeric, CollationTypeBinary, 10)
 }
 
 func (t *UTinyIntType) Value() ObjTypeValue {
@@ -479,7 +485,7 @@ func (t *USmallIntType) EncodedLength(value interface{}) int {
 }
 
 func (t *USmallIntType) DefaultObjMeta() *ObjectMeta {
-	return NewObjectMeta(t, CollationLevelNumeric, CollationTypeBinary, 10)
+	return NewObjectMetaWithParams(t, CollationLevelNumeric, CollationTypeBinary, 10)
 }
 
 func (t *USmallIntType) Value() ObjTypeValue {
@@ -503,7 +509,7 @@ func (t *UMediumIntType) EncodedLength(value interface{}) int {
 }
 
 func (t *UMediumIntType) DefaultObjMeta() *ObjectMeta {
-	return NewObjectMeta(t, CollationLevelNumeric, CollationTypeBinary, 10)
+	return NewObjectMetaWithParams(t, CollationLevelNumeric, CollationTypeBinary, 10)
 }
 
 func (t *UMediumIntType) Value() ObjTypeValue {
@@ -527,7 +533,7 @@ func (t *UInt32Type) EncodedLength(value interface{}) int {
 }
 
 func (t *UInt32Type) DefaultObjMeta() *ObjectMeta {
-	return NewObjectMeta(t, CollationLevelNumeric, CollationTypeBinary, 10)
+	return NewObjectMetaWithParams(t, CollationLevelNumeric, CollationTypeBinary, 10)
 }
 
 func (t *UInt32Type) Value() ObjTypeValue {
@@ -551,7 +557,7 @@ func (t *UInt64Type) EncodedLength(value interface{}) int {
 }
 
 func (t *UInt64Type) DefaultObjMeta() *ObjectMeta {
-	return NewObjectMeta(t, CollationLevelNumeric, CollationTypeBinary, 10)
+	return NewObjectMetaWithParams(t, CollationLevelNumeric, CollationTypeBinary, 10)
 }
 
 func (t *UInt64Type) Value() ObjTypeValue {
@@ -575,7 +581,7 @@ func (t *FloatType) EncodedLength(value interface{}) int {
 }
 
 func (t *FloatType) DefaultObjMeta() *ObjectMeta {
-	return NewObjectMeta(t, CollationLevelNumeric, CollationTypeBinary, 10)
+	return NewObjectMetaWithParams(t, CollationLevelNumeric, CollationTypeBinary, 10)
 }
 
 func (t *FloatType) Value() ObjTypeValue {
@@ -599,7 +605,7 @@ func (t *DoubleType) EncodedLength(value interface{}) int {
 }
 
 func (t *DoubleType) DefaultObjMeta() *ObjectMeta {
-	return NewObjectMeta(t, CollationLevelNumeric, CollationTypeBinary, 10)
+	return NewObjectMetaWithParams(t, CollationLevelNumeric, CollationTypeBinary, 10)
 }
 
 func (t *DoubleType) Value() ObjTypeValue {
@@ -623,7 +629,7 @@ func (t *UFloatType) EncodedLength(value interface{}) int {
 }
 
 func (t *UFloatType) DefaultObjMeta() *ObjectMeta {
-	return NewObjectMeta(t, CollationLevelNumeric, CollationTypeBinary, 10)
+	return NewObjectMetaWithParams(t, CollationLevelNumeric, CollationTypeBinary, 10)
 }
 
 func (t *UFloatType) Value() ObjTypeValue {
@@ -647,7 +653,7 @@ func (t *UDoubleType) EncodedLength(value interface{}) int {
 }
 
 func (t *UDoubleType) DefaultObjMeta() *ObjectMeta {
-	return NewObjectMeta(t, CollationLevelNumeric, CollationTypeBinary, 10)
+	return NewObjectMetaWithParams(t, CollationLevelNumeric, CollationTypeBinary, 10)
 }
 
 func (t *UDoubleType) Value() ObjTypeValue {
@@ -671,7 +677,7 @@ func (t *NumberType) EncodedLength(value interface{}) int {
 }
 
 func (t *NumberType) DefaultObjMeta() *ObjectMeta {
-	return NewObjectMeta(t, CollationLevelNumeric, CollationTypeBinary, 10)
+	return NewObjectMetaWithParams(t, CollationLevelNumeric, CollationTypeBinary, 10)
 }
 
 func (t *NumberType) Value() ObjTypeValue {
@@ -695,7 +701,7 @@ func (t *UNumberType) EncodedLength(value interface{}) int {
 }
 
 func (t *UNumberType) DefaultObjMeta() *ObjectMeta {
-	return NewObjectMeta(t, CollationLevelNumeric, CollationTypeBinary, 10)
+	return NewObjectMetaWithParams(t, CollationLevelNumeric, CollationTypeBinary, 10)
 }
 
 func (t *UNumberType) Value() ObjTypeValue {
@@ -719,7 +725,7 @@ func (t *DateTimeType) EncodedLength(value interface{}) int {
 }
 
 func (t *DateTimeType) DefaultObjMeta() *ObjectMeta {
-	return NewObjectMeta(t, CollationLevelNumeric, CollationTypeBinary, 10)
+	return NewObjectMetaWithParams(t, CollationLevelNumeric, CollationTypeBinary, 10)
 }
 
 func (t *DateTimeType) Value() ObjTypeValue {
@@ -743,7 +749,7 @@ func (t *TimestampType) EncodedLength(value interface{}) int {
 }
 
 func (t *TimestampType) DefaultObjMeta() *ObjectMeta {
-	return NewObjectMeta(t, CollationLevelNumeric, CollationTypeBinary, 10)
+	return NewObjectMetaWithParams(t, CollationLevelNumeric, CollationTypeBinary, 10)
 }
 
 func (t *TimestampType) Value() ObjTypeValue {
@@ -767,7 +773,7 @@ func (t *DateType) EncodedLength(value interface{}) int {
 }
 
 func (t *DateType) DefaultObjMeta() *ObjectMeta {
-	return NewObjectMeta(t, CollationLevelNumeric, CollationTypeBinary, 10)
+	return NewObjectMetaWithParams(t, CollationLevelNumeric, CollationTypeBinary, 10)
 }
 
 func (t *DateType) Value() ObjTypeValue {
@@ -791,7 +797,7 @@ func (t *TimeType) EncodedLength(value interface{}) int {
 }
 
 func (t *TimeType) DefaultObjMeta() *ObjectMeta {
-	return NewObjectMeta(t, CollationLevelNumeric, CollationTypeBinary, 10)
+	return NewObjectMetaWithParams(t, CollationLevelNumeric, CollationTypeBinary, 10)
 }
 
 func (t *TimeType) Value() ObjTypeValue {
@@ -815,7 +821,7 @@ func (t *YearType) EncodedLength(value interface{}) int {
 }
 
 func (t *YearType) DefaultObjMeta() *ObjectMeta {
-	return NewObjectMeta(t, CollationLevelNumeric, CollationTypeBinary, 10)
+	return NewObjectMetaWithParams(t, CollationLevelNumeric, CollationTypeBinary, 10)
 }
 
 func (t *YearType) Value() ObjTypeValue {
@@ -839,7 +845,7 @@ func (t *VarcharType) EncodedLength(value interface{}) int {
 }
 
 func (t *VarcharType) DefaultObjMeta() *ObjectMeta {
-	return NewObjectMeta(t, CollationLevelExplicit, CollationTypeUtf8mb4GeneralCi, 10)
+	return NewObjectMetaWithParams(t, CollationLevelExplicit, CollationTypeUtf8mb4GeneralCi, 10)
 }
 
 func (t *VarcharType) Value() ObjTypeValue {
@@ -863,7 +869,7 @@ func (t *CharType) EncodedLength(value interface{}) int {
 }
 
 func (t *CharType) DefaultObjMeta() *ObjectMeta {
-	return NewObjectMeta(t, CollationLevelExplicit, CollationTypeUtf8mb4GeneralCi, 10)
+	return NewObjectMetaWithParams(t, CollationLevelExplicit, CollationTypeUtf8mb4GeneralCi, 10)
 }
 
 func (t *CharType) Value() ObjTypeValue {
@@ -887,7 +893,7 @@ func (t *HexStringType) EncodedLength(value interface{}) int {
 }
 
 func (t *HexStringType) DefaultObjMeta() *ObjectMeta {
-	return NewObjectMeta(t, CollationLevelNumeric, CollationTypeBinary, 10)
+	return NewObjectMetaWithParams(t, CollationLevelNumeric, CollationTypeBinary, 10)
 }
 
 func (t *HexStringType) Value() ObjTypeValue {
@@ -911,7 +917,7 @@ func (t *ExtendType) EncodedLength(value interface{}) int {
 }
 
 func (t *ExtendType) DefaultObjMeta() *ObjectMeta {
-	return NewObjectMeta(t, CollationLevelNumeric, CollationTypeBinary, 10)
+	return NewObjectMetaWithParams(t, CollationLevelNumeric, CollationTypeBinary, 10)
 }
 
 func (t *ExtendType) Value() ObjTypeValue {
@@ -935,7 +941,7 @@ func (t *UnknownType) EncodedLength(value interface{}) int {
 }
 
 func (t *UnknownType) DefaultObjMeta() *ObjectMeta {
-	return NewObjectMeta(t, CollationLevelNumeric, CollationTypeBinary, 10)
+	return NewObjectMetaWithParams(t, CollationLevelNumeric, CollationTypeBinary, 10)
 }
 
 func (t *UnknownType) Value() ObjTypeValue {
@@ -959,7 +965,7 @@ func (t *TinyTextType) EncodedLength(value interface{}) int {
 }
 
 func (t *TinyTextType) DefaultObjMeta() *ObjectMeta {
-	return NewObjectMeta(t, CollationLevelNumeric, CollationTypeBinary, 10)
+	return NewObjectMetaWithParams(t, CollationLevelNumeric, CollationTypeBinary, 10)
 }
 
 func (t *TinyTextType) Value() ObjTypeValue {
@@ -983,7 +989,7 @@ func (t *TextType) EncodedLength(value interface{}) int {
 }
 
 func (t *TextType) DefaultObjMeta() *ObjectMeta {
-	return NewObjectMeta(t, CollationLevelNumeric, CollationTypeBinary, 10)
+	return NewObjectMetaWithParams(t, CollationLevelNumeric, CollationTypeBinary, 10)
 }
 
 func (t *TextType) Value() ObjTypeValue {
@@ -1007,7 +1013,7 @@ func (t *MediumTextType) EncodedLength(value interface{}) int {
 }
 
 func (t *MediumTextType) DefaultObjMeta() *ObjectMeta {
-	return NewObjectMeta(t, CollationLevelNumeric, CollationTypeBinary, 10)
+	return NewObjectMetaWithParams(t, CollationLevelNumeric, CollationTypeBinary, 10)
 }
 
 func (t *MediumTextType) Value() ObjTypeValue {
@@ -1031,7 +1037,7 @@ func (t *LongTextType) EncodedLength(value interface{}) int {
 }
 
 func (t *LongTextType) DefaultObjMeta() *ObjectMeta {
-	return NewObjectMeta(t, CollationLevelNumeric, CollationTypeBinary, 10)
+	return NewObjectMetaWithParams(t, CollationLevelNumeric, CollationTypeBinary, 10)
 }
 
 func (t *LongTextType) Value() ObjTypeValue {
@@ -1055,7 +1061,7 @@ func (t *BitType) EncodedLength(value interface{}) int {
 }
 
 func (t *BitType) DefaultObjMeta() *ObjectMeta {
-	return NewObjectMeta(t, CollationLevelNumeric, CollationTypeBinary, 10)
+	return NewObjectMetaWithParams(t, CollationLevelNumeric, CollationTypeBinary, 10)
 }
 
 func (t *BitType) Value() ObjTypeValue {

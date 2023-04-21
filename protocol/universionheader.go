@@ -100,5 +100,5 @@ func (h *UniVersionHeader) Encode(buffer *bytes.Buffer) {
 
 func (h *UniVersionHeader) Decode(buffer *bytes.Buffer) {
 	h.version = util.DecodeVi64(buffer)
-	h.contentLength = int(util.DecodeVi64(buffer)) // payloadLen useless right now
+	h.contentLength = int(util.DecodeVi64(buffer)) // contentLength useless right now
 }

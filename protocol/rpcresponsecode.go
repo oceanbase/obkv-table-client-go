@@ -57,8 +57,9 @@ func (c *RpcResponseCode) Decode(buffer *bytes.Buffer) {
 	c.code = ResponseCode(util.DecodeVi32(buffer))
 	c.msg = util.DecodeBytes(buffer)
 
-	waringMsgsLen := util.DecodeVi32(buffer)
-	if waringMsgsLen > 0 {
+	waringMsgsLen := int(util.DecodeVi32(buffer))
+
+	for i := 0; i < waringMsgsLen; i++ {
 		rpcResponseWarningMsg := NewRpcResponseWarningMsg()
 		rpcResponseWarningMsg.Decode(buffer)
 		c.warningMsgs = append(c.warningMsgs, rpcResponseWarningMsg)

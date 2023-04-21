@@ -9,6 +9,17 @@ type Object struct {
 	value interface{}
 }
 
+func NewObject() *Object {
+	return &Object{
+		meta:  NewObjectMeta(),
+		value: nil,
+	}
+}
+
+func NewObjectWithParams(meta *ObjectMeta, value interface{}) *Object {
+	return &Object{meta: meta, value: value}
+}
+
 func (o *Object) Meta() *ObjectMeta {
 	return o.meta
 }
@@ -31,8 +42,8 @@ func (o *Object) Encode(buffer *bytes.Buffer) {
 }
 
 func (o *Object) Decode(buffer *bytes.Buffer) {
-	// TODO implement me
-	panic("implement me")
+	o.meta.Decode(buffer)
+	o.value = o.meta.ObjType().Decode(buffer, o.meta.CsType())
 }
 
 func (o *Object) EncodedLength() int {

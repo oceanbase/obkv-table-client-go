@@ -28,6 +28,18 @@ func (e *TableEntity) SetProperties(properties map[string]*Object) {
 	e.properties = properties
 }
 
+func (e *TableEntity) GetProperty(name string) *Object {
+	return e.properties[name]
+}
+
+func (e *TableEntity) SetProperty(name string, property *Object) {
+	e.properties[name] = property
+}
+
+func (e *TableEntity) DelProperty(name string) {
+	delete(e.properties, name)
+}
+
 func (e *TableEntity) PayloadLen() int {
 	return e.PayloadContentLen() + e.UniVersionHeader.UniVersionHeaderLen() // Do not change the order
 }
@@ -60,6 +72,19 @@ func (e *TableEntity) Encode(buffer *bytes.Buffer) {
 }
 
 func (e *TableEntity) Decode(buffer *bytes.Buffer) {
-	// TODO implement me
-	panic("implement me")
+	e.UniVersionHeader.Decode(buffer)
+
+	e.rowKey.Decode(buffer)
+
+	propertiesLen := util.DecodeVi64(buffer)
+
+	var i int64
+	for i = 0; i < propertiesLen; i++ {
+		name := util.DecodeVString(buffer)
+
+		property := NewObject()
+		property.Decode(buffer)
+
+		e.properties[name] = property
+	}
 }
