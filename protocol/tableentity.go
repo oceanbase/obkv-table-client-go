@@ -12,6 +12,14 @@ type TableEntity struct {
 	properties map[string]*Object
 }
 
+func NewTableEntity() *TableEntity {
+	return &TableEntity{
+		UniVersionHeader: NewUniVersionHeader(),
+		rowKey:           NewRowKey(),
+		properties:       make(map[string]*Object),
+	}
+}
+
 func (e *TableEntity) RowKey() *RowKey {
 	return e.rowKey
 }

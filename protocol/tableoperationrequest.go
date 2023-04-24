@@ -2,7 +2,11 @@ package protocol
 
 import (
 	"bytes"
+	"time"
 
+	"github.com/pkg/errors"
+
+	"github.com/oceanbase/obkv-table-client-go/table"
 	"github.com/oceanbase/obkv-table-client-go/util"
 )
 
@@ -18,6 +22,30 @@ type TableOperationRequest struct {
 	returnRowKey         bool
 	returnAffectedEntity bool
 	returnAffectedRows   bool
+}
+
+func NewTableOperationRequest(tableName string, operationType TableOperationType, rowKeys []interface{}, columns []*table.Column, timeout time.Duration, flag uint16) (*TableOperationRequest, error) {
+	tableOperation, err := NewTableOperation(operationType, rowKeys, columns)
+	if err != nil {
+		return nil, errors.Wrap(err, "create table operation")
+	}
+	uniVersionHeader := NewUniVersionHeader()
+	uniVersionHeader.SetFlag(flag)
+	uniVersionHeader.SetTimeout(timeout)
+
+	return &TableOperationRequest{
+		UniVersionHeader:     uniVersionHeader,
+		credential:           nil, // when execute set
+		tableName:            tableName,
+		tableId:              InvalidTableId,
+		partitionId:          InvalidPartitionId,
+		entityType:           Dynamic,
+		tableOperation:       tableOperation,
+		consistencyLevel:     Strong,
+		returnRowKey:         false,
+		returnAffectedEntity: false,
+		returnAffectedRows:   true,
+	}, nil
 }
 
 type TableEntityType uint8

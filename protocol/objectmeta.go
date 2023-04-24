@@ -17,7 +17,7 @@ type ObjectMeta struct {
 }
 
 func NewObjectMeta() *ObjectMeta {
-	return &ObjectMeta{}
+	return &ObjectMeta{objType: nil, csLevel: 0, csType: 0, scale: 0}
 }
 
 func NewObjectMetaWithParams(objType ObjType, csLevel CollationLevel, csType CollationType, scale byte) *ObjectMeta {

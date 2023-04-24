@@ -2,14 +2,15 @@ package client
 
 import (
 	"errors"
+	"strings"
+	"sync"
+
 	"github.com/oceanbase/obkv-table-client-go/config"
 	"github.com/oceanbase/obkv-table-client-go/log"
 	"github.com/oceanbase/obkv-table-client-go/protocol"
 	"github.com/oceanbase/obkv-table-client-go/route"
 	"github.com/oceanbase/obkv-table-client-go/table"
 	"github.com/oceanbase/obkv-table-client-go/util"
-	"strings"
-	"sync"
 )
 
 func NewClient(
@@ -57,8 +58,8 @@ type ObkvOption struct {
 
 type Client interface {
 	AddRowkey(tableName string, rowkey []string) error
-	Insert(tableName string, rowkey []table.Column, mutateColumns []table.Column, opts ...ObkvOption) (int64, error)
-	Get(tableName string, rowkey []table.Column, getColumns []string, opts ...ObkvOption) (map[string]interface{}, error)
+	Insert(tableName string, rowkey []*table.Column, mutateColumns []*table.Column, opts ...ObkvOption) (int64, error)
+	Get(tableName string, rowkey []*table.Column, getColumns []string, opts ...ObkvOption) (map[string]interface{}, error)
 }
 
 type ObClient struct {
@@ -262,14 +263,14 @@ func (c *ObClient) AddRowkey(tableName string, rowkey []string) error {
 
 func (c *ObClient) Insert(
 	tableName string,
-	rowkey []table.Column,
-	mutateColumns []table.Column,
+	rowkey []*table.Column,
+	mutateColumns []*table.Column,
 	opts ...ObkvOption) (int64, error) {
 	var mutateColNames []string
 	var mutateColValues []interface{}
 	for _, col := range mutateColumns {
-		mutateColNames = append(mutateColNames, col.Name)
-		mutateColValues = append(mutateColValues, col.Value)
+		mutateColNames = append(mutateColNames, col.Name())
+		mutateColValues = append(mutateColValues, col.Value())
 	}
 	res, err := c.execute(
 		tableName,
@@ -290,7 +291,7 @@ func (c *ObClient) Insert(
 
 func (c *ObClient) Get(
 	tableName string,
-	rowkey []table.Column,
+	rowkey []*table.Column,
 	getColumns []string,
 	opts ...ObkvOption) (map[string]interface{}, error) {
 	res, err := c.execute(
@@ -313,13 +314,13 @@ func (c *ObClient) Get(
 func (c *ObClient) execute(
 	tableName string,
 	opType protocol.ObTableOperationType,
-	rowkey []table.Column,
+	rowkey []*table.Column,
 	columns []string,
 	properties []interface{},
 	opts ...ObkvOption) (*protocol.ObTableOperationResult, error) {
 	var rowkeyValue []interface{}
 	for _, col := range rowkey {
-		rowkeyValue = append(rowkeyValue, col.Value)
+		rowkeyValue = append(rowkeyValue, col.Value())
 	}
 	// 1. Get table route
 	tableParam, err := c.getTableParam(tableName, rowkeyValue, false /* refresh */)

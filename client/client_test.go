@@ -1,13 +1,15 @@
 package client
 
 import (
+	"testing"
+
 	"github.com/agiledragon/gomonkey/v2"
+	"github.com/stretchr/testify/assert"
+
 	"github.com/oceanbase/obkv-table-client-go/config"
 	"github.com/oceanbase/obkv-table-client-go/route"
 	"github.com/oceanbase/obkv-table-client-go/route/mock_route"
 	"github.com/oceanbase/obkv-table-client-go/table"
-	"github.com/stretchr/testify/assert"
-	"testing"
 )
 
 var (
@@ -66,8 +68,8 @@ func TestObClient_Insert(t *testing.T) {
 	// 3. add rowkey element
 	err = cli.AddRowkey(mock_route.MockTestTableName, []string{"c1"})
 	// 4. insert
-	rowkey := []table.Column{{"c1", 1}}
-	mutateColumns := []table.Column{{"c2", 1}}
+	rowkey := []*table.Column{table.NewColumn("c1", 1)}
+	mutateColumns := []*table.Column{table.NewColumn("c2", 1)}
 	affectRows, err := cli.Insert(
 		mock_route.MockTestTableName,
 		rowkey,

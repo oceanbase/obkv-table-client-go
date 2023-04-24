@@ -10,6 +10,12 @@ type RowKey struct {
 	keys []*Object
 }
 
+func NewRowKey() *RowKey {
+	return &RowKey{
+		keys: nil,
+	}
+}
+
 func (k *RowKey) Keys() []*Object {
 	return k.keys
 }

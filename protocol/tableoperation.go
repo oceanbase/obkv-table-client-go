@@ -3,6 +3,9 @@ package protocol
 import (
 	"bytes"
 
+	"github.com/pkg/errors"
+
+	"github.com/oceanbase/obkv-table-client-go/table"
 	"github.com/oceanbase/obkv-table-client-go/util"
 )
 
@@ -10,6 +13,44 @@ type TableOperation struct {
 	*UniVersionHeader
 	opType TableOperationType
 	entity *TableEntity
+}
+
+func NewTableOperation(operationType TableOperationType, rowKeys []interface{}, columns []*table.Column) (*TableOperation, error) {
+	tableEntity := NewTableEntity()
+
+	// add rowKey
+	for _, rowKey := range rowKeys {
+		objMeta, err := DefaultObjMeta(rowKey)
+		if err != nil {
+			return nil, errors.Wrap(err, "create obj meta by row key")
+		}
+
+		object := NewObject()
+		object.SetMeta(objMeta)
+		object.SetValue(rowKey)
+
+		tableEntity.RowKey().AppendKey(object)
+	}
+
+	// add column
+	for _, column := range columns {
+		objMeta, err := DefaultObjMeta(column.Value())
+		if err != nil {
+			return nil, errors.Wrap(err, "create obj meta by column")
+		}
+
+		object := NewObject()
+		object.SetMeta(objMeta)
+		object.SetValue(column.Value())
+
+		tableEntity.SetProperty(column.Name(), object)
+	}
+
+	return &TableOperation{
+		UniVersionHeader: NewUniVersionHeader(),
+		opType:           operationType,
+		entity:           tableEntity,
+	}, nil
 }
 
 type TableOperationType uint8
