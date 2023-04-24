@@ -14,6 +14,16 @@ type TableOperationResponse struct {
 	affectedRows  int64
 }
 
+func NewTableOperationResponse() *TableOperationResponse {
+	return &TableOperationResponse{
+		UniVersionHeader: NewUniVersionHeader(),
+		header:           NewTableResponse(),
+		operationType:    Get,
+		entity:           NewTableEntity(),
+		affectedRows:     0,
+	}
+}
+
 func (r *TableOperationResponse) Header() *TableResponse {
 	return r.header
 }

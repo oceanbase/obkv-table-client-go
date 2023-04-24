@@ -13,6 +13,15 @@ type TableResponse struct {
 	msg      []byte
 }
 
+func NewTableResponse() *TableResponse {
+	return &TableResponse{
+		UniVersionHeader: NewUniVersionHeader(),
+		errorNo:          0,
+		sqlState:         nil,
+		msg:              nil,
+	}
+}
+
 func (r *TableResponse) ErrorNo() int32 {
 	return r.errorNo
 }

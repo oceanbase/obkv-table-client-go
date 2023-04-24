@@ -80,6 +80,9 @@ func (c *Connection) Login() {
 		return
 	}
 	// TODO active = true
+
+	c.credential = loginResponse.Credential()
+	c.tenantId = loginResponse.TenantId()
 }
 
 func (c *Connection) Execute(ctx context.Context, request protocol.Payload, response protocol.Payload) error {

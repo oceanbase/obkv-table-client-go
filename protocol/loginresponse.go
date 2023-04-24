@@ -81,6 +81,14 @@ func (r *LoginResponse) SetDatabaseId(databaseId int64) {
 	r.databaseId = databaseId
 }
 
+func (r *LoginResponse) TenantId() uint64 {
+	return r.tenantId
+}
+
+func (r *LoginResponse) SetTenantId(tenantId uint64) {
+	r.tenantId = tenantId
+}
+
 func (r *LoginResponse) PCode() TablePacketCode {
 	return TableApiLogin
 }
