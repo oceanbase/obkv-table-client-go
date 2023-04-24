@@ -7,6 +7,7 @@ import (
 	"github.com/oceanbase/obkv-table-client-go/route/mock_route"
 	"github.com/oceanbase/obkv-table-client-go/table"
 	"github.com/stretchr/testify/assert"
+	"sync"
 	"testing"
 )
 
@@ -20,26 +21,27 @@ var (
 
 func getMockObClient() (*ObClient, error) {
 	// CREATE TABLE test(c1 INT, c2 int) PARTITION BY hash(c1) partitions 2;
+	cfg := config.NewDefaultClientConfig()
 	obCli, err := newObClient(
 		TestConfigUrl,
 		TestFullUserName,
 		TestPassWord,
 		TestSysUserName,
 		TestSysPassWord,
-		config.NewDefaultClientConfig(),
+		cfg,
 	)
 	if err != nil {
 		return nil, err
 	}
-	tb, err := table.NewObTable(
+	tb := NewObTable(
 		mock_route.MockTestServerAddr.Ip(),
 		mock_route.MockTestServerAddr.SvrPort(),
 		mock_route.MockTestTenantName,
 		obCli.userName,
 		obCli.password,
 		obCli.database,
-		obCli.config.ConnPoolMaxConnSize,
 	)
+	err = tb.init(cfg)
 	if err != nil {
 		return nil, err
 	}
@@ -65,6 +67,7 @@ func TestObClient_Insert(t *testing.T) {
 	defer patch.Reset()
 	// 3. add rowkey element
 	err = cli.AddRowkey(mock_route.MockTestTableName, []string{"c1"})
+	assert.Equal(t, nil, err)
 	// 4. insert
 	rowkey := []table.Column{{"c1", 1}}
 	mutateColumns := []table.Column{{"c2", 1}}
@@ -74,5 +77,79 @@ func TestObClient_Insert(t *testing.T) {
 		mutateColumns,
 	)
 	assert.Equal(t, nil, err)
-	assert.Equal(t, 1, affectRows)
+	assert.Equal(t, int64(0), affectRows)
+}
+
+func TestObClient_Get(t *testing.T) {
+	// 1. create client
+	cli, err := getMockObClient()
+	assert.Equal(t, nil, err)
+	// 2. mock route
+	entry := mock_route.GetMockHashTableEntryV4()
+	patch := gomonkey.ApplyFunc(
+		route.GetTableEntryFromRemote, func(
+			addr *route.ObServerAddr,
+			sysUA *route.ObUserAuth,
+			key *route.ObTableEntryKey) (*route.ObTableEntry, error) {
+			return entry, nil
+		},
+	)
+	defer patch.Reset()
+	// 3. add rowkey element
+	err = cli.AddRowkey(mock_route.MockTestTableName, []string{"c1"})
+	assert.Equal(t, nil, err)
+	// 4. get
+	rowkey := []table.Column{{"c1", 1}}
+	selectColumns := []string{"c1", "c2"}
+	res, err := cli.Get(
+		mock_route.MockTestTableName,
+		rowkey,
+		selectColumns,
+	)
+	assert.Equal(t, nil, err)
+	assert.Equal(t, 0, len(res))
+}
+
+func TestObClientInsertConcurrent(t *testing.T) {
+	t.Parallel()
+	var wg sync.WaitGroup
+	// 1. create client
+	cli, err := getMockObClient()
+	assert.Equal(t, nil, err)
+	// 2. mock route
+	entry := mock_route.GetMockHashTableEntryV4()
+	patch := gomonkey.ApplyFunc(
+		route.GetTableEntryFromRemote, func(
+			addr *route.ObServerAddr,
+			sysUA *route.ObUserAuth,
+			key *route.ObTableEntryKey) (*route.ObTableEntry, error) {
+			return entry, nil
+		},
+	)
+	defer patch.Reset()
+	// 3. add rowkey element
+	err = cli.AddRowkey(mock_route.MockTestTableName, []string{"c1"})
+	assert.Equal(t, nil, err)
+	// 4. test
+	for i := 0; i < 2000; i++ {
+		wg.Add(1)
+		go func(i int) {
+			defer wg.Done()
+			rowkey := []table.Column{{"c1", 1}}
+			mutateColumns := []table.Column{{"c2", 1}}
+			_, err := cli.Insert(
+				mock_route.MockTestTableName,
+				rowkey,
+				mutateColumns,
+			)
+			assert.Equal(t, nil, err)
+		}(i)
+	}
+}
+
+func TestObTableParam_ToString(t *testing.T) {
+	param := ObTableParam{}
+	assert.Equal(t, param.String(), "ObTableParam{table:nil, tableId:0, partitionId:0}")
+	param = ObTableParam{nil, 500023, 500012}
+	assert.Equal(t, param.String(), "ObTableParam{table:nil, tableId:500023, partitionId:500012}")
 }

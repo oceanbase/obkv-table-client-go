@@ -134,20 +134,27 @@ func (r *ObReplicaType) String() string {
 }
 
 type ObServerRoster struct {
-	maxPriority int32
+	maxPriority atomic.Int32
 	roster      []*ObServerAddr
 	// todo: serverLdc
 }
 
+func (r *ObServerRoster) MaxPriority() int32 {
+	return r.maxPriority.Load()
+}
+
 func (r *ObServerRoster) Reset(servers []*ObServerAddr) {
-	atomic.StoreInt32(&r.maxPriority, 0)
+	r.maxPriority.Store(0)
 	r.roster = servers
 }
 
 func (r *ObServerRoster) GetServer() *ObServerAddr {
-	// todo: adapt java
 	idx := rand.Intn(len(r.roster))
 	return r.roster[idx]
+}
+
+func (r *ObServerRoster) Size() int {
+	return len(r.roster)
 }
 
 func (r *ObServerRoster) String() string {
@@ -165,7 +172,7 @@ func (r *ObServerRoster) String() string {
 	}
 	rostersStr += "]"
 	return "ObServerRoster{" +
-		"maxPriority:" + strconv.Itoa(int(r.maxPriority)) + ", " +
+		"maxPriority:" + strconv.Itoa(int(r.maxPriority.Load())) + ", " +
 		"roster:" + rostersStr +
 		"}"
 }

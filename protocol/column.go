@@ -55,6 +55,14 @@ type ObColumn struct {
 	columnExpress  ObGeneratedColumnSimpleFunc // only support 'SUBSTRING' expr now
 }
 
+func (c *ObColumn) CollationType() ObCollationType {
+	return c.collationType
+}
+
+func (c *ObColumn) ObjType() ObObjType {
+	return c.objType
+}
+
 func (c *ObColumn) RefColumnNames() []string {
 	return c.refColumnNames
 }

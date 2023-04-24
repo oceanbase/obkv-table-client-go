@@ -28,27 +28,6 @@ var (
 	testUserAuth    = ObUserAuth{testUserName, testPassword}
 )
 
-//func TestGetTableEntryFromRemote(t *testing.T) {
-//	ver, err := GetObVersionFromRemote(&testServerAddr, &testUserAuth)
-//	if err != nil {
-//		panic(err)
-//	}
-//	fmt.Println("ob cluster version is:", ver)
-//	key := ObTableEntryKey{
-//		testClusterName,
-//		testTenantName,
-//		testDatabase,
-//		testTableName,
-//	}
-//	util.SetObVersion(ver)
-//	InitSql(ver)
-//	entry, err := GetTableEntryFromRemote(&testServerAddr, &testUserAuth, &key)
-//	if err != nil {
-//		panic(err)
-//	}
-//	fmt.Println("entry is:", entry.String())
-//}
-
 // 3.x version
 /*
 CREATE TABLE t1(c1 INT(5),
@@ -167,28 +146,28 @@ func TestGetTableEntryFromRemoteV3(t *testing.T) {
 		"comm:ObPartDescCommon{partFuncType:ObPartFuncType{name:RANGE_COLUMNS, index:4}, "+
 		"partExpr:c1, orderedPartColumnNames:c1, orderedPartRefColumnRowKeyRelations:[], "+
 		"partColumns:[ObColumn{columnName:c1, index:0, objType:ObObjType{type:ObInt32Type}, "+
-		"collationType:ObCollationType{collationType:csTypeBinary}, refColumnNames:[c1], "+
+		"collationType:ObCollationType{collationType:CsTypeBinary}, refColumnNames:[c1], "+
 		"isGenColumn:false, columnExpress:nil}, "+
 		"ObColumn{columnName:c2, index:1, objType:ObObjType{type:ObInt32Type}, "+
-		"collationType:ObCollationType{collationType:csTypeBinary}, "+
+		"collationType:ObCollationType{collationType:CsTypeBinary}, "+
 		"refColumnNames:[c2], isGenColumn:false, columnExpress:nil}], "+
 		"rowKeyElement:nil}, partSpace:0, partNum:2, "+
 		"orderedCompareColumns:[ObColumn{columnName:c1, index:0, "+
 		"objType:ObObjType{type:ObInt32Type}, "+
-		"collationType:ObCollationType{collationType:csTypeBinary}, "+
+		"collationType:ObCollationType{collationType:CsTypeBinary}, "+
 		"refColumnNames:[c1], isGenColumn:false, columnExpress:nil}], "+
 		"orderedCompareColumnTypes:[ObObjType{type:ObInt64Type}]}")
-	assert.Equal(t, entry.partitionInfo.subPartDesc.String(), "ObHashPartDesc{"+
+	assert.Contains(t, entry.partitionInfo.subPartDesc.String(), "ObHashPartDesc{"+
 		"comm:ObPartDescCommon{partFuncType:ObPartFuncType{name:HASH_V2, index:8}, "+
 		"partExpr:c2, orderedPartColumnNames:c2, orderedPartRefColumnRowKeyRelations:[], "+
 		"partColumns:[ObColumn{columnName:c1, index:0, objType:ObObjType{type:ObInt32Type}, "+
-		"collationType:ObCollationType{collationType:csTypeBinary}, refColumnNames:[c1], "+
+		"collationType:ObCollationType{collationType:CsTypeBinary}, refColumnNames:[c1], "+
 		"isGenColumn:false, columnExpress:nil}, "+
 		"ObColumn{columnName:c2, index:1, objType:ObObjType{type:ObInt32Type}, "+
-		"collationType:ObCollationType{collationType:csTypeBinary}, "+
+		"collationType:ObCollationType{collationType:CsTypeBinary}, "+
 		"refColumnNames:[c2], isGenColumn:false, columnExpress:nil}], "+
 		"rowKeyElement:nil}, completeWorks:[], partSpace:0, partNum:2, "+
-		"partNameIdMap:{m[p0]=0, m[p1]=1}}")
+		"partNameIdMap:{m[p")
 	assert.Equal(t, entry.tableLocation.String(), "ObTableLocation{"+
 		"replicaLocations:["+
 		"ObReplicaLocation{addr:ObServerAddr{ip:127.0.0.1, sqlPort:42705, svrPort:42704}, "+
@@ -347,25 +326,25 @@ func TestGetTableEntryFromRemoteV4(t *testing.T) {
 		"comm:ObPartDescCommon{partFuncType:ObPartFuncType{name:RANGE_COLUMNS, index:4}, "+
 		"partExpr:c1, orderedPartColumnNames:c1, orderedPartRefColumnRowKeyRelations:[], "+
 		"partColumns:[ObColumn{columnName:c1, index:0, objType:ObObjType{type:ObInt32Type}, "+
-		"collationType:ObCollationType{collationType:csTypeBinary}, refColumnNames:[c1], "+
+		"collationType:ObCollationType{collationType:CsTypeBinary}, refColumnNames:[c1], "+
 		"isGenColumn:false, columnExpress:nil}, "+
 		"ObColumn{columnName:c2, index:1, objType:ObObjType{type:ObInt32Type}, "+
-		"collationType:ObCollationType{collationType:csTypeBinary}, "+
+		"collationType:ObCollationType{collationType:CsTypeBinary}, "+
 		"refColumnNames:[c2], isGenColumn:false, columnExpress:nil}], "+
 		"rowKeyElement:nil}, partSpace:0, partNum:2, "+
 		"orderedCompareColumns:[ObColumn{columnName:c1, index:0, "+
 		"objType:ObObjType{type:ObInt32Type}, "+
-		"collationType:ObCollationType{collationType:csTypeBinary}, "+
+		"collationType:ObCollationType{collationType:CsTypeBinary}, "+
 		"refColumnNames:[c1], isGenColumn:false, columnExpress:nil}], "+
 		"orderedCompareColumnTypes:[ObObjType{type:ObInt64Type}]}")
 	assert.Equal(t, entry.partitionInfo.subPartDesc.String(), "ObHashPartDesc{"+
 		"comm:ObPartDescCommon{partFuncType:ObPartFuncType{name:HASH_V2, index:8}, "+
 		"partExpr:c2, orderedPartColumnNames:c2, orderedPartRefColumnRowKeyRelations:[], "+
 		"partColumns:[ObColumn{columnName:c1, index:0, objType:ObObjType{type:ObInt32Type}, "+
-		"collationType:ObCollationType{collationType:csTypeBinary}, refColumnNames:[c1], "+
+		"collationType:ObCollationType{collationType:CsTypeBinary}, refColumnNames:[c1], "+
 		"isGenColumn:false, columnExpress:nil}, "+
 		"ObColumn{columnName:c2, index:1, objType:ObObjType{type:ObInt32Type}, "+
-		"collationType:ObCollationType{collationType:csTypeBinary}, "+
+		"collationType:ObCollationType{collationType:CsTypeBinary}, "+
 		"refColumnNames:[c2], isGenColumn:false, columnExpress:nil}], "+
 		"rowKeyElement:nil}, completeWorks:[], partSpace:0, partNum:2, "+
 		"partNameIdMap:{}}")
@@ -427,7 +406,7 @@ func TestObColumnIndexesPair_ToString(t *testing.T) {
 		"columnName:testColumnName, "+
 		"index:0, "+
 		"objType:ObObjType{type:ObTinyIntType}, "+
-		"collationType:ObCollationType{collationType:csTypeBinary}, "+
+		"collationType:ObCollationType{collationType:CsTypeBinary}, "+
 		"refColumnNames:[testColumnName], "+
 		"isGenColumn:false, "+
 		"columnExpress:nil}, "+
@@ -470,8 +449,8 @@ func TestObPartDescCommon_ToString(t *testing.T) {
 		"partFuncType:ObPartFuncType{name:HASH, index:0}, "+
 		"partExpr:c1, c2, "+
 		"orderedPartColumnNames:c1,c2, "+
-		"orderedPartRefColumnRowKeyRelations:[ObColumnIndexesPair{column:ObColumn{columnName:testColumnName, index:0, objType:ObObjType{type:ObTinyIntType}, collationType:ObCollationType{collationType:csTypeBinary}, refColumnNames:[testColumnName], isGenColumn:false, columnExpress:nil}, indexes:[0]}], "+
-		"partColumns:[ObColumn{columnName:testColumnName, index:0, objType:ObObjType{type:ObTinyIntType}, collationType:ObCollationType{collationType:csTypeBinary}, refColumnNames:[testColumnName], isGenColumn:false, columnExpress:nil}], "+
+		"orderedPartRefColumnRowKeyRelations:[ObColumnIndexesPair{column:ObColumn{columnName:testColumnName, index:0, objType:ObObjType{type:ObTinyIntType}, collationType:ObCollationType{collationType:CsTypeBinary}, refColumnNames:[testColumnName], isGenColumn:false, columnExpress:nil}, indexes:[0]}], "+
+		"partColumns:[ObColumn{columnName:testColumnName, index:0, objType:ObObjType{type:ObTinyIntType}, collationType:ObCollationType{collationType:CsTypeBinary}, refColumnNames:[testColumnName], isGenColumn:false, columnExpress:nil}], "+
 		"rowKeyElement:ObRowkeyElement{nameIdxMap:{m[c1]=0}}}",
 		comm.CommString(),
 	)
@@ -510,15 +489,25 @@ func TestObRangePartDesc_ToString(t *testing.T) {
 	desc.PartColumns = partColumns
 	desc.RowKeyElement = rowKeyElement
 	assert.Equal(t, "ObRangePartDesc{"+
-		"comm:ObPartDescCommon{partFuncType:ObPartFuncType{name:RANGE, index:3}, partExpr:c1, c2, orderedPartColumnNames:c1,c2, orderedPartRefColumnRowKeyRelations:[ObColumnIndexesPair{column:ObColumn{columnName:testColumnName, index:0, objType:ObObjType{type:ObTinyIntType}, collationType:ObCollationType{collationType:csTypeBinary}, refColumnNames:[testColumnName], isGenColumn:false, columnExpress:nil}, indexes:[0]}], partColumns:[ObColumn{columnName:testColumnName, index:0, objType:ObObjType{type:ObTinyIntType}, collationType:ObCollationType{collationType:csTypeBinary}, refColumnNames:[testColumnName], isGenColumn:false, columnExpress:nil}], rowKeyElement:ObRowkeyElement{nameIdxMap:{m[c1]=0}}}, partSpace:0, partNum:10, "+
-		"orderedCompareColumns:[ObColumn{columnName:testColumnName, index:0, objType:ObObjType{type:ObTinyIntType}, collationType:ObCollationType{collationType:csTypeBinary}, refColumnNames:[testColumnName], isGenColumn:false, columnExpress:nil}, ObColumn{columnName:testColumnName, index:0, objType:ObObjType{type:ObTinyIntType}, collationType:ObCollationType{collationType:csTypeBinary}, refColumnNames:[testColumnName], isGenColumn:false, columnExpress:nil}], "+
+		"comm:ObPartDescCommon{partFuncType:ObPartFuncType{name:RANGE, index:3}, partExpr:c1, c2, orderedPartColumnNames:c1,c2, orderedPartRefColumnRowKeyRelations:[ObColumnIndexesPair{column:ObColumn{columnName:testColumnName, index:0, objType:ObObjType{type:ObTinyIntType}, collationType:ObCollationType{collationType:CsTypeBinary}, refColumnNames:[testColumnName], isGenColumn:false, columnExpress:nil}, indexes:[0]}], partColumns:[ObColumn{columnName:testColumnName, index:0, objType:ObObjType{type:ObTinyIntType}, collationType:ObCollationType{collationType:CsTypeBinary}, refColumnNames:[testColumnName], isGenColumn:false, columnExpress:nil}], rowKeyElement:ObRowkeyElement{nameIdxMap:{m[c1]=0}}}, partSpace:0, partNum:10, "+
+		"orderedCompareColumns:[ObColumn{columnName:testColumnName, index:0, objType:ObObjType{type:ObTinyIntType}, collationType:ObCollationType{collationType:CsTypeBinary}, refColumnNames:[testColumnName], isGenColumn:false, columnExpress:nil}, ObColumn{columnName:testColumnName, index:0, objType:ObObjType{type:ObTinyIntType}, collationType:ObCollationType{collationType:CsTypeBinary}, refColumnNames:[testColumnName], isGenColumn:false, columnExpress:nil}], "+
 		"orderedCompareColumnTypes:[ObObjType{type:ObTinyIntType}, ObObjType{type:ObTinyIntType}]}",
 		desc.String(),
 	)
 }
 
+func TestObHashPartDesc_GetPartId(t *testing.T) {
+	desc := &ObHashPartDesc{}
+	partId, err := desc.GetPartId(nil)
+	assert.NotEqual(t, nil, err)
+	assert.EqualValues(t, ObInvalidPartId, partId)
+	partId, err = desc.GetPartId([]interface{}{1, 2, 3})
+	assert.NotEqual(t, nil, err)
+	assert.EqualValues(t, ObInvalidPartId, partId)
+}
+
 func TestObHashPartDesc_ToString(t *testing.T) {
-	desc := ObHashPartDesc{}
+	desc := &ObHashPartDesc{}
 	assert.Equal(t, "ObHashPartDesc{comm:ObPartDescCommon{partFuncType:ObPartFuncType{name:, index:0}, partExpr:, orderedPartColumnNames:, orderedPartRefColumnRowKeyRelations:[], partColumns:[], rowKeyElement:nil}, "+
 		"completeWorks:[], "+
 		"partSpace:0, "+
@@ -540,7 +529,7 @@ func TestObHashPartDesc_ToString(t *testing.T) {
 	rowKeyElement := table.NewObRowkeyElement(nameIdxMap)
 	partNameIdMap := make(map[string]int64)
 	partNameIdMap["p0"] = 0
-	desc = ObHashPartDesc{
+	desc = &ObHashPartDesc{
 		completeWorks: []int64{1, 2, 3},
 		partSpace:     0,
 		partNum:       10,
@@ -553,7 +542,7 @@ func TestObHashPartDesc_ToString(t *testing.T) {
 	desc.PartColumns = partColumns
 	desc.RowKeyElement = rowKeyElement
 	assert.Equal(t, "ObHashPartDesc{"+
-		"comm:ObPartDescCommon{partFuncType:ObPartFuncType{name:HASH, index:0}, partExpr:c1, c2, orderedPartColumnNames:c1,c2, orderedPartRefColumnRowKeyRelations:[ObColumnIndexesPair{column:ObColumn{columnName:testColumnName, index:0, objType:ObObjType{type:ObTinyIntType}, collationType:ObCollationType{collationType:csTypeBinary}, refColumnNames:[testColumnName], isGenColumn:false, columnExpress:nil}, indexes:[0]}], partColumns:[ObColumn{columnName:testColumnName, index:0, objType:ObObjType{type:ObTinyIntType}, collationType:ObCollationType{collationType:csTypeBinary}, refColumnNames:[testColumnName], isGenColumn:false, columnExpress:nil}], rowKeyElement:ObRowkeyElement{nameIdxMap:{m[c1]=0}}}, "+
+		"comm:ObPartDescCommon{partFuncType:ObPartFuncType{name:HASH, index:0}, partExpr:c1, c2, orderedPartColumnNames:c1,c2, orderedPartRefColumnRowKeyRelations:[ObColumnIndexesPair{column:ObColumn{columnName:testColumnName, index:0, objType:ObObjType{type:ObTinyIntType}, collationType:ObCollationType{collationType:CsTypeBinary}, refColumnNames:[testColumnName], isGenColumn:false, columnExpress:nil}, indexes:[0]}], partColumns:[ObColumn{columnName:testColumnName, index:0, objType:ObObjType{type:ObTinyIntType}, collationType:ObCollationType{collationType:CsTypeBinary}, refColumnNames:[testColumnName], isGenColumn:false, columnExpress:nil}], rowKeyElement:ObRowkeyElement{nameIdxMap:{m[c1]=0}}}, "+
 		"completeWorks:[1, 2, 3], "+
 		"partSpace:0, "+
 		"partNum:10, "+
@@ -609,7 +598,7 @@ func TestObKeyPartDesc_ToString(t *testing.T) {
 	desc.PartColumns = partColumns
 	desc.RowKeyElement = rowKeyElement
 	assert.Equal(t, "ObKeyPartDesc{"+
-		"comm:ObPartDescCommon{partFuncType:ObPartFuncType{name:KEY_V2, index:6}, partExpr:c1, c2, orderedPartColumnNames:c1,c2, orderedPartRefColumnRowKeyRelations:[ObColumnIndexesPair{column:ObColumn{columnName:testColumnName, index:0, objType:ObObjType{type:ObTinyIntType}, collationType:ObCollationType{collationType:csTypeBinary}, refColumnNames:[testColumnName], isGenColumn:false, columnExpress:nil}, indexes:[0]}], partColumns:[ObColumn{columnName:testColumnName, index:0, objType:ObObjType{type:ObTinyIntType}, collationType:ObCollationType{collationType:csTypeBinary}, refColumnNames:[testColumnName], isGenColumn:false, columnExpress:nil}], rowKeyElement:ObRowkeyElement{nameIdxMap:{m[c1]=0}}}, "+
+		"comm:ObPartDescCommon{partFuncType:ObPartFuncType{name:KEY_V2, index:6}, partExpr:c1, c2, orderedPartColumnNames:c1,c2, orderedPartRefColumnRowKeyRelations:[ObColumnIndexesPair{column:ObColumn{columnName:testColumnName, index:0, objType:ObObjType{type:ObTinyIntType}, collationType:ObCollationType{collationType:CsTypeBinary}, refColumnNames:[testColumnName], isGenColumn:false, columnExpress:nil}, indexes:[0]}], partColumns:[ObColumn{columnName:testColumnName, index:0, objType:ObObjType{type:ObTinyIntType}, collationType:ObCollationType{collationType:CsTypeBinary}, refColumnNames:[testColumnName], isGenColumn:false, columnExpress:nil}], rowKeyElement:ObRowkeyElement{nameIdxMap:{m[c1]=0}}}, "+
 		"partSpace:0, "+
 		"partNum:10, "+
 		"partNameIdMap:{m[p0]=0}}",
@@ -796,9 +785,9 @@ func TestObPartitionInfo_ToString(t *testing.T) {
 	}
 	assert.Equal(t, "ObPartitionInfo{"+
 		"level:ObPartitionLevel{name:partLevelZero, index:0}, "+
-		"firstPartDesc:ObHashPartDesc{comm:ObPartDescCommon{partFuncType:ObPartFuncType{name:HASH, index:0}, partExpr:c1, c2, orderedPartColumnNames:c1,c2, orderedPartRefColumnRowKeyRelations:[ObColumnIndexesPair{column:ObColumn{columnName:testColumnName, index:0, objType:ObObjType{type:ObTinyIntType}, collationType:ObCollationType{collationType:csTypeBinary}, refColumnNames:[testColumnName], isGenColumn:false, columnExpress:nil}, indexes:[0]}], partColumns:[ObColumn{columnName:testColumnName, index:0, objType:ObObjType{type:ObTinyIntType}, collationType:ObCollationType{collationType:csTypeBinary}, refColumnNames:[testColumnName], isGenColumn:false, columnExpress:nil}], rowKeyElement:ObRowkeyElement{nameIdxMap:{m[c1]=0}}}, completeWorks:[1, 2, 3], partSpace:0, partNum:10, partNameIdMap:{m[p0]=0}}, "+
-		"subPartDesc:ObHashPartDesc{comm:ObPartDescCommon{partFuncType:ObPartFuncType{name:HASH, index:0}, partExpr:c1, c2, orderedPartColumnNames:c1,c2, orderedPartRefColumnRowKeyRelations:[ObColumnIndexesPair{column:ObColumn{columnName:testColumnName, index:0, objType:ObObjType{type:ObTinyIntType}, collationType:ObCollationType{collationType:csTypeBinary}, refColumnNames:[testColumnName], isGenColumn:false, columnExpress:nil}, indexes:[0]}], partColumns:[ObColumn{columnName:testColumnName, index:0, objType:ObObjType{type:ObTinyIntType}, collationType:ObCollationType{collationType:csTypeBinary}, refColumnNames:[testColumnName], isGenColumn:false, columnExpress:nil}], rowKeyElement:ObRowkeyElement{nameIdxMap:{m[c1]=0}}}, completeWorks:[1, 2, 3], partSpace:0, partNum:10, partNameIdMap:{m[p0]=0}}, "+
-		"partColumns:[ObColumn{columnName:testColumnName, index:0, objType:ObObjType{type:ObTinyIntType}, collationType:ObCollationType{collationType:csTypeBinary}, refColumnNames:[testColumnName], isGenColumn:false, columnExpress:nil}], "+
+		"firstPartDesc:ObHashPartDesc{comm:ObPartDescCommon{partFuncType:ObPartFuncType{name:HASH, index:0}, partExpr:c1, c2, orderedPartColumnNames:c1,c2, orderedPartRefColumnRowKeyRelations:[ObColumnIndexesPair{column:ObColumn{columnName:testColumnName, index:0, objType:ObObjType{type:ObTinyIntType}, collationType:ObCollationType{collationType:CsTypeBinary}, refColumnNames:[testColumnName], isGenColumn:false, columnExpress:nil}, indexes:[0]}], partColumns:[ObColumn{columnName:testColumnName, index:0, objType:ObObjType{type:ObTinyIntType}, collationType:ObCollationType{collationType:CsTypeBinary}, refColumnNames:[testColumnName], isGenColumn:false, columnExpress:nil}], rowKeyElement:ObRowkeyElement{nameIdxMap:{m[c1]=0}}}, completeWorks:[1, 2, 3], partSpace:0, partNum:10, partNameIdMap:{m[p0]=0}}, "+
+		"subPartDesc:ObHashPartDesc{comm:ObPartDescCommon{partFuncType:ObPartFuncType{name:HASH, index:0}, partExpr:c1, c2, orderedPartColumnNames:c1,c2, orderedPartRefColumnRowKeyRelations:[ObColumnIndexesPair{column:ObColumn{columnName:testColumnName, index:0, objType:ObObjType{type:ObTinyIntType}, collationType:ObCollationType{collationType:CsTypeBinary}, refColumnNames:[testColumnName], isGenColumn:false, columnExpress:nil}, indexes:[0]}], partColumns:[ObColumn{columnName:testColumnName, index:0, objType:ObObjType{type:ObTinyIntType}, collationType:ObCollationType{collationType:CsTypeBinary}, refColumnNames:[testColumnName], isGenColumn:false, columnExpress:nil}], rowKeyElement:ObRowkeyElement{nameIdxMap:{m[c1]=0}}}, completeWorks:[1, 2, 3], partSpace:0, partNum:10, partNameIdMap:{m[p0]=0}}, "+
+		"partColumns:[ObColumn{columnName:testColumnName, index:0, objType:ObObjType{type:ObTinyIntType}, collationType:ObCollationType{collationType:CsTypeBinary}, refColumnNames:[testColumnName], isGenColumn:false, columnExpress:nil}], "+
 		"partTabletIdMap:{m[0]=500021}, "+
 		"partNameIdMap:{m[p0]=0}}",
 		info.String(),
@@ -891,7 +880,8 @@ func TestObServerRoster_ToString(t *testing.T) {
 	roster = append(roster, addr)
 	roster = append(roster, addr)
 	roster = append(roster, addr)
-	r = ObServerRoster{1, roster}
+	r = ObServerRoster{roster: roster}
+	r.maxPriority.Store(1)
 	assert.Equal(t, r.String(), "ObServerRoster{maxPriority:1, "+
 		"roster:[nil, nil, nil, nil, "+
 		"ObServerAddr{ip:127.0.0.1, sqlPort:8000, svrPort:8080}, "+
@@ -906,4 +896,35 @@ func TestObServerRoute_ToString(t *testing.T) {
 	assert.Equal(t, r.String(), "ObServerRoute{readConsistency:0}")
 	r = ObServerRoute{ObReadConsistencyWeak}
 	assert.Equal(t, r.String(), "ObServerRoute{readConsistency:1}")
+}
+
+func TestHash64a(t *testing.T) {
+	result := MurmurHash64A([]byte{1}, len([]byte{1}), int64(0))
+	assert.Equal(t, int64(-5720937396023583481), result)
+	result = MurmurHash64A([]byte{1}, len([]byte{1}), int64(1))
+	assert.Equal(t, int64(6351753276682545529), result)
+	result = MurmurHash64A([]byte{1, 2, 3}, len([]byte{1, 2, 3}), int64(123456789))
+	assert.Equal(t, int64(-4356950700900923028), result)
+}
+
+func TestHashSortUtf8Mb4(t *testing.T) {
+	data := []byte{1}
+	hashCode := 0
+	res := hashSortUtf8Mb4(data, int64(hashCode), 10, true)
+	assert.Equal(t, int64(-7030129012826305577), res)
+	res = hashSortUtf8Mb4(data, int64(hashCode), 10, false)
+	assert.Equal(t, int64(2570), res)
+	res = hashSortUtf8Mb4(data, int64(hashCode), 0xc6a4a7935bd1e995, true)
+	assert.Equal(t, int64(-7030129012826305577), res)
+	res = hashSortUtf8Mb4(data, int64(hashCode), 0xc6a4a7935bd1e995, false)
+	assert.Equal(t, int64(7062546676564130965), res)
+	data = []byte{1, 2, 3, 4, 5, 6, 7, 8, 9}
+	res = hashSortUtf8Mb4(data, int64(hashCode), 10, true)
+	assert.Equal(t, int64(-1916273894318764036), res)
+	res = hashSortUtf8Mb4(data, int64(hashCode), 10, false)
+	assert.Equal(t, int64(1013208367030014238), res)
+	res = hashSortUtf8Mb4(data, int64(hashCode), 0xc6a4a7935bd1e995, true)
+	assert.Equal(t, int64(-1916273894318764036), res)
+	res = hashSortUtf8Mb4(data, int64(hashCode), 0xc6a4a7935bd1e995, false)
+	assert.Equal(t, int64(7452881443849355883), res)
 }

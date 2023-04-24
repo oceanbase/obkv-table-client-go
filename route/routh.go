@@ -159,6 +159,14 @@ type ObUserAuth struct {
 	password string
 }
 
+func (a *ObUserAuth) Password() string {
+	return a.password
+}
+
+func (a *ObUserAuth) UserName() string {
+	return a.userName
+}
+
 func NewObUserAuth(userName string, password string) *ObUserAuth {
 	return &ObUserAuth{userName, password}
 }
@@ -253,7 +261,7 @@ func GetTableEntryFromRemote(
 	}
 
 	// 5. Get partition location entry
-	partLocationEntry, err := getPartLocationEntryFromRemote(db, entry)
+	partLocationEntry, err := GetPartLocationEntryFromRemote(db, entry)
 	if err != nil {
 		log.Warn("failed to get table entry location", log.String("entry", entry.String()))
 		return nil, err
@@ -320,7 +328,7 @@ func getTableEntryFromResultSet(rows *Rows) (*ObTableEntry, error) {
 	return entry, nil
 }
 
-func getPartLocationEntryFromRemote(db *DB, entry *ObTableEntry) (*ObPartLocationEntry, error) {
+func GetPartLocationEntryFromRemote(db *DB, entry *ObTableEntry) (*ObPartLocationEntry, error) {
 	// 1. Create inStatement "(0,1,2...partNum);".
 	partIds := make([]int, 0, entry.partNum)
 	if util.ObVersion() >= 4 && entry.IsPartitionTable() {
