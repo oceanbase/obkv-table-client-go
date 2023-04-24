@@ -1,33 +1,37 @@
 package protocol
 
 const (
-	csTypeInvalid          = 0
-	csTypeUtf8mb4GeneralCi = 45 // default, case insensitivity
-	csTypeUtf8mb4Bin       = 46 // case sensitive
-	csTypeBinary           = 63
-	csTypeCollationFree    = 100
-	csTypeMax              = 101
+	CsTypeInvalid          = 0
+	CsTypeUtf8mb4GeneralCi = 45 // default, case insensitivity
+	CsTypeUtf8mb4Bin       = 46 // case sensitive
+	CsTypeBinary           = 63
+	CsTypeCollationFree    = 100
+	CsTypeMax              = 101
 )
 
 type ObCollationType struct {
 	value int
 }
 
+func (t *ObCollationType) Value() int {
+	return t.value
+}
+
 func (t *ObCollationType) String() string {
 	var collationTypeStr string
 	switch t.value {
-	case csTypeUtf8mb4GeneralCi:
-		collationTypeStr = "csTypeUtf8mb4GeneralCi"
-	case csTypeUtf8mb4Bin:
-		collationTypeStr = "csTypeUtf8mb4Bin"
-	case csTypeBinary:
-		collationTypeStr = "csTypeBinary"
-	case csTypeCollationFree:
-		collationTypeStr = "csTypeCollationFree"
-	case csTypeMax:
-		collationTypeStr = "csTypeMax"
+	case CsTypeUtf8mb4GeneralCi:
+		collationTypeStr = "CsTypeUtf8mb4GeneralCi"
+	case CsTypeUtf8mb4Bin:
+		collationTypeStr = "CsTypeUtf8mb4Bin"
+	case CsTypeBinary:
+		collationTypeStr = "CsTypeBinary"
+	case CsTypeCollationFree:
+		collationTypeStr = "CsTypeCollationFree"
+	case CsTypeMax:
+		collationTypeStr = "CsTypeMax"
 	default:
-		collationTypeStr = "csTypeInvalid"
+		collationTypeStr = "CsTypeInvalid"
 	}
 	return "ObCollationType{" +
 		"collationType:" + collationTypeStr +
@@ -36,20 +40,20 @@ func (t *ObCollationType) String() string {
 
 func NewObCollationType(value int) ObCollationType {
 	switch value {
-	case csTypeInvalid:
-		return ObCollationType{csTypeInvalid}
-	case csTypeUtf8mb4GeneralCi:
-		return ObCollationType{csTypeUtf8mb4GeneralCi}
-	case csTypeUtf8mb4Bin:
-		return ObCollationType{csTypeUtf8mb4Bin}
-	case csTypeBinary:
-		return ObCollationType{csTypeBinary}
-	case csTypeCollationFree:
-		return ObCollationType{csTypeCollationFree}
-	case csTypeMax:
-		return ObCollationType{csTypeMax}
+	case CsTypeInvalid:
+		return ObCollationType{CsTypeInvalid}
+	case CsTypeUtf8mb4GeneralCi:
+		return ObCollationType{CsTypeUtf8mb4GeneralCi}
+	case CsTypeUtf8mb4Bin:
+		return ObCollationType{CsTypeUtf8mb4Bin}
+	case CsTypeBinary:
+		return ObCollationType{CsTypeBinary}
+	case CsTypeCollationFree:
+		return ObCollationType{CsTypeCollationFree}
+	case CsTypeMax:
+		return ObCollationType{CsTypeMax}
 	default:
-		return ObCollationType{csTypeInvalid}
+		return ObCollationType{CsTypeInvalid}
 	}
 }
 

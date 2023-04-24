@@ -261,6 +261,14 @@ type ObTableEntry struct {
 	partLocationEntry *ObPartLocationEntry
 }
 
+func (e *ObTableEntry) SetPartLocationEntry(partLocationEntry *ObPartLocationEntry) {
+	e.partLocationEntry = partLocationEntry
+}
+
+func (e *ObTableEntry) RefreshTimeMills() int64 {
+	return e.refreshTimeMills
+}
+
 func (e *ObTableEntry) TableLocation() *ObTableLocation {
 	return e.tableLocation
 }
