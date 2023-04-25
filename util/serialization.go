@@ -2,6 +2,7 @@ package util
 
 import (
 	"bytes"
+	"math"
 )
 
 const (
@@ -30,43 +31,56 @@ var obMax = []uint64{
 	obMaxV9b,
 }
 
-func NeedLengthByVi32(value int32) (needLength int) {
+func EncodedLengthByVi32(value int32) (encodedLength int) {
 	if value < 0 {
 		return 5
 	}
 	var unsignedValue = uint64(value)
 	for _, max := range obMax {
-		needLength++
+		encodedLength++
 		if unsignedValue <= max {
 			break
 		}
 	}
-	return needLength
+	return encodedLength
 }
 
-func NeedLengthByVi64(value int64) (needLength int) {
+func EncodedLengthByVi64(value int64) (encodedLength int) {
 	if value < 0 {
 		return 10
 	}
 	var unsignedValue = uint64(value)
 	for _, max := range obMax {
-		needLength++
+		encodedLength++
 		if unsignedValue <= max {
 			break
 		}
 	}
-	return needLength
+	return encodedLength
 }
 
-func NeedLengthByVString(str string) (needLength int) {
-	return NeedLengthByVi64(int64(len(str))) + len(str) + 1
+func EncodedLengthByVf32(value float32) (encodedLength int) {
+	return EncodedLengthByVi32(int32(math.Float32bits(value)))
 }
 
-func NeedLengthByBytes(bys []byte) (needLength int) {
-	return NeedLengthByVi64(int64(len(bys))) + len(bys)
+func EncodedLengthByVf64(value float64) (encodedLength int) {
+	return EncodedLengthByVi64(int64(math.Float64bits(value)))
 }
 
-func EncodeVi32(buf []byte, value int32) {
+func EncodedLengthByVString(str string) (encodedLength int) {
+	return EncodedLengthByVi64(int64(len(str))) + len(str) + 1
+}
+
+func EncodedLengthByBytesString(bys []byte) (encodedLength int) {
+	return EncodedLengthByVi64(int64(len(bys))) + len(bys) + 1
+}
+
+func EncodedLengthByBytes(bys []byte) (encodedLength int) {
+	return EncodedLengthByVi64(int64(len(bys))) + len(bys)
+}
+
+func EncodeVi32(buffer *bytes.Buffer, value int32) {
+	var buf = buffer.Next(EncodedLengthByVi32(value))
 	var unsignedValue = uint32(value)
 	var index = 0
 	for uint64(unsignedValue) > obMaxV1b {
@@ -77,7 +91,8 @@ func EncodeVi32(buf []byte, value int32) {
 	buf[index] = byte(unsignedValue & 0x7f)
 }
 
-func EncodeVi64(buf []byte, value int64) {
+func EncodeVi64(buffer *bytes.Buffer, value int64) {
+	var buf = buffer.Next(EncodedLengthByVi64(value))
 	var unsignedValue = uint64(value)
 	var index = 0
 	for unsignedValue > obMaxV1b {
@@ -88,26 +103,44 @@ func EncodeVi64(buf []byte, value int64) {
 	buf[index] = byte(unsignedValue & 0x7f)
 }
 
-func EncodeVString(buf []byte, str string) {
-	// encode string header
-	var strLen = len(str)
-	var strHeadNeedLength = NeedLengthByVi64(int64(strLen))
-	EncodeVi64(buf[:strHeadNeedLength], int64(strLen))
-	// copy string body
-	var endIndex = len(buf) - 1
-	var strBytes = StringToBytes(str)
-	copy(buf[strHeadNeedLength:endIndex], strBytes)
-	// copy string end
-	buf[endIndex] = end
+func EncodeVf32(buffer *bytes.Buffer, value float32) {
+	EncodeVi32(buffer, int32(math.Float32bits(value)))
 }
 
-func EncodeBytes(buf []byte, bys []byte) {
+func EncodeVf64(buffer *bytes.Buffer, value float64) {
+	EncodeVi64(buffer, int64(math.Float64bits(value)))
+}
+
+func EncodeVString(buffer *bytes.Buffer, str string) {
+	// encode string header
+	var strLen = len(str)
+	EncodeVi64(buffer, int64(strLen))
+	// copy string body
+	var buf = buffer.Next(strLen + 1)
+	var strBytes = StringToBytes(str)
+	copy(buf[:strLen], strBytes)
+	// copy string end
+	buf[strLen] = end
+}
+
+func EncodeBytesString(buffer *bytes.Buffer, bys []byte) {
 	// encode bytes header
 	var bytesLen = len(bys)
-	var bytesHeadNeedLength = NeedLengthByVi64(int64(bytesLen))
-	EncodeVi64(buf[:bytesHeadNeedLength], int64(bytesLen))
+	EncodeVi64(buffer, int64(bytesLen))
 	// copy bytes body
-	copy(buf[bytesHeadNeedLength:], bys)
+	var buf = buffer.Next(bytesLen + 1)
+	copy(buf[:bytesLen], bys)
+	// copy bytes end
+	buf[bytesLen] = end
+}
+
+func EncodeBytes(buffer *bytes.Buffer, bys []byte) {
+	// encode bytes header
+	var bytesLen = len(bys)
+	EncodeVi64(buffer, int64(bytesLen))
+	// copy bytes body
+	var buf = buffer.Next(bytesLen)
+	copy(buf[:bytesLen], bys)
 }
 
 func DecodeVi32(buffer *bytes.Buffer) int32 {
@@ -142,6 +175,14 @@ func DecodeVi64(buffer *bytes.Buffer) int64 {
 	return int64(ret)
 }
 
+func DecodeVf32(buffer *bytes.Buffer) float32 {
+	return math.Float32frombits(uint32(DecodeVi32(buffer)))
+}
+
+func DecodeVf64(buffer *bytes.Buffer) float64 {
+	return math.Float64frombits(uint64(DecodeVi64(buffer)))
+}
+
 func DecodeVString(buffer *bytes.Buffer) string {
 	// decode string header
 	strLen := DecodeVi32(buffer)
@@ -151,6 +192,17 @@ func DecodeVString(buffer *bytes.Buffer) string {
 	// skip the end byte '0'
 	SkipBytes(buffer, 1)
 	return BytesToString(strBodyBuf)
+}
+
+func DecodeBytesString(buffer *bytes.Buffer) []byte {
+	// decode bytes header
+	bytesLen := DecodeVi32(buffer)
+	// copy bytes body
+	bytesBodyBuf := make([]byte, bytesLen)
+	copy(bytesBodyBuf, buffer.Next(int(bytesLen)))
+	// skip the end byte '0'
+	SkipBytes(buffer, 1)
+	return bytesBodyBuf
 }
 
 func DecodeBytes(buffer *bytes.Buffer) []byte {

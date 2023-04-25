@@ -45,7 +45,7 @@ type Connection struct {
 	uuid           uuid.UUID
 	traceIdCounter atomic.Uint32
 
-	credential string
+	credential []byte
 	tenantId   uint64
 }
 
@@ -71,15 +71,20 @@ func (c *Connection) Connect() error {
 	return nil
 }
 
-func (c *Connection) Login() {
+func (c *Connection) Login() error {
 	loginRequest := protocol.NewLoginRequest(c.option.tenantName, c.option.databaseName, c.option.userName, c.option.password)
 	loginResponse := protocol.NewLoginResponse()
 	err := c.Execute(context.TODO(), loginRequest, loginResponse)
 	if err != nil {
-		fmt.Println(err.Error())
-		return
+		return errors.Wrap(err, "tcp login failed")
 	}
+
+	c.credential = loginResponse.Credential()
+	c.tenantId = loginResponse.TenantId()
+
 	// TODO active = true
+	c.active.Store(true)
+	return nil
 }
 
 func (c *Connection) Execute(ctx context.Context, request protocol.Payload, response protocol.Payload) error {
@@ -118,9 +123,14 @@ func (c *Connection) Execute(ctx context.Context, request protocol.Payload, resp
 
 	c.decodeRpcHeader(contentBuffer)
 
-	payloadBuf = contentBuffer.Bytes()
+	rpcResponseCode := protocol.NewRpcResponseCode()
 
-	contentBuffer.Next(10) // TODO rpcResponseCode
+	rpcResponseCode.Decode(contentBuffer)
+
+	if rpcResponseCode.Code() != protocol.ObSuccess {
+		fmt.Printf("failed to rpc response code not success, code: %d\n", rpcResponseCode.Code())
+		return errors.Errorf("rpc response code not success, code : %d", rpcResponseCode.Code())
+	}
 
 	c.decodePayload(response, contentBuffer)
 
@@ -224,17 +234,20 @@ func (c *Connection) Close() {
 }
 
 func (c *Connection) encodePayload(payload protocol.Payload) []byte {
-	payloadBuf := payload.Encode()
+	payloadLen := payload.PayloadLen()
+	payloadBuf := make([]byte, payloadLen)
+	payloadBuffer := bytes.NewBuffer(payloadBuf)
+	payload.Encode(payloadBuffer)
 	return payloadBuf
 }
 
 func (c *Connection) encodeRpcHeader(payload protocol.Payload, payloadBuf []byte) []byte {
 	rpcHeader := protocol.NewRpcHeader()
 	rpcHeader.SetPCode(payload.PCode().Value())
-	rpcHeader.SetTimeout(payload.Timeout())
+	rpcHeader.SetFlag(payload.Flag())
 	rpcHeader.SetTenantId(payload.TenantId())
 	rpcHeader.SetSessionId(payload.SessionId())
-	rpcHeader.SetFlag(payload.Flag())
+	rpcHeader.SetTimeout(payload.Timeout())
 	rpcHeader.SetTraceId0(uint64(c.uuid.ID()))
 	rpcHeader.SetTraceId1(uint64(c.traceIdCounter.Add(1)))
 	// TODO To be added

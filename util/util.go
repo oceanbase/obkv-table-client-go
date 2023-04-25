@@ -72,3 +72,17 @@ func BytesToString(bys []byte) string {
 	// The caller must not modify b while the result string is in use.
 	return unsafe.String(unsafe.SliceData(bys), len(bys))
 }
+
+func BoolToByte(b bool) byte {
+	if b {
+		return 1
+	}
+	return 0
+}
+
+func ByteToBool(b byte) bool {
+	if b == 0 {
+		return false
+	}
+	return true
+}

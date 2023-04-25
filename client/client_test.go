@@ -1,14 +1,16 @@
 package client
 
 import (
+	"sync"
+	"testing"
+
 	"github.com/agiledragon/gomonkey/v2"
+	"github.com/stretchr/testify/assert"
+
 	"github.com/oceanbase/obkv-table-client-go/config"
 	"github.com/oceanbase/obkv-table-client-go/route"
 	"github.com/oceanbase/obkv-table-client-go/route/mock_route"
 	"github.com/oceanbase/obkv-table-client-go/table"
-	"github.com/stretchr/testify/assert"
-	"sync"
-	"testing"
 )
 
 var (
@@ -69,8 +71,8 @@ func TestObClient_Insert(t *testing.T) {
 	err = cli.AddRowkey(mock_route.MockTestTableName, []string{"c1"})
 	assert.Equal(t, nil, err)
 	// 4. insert
-	rowkey := []table.Column{{"c1", 1}}
-	mutateColumns := []table.Column{{"c2", 1}}
+	rowkey := []*table.Column{table.NewColumn("c1", 1)}
+	mutateColumns := []*table.Column{table.NewColumn("c2", 1)}
 	affectRows, err := cli.Insert(
 		mock_route.MockTestTableName,
 		rowkey,
@@ -99,7 +101,7 @@ func TestObClient_Get(t *testing.T) {
 	err = cli.AddRowkey(mock_route.MockTestTableName, []string{"c1"})
 	assert.Equal(t, nil, err)
 	// 4. get
-	rowkey := []table.Column{{"c1", 1}}
+	rowkey := []*table.Column{table.NewColumn("c1", 1)}
 	selectColumns := []string{"c1", "c2"}
 	res, err := cli.Get(
 		mock_route.MockTestTableName,
@@ -135,8 +137,8 @@ func TestObClientInsertConcurrent(t *testing.T) {
 		wg.Add(1)
 		go func(i int) {
 			defer wg.Done()
-			rowkey := []table.Column{{"c1", 1}}
-			mutateColumns := []table.Column{{"c2", 1}}
+			rowkey := []*table.Column{table.NewColumn("c1", 1)}
+			mutateColumns := []*table.Column{table.NewColumn("c2", 1)}
 			_, err := cli.Insert(
 				mock_route.MockTestTableName,
 				rowkey,

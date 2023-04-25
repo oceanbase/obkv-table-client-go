@@ -4,7 +4,7 @@ import (
 	"github.com/oceanbase/obkv-table-client-go/table"
 )
 
-func columnsToString(columns []table.Column) string {
+func columnsToString(columns []*table.Column) string {
 	var str string
 	str = str + "["
 	for i := 0; i < len(columns); i++ {

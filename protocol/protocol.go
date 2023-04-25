@@ -11,9 +11,9 @@ type Payload interface {
 
 	PCode() TablePacketCode
 
-	PayloadLen() int64
+	PayloadLen() int
 
-	PayloadContentLen() int64
+	PayloadContentLen() int
 
 	TenantId() uint64
 	SetTenantId(tenantId uint64)
@@ -28,8 +28,8 @@ type Payload interface {
 	SetVersion(version int64)
 
 	Timeout() time.Duration
-	SetTimeout(duration time.Duration)
+	SetTimeout(timeout time.Duration)
 
-	Credential() string
-	SetCredential(credential string)
+	Credential() []byte
+	SetCredential(credential []byte)
 }

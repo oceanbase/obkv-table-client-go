@@ -1,8 +1,18 @@
 package protocol
 
+import (
+	"bytes"
+	"time"
+
+	"github.com/pkg/errors"
+
+	"github.com/oceanbase/obkv-table-client-go/table"
+	"github.com/oceanbase/obkv-table-client-go/util"
+)
+
 type TableOperationRequest struct {
 	*UniVersionHeader
-	credential           string
+	credential           []byte
 	tableName            string
 	tableId              int64
 	partitionId          int64
@@ -14,7 +24,31 @@ type TableOperationRequest struct {
 	returnAffectedRows   bool
 }
 
-type TableEntityType int32
+func NewTableOperationRequest(tableName string, operationType TableOperationType, rowKeys []interface{}, columns []*table.Column, timeout time.Duration, flag uint16) (*TableOperationRequest, error) {
+	tableOperation, err := NewTableOperation(operationType, rowKeys, columns)
+	if err != nil {
+		return nil, errors.Wrap(err, "create table operation")
+	}
+	uniVersionHeader := NewUniVersionHeader()
+	uniVersionHeader.SetFlag(flag)
+	uniVersionHeader.SetTimeout(timeout)
+
+	return &TableOperationRequest{
+		UniVersionHeader:     uniVersionHeader,
+		credential:           nil, // when execute set
+		tableName:            tableName,
+		tableId:              InvalidTableId,
+		partitionId:          InvalidPartitionId,
+		entityType:           Dynamic,
+		tableOperation:       tableOperation,
+		consistencyLevel:     Strong,
+		returnRowKey:         false,
+		returnAffectedEntity: false,
+		returnAffectedRows:   true,
+	}, nil
+}
+
+type TableEntityType uint8
 
 const (
 	Dynamic TableEntityType = iota
@@ -22,9 +56,154 @@ const (
 	HKV
 )
 
-type TableConsistencyLevel int32
+type TableConsistencyLevel uint8
 
 const (
 	Strong TableConsistencyLevel = iota
 	Eventual
 )
+
+func (r *TableOperationRequest) TableName() string {
+	return r.tableName
+}
+
+func (r *TableOperationRequest) SetTableName(tableName string) {
+	r.tableName = tableName
+}
+
+func (r *TableOperationRequest) TableId() int64 {
+	return r.tableId
+}
+
+func (r *TableOperationRequest) SetTableId(tableId int64) {
+	r.tableId = tableId
+}
+
+func (r *TableOperationRequest) PartitionId() int64 {
+	return r.partitionId
+}
+
+func (r *TableOperationRequest) SetPartitionId(partitionId int64) {
+	r.partitionId = partitionId
+}
+
+func (r *TableOperationRequest) EntityType() TableEntityType {
+	return r.entityType
+}
+
+func (r *TableOperationRequest) SetEntityType(entityType TableEntityType) {
+	r.entityType = entityType
+}
+
+func (r *TableOperationRequest) TableOperation() *TableOperation {
+	return r.tableOperation
+}
+
+func (r *TableOperationRequest) SetTableOperation(tableOperation *TableOperation) {
+	r.tableOperation = tableOperation
+}
+
+func (r *TableOperationRequest) ConsistencyLevel() TableConsistencyLevel {
+	return r.consistencyLevel
+}
+
+func (r *TableOperationRequest) SetConsistencyLevel(consistencyLevel TableConsistencyLevel) {
+	r.consistencyLevel = consistencyLevel
+}
+
+func (r *TableOperationRequest) ReturnRowKey() bool {
+	return r.returnRowKey
+}
+
+func (r *TableOperationRequest) SetReturnRowKey(returnRowKey bool) {
+	r.returnRowKey = returnRowKey
+}
+
+func (r *TableOperationRequest) ReturnAffectedEntity() bool {
+	return r.returnAffectedEntity
+}
+
+func (r *TableOperationRequest) SetReturnAffectedEntity(returnAffectedEntity bool) {
+	r.returnAffectedEntity = returnAffectedEntity
+}
+
+func (r *TableOperationRequest) ReturnAffectedRows() bool {
+	return r.returnAffectedRows
+}
+
+func (r *TableOperationRequest) SetReturnAffectedRows(returnAffectedRows bool) {
+	r.returnAffectedRows = returnAffectedRows
+}
+
+func (r *TableOperationRequest) PCode() TablePacketCode {
+	return TableApiExecute
+}
+
+func (r *TableOperationRequest) PayloadLen() int {
+	return r.PayloadContentLen() + r.UniVersionHeader.UniVersionHeaderLen() // Do not change the order
+}
+
+func (r *TableOperationRequest) PayloadContentLen() int {
+	totalLen := 0
+	if globalVersion >= 4 { // todo version
+		totalLen =
+			util.EncodedLengthByBytesString(r.credential) +
+				util.EncodedLengthByVString(r.tableName) +
+				util.EncodedLengthByVi64(r.tableId) +
+				8 + // todo partitionId
+				5 + // entityType consistencyLevel returnRowKey returnAffectedEntity returnAffectedRows
+				r.tableOperation.PayloadLen()
+	} else {
+		totalLen =
+			util.EncodedLengthByBytesString(r.credential) +
+				util.EncodedLengthByVString(r.tableName) +
+				util.EncodedLengthByVi64(r.tableId) +
+				util.EncodedLengthByVi64(r.partitionId) + // todo partitionId
+				5 + // entityType consistencyLevel returnRowKey returnAffectedEntity returnAffectedRows
+				r.tableOperation.PayloadLen()
+	}
+
+	r.UniVersionHeader.SetContentLength(totalLen)
+	return r.UniVersionHeader.ContentLength()
+}
+
+func (r *TableOperationRequest) Credential() []byte {
+	return r.credential
+}
+
+func (r *TableOperationRequest) SetCredential(credential []byte) {
+	r.credential = credential
+}
+
+func (r *TableOperationRequest) Encode(buffer *bytes.Buffer) {
+	r.UniVersionHeader.Encode(buffer)
+
+	util.EncodeBytesString(buffer, r.credential)
+
+	util.EncodeVString(buffer, r.tableName)
+
+	util.EncodeVi64(buffer, r.tableId)
+
+	if globalVersion >= 4 { // todo version
+		util.PutUint64(buffer, uint64(r.partitionId))
+	} else {
+		util.EncodeVi64(buffer, r.partitionId)
+	}
+
+	util.PutUint8(buffer, uint8(r.entityType))
+
+	r.tableOperation.Encode(buffer)
+
+	util.PutUint8(buffer, uint8(r.consistencyLevel))
+
+	util.PutUint8(buffer, util.BoolToByte(r.returnRowKey))
+
+	util.PutUint8(buffer, util.BoolToByte(r.returnAffectedEntity))
+
+	util.PutUint8(buffer, util.BoolToByte(r.returnAffectedRows))
+}
+
+func (r *TableOperationRequest) Decode(buffer *bytes.Buffer) {
+	// TODO implement me
+	panic("implement me")
+}

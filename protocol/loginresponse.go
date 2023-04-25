@@ -13,7 +13,7 @@ type LoginResponse struct {
 	reserved2          int64
 
 	serverVersion string
-	credential    string
+	credential    []byte
 	tenantId      uint64
 	userId        int64
 	databaseId    int64
@@ -26,7 +26,7 @@ func NewLoginResponse() *LoginResponse {
 		reserved1:          0,
 		reserved2:          0,
 		serverVersion:      "",
-		credential:         "",
+		credential:         nil,
 		tenantId:           0,
 		userId:             0,
 		databaseId:         0,
@@ -81,36 +81,37 @@ func (r *LoginResponse) SetDatabaseId(databaseId int64) {
 	r.databaseId = databaseId
 }
 
+func (r *LoginResponse) TenantId() uint64 {
+	return r.tenantId
+}
+
+func (r *LoginResponse) SetTenantId(tenantId uint64) {
+	r.tenantId = tenantId
+}
+
 func (r *LoginResponse) PCode() TablePacketCode {
-	return Login
+	return TableApiLogin
 }
 
-func (r *LoginResponse) PayloadLen() int64 {
+func (r *LoginResponse) PayloadLen() int {
 	// TODO implement me
 	panic("implement me")
 }
 
-func (r *LoginResponse) PayloadContentLen() int64 {
+func (r *LoginResponse) PayloadContentLen() int {
 	// TODO implement me
 	panic("implement me")
 }
 
-func (r *LoginResponse) SessionId() uint64 {
-	return 0
-}
-
-func (r *LoginResponse) SetSessionId(sessionId uint64) {
-}
-
-func (r *LoginResponse) Credential() string {
+func (r *LoginResponse) Credential() []byte {
 	return r.credential
 }
 
-func (r *LoginResponse) SetCredential(credential string) {
+func (r *LoginResponse) SetCredential(credential []byte) {
 	r.credential = credential
 }
 
-func (r *LoginResponse) Encode() []byte {
+func (r *LoginResponse) Encode(buffer *bytes.Buffer) {
 	// TODO implement me
 	panic("implement me")
 }
@@ -119,12 +120,11 @@ func (r *LoginResponse) Decode(buffer *bytes.Buffer) {
 	r.UniVersionHeader.Decode(buffer)
 
 	r.serverCapabilities = util.DecodeVi32(buffer)
-	_ = util.DecodeVi32(buffer) // reserved1
-	_ = util.DecodeVi64(buffer) // reserved2
+	r.reserved1 = util.DecodeVi32(buffer)
+	r.reserved2 = util.DecodeVi64(buffer)
 
 	r.serverVersion = util.DecodeVString(buffer)
-	r.credential = util.DecodeVString(buffer)
-
+	r.credential = util.DecodeBytesString(buffer)
 	r.tenantId = uint64(util.DecodeVi64(buffer))
 	r.userId = util.DecodeVi64(buffer)
 	r.databaseId = util.DecodeVi64(buffer)

@@ -5,7 +5,7 @@ import (
 )
 
 type ProtoEncoder interface {
-	Encode() []byte
+	Encode(*bytes.Buffer)
 }
 
 type ProtoDecoder interface {

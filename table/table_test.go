@@ -1,15 +1,16 @@
 package table
 
 import (
-	"github.com/stretchr/testify/assert"
 	"testing"
+
+	"github.com/stretchr/testify/assert"
 )
 
 func TestColumn_ToString(t *testing.T) {
 	col := Column{}
-	assert.Equal(t, col.String(), "Column{Name:, Value:<nil>}")
+	assert.Equal(t, col.String(), "column{name: , value: <nil>}")
 	col = Column{"c1", 123}
-	assert.Equal(t, col.String(), "Column{Name:c1, Value:123}")
+	assert.Equal(t, col.String(), "column{name: c1, value: 123}")
 }
 
 func TestObRowkeyElement_ToString(t *testing.T) {
