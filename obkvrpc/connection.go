@@ -71,18 +71,20 @@ func (c *Connection) Connect() error {
 	return nil
 }
 
-func (c *Connection) Login() {
+func (c *Connection) Login() error {
 	loginRequest := protocol.NewLoginRequest(c.option.tenantName, c.option.databaseName, c.option.userName, c.option.password)
 	loginResponse := protocol.NewLoginResponse()
 	err := c.Execute(context.TODO(), loginRequest, loginResponse)
 	if err != nil {
-		fmt.Println(err.Error())
-		return
+		return errors.Wrap(err, "tcp login failed")
 	}
-	// TODO active = true
 
 	c.credential = loginResponse.Credential()
 	c.tenantId = loginResponse.TenantId()
+
+	// TODO active = true
+	c.active.Store(true)
+	return nil
 }
 
 func (c *Connection) Execute(ctx context.Context, request protocol.Payload, response protocol.Payload) error {
@@ -121,16 +123,13 @@ func (c *Connection) Execute(ctx context.Context, request protocol.Payload, resp
 
 	c.decodeRpcHeader(contentBuffer)
 
-	payloadBuf = contentBuffer.Bytes()
-
-	// TODO rpcResponseCode
 	rpcResponseCode := protocol.NewRpcResponseCode()
 
 	rpcResponseCode.Decode(contentBuffer)
 
 	if rpcResponseCode.Code() != protocol.ObSuccess {
 		fmt.Printf("failed to rpc response code not success, code: %d\n", rpcResponseCode.Code())
-		return errors.Errorf("rpc response code not success,code : %d", rpcResponseCode.Code())
+		return errors.Errorf("rpc response code not success, code : %d", rpcResponseCode.Code())
 	}
 
 	c.decodePayload(response, contentBuffer)
