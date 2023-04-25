@@ -28,6 +28,10 @@ type ObBytesString struct {
 	bytesVal []byte
 }
 
+func (v *ObBytesString) BytesVal() []byte {
+	return v.bytesVal
+}
+
 func (v *ObBytesString) String() string {
 	return "ObBytesString{" +
 		"bytesVal:" + string(v.bytesVal) +
@@ -121,7 +125,7 @@ func parseTimestamp(obj interface{}) (time.Time, error) {
 }
 
 func parseTextToComparable(obj interface{}, csType ObCollationType) (interface{}, error) {
-	if csType.value == csTypeBinary {
+	if csType.value == CsTypeBinary {
 		if v, ok := obj.(ObBytesString); ok {
 			return v, nil
 		} else if v, ok := obj.([]byte); ok {
@@ -196,7 +200,7 @@ type ObObjType interface {
 	getEncodeSize(obj interface{}) int
 	getDefaultObjMeta() ObObjMeta
 	parseToComparable(obj interface{}, csType ObCollationType) (interface{}, error)
-	getValue() int
+	GetValue() int
 }
 
 func NewObObjType(value int) (ObObjType, error) {
@@ -297,7 +301,7 @@ func (t ObNullType) getEncodeSize(obj interface{}) int {
 func (t ObNullType) getDefaultObjMeta() ObObjMeta {
 	return ObObjMeta{t,
 		ObCollationLevel{csLevelIgnorable},
-		ObCollationType{csTypeBinary},
+		ObCollationType{CsTypeBinary},
 		byte(10),
 	}
 }
@@ -306,7 +310,7 @@ func (t ObNullType) parseToComparable(obj interface{}, csType ObCollationType) (
 	return nil, nil
 }
 
-func (t ObNullType) getValue() int {
+func (t ObNullType) GetValue() int {
 	return t.value
 }
 
@@ -338,7 +342,7 @@ func (t ObTinyIntType) getEncodeSize(obj interface{}) int {
 func (t ObTinyIntType) getDefaultObjMeta() ObObjMeta {
 	return ObObjMeta{t,
 		ObCollationLevel{csLevelNumeric},
-		ObCollationType{csTypeBinary},
+		ObCollationType{CsTypeBinary},
 		byte(10),
 	}
 }
@@ -362,7 +366,7 @@ func (t ObTinyIntType) parseToComparable(obj interface{}, csType ObCollationType
 	}
 }
 
-func (t ObTinyIntType) getValue() int {
+func (t ObTinyIntType) GetValue() int {
 	return t.value
 }
 
@@ -394,7 +398,7 @@ func (t ObSmallIntType) getEncodeSize(obj interface{}) int {
 func (t ObSmallIntType) getDefaultObjMeta() ObObjMeta {
 	return ObObjMeta{t,
 		ObCollationLevel{csLevelNumeric},
-		ObCollationType{csTypeBinary},
+		ObCollationType{CsTypeBinary},
 		byte(10),
 	}
 }
@@ -418,7 +422,7 @@ func (t ObSmallIntType) parseToComparable(obj interface{}, csType ObCollationTyp
 	}
 }
 
-func (t ObSmallIntType) getValue() int {
+func (t ObSmallIntType) GetValue() int {
 	return t.value
 }
 
@@ -450,7 +454,7 @@ func (t ObMediumIntType) getEncodeSize(obj interface{}) int {
 func (t ObMediumIntType) getDefaultObjMeta() ObObjMeta {
 	return ObObjMeta{t,
 		ObCollationLevel{csLevelNumeric},
-		ObCollationType{csTypeBinary},
+		ObCollationType{CsTypeBinary},
 		byte(10),
 	}
 }
@@ -459,7 +463,7 @@ func (t ObMediumIntType) parseToComparable(obj interface{}, csType ObCollationTy
 	return nil, errors.New("ObMediumIntType is not supported")
 }
 
-func (t ObMediumIntType) getValue() int {
+func (t ObMediumIntType) GetValue() int {
 	return t.value
 }
 
@@ -491,7 +495,7 @@ func (t ObInt32Type) getEncodeSize(obj interface{}) int {
 func (t ObInt32Type) getDefaultObjMeta() ObObjMeta {
 	return ObObjMeta{t,
 		ObCollationLevel{csLevelNumeric},
-		ObCollationType{csTypeBinary},
+		ObCollationType{CsTypeBinary},
 		byte(10),
 	}
 }
@@ -515,7 +519,7 @@ func (t ObInt32Type) parseToComparable(obj interface{}, csType ObCollationType) 
 	}
 }
 
-func (t ObInt32Type) getValue() int {
+func (t ObInt32Type) GetValue() int {
 	return t.value
 }
 
@@ -547,7 +551,7 @@ func (t ObInt64Type) getEncodeSize(obj interface{}) int {
 func (t ObInt64Type) getDefaultObjMeta() ObObjMeta {
 	return ObObjMeta{t,
 		ObCollationLevel{csLevelNumeric},
-		ObCollationType{csTypeBinary},
+		ObCollationType{CsTypeBinary},
 		byte(10),
 	}
 }
@@ -556,7 +560,7 @@ func (t ObInt64Type) parseToComparable(obj interface{}, csType ObCollationType) 
 	return ParseToLong(obj)
 }
 
-func (t ObInt64Type) getValue() int {
+func (t ObInt64Type) GetValue() int {
 	return t.value
 }
 
@@ -588,7 +592,7 @@ func (t ObUTinyIntType) getEncodeSize(obj interface{}) int {
 func (t ObUTinyIntType) getDefaultObjMeta() ObObjMeta {
 	return ObObjMeta{t,
 		ObCollationLevel{csLevelNumeric},
-		ObCollationType{csTypeBinary},
+		ObCollationType{CsTypeBinary},
 		byte(10),
 	}
 }
@@ -612,7 +616,7 @@ func (t ObUTinyIntType) parseToComparable(obj interface{}, csType ObCollationTyp
 	}
 }
 
-func (t ObUTinyIntType) getValue() int {
+func (t ObUTinyIntType) GetValue() int {
 	return t.value
 }
 
@@ -644,7 +648,7 @@ func (t ObUSmallIntType) getEncodeSize(obj interface{}) int {
 func (t ObUSmallIntType) getDefaultObjMeta() ObObjMeta {
 	return ObObjMeta{t,
 		ObCollationLevel{csLevelNumeric},
-		ObCollationType{csTypeBinary},
+		ObCollationType{CsTypeBinary},
 		byte(10),
 	}
 }
@@ -668,7 +672,7 @@ func (t ObUSmallIntType) parseToComparable(obj interface{}, csType ObCollationTy
 	}
 }
 
-func (t ObUSmallIntType) getValue() int {
+func (t ObUSmallIntType) GetValue() int {
 	return t.value
 }
 
@@ -700,7 +704,7 @@ func (t ObUMediumIntType) getEncodeSize(obj interface{}) int {
 func (t ObUMediumIntType) getDefaultObjMeta() ObObjMeta {
 	return ObObjMeta{t,
 		ObCollationLevel{csLevelNumeric},
-		ObCollationType{csTypeBinary},
+		ObCollationType{CsTypeBinary},
 		byte(10),
 	}
 }
@@ -725,7 +729,7 @@ func (t ObUMediumIntType) parseToComparable(obj interface{}, csType ObCollationT
 	}
 }
 
-func (t ObUMediumIntType) getValue() int {
+func (t ObUMediumIntType) GetValue() int {
 	return t.value
 }
 
@@ -757,7 +761,7 @@ func (t ObUInt32Type) getEncodeSize(obj interface{}) int {
 func (t ObUInt32Type) getDefaultObjMeta() ObObjMeta {
 	return ObObjMeta{t,
 		ObCollationLevel{csLevelNumeric},
-		ObCollationType{csTypeBinary},
+		ObCollationType{CsTypeBinary},
 		byte(10),
 	}
 }
@@ -781,7 +785,7 @@ func (t ObUInt32Type) parseToComparable(obj interface{}, csType ObCollationType)
 	}
 }
 
-func (t ObUInt32Type) getValue() int {
+func (t ObUInt32Type) GetValue() int {
 	return t.value
 }
 
@@ -813,7 +817,7 @@ func (t ObUInt64Type) getEncodeSize(obj interface{}) int {
 func (t ObUInt64Type) getDefaultObjMeta() ObObjMeta {
 	return ObObjMeta{t,
 		ObCollationLevel{csLevelNumeric},
-		ObCollationType{csTypeBinary},
+		ObCollationType{CsTypeBinary},
 		byte(10),
 	}
 }
@@ -822,7 +826,7 @@ func (t ObUInt64Type) parseToComparable(obj interface{}, csType ObCollationType)
 	return ParseToLong(obj)
 }
 
-func (t ObUInt64Type) getValue() int {
+func (t ObUInt64Type) GetValue() int {
 	return t.value
 }
 
@@ -854,7 +858,7 @@ func (t ObFloatType) getEncodeSize(obj interface{}) int {
 func (t ObFloatType) getDefaultObjMeta() ObObjMeta {
 	return ObObjMeta{t,
 		ObCollationLevel{csLevelNumeric},
-		ObCollationType{csTypeBinary},
+		ObCollationType{CsTypeBinary},
 		byte(10),
 	}
 }
@@ -882,7 +886,7 @@ func (t ObFloatType) parseToComparable(obj interface{}, csType ObCollationType) 
 	}
 }
 
-func (t ObFloatType) getValue() int {
+func (t ObFloatType) GetValue() int {
 	return t.value
 }
 
@@ -914,7 +918,7 @@ func (t ObDoubleType) getEncodeSize(obj interface{}) int {
 func (t ObDoubleType) getDefaultObjMeta() ObObjMeta {
 	return ObObjMeta{t,
 		ObCollationLevel{csLevelNumeric},
-		ObCollationType{csTypeBinary},
+		ObCollationType{CsTypeBinary},
 		byte(10),
 	}
 }
@@ -942,7 +946,7 @@ func (t ObDoubleType) parseToComparable(obj interface{}, csType ObCollationType)
 	}
 }
 
-func (t ObDoubleType) getValue() int {
+func (t ObDoubleType) GetValue() int {
 	return t.value
 }
 
@@ -974,7 +978,7 @@ func (t ObUFloatType) getEncodeSize(obj interface{}) int {
 func (t ObUFloatType) getDefaultObjMeta() ObObjMeta {
 	return ObObjMeta{t,
 		ObCollationLevel{csLevelNumeric},
-		ObCollationType{csTypeBinary},
+		ObCollationType{CsTypeBinary},
 		byte(10),
 	}
 }
@@ -983,7 +987,7 @@ func (t ObUFloatType) parseToComparable(obj interface{}, csType ObCollationType)
 	return nil, errors.New("ObUFloatType is not supported")
 }
 
-func (t ObUFloatType) getValue() int {
+func (t ObUFloatType) GetValue() int {
 	return t.value
 }
 
@@ -1015,7 +1019,7 @@ func (t ObUDoubleType) getEncodeSize(obj interface{}) int {
 func (t ObUDoubleType) getDefaultObjMeta() ObObjMeta {
 	return ObObjMeta{t,
 		ObCollationLevel{csLevelNumeric},
-		ObCollationType{csTypeBinary},
+		ObCollationType{CsTypeBinary},
 		byte(10),
 	}
 }
@@ -1024,7 +1028,7 @@ func (t ObUDoubleType) parseToComparable(obj interface{}, csType ObCollationType
 	return nil, errors.New("ObUDoubleType is not supported")
 }
 
-func (t ObUDoubleType) getValue() int {
+func (t ObUDoubleType) GetValue() int {
 	return t.value
 }
 
@@ -1056,7 +1060,7 @@ func (t ObNumberType) getEncodeSize(obj interface{}) int {
 func (t ObNumberType) getDefaultObjMeta() ObObjMeta {
 	return ObObjMeta{t,
 		ObCollationLevel{csLevelNumeric},
-		ObCollationType{csTypeBinary},
+		ObCollationType{CsTypeBinary},
 		byte(10),
 	}
 }
@@ -1065,7 +1069,7 @@ func (t ObNumberType) parseToComparable(obj interface{}, csType ObCollationType)
 	return nil, errors.New("ObNumberType is not supported")
 }
 
-func (t ObNumberType) getValue() int {
+func (t ObNumberType) GetValue() int {
 	return t.value
 }
 
@@ -1097,7 +1101,7 @@ func (t ObUNumberType) getEncodeSize(obj interface{}) int {
 func (t ObUNumberType) getDefaultObjMeta() ObObjMeta {
 	return ObObjMeta{t,
 		ObCollationLevel{csLevelNumeric},
-		ObCollationType{csTypeBinary},
+		ObCollationType{CsTypeBinary},
 		byte(10),
 	}
 }
@@ -1106,7 +1110,7 @@ func (t ObUNumberType) parseToComparable(obj interface{}, csType ObCollationType
 	return nil, errors.New("ObUNumberType is not supported")
 }
 
-func (t ObUNumberType) getValue() int {
+func (t ObUNumberType) GetValue() int {
 	return t.value
 }
 
@@ -1138,7 +1142,7 @@ func (t ObDateTimeType) getEncodeSize(obj interface{}) int {
 func (t ObDateTimeType) getDefaultObjMeta() ObObjMeta {
 	return ObObjMeta{t,
 		ObCollationLevel{csLevelNumeric},
-		ObCollationType{csTypeBinary},
+		ObCollationType{CsTypeBinary},
 		byte(10),
 	}
 }
@@ -1147,7 +1151,7 @@ func (t ObDateTimeType) parseToComparable(obj interface{}, csType ObCollationTyp
 	return parseTimestamp(obj)
 }
 
-func (t ObDateTimeType) getValue() int {
+func (t ObDateTimeType) GetValue() int {
 	return t.value
 }
 
@@ -1179,7 +1183,7 @@ func (t ObTimestampType) getEncodeSize(obj interface{}) int {
 func (t ObTimestampType) getDefaultObjMeta() ObObjMeta {
 	return ObObjMeta{t,
 		ObCollationLevel{csLevelNumeric},
-		ObCollationType{csTypeBinary},
+		ObCollationType{CsTypeBinary},
 		byte(10),
 	}
 }
@@ -1188,7 +1192,7 @@ func (t ObTimestampType) parseToComparable(obj interface{}, csType ObCollationTy
 	return parseTimestamp(obj)
 }
 
-func (t ObTimestampType) getValue() int {
+func (t ObTimestampType) GetValue() int {
 	return t.value
 }
 
@@ -1220,7 +1224,7 @@ func (t ObDateType) getEncodeSize(obj interface{}) int {
 func (t ObDateType) getDefaultObjMeta() ObObjMeta {
 	return ObObjMeta{t,
 		ObCollationLevel{csLevelNumeric},
-		ObCollationType{csTypeBinary},
+		ObCollationType{CsTypeBinary},
 		byte(10),
 	}
 }
@@ -1236,7 +1240,7 @@ func (t ObDateType) parseToComparable(obj interface{}, csType ObCollationType) (
 	}
 }
 
-func (t ObDateType) getValue() int {
+func (t ObDateType) GetValue() int {
 	return t.value
 }
 
@@ -1268,7 +1272,7 @@ func (t ObTimeType) getEncodeSize(obj interface{}) int {
 func (t ObTimeType) getDefaultObjMeta() ObObjMeta {
 	return ObObjMeta{t,
 		ObCollationLevel{csLevelNumeric},
-		ObCollationType{csTypeBinary},
+		ObCollationType{CsTypeBinary},
 		byte(10),
 	}
 }
@@ -1277,7 +1281,7 @@ func (t ObTimeType) parseToComparable(obj interface{}, csType ObCollationType) (
 	return nil, errors.New("ObTimeType is not supported")
 }
 
-func (t ObTimeType) getValue() int {
+func (t ObTimeType) GetValue() int {
 	return t.value
 }
 
@@ -1309,7 +1313,7 @@ func (t ObYearType) getEncodeSize(obj interface{}) int {
 func (t ObYearType) getDefaultObjMeta() ObObjMeta {
 	return ObObjMeta{t,
 		ObCollationLevel{csLevelNumeric},
-		ObCollationType{csTypeBinary},
+		ObCollationType{CsTypeBinary},
 		byte(10),
 	}
 }
@@ -1318,7 +1322,7 @@ func (t ObYearType) parseToComparable(obj interface{}, csType ObCollationType) (
 	return nil, errors.New("ObYearType is not supported")
 }
 
-func (t ObYearType) getValue() int {
+func (t ObYearType) GetValue() int {
 	return t.value
 }
 
@@ -1350,7 +1354,7 @@ func (t ObVarcharType) getEncodeSize(obj interface{}) int {
 func (t ObVarcharType) getDefaultObjMeta() ObObjMeta {
 	return ObObjMeta{t,
 		ObCollationLevel{csLevelExplicit},
-		ObCollationType{csTypeUtf8mb4GeneralCi},
+		ObCollationType{CsTypeUtf8mb4GeneralCi},
 		byte(10),
 	}
 }
@@ -1359,7 +1363,7 @@ func (t ObVarcharType) parseToComparable(obj interface{}, csType ObCollationType
 	return parseTextToComparable(obj, csType)
 }
 
-func (t ObVarcharType) getValue() int {
+func (t ObVarcharType) GetValue() int {
 	return t.value
 }
 
@@ -1391,7 +1395,7 @@ func (t ObCharType) getEncodeSize(obj interface{}) int {
 func (t ObCharType) getDefaultObjMeta() ObObjMeta {
 	return ObObjMeta{t,
 		ObCollationLevel{csLevelExplicit},
-		ObCollationType{csTypeUtf8mb4GeneralCi},
+		ObCollationType{CsTypeUtf8mb4GeneralCi},
 		byte(10),
 	}
 }
@@ -1400,7 +1404,7 @@ func (t ObCharType) parseToComparable(obj interface{}, csType ObCollationType) (
 	return parseTextToComparable(obj, csType)
 }
 
-func (t ObCharType) getValue() int {
+func (t ObCharType) GetValue() int {
 	return t.value
 }
 
@@ -1432,7 +1436,7 @@ func (t ObHexStringType) getEncodeSize(obj interface{}) int {
 func (t ObHexStringType) getDefaultObjMeta() ObObjMeta {
 	return ObObjMeta{t,
 		ObCollationLevel{csLevelInvalid},
-		ObCollationType{csTypeBinary},
+		ObCollationType{CsTypeBinary},
 		byte(10),
 	}
 }
@@ -1441,7 +1445,7 @@ func (t ObHexStringType) parseToComparable(obj interface{}, csType ObCollationTy
 	return nil, errors.New("ObHexStringType is not supported")
 }
 
-func (t ObHexStringType) getValue() int {
+func (t ObHexStringType) GetValue() int {
 	return t.value
 }
 
@@ -1473,7 +1477,7 @@ func (t ObExtendType) getEncodeSize(obj interface{}) int {
 func (t ObExtendType) getDefaultObjMeta() ObObjMeta {
 	return ObObjMeta{t,
 		ObCollationLevel{csLevelInvalid},
-		ObCollationType{csTypeInvalid},
+		ObCollationType{CsTypeInvalid},
 		byte(10),
 	}
 }
@@ -1482,7 +1486,7 @@ func (t ObExtendType) parseToComparable(obj interface{}, csType ObCollationType)
 	return nil, errors.New("ObExtendType is not supported")
 }
 
-func (t ObExtendType) getValue() int {
+func (t ObExtendType) GetValue() int {
 	return t.value
 }
 
@@ -1514,7 +1518,7 @@ func (t ObUnknownType) getEncodeSize(obj interface{}) int {
 func (t ObUnknownType) getDefaultObjMeta() ObObjMeta {
 	return ObObjMeta{t,
 		ObCollationLevel{csLevelInvalid},
-		ObCollationType{csTypeInvalid},
+		ObCollationType{CsTypeInvalid},
 		byte(10),
 	}
 }
@@ -1523,7 +1527,7 @@ func (t ObUnknownType) parseToComparable(obj interface{}, csType ObCollationType
 	return nil, errors.New("ObUnknownType is not supported")
 }
 
-func (t ObUnknownType) getValue() int {
+func (t ObUnknownType) GetValue() int {
 	return t.value
 }
 
@@ -1555,7 +1559,7 @@ func (t ObTinyTextType) getEncodeSize(obj interface{}) int {
 func (t ObTinyTextType) getDefaultObjMeta() ObObjMeta {
 	return ObObjMeta{t,
 		ObCollationLevel{csLevelImplicit},
-		ObCollationType{csTypeBinary},
+		ObCollationType{CsTypeBinary},
 		byte(10),
 	}
 }
@@ -1564,7 +1568,7 @@ func (t ObTinyTextType) parseToComparable(obj interface{}, csType ObCollationTyp
 	return parseTextToComparable(obj, csType)
 }
 
-func (t ObTinyTextType) getValue() int {
+func (t ObTinyTextType) GetValue() int {
 	return t.value
 }
 
@@ -1596,7 +1600,7 @@ func (t ObTextType) getEncodeSize(obj interface{}) int {
 func (t ObTextType) getDefaultObjMeta() ObObjMeta {
 	return ObObjMeta{t,
 		ObCollationLevel{csLevelImplicit},
-		ObCollationType{csTypeBinary},
+		ObCollationType{CsTypeBinary},
 		byte(10),
 	}
 }
@@ -1605,7 +1609,7 @@ func (t ObTextType) parseToComparable(obj interface{}, csType ObCollationType) (
 	return parseTextToComparable(obj, csType)
 }
 
-func (t ObTextType) getValue() int {
+func (t ObTextType) GetValue() int {
 	return t.value
 }
 
@@ -1637,7 +1641,7 @@ func (t ObMediumTextType) getEncodeSize(obj interface{}) int {
 func (t ObMediumTextType) getDefaultObjMeta() ObObjMeta {
 	return ObObjMeta{t,
 		ObCollationLevel{csLevelImplicit},
-		ObCollationType{csTypeBinary},
+		ObCollationType{CsTypeBinary},
 		byte(10),
 	}
 }
@@ -1646,7 +1650,7 @@ func (t ObMediumTextType) parseToComparable(obj interface{}, csType ObCollationT
 	return parseTextToComparable(obj, csType)
 }
 
-func (t ObMediumTextType) getValue() int {
+func (t ObMediumTextType) GetValue() int {
 	return t.value
 }
 
@@ -1678,7 +1682,7 @@ func (t ObLongTextType) getEncodeSize(obj interface{}) int {
 func (t ObLongTextType) getDefaultObjMeta() ObObjMeta {
 	return ObObjMeta{t,
 		ObCollationLevel{csLevelImplicit},
-		ObCollationType{csTypeBinary},
+		ObCollationType{CsTypeBinary},
 		byte(10),
 	}
 }
@@ -1687,7 +1691,7 @@ func (t ObLongTextType) parseToComparable(obj interface{}, csType ObCollationTyp
 	return parseTextToComparable(obj, csType)
 }
 
-func (t ObLongTextType) getValue() int {
+func (t ObLongTextType) GetValue() int {
 	return t.value
 }
 
@@ -1719,7 +1723,7 @@ func (t ObBitType) getEncodeSize(obj interface{}) int {
 func (t ObBitType) getDefaultObjMeta() ObObjMeta {
 	return ObObjMeta{t,
 		ObCollationLevel{csLevelNumeric},
-		ObCollationType{csTypeBinary},
+		ObCollationType{CsTypeBinary},
 		byte(10),
 	}
 }
@@ -1728,6 +1732,6 @@ func (t ObBitType) parseToComparable(obj interface{}, csType ObCollationType) (i
 	return nil, errors.New("ObBitType is not supported")
 }
 
-func (t ObBitType) getValue() int {
+func (t ObBitType) GetValue() int {
 	return t.value
 }

@@ -5,11 +5,14 @@ import (
 	"github.com/oceanbase/obkv-table-client-go/log"
 	"github.com/oceanbase/obkv-table-client-go/protocol"
 	"github.com/oceanbase/obkv-table-client-go/table"
+	"github.com/oceanbase/obkv-table-client-go/util"
 	"strconv"
 	"strings"
+	"time"
 )
 
 const (
+	ObInvalidPartId = -1
 	ObPartIdBitNum  = 28
 	ObPartIdShift   = 32
 	ObMask          = (1 << ObPartIdBitNum) | 1<<(ObPartIdBitNum+ObPartIdShift)
@@ -138,6 +141,10 @@ func evalPartKeyValues(desc ObPartDesc, rowkey []interface{}) ([]interface{}, er
 		log.Warn("part desc is nil")
 		return nil, errors.New("part desc is nil")
 	}
+	if desc.rowKeyElement() == nil {
+		log.Warn("rowkey element is nil")
+		return nil, errors.New("rowkey element is nil")
+	}
 	if len(rowkey) < len(desc.rowKeyElement().NameIdxMap()) {
 		log.Warn("rowkey count not match",
 			log.Int("rowkey len", len(rowkey)),
@@ -206,7 +213,7 @@ func (d *ObRangePartDesc) setPartColumns(partColumns []*protocol.ObColumn) {
 
 func (d *ObRangePartDesc) GetPartId(rowkey []interface{}) (int64, error) {
 	// todo: impl
-	return -1, errors.New("not implement")
+	return ObInvalidPartId, errors.New("not implement")
 }
 
 //func (d *ObRangePartDesc) setOrderedCompareColumns(orderedPartColumn []protocol.ObColumn) {
@@ -289,21 +296,21 @@ func (d *ObHashPartDesc) setPartColumns(partColumns []*protocol.ObColumn) {
 func (d *ObHashPartDesc) GetPartId(rowkey []interface{}) (int64, error) {
 	if len(rowkey) == 0 {
 		log.Warn("rowkey size is 0")
-		return -1, errors.New("rowkeys size is 0")
+		return ObInvalidPartId, errors.New("rowkeys size is 0")
 	}
 	evalValues, err := evalPartKeyValues(d, rowkey)
 	if err != nil {
 		log.Warn("failed to eval part key values", log.String("part desc", d.String()))
-		return -1, err
+		return ObInvalidPartId, err
 	}
 	longValue, err := protocol.ParseToLong(evalValues[0]) // hash part has one param at most
 	if err != nil {
 		log.Warn("failed to parse to long", log.String("part desc", d.String()))
-		return -1, err
+		return ObInvalidPartId, err
 	}
 	if v, ok := longValue.(int64); !ok {
 		log.Warn("failed to convert to long")
-		return -1, errors.New("failed to convert to long")
+		return ObInvalidPartId, errors.New("failed to convert to long")
 	} else {
 		return d.innerHash(v), nil
 	}
@@ -393,8 +400,172 @@ func (d *ObKeyPartDesc) setPartColumns(partColumns []*protocol.ObColumn) {
 }
 
 func (d *ObKeyPartDesc) GetPartId(rowkey []interface{}) (int64, error) {
-	// todo: impl
-	return -1, errors.New("not implement")
+	if len(rowkey) == 0 {
+		log.Warn("rowkey size is 0")
+		return ObInvalidPartId, errors.New("rowkeys size is 0")
+	}
+	evalValues, err := evalPartKeyValues(d, rowkey)
+	if err != nil {
+		log.Warn("failed to eval part key values", log.String("part desc", d.String()))
+		return ObInvalidPartId, err
+	}
+	if len(evalValues) < len(d.OrderedPartRefColumnRowKeyRelations) {
+		log.Warn("invalid eval values length",
+			log.Int("evalValues length", len(evalValues)),
+			log.Int("OrderedPartRefColumnRowKeyRelations length", len(d.OrderedPartRefColumnRowKeyRelations)))
+	}
+	var hashValue int64
+	for i := 0; i < len(d.OrderedPartRefColumnRowKeyRelations); i++ {
+		hashValue, err = d.toHashCode(
+			evalValues[i],
+			d.OrderedPartRefColumnRowKeyRelations[i].column,
+			hashValue,
+			d.PartFuncType,
+		)
+		if err != nil {
+			log.Warn("failed to convert to hash code", log.String("part desc", d.String()))
+			return ObInvalidPartId, err
+		}
+	}
+	if hashValue < 0 {
+		hashValue = -hashValue
+	}
+	return (int64(d.partSpace) << ObPartIdBitNum) | (hashValue % int64(d.partNum)), nil
+}
+
+func intToInt64(value interface{}) (int64, error) {
+	switch v := value.(type) {
+	case bool:
+		if v {
+			return int64(1), nil
+		} else {
+			return int64(0), nil
+		}
+	case int8:
+		return int64(v), nil
+	case uint8:
+		return int64(v), nil
+	case int16:
+		return int64(v), nil
+	case uint16:
+		return int64(v), nil
+	case int:
+		return int64(v), nil
+	case uint:
+		return int64(v), nil
+	case int32:
+		return int64(v), nil
+	case uint32:
+		return int64(v), nil
+	case int64:
+		return v, nil
+	default:
+		log.Warn("invalid type to convert to int64", log.String("value", util.InterfaceToString(value)))
+		return -1, errors.New("invalid type to convert to int64")
+	}
+}
+
+func (d *ObKeyPartDesc) toHashCode(
+	value interface{},
+	refColumn *protocol.ObColumn,
+	hashCode int64,
+	partFuncType ObPartFuncType) (int64, error) {
+	objType := refColumn.ObjType()
+	typeValue := objType.GetValue()
+	collType := refColumn.CollationType()
+	if typeValue >= protocol.ObTinyIntTypeValue && typeValue <= protocol.ObUInt64TypeValue {
+		i64, err := intToInt64(value)
+		if err != nil {
+			log.Warn("failed to convert int to int64", log.Int("type", typeValue))
+			return -1, err
+		}
+		arr := d.longToByteArray(i64)
+		return MurmurHash64A(arr, len(arr), hashCode), nil
+	} else if typeValue == protocol.ObDateTimeTypeValue || typeValue == protocol.ObTimestampTypeValue {
+		t, ok := value.(time.Time)
+		if !ok {
+			log.Warn("invalid timestamp type", log.String("value", util.InterfaceToString(value)))
+			return -1, errors.New("invalid timestamp type")
+		}
+		return d.timeStampHash(t, hashCode), nil
+	} else if typeValue == protocol.ObDateTypeValue {
+		date, ok := value.(time.Time)
+		if !ok {
+			log.Warn("invalid date type", log.String("value", util.InterfaceToString(value)))
+			return -1, errors.New("invalid date type")
+		}
+		return d.dateHash(date, hashCode), nil
+	} else if typeValue == protocol.ObVarcharTypeValue || typeValue == protocol.ObCharTypeValue {
+		return d.varcharHash(value, collType, hashCode, partFuncType)
+	} else {
+		log.Warn("unsupported type for key hash", log.String("objType", objType.String()))
+		return -1, errors.New("unsupported type for key hash")
+	}
+}
+
+func (d *ObKeyPartDesc) longToByteArray(l int64) []byte {
+	return []byte{(byte)(l & 0xFF), (byte)((l >> 8) & 0xFF), (byte)((l >> 16) & 0xFF),
+		(byte)((l >> 24) & 0xFF), (byte)((l >> 32) & 0xFF), (byte)((l >> 40) & 0xFF),
+		(byte)((l >> 48) & 0xFF), (byte)((l >> 56) & 0xFF)}
+}
+
+func (d *ObKeyPartDesc) longHash(value int64, hashCode int64) int64 {
+	arr := d.longToByteArray(value)
+	return MurmurHash64A(arr, len(arr), hashCode)
+}
+
+func (d *ObKeyPartDesc) timeStampHash(ts time.Time, hashCode int64) int64 {
+	return d.longHash(ts.UnixMilli(), hashCode)
+}
+
+func (d *ObKeyPartDesc) dateHash(ts time.Time, hashCode int64) int64 {
+	return d.longHash(ts.UnixMilli(), hashCode)
+}
+
+func (d *ObKeyPartDesc) varcharHash(
+	value interface{},
+	collType protocol.ObCollationType,
+	hashCode int64,
+	partFuncType ObPartFuncType) (int64, error) {
+	var seed uint64 = 0xc6a4a7935bd1e995
+	var bytes []byte
+	if v, ok := value.(string); ok {
+		// Right Now, only UTF8 String is supported, aligned with the Serialization.
+		// string and []byte is utf8 default in go language
+		bytes = []byte(v)
+	} else if v, ok := value.([]byte); ok {
+		bytes = v
+	} else if v, ok := value.(protocol.ObBytesString); ok {
+		bytes = v.BytesVal()
+	} else {
+		log.Warn("invalid varchar", log.String("value", util.InterfaceToString(value)))
+		return -1, errors.New("invalid varchar value for calc hash value")
+	}
+	switch collType.Value() {
+	case protocol.CsTypeUtf8mb4GeneralCi:
+		if partFuncType.index == partFuncTypeKeyV3Index ||
+			partFuncType.index == partFuncTypeKeyImplV2Index ||
+			util.ObVersion() >= 4 {
+			hashCode = hashSortUtf8Mb4(bytes, hashCode, seed, true)
+		} else {
+			hashCode = hashSortUtf8Mb4(bytes, hashCode, seed, false)
+		}
+	case protocol.CsTypeUtf8mb4Bin:
+	case protocol.CsTypeBinary:
+		if partFuncType.index == partFuncTypeKeyV3Index ||
+			partFuncType.index == partFuncTypeKeyImplV2Index ||
+			util.ObVersion() >= 4 {
+			hashCode = MurmurHash64A(bytes, len(bytes), hashCode)
+		} else {
+			hashCode = hashSortMbBin(bytes, hashCode, seed)
+		}
+	case protocol.CsTypeInvalid:
+	case protocol.CsTypeCollationFree:
+	case protocol.CsTypeMax:
+		log.Warn("not supported collation type", log.Int("coll type", collType.Value()))
+		return -1, errors.New("not supported collation type")
+	}
+	return hashCode, nil
 }
 
 func (d *ObKeyPartDesc) String() string {
@@ -462,31 +633,33 @@ func (l ObPartitionLevel) String() string {
 }
 
 const (
-	partFuncTypeUnknownIndex  = -1
-	partFuncTypeHashIndex     = 0
-	partFuncTypeKeyIndex      = 1
-	partFuncTypeKeyImplIndex  = 2
-	partFuncTypeRangeIndex    = 3
-	partFuncTypeRangeColIndex = 4
-	partFuncTypeListIndex     = 5
-	partFuncTypeKeyV2Index    = 6
-	partFuncTypeListColIndex  = 7
-	partFuncTypeHashV2Index   = 8
-	partFuncTypeKeyV3Index    = 9
+	partFuncTypeUnknownIndex   = -1
+	partFuncTypeHashIndex      = 0
+	partFuncTypeKeyIndex       = 1
+	partFuncTypeKeyImplIndex   = 2
+	partFuncTypeRangeIndex     = 3
+	partFuncTypeRangeColIndex  = 4
+	partFuncTypeListIndex      = 5
+	partFuncTypeKeyV2Index     = 6
+	partFuncTypeListColIndex   = 7
+	partFuncTypeHashV2Index    = 8
+	partFuncTypeKeyV3Index     = 9
+	partFuncTypeKeyImplV2Index = 10
 )
 
 const (
-	partFuncTypeUnknown  = "UNKNOWN"
-	partFuncTypeHash     = "HASH"
-	partFuncTypeKey      = "KEY"
-	partFuncTypeKeyImpl  = "KEY_IMPLICIT"
-	partFuncTypeRange    = "RANGE"
-	partFuncTypeRangeCol = "RANGE_COLUMNS"
-	partFuncTypeList     = "LIST"
-	partFuncTypeKeyV2    = "KEY_V2"
-	partFuncTypeListCol  = "LIST_COLUMNS"
-	partFuncTypeHashV2   = "HASH_V2"
-	partFuncTypeKeyV3    = "KEY_V3"
+	partFuncTypeUnknown   = "UNKNOWN"
+	partFuncTypeHash      = "HASH"
+	partFuncTypeKey       = "KEY"
+	partFuncTypeKeyImpl   = "KEY_IMPLICIT"
+	partFuncTypeRange     = "RANGE"
+	partFuncTypeRangeCol  = "RANGE_COLUMNS"
+	partFuncTypeList      = "LIST"
+	partFuncTypeKeyV2     = "KEY_V2"
+	partFuncTypeListCol   = "LIST_COLUMNS"
+	partFuncTypeHashV2    = "HASH_V2"
+	partFuncTypeKeyV3     = "KEY_V3"
+	partFuncTypeKeyImplV2 = "KEY_IMPLICIT_V2"
 )
 
 type ObPartFuncType struct {
@@ -508,7 +681,8 @@ func (t ObPartFuncType) isRangePart() bool {
 func (t ObPartFuncType) isKeyPart() bool {
 	return t.index == partFuncTypeKeyImplIndex ||
 		t.index == partFuncTypeKeyV2Index ||
-		t.index == partFuncTypeKeyV3Index
+		t.index == partFuncTypeKeyV3Index ||
+		t.index == partFuncTypeKeyImplV2Index
 }
 
 func (t ObPartFuncType) isHashPart() bool {
@@ -541,6 +715,8 @@ func newObPartFuncType(index int) ObPartFuncType {
 		return ObPartFuncType{partFuncTypeHashV2, partFuncTypeHashV2Index}
 	case partFuncTypeKeyV3Index:
 		return ObPartFuncType{partFuncTypeKeyV3, partFuncTypeKeyV3Index}
+	case partFuncTypeKeyImplV2Index:
+		return ObPartFuncType{partFuncTypeKeyImplV2, partFuncTypeKeyImplV2Index}
 	default:
 		return ObPartFuncType{partFuncTypeUnknown, partFuncTypeUnknownIndex}
 	}
