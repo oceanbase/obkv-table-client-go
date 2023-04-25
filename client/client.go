@@ -2,6 +2,14 @@ package client
 
 import (
 	"errors"
+	"math"
+	"strconv"
+	"strings"
+	"sync"
+	"time"
+
+	"go.uber.org/atomic"
+
 	"github.com/oceanbase/obkv-table-client-go/config"
 	"github.com/oceanbase/obkv-table-client-go/log"
 	"github.com/oceanbase/obkv-table-client-go/obkvrpc"
@@ -9,12 +17,6 @@ import (
 	"github.com/oceanbase/obkv-table-client-go/route"
 	"github.com/oceanbase/obkv-table-client-go/table"
 	"github.com/oceanbase/obkv-table-client-go/util"
-	"go.uber.org/atomic"
-	"math"
-	"strconv"
-	"strings"
-	"sync"
-	"time"
 )
 
 func NewClient(
@@ -201,13 +203,13 @@ func (c *ObClient) AddRowkey(tableName string, rowkey []string) error {
 
 func (c *ObClient) Insert(
 	tableName string,
-	rowkey []table.Column,
-	mutateColumns []table.Column,
+	rowkey []*table.Column,
+	mutateColumns []*table.Column,
 	opts ...ObkvOption) (int64, error) {
 	var mutateColNames []string
 	var mutateColValues []interface{}
 	for _, col := range mutateColumns {
-		mutateColNames = append(mutateColNames, col.Name)
+		mutateColNames = append(mutateColNames, col.Name())
 		mutateColValues = append(mutateColValues, col.Value)
 	}
 	res, err := c.execute(
@@ -229,7 +231,7 @@ func (c *ObClient) Insert(
 
 func (c *ObClient) Get(
 	tableName string,
-	rowkey []table.Column,
+	rowkey []*table.Column,
 	getColumns []string,
 	opts ...ObkvOption) (map[string]interface{}, error) {
 	res, err := c.execute(
@@ -252,7 +254,7 @@ func (c *ObClient) Get(
 func (c *ObClient) execute(
 	tableName string,
 	opType protocol.ObTableOperationType,
-	rowkey []table.Column,
+	rowkey []*table.Column,
 	columns []string,
 	properties []interface{},
 	opts ...ObkvOption) (*protocol.ObTableOperationResult, error) {
@@ -726,7 +728,7 @@ func (t *ObTable) init(config *config.ClientConfig) error {
 }
 
 func (t *ObTable) execute(request interface{}, result interface{}) error {
-	return t.rpcClient.Execute(request, result)
+	return t.rpcClient.ex(request, result)
 }
 
 func (t *ObTable) close() {
