@@ -6,6 +6,14 @@ import (
 	"github.com/oceanbase/obkv-table-client-go/util"
 )
 
+type TableEntityType uint8
+
+const (
+	Dynamic TableEntityType = iota
+	KV
+	HKV
+)
+
 type TableEntity struct {
 	*UniVersionHeader
 	rowKey     *RowKey

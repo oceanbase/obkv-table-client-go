@@ -78,3 +78,8 @@ func (c *RpcClient) Execute(ctx context.Context, request protocol.Payload, respo
 	}
 	return nil
 }
+
+func (c *RpcClient) Close() {
+	// TODO implement me
+	return
+}

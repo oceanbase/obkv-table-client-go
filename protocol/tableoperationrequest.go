@@ -48,20 +48,13 @@ func NewTableOperationRequest(tableName string, operationType TableOperationType
 	}, nil
 }
 
-type TableEntityType uint8
+func (r *TableOperationRequest) Credential() []byte {
+	return r.credential
+}
 
-const (
-	Dynamic TableEntityType = iota
-	KV
-	HKV
-)
-
-type TableConsistencyLevel uint8
-
-const (
-	Strong TableConsistencyLevel = iota
-	Eventual
-)
+func (r *TableOperationRequest) SetCredential(credential []byte) {
+	r.credential = credential
+}
 
 func (r *TableOperationRequest) TableName() string {
 	return r.tableName
@@ -165,14 +158,6 @@ func (r *TableOperationRequest) PayloadContentLen() int {
 
 	r.UniVersionHeader.SetContentLength(totalLen)
 	return r.UniVersionHeader.ContentLength()
-}
-
-func (r *TableOperationRequest) Credential() []byte {
-	return r.credential
-}
-
-func (r *TableOperationRequest) SetCredential(credential []byte) {
-	r.credential = credential
 }
 
 func (r *TableOperationRequest) Encode(buffer *bytes.Buffer) {

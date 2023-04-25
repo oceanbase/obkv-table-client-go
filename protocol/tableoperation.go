@@ -9,6 +9,19 @@ import (
 	"github.com/oceanbase/obkv-table-client-go/util"
 )
 
+type TableOperationType uint8
+
+const (
+	Get TableOperationType = iota
+	Insert
+	Del
+	Update
+	InsertOrUpdate
+	Replace
+	Increment
+	Append
+)
+
 type TableOperation struct {
 	*UniVersionHeader
 	opType TableOperationType
@@ -52,19 +65,6 @@ func NewTableOperation(operationType TableOperationType, rowKeys []interface{}, 
 		entity:           tableEntity,
 	}, nil
 }
-
-type TableOperationType uint8
-
-const (
-	Get TableOperationType = iota
-	Insert
-	Del
-	Update
-	InsertOrUpdate
-	Replace
-	Increment
-	Append
-)
 
 func (o *TableOperation) OpType() TableOperationType {
 	return o.opType
