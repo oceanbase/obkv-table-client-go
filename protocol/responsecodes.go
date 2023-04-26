@@ -700,8 +700,3 @@ const (
 	ObRsListInvaild                          ResponseCode = -9017
 	ObAgentHasFailedTask                     ResponseCode = -9018
 )
-
-func (c ResponseCode) String() string {
-	// TODO
-	return ""
-}

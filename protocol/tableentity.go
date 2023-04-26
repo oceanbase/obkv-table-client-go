@@ -6,6 +6,14 @@ import (
 	"github.com/oceanbase/obkv-table-client-go/util"
 )
 
+type TableEntityType uint8
+
+const (
+	Dynamic TableEntityType = iota
+	KV
+	HKV
+)
+
 type TableEntity struct {
 	*UniVersionHeader
 	rowKey     *RowKey
@@ -46,6 +54,15 @@ func (e *TableEntity) SetProperty(name string, property *Object) {
 
 func (e *TableEntity) DelProperty(name string) {
 	delete(e.properties, name)
+}
+
+// GetSimpleProperties todo optimize
+func (e *TableEntity) GetSimpleProperties() map[string]interface{} {
+	m := make(map[string]interface{}, len(e.properties))
+	for k, v := range e.properties {
+		m[k] = v.value
+	}
+	return m
 }
 
 func (e *TableEntity) PayloadLen() int {
@@ -95,12 +112,4 @@ func (e *TableEntity) Decode(buffer *bytes.Buffer) {
 
 		e.properties[name] = property
 	}
-}
-
-func (e *TableEntity) GetSimpleProperties() map[string]interface{} {
-	m := make(map[string]interface{}, len(e.properties))
-	for k, v := range e.properties {
-		m[k] = v.value
-	}
-	return m
 }

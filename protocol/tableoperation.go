@@ -62,6 +62,7 @@ func NewTableOperation(
 
 type TableOperationType uint8
 
+// todo add prefix
 const (
 	Get TableOperationType = iota
 	Insert
