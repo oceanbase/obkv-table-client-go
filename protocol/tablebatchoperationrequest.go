@@ -2,6 +2,7 @@ package protocol
 
 import (
 	"bytes"
+	"time"
 
 	"github.com/oceanbase/obkv-table-client-go/util"
 )
@@ -19,6 +20,34 @@ type TableBatchOperationRequest struct {
 	returnAffectedRows   bool
 	partitionId          int64 // todo batch request partitionId different
 	atomicOperation      bool
+}
+
+func NewTableBatchOperationRequest(
+	tableName string,
+	tableId uint64,
+	partitionId int64,
+	tableBatchOperation *TableBatchOperation,
+	timeout time.Duration,
+	flag uint16) (*TableBatchOperationRequest, error) {
+
+	uniVersionHeader := NewUniVersionHeader()
+	uniVersionHeader.SetFlag(flag)
+	uniVersionHeader.SetTimeout(timeout)
+
+	return &TableBatchOperationRequest{
+		UniVersionHeader:     uniVersionHeader,
+		credential:           nil,
+		tableName:            tableName,
+		tableId:              tableId,
+		entityType:           Dynamic,
+		tableBatchOperation:  tableBatchOperation,
+		consistencyLevel:     Strong,
+		returnRowKey:         false,
+		returnAffectedEntity: false,
+		returnAffectedRows:   false,
+		partitionId:          partitionId,
+		atomicOperation:      false,
+	}, nil
 }
 
 func (r *TableBatchOperationRequest) Credential() []byte {

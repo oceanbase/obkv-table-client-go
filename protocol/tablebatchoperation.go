@@ -14,6 +14,16 @@ type TableBatchOperation struct {
 	samePropertiesNames bool
 }
 
+func NewTableBatchOperation() *TableBatchOperation {
+	return &TableBatchOperation{
+		UniVersionHeader:    NewUniVersionHeader(),
+		tableOperations:     nil,
+		readOnly:            false,
+		sameType:            false,
+		samePropertiesNames: false,
+	}
+}
+
 func (o *TableBatchOperation) TableOperations() []*TableOperation {
 	return o.tableOperations
 }
