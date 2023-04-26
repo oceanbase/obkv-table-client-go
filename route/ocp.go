@@ -3,14 +3,14 @@ package route
 import "math/rand"
 
 type ObOcpModel struct {
-	serverAddrs []ObServerAddr
+	ServerAddrs []ObServerAddr
 	//clusterId   int64
 	// todo: idc2Region
 }
 
 func (o *ObOcpModel) GetServerAddressRandomly() *ObServerAddr {
-	idx := rand.Intn(len(o.serverAddrs) - 1)
-	return &o.serverAddrs[idx]
+	idx := rand.Intn(len(o.ServerAddrs))
+	return &o.ServerAddrs[idx]
 }
 
 func LoadOcpModel(configUrl string, fileName string) (*ObOcpModel, error) {

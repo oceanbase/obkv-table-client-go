@@ -1,6 +1,7 @@
 package client
 
 import (
+	"context"
 	"errors"
 	"math"
 	"strconv"
@@ -64,8 +65,8 @@ type ObkvOption struct {
 
 type Client interface {
 	AddRowkey(tableName string, rowkey []string) error
-	Insert(tableName string, rowkey []table.Column, mutateColumns []table.Column, opts ...ObkvOption) (int64, error)
-	Get(tableName string, rowkey []table.Column, getColumns []string, opts ...ObkvOption) (map[string]interface{}, error)
+	Insert(tableName string, rowkey []*table.Column, mutateColumns []*table.Column, opts ...ObkvOption) (int64, error)
+	Get(tableName string, rowkey []*table.Column, getColumns []string, opts ...ObkvOption) (map[string]interface{}, error)
 }
 
 type ObClient struct {
@@ -210,11 +211,11 @@ func (c *ObClient) Insert(
 	var mutateColValues []interface{}
 	for _, col := range mutateColumns {
 		mutateColNames = append(mutateColNames, col.Name())
-		mutateColValues = append(mutateColValues, col.Value)
+		mutateColValues = append(mutateColValues, col.Value())
 	}
 	res, err := c.execute(
 		tableName,
-		protocol.ObTableOperationTypeInsert,
+		protocol.Insert,
 		rowkey,
 		mutateColNames,
 		mutateColValues,
@@ -236,7 +237,7 @@ func (c *ObClient) Get(
 	opts ...ObkvOption) (map[string]interface{}, error) {
 	res, err := c.execute(
 		tableName,
-		protocol.ObTableOperationTypeGet,
+		protocol.Get,
 		rowkey,
 		getColumns,
 		nil,
@@ -248,19 +249,19 @@ func (c *ObClient) Get(
 			log.String("getColumns", util.StringArrayToString(getColumns)))
 		return nil, err
 	}
-	return res.Entity().Properties(), nil
+	return res.Entity().GetSimpleProperties(), nil
 }
 
 func (c *ObClient) execute(
 	tableName string,
-	opType protocol.ObTableOperationType,
+	opType protocol.TableOperationType,
 	rowkey []*table.Column,
 	columns []string,
 	properties []interface{},
-	opts ...ObkvOption) (*protocol.ObTableOperationResult, error) {
+	opts ...ObkvOption) (*protocol.TableOperationResponse, error) {
 	var rowkeyValue []interface{}
 	for _, col := range rowkey {
-		rowkeyValue = append(rowkeyValue, col.Value)
+		rowkeyValue = append(rowkeyValue, col.Value())
 	}
 	// 1. Get table route
 	tableParam, err := c.getTableParam(tableName, rowkeyValue, false /* refresh */)
@@ -272,7 +273,7 @@ func (c *ObClient) execute(
 	}
 
 	// 2. Construct request.
-	request, err := protocol.NewObTableOperationRequest(
+	request, err := protocol.NewTableOperationRequest(
 		tableName,
 		tableParam.TableId(),
 		tableParam.PartitionId(),
@@ -292,7 +293,7 @@ func (c *ObClient) execute(
 	}
 
 	// 3. execute
-	result := new(protocol.ObTableOperationResult)
+	result := protocol.NewTableOperationResponse()
 	err = tableParam.table.execute(request, result)
 	if err != nil {
 		log.Warn("failed to execute request", log.String("request", request.String()))
@@ -325,6 +326,18 @@ func (c *ObClient) getTableParam(
 			log.Int64("partId", partId))
 		return nil, err
 	}
+
+	if util.ObVersion() >= 4 {
+		partId, err = entry.PartitionInfo().GetTabletId(partId)
+		if err != nil {
+			log.Warn("failed to get tablet id",
+				log.String("tableName", tableName),
+				log.String("entry", entry.String()),
+				log.Int64("partId", partId))
+			return nil, err
+		}
+	}
+
 	return NewObTableParam(t, entry.TableId(), partId), nil
 }
 
@@ -554,7 +567,7 @@ func (c *ObClient) fetchMetadata() error {
 		return err
 	}
 	// 2.1 Set ob version and init route sql by ob version.
-	if util.ObVersion() != 0.0 {
+	if util.ObVersion() == 0.0 {
 		util.SetObVersion(ver)
 		route.InitSql(ver)
 	}
@@ -691,7 +704,7 @@ type ObTable struct {
 	userName   string
 	password   string
 	database   string
-	rpcClient  *obkvrpc.ObRpcClient
+	rpcClient  *obkvrpc.RpcClient
 
 	isClosed bool
 	mutex    sync.Mutex
@@ -716,28 +729,35 @@ func NewObTable(
 }
 
 func (t *ObTable) init(config *config.ClientConfig) error {
-	opt := obkvrpc.NewObRpcClientOption(config.ConnPoolMaxConnSize)
-	cli := obkvrpc.NewObRpcClient(opt)
-	err := cli.Init()
+	opt := obkvrpc.NewRpcClientOption(
+		t.ip,
+		t.port,
+		config.RpcConnectTimeOut,
+		t.tenantName,
+		t.database,
+		t.userName,
+		t.password,
+	)
+	cli, err := obkvrpc.NewRpcClient(opt)
 	if err != nil {
-		log.Warn("failed to init rpc client", log.String("rpc client", cli.String()))
+		log.Warn("failed to new rpc client", log.String("rpc client opt", opt.String()))
 		return err
 	}
 	t.rpcClient = cli
 	return nil
 }
 
-func (t *ObTable) execute(request interface{}, result interface{}) error {
-	return t.rpcClient.ex(request, result)
+func (t *ObTable) execute(request protocol.Payload, result protocol.Payload) error {
+	return t.rpcClient.Execute(context.TODO(), request, result)
 }
 
 func (t *ObTable) close() {
 	if !t.isClosed {
 		t.mutex.Lock()
 		if !t.isClosed { // double check after lock
-			if t.rpcClient != nil {
-				t.rpcClient.Close()
-			}
+			//if t.rpcClient != nil {
+			// todo: t.rpcClient.Close()
+			//}
 			t.isClosed = true
 		}
 		t.mutex.Unlock()
