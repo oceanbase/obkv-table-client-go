@@ -8,19 +8,19 @@ import (
 
 func TestObCollationType_ToString(t *testing.T) {
 	coll := ObCollationType{}
-	assert.Equal(t, "ObCollationType{collationType:csTypeInvalid}", coll.String())
-	coll = NewObCollationType(csTypeInvalid)
-	assert.Equal(t, "ObCollationType{collationType:csTypeInvalid}", coll.String())
-	coll = NewObCollationType(csTypeUtf8mb4GeneralCi)
-	assert.Equal(t, "ObCollationType{collationType:csTypeUtf8mb4GeneralCi}", coll.String())
-	coll = NewObCollationType(csTypeUtf8mb4Bin)
-	assert.Equal(t, "ObCollationType{collationType:csTypeUtf8mb4Bin}", coll.String())
-	coll = NewObCollationType(csTypeBinary)
-	assert.Equal(t, "ObCollationType{collationType:csTypeBinary}", coll.String())
-	coll = NewObCollationType(csTypeCollationFree)
-	assert.Equal(t, "ObCollationType{collationType:csTypeCollationFree}", coll.String())
-	coll = NewObCollationType(csTypeMax)
-	assert.Equal(t, "ObCollationType{collationType:csTypeMax}", coll.String())
+	assert.Equal(t, "ObCollationType{collationType:CsTypeInvalid}", coll.String())
+	coll = NewObCollationType(CsTypeInvalid)
+	assert.Equal(t, "ObCollationType{collationType:CsTypeInvalid}", coll.String())
+	coll = NewObCollationType(CsTypeUtf8mb4GeneralCi)
+	assert.Equal(t, "ObCollationType{collationType:CsTypeUtf8mb4GeneralCi}", coll.String())
+	coll = NewObCollationType(CsTypeUtf8mb4Bin)
+	assert.Equal(t, "ObCollationType{collationType:CsTypeUtf8mb4Bin}", coll.String())
+	coll = NewObCollationType(CsTypeBinary)
+	assert.Equal(t, "ObCollationType{collationType:CsTypeBinary}", coll.String())
+	coll = NewObCollationType(CsTypeCollationFree)
+	assert.Equal(t, "ObCollationType{collationType:CsTypeCollationFree}", coll.String())
+	coll = NewObCollationType(CsTypeMax)
+	assert.Equal(t, "ObCollationType{collationType:CsTypeMax}", coll.String())
 }
 
 func TestObCollationLevel_ToString(t *testing.T) {
@@ -50,7 +50,7 @@ func TestObColumn_ToString(t *testing.T) {
 		"columnName:, "+
 		"index:0, "+
 		"objType:nil, "+
-		"collationType:ObCollationType{collationType:csTypeInvalid}, "+
+		"collationType:ObCollationType{collationType:CsTypeInvalid}, "+
 		"refColumnNames:[], "+
 		"isGenColumn:false, "+
 		"columnExpress:nil}",
@@ -63,7 +63,7 @@ func TestObColumn_ToString(t *testing.T) {
 		"columnName:testColumnName, "+
 		"index:0, "+
 		"objType:ObObjType{type:ObTinyIntType}, "+
-		"collationType:ObCollationType{collationType:csTypeBinary}, "+
+		"collationType:ObCollationType{collationType:CsTypeBinary}, "+
 		"refColumnNames:[testColumnName], "+
 		"isGenColumn:false, "+
 		"columnExpress:nil}",
@@ -76,7 +76,7 @@ func TestObObjMeta_ToString(t *testing.T) {
 	assert.Equal(t, "ObObjMeta{"+
 		"objType:nil, "+
 		"csLevel:ObCollationLevel{collationLevel:csLevelExplicit}, "+
-		"csType:ObCollationType{collationType:csTypeInvalid}, "+
+		"csType:ObCollationType{collationType:CsTypeInvalid}, "+
 		"scale:0}",
 		meta.String(),
 	)
@@ -158,8 +158,8 @@ func TestParse(t *testing.T) {
 	// test parseTextToComparable
 	{
 		{
-			// cs type = csTypeBinary
-			csBin := ObCollationType{csTypeBinary}
+			// cs type = CsTypeBinary
+			csBin := ObCollationType{CsTypeBinary}
 			bStr := ObBytesString{[]byte{0, 1, 2}}
 			res, err := parseTextToComparable(bStr, csBin)
 			assert.Equal(t, err, nil)
@@ -174,8 +174,8 @@ func TestParse(t *testing.T) {
 			assert.Equal(t, res, bStr)
 		}
 		{
-			// cs type = csTypeUtf8mb4GeneralCi
-			csBin := ObCollationType{csTypeUtf8mb4GeneralCi}
+			// cs type = CsTypeUtf8mb4GeneralCi
+			csBin := ObCollationType{CsTypeUtf8mb4GeneralCi}
 			bStr := ObBytesString{[]byte{0, 1, 2}}
 			_, err := parseTextToComparable(bStr, csBin)
 			assert.NotEqual(t, err, nil) // todo

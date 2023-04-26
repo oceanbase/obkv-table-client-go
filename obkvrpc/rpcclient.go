@@ -2,6 +2,7 @@ package obkvrpc
 
 import (
 	"context"
+	"strconv"
 	"time"
 
 	"github.com/google/uuid"
@@ -21,8 +22,35 @@ type RpcClientOption struct {
 	password     string
 }
 
-func NewRpcClientOption(ip string, port int, connectTimeout time.Duration, tenantName string, databaseName string, userName string, password string) *RpcClientOption {
-	return &RpcClientOption{ip: ip, port: port, connectTimeout: connectTimeout, tenantName: tenantName, databaseName: databaseName, userName: userName, password: password}
+func (o *RpcClientOption) String() string {
+	return "RpcClientOption{" +
+		"ip:" + o.ip + ", " +
+		"port:" + strconv.Itoa(o.port) + ", " +
+		"connectTimeout:" + o.connectTimeout.String() + ", " +
+		"tenantName:" + o.tenantName + ", " +
+		"databaseName:" + o.databaseName + ", " +
+		"userName:" + o.userName + ", " +
+		"password:" + o.password +
+		"}"
+}
+
+func NewRpcClientOption(
+	ip string,
+	port int,
+	connectTimeout time.Duration,
+	tenantName string,
+	databaseName string,
+	userName string,
+	password string) *RpcClientOption {
+	return &RpcClientOption{
+		ip:             ip,
+		port:           port,
+		connectTimeout: connectTimeout,
+		tenantName:     tenantName,
+		databaseName:   databaseName,
+		userName:       userName,
+		password:       password,
+	}
 }
 
 type RpcClient struct {
@@ -77,9 +105,4 @@ func (c *RpcClient) Execute(ctx context.Context, request protocol.Payload, respo
 		}
 	}
 	return nil
-}
-
-func (c *RpcClient) Close() {
-	// TODO implement me
-	return
 }

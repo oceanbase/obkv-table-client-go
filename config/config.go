@@ -7,6 +7,7 @@ import (
 
 type ClientConfig struct {
 	ConnPoolMaxConnSize int
+	RpcConnectTimeOut   time.Duration
 	OperationTimeOut    time.Duration
 	LogLevel            uint16
 
@@ -22,6 +23,7 @@ type ClientConfig struct {
 func NewDefaultClientConfig() *ClientConfig {
 	return &ClientConfig{
 		ConnPoolMaxConnSize:              1,
+		RpcConnectTimeOut:                time.Duration(1000) * time.Millisecond,  // 1s
 		OperationTimeOut:                 time.Duration(10000) * time.Millisecond, // 10s
 		LogLevel:                         7,
 		TableEntryRefreshLockTimeout:     time.Duration(4000) * time.Millisecond, // 4s

@@ -81,6 +81,14 @@ func (p *ObPartitionInfo) FirstPartDesc() ObPartDesc {
 	return p.firstPartDesc
 }
 
+func (p *ObPartitionInfo) GetTabletId(partId int64) (int64, error) {
+	if p.partTabletIdMap == nil {
+		log.Warn("partTabletIdMap is nil")
+		return 0, errors.New("partTabletIdMap is nil")
+	}
+	return p.partTabletIdMap[partId], nil
+}
+
 func (p *ObPartitionInfo) Level() ObPartitionLevel {
 	return p.level
 }
