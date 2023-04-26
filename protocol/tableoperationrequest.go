@@ -6,7 +6,6 @@ import (
 
 	"github.com/pkg/errors"
 
-	"github.com/oceanbase/obkv-table-client-go/table"
 	"github.com/oceanbase/obkv-table-client-go/util"
 )
 
@@ -14,7 +13,7 @@ type TableOperationRequest struct {
 	*UniVersionHeader
 	credential           []byte
 	tableName            string
-	tableId              int64
+	tableId              uint64
 	partitionId          int64
 	entityType           TableEntityType
 	tableOperation       *TableOperation
@@ -24,8 +23,17 @@ type TableOperationRequest struct {
 	returnAffectedRows   bool
 }
 
-func NewTableOperationRequest(tableName string, operationType TableOperationType, rowKeys []interface{}, columns []*table.Column, timeout time.Duration, flag uint16) (*TableOperationRequest, error) {
-	tableOperation, err := NewTableOperation(operationType, rowKeys, columns)
+func NewTableOperationRequest(
+	tableName string,
+	tableId uint64,
+	partitionId int64,
+	operationType TableOperationType,
+	rowKeys []interface{},
+	columnNames []string,
+	properties []interface{},
+	timeout time.Duration,
+	flag uint16) (*TableOperationRequest, error) {
+	tableOperation, err := NewTableOperation(operationType, rowKeys, columnNames, properties)
 	if err != nil {
 		return nil, errors.Wrap(err, "create table operation")
 	}
@@ -37,8 +45,8 @@ func NewTableOperationRequest(tableName string, operationType TableOperationType
 		UniVersionHeader:     uniVersionHeader,
 		credential:           nil, // when execute set
 		tableName:            tableName,
-		tableId:              InvalidTableId,
-		partitionId:          InvalidPartitionId,
+		tableId:              tableId,
+		partitionId:          partitionId,
 		entityType:           Dynamic,
 		tableOperation:       tableOperation,
 		consistencyLevel:     Strong,
@@ -71,11 +79,11 @@ func (r *TableOperationRequest) SetTableName(tableName string) {
 	r.tableName = tableName
 }
 
-func (r *TableOperationRequest) TableId() int64 {
+func (r *TableOperationRequest) TableId() uint64 {
 	return r.tableId
 }
 
-func (r *TableOperationRequest) SetTableId(tableId int64) {
+func (r *TableOperationRequest) SetTableId(tableId uint64) {
 	r.tableId = tableId
 }
 
@@ -149,7 +157,7 @@ func (r *TableOperationRequest) PayloadContentLen() int {
 		totalLen =
 			util.EncodedLengthByBytesString(r.credential) +
 				util.EncodedLengthByVString(r.tableName) +
-				util.EncodedLengthByVi64(r.tableId) +
+				util.EncodedLengthByVi64(int64(r.tableId)) +
 				8 + // todo partitionId
 				5 + // entityType consistencyLevel returnRowKey returnAffectedEntity returnAffectedRows
 				r.tableOperation.PayloadLen()
@@ -157,7 +165,7 @@ func (r *TableOperationRequest) PayloadContentLen() int {
 		totalLen =
 			util.EncodedLengthByBytesString(r.credential) +
 				util.EncodedLengthByVString(r.tableName) +
-				util.EncodedLengthByVi64(r.tableId) +
+				util.EncodedLengthByVi64(int64(r.tableId)) +
 				util.EncodedLengthByVi64(r.partitionId) + // todo partitionId
 				5 + // entityType consistencyLevel returnRowKey returnAffectedEntity returnAffectedRows
 				r.tableOperation.PayloadLen()
@@ -182,7 +190,7 @@ func (r *TableOperationRequest) Encode(buffer *bytes.Buffer) {
 
 	util.EncodeVString(buffer, r.tableName)
 
-	util.EncodeVi64(buffer, r.tableId)
+	util.EncodeVi64(buffer, int64(r.tableId))
 
 	if globalVersion >= 4 { // todo version
 		util.PutUint64(buffer, uint64(r.partitionId))
@@ -206,4 +214,10 @@ func (r *TableOperationRequest) Encode(buffer *bytes.Buffer) {
 func (r *TableOperationRequest) Decode(buffer *bytes.Buffer) {
 	// TODO implement me
 	panic("implement me")
+}
+
+func (r *TableOperationRequest) String() string {
+	// todo: impl
+	return "TableOperationRequest{" +
+		"}"
 }

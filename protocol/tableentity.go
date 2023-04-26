@@ -96,3 +96,11 @@ func (e *TableEntity) Decode(buffer *bytes.Buffer) {
 		e.properties[name] = property
 	}
 }
+
+func (e *TableEntity) GetSimpleProperties() map[string]interface{} {
+	m := make(map[string]interface{}, len(e.properties))
+	for k, v := range e.properties {
+		m[k] = v.value
+	}
+	return m
+}
