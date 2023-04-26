@@ -116,7 +116,7 @@ func DefaultObjMeta(value interface{}) (*ObjectMeta, error) {
 	case time.Duration:
 		return ObjTypes[ObjTypeDateTimeTypeValue].DefaultObjMeta(), nil
 	default:
-		return nil, errors.Errorf("not match objmeta, value: %s", value)
+		return nil, errors.Errorf("not match objmeta, value: %v", value)
 	}
 }
 

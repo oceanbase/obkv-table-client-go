@@ -56,21 +56,6 @@ func NewTableOperationRequest(
 	}, nil
 }
 
-type TableEntityType uint8
-
-const (
-	Dynamic TableEntityType = iota
-	KV
-	HKV
-)
-
-type TableConsistencyLevel uint8
-
-const (
-	Strong TableConsistencyLevel = iota
-	Eventual
-)
-
 func (r *TableOperationRequest) TableName() string {
 	return r.tableName
 }

@@ -10,7 +10,7 @@ type TableBatchOperationRequest struct {
 	*UniVersionHeader
 	credential           []byte
 	tableName            string
-	tableId              int64
+	tableId              uint64
 	entityType           TableEntityType
 	tableBatchOperation  *TableBatchOperation
 	consistencyLevel     TableConsistencyLevel
@@ -37,11 +37,11 @@ func (r *TableBatchOperationRequest) SetTableName(tableName string) {
 	r.tableName = tableName
 }
 
-func (r *TableBatchOperationRequest) TableId() int64 {
+func (r *TableBatchOperationRequest) TableId() uint64 {
 	return r.tableId
 }
 
-func (r *TableBatchOperationRequest) SetTableId(tableId int64) {
+func (r *TableBatchOperationRequest) SetTableId(tableId uint64) {
 	r.tableId = tableId
 }
 
@@ -123,7 +123,7 @@ func (r *TableBatchOperationRequest) PayloadContentLen() int {
 		totalLen =
 			util.EncodedLengthByBytesString(r.credential) +
 				util.EncodedLengthByVString(r.tableName) +
-				util.EncodedLengthByVi64(r.tableId) +
+				util.EncodedLengthByVi64(int64(r.tableId)) +
 				6 + // entityType consistencyLevel returnRowKey returnAffectedEntity returnAffectedRows atomicOperation
 				8 + // todo partitionId
 				r.tableBatchOperation.PayloadLen()
@@ -131,7 +131,7 @@ func (r *TableBatchOperationRequest) PayloadContentLen() int {
 		totalLen =
 			util.EncodedLengthByBytesString(r.credential) +
 				util.EncodedLengthByVString(r.tableName) +
-				util.EncodedLengthByVi64(r.tableId) +
+				util.EncodedLengthByVi64(int64(r.tableId)) +
 				6 + // entityType consistencyLevel returnRowKey returnAffectedEntity returnAffectedRows atomicOperation
 				util.EncodedLengthByVi64(r.partitionId) + // todo partitionId\
 				r.tableBatchOperation.PayloadLen()
@@ -148,7 +148,7 @@ func (r *TableBatchOperationRequest) Encode(buffer *bytes.Buffer) {
 
 	util.EncodeVString(buffer, r.tableName)
 
-	util.EncodeVi64(buffer, r.tableId)
+	util.EncodeVi64(buffer, int64(r.tableId))
 
 	util.PutUint8(buffer, uint8(r.entityType))
 

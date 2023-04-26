@@ -56,6 +56,15 @@ func (e *TableEntity) DelProperty(name string) {
 	delete(e.properties, name)
 }
 
+// GetSimpleProperties todo optimize
+func (e *TableEntity) GetSimpleProperties() map[string]interface{} {
+	m := make(map[string]interface{}, len(e.properties))
+	for k, v := range e.properties {
+		m[k] = v.value
+	}
+	return m
+}
+
 func (e *TableEntity) PayloadLen() int {
 	return e.PayloadContentLen() + e.UniVersionHeader.UniVersionHeaderLen() // Do not change the order
 }
