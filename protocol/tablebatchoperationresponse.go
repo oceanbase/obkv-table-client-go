@@ -11,6 +11,13 @@ type TableBatchOperationResponse struct {
 	tableOperationResponses []*TableOperationResponse
 }
 
+func NewTableBatchOperationResponse() *TableBatchOperationResponse {
+	return &TableBatchOperationResponse{
+		UniVersionHeader:        NewUniVersionHeader(),
+		tableOperationResponses: nil,
+	}
+}
+
 func (r *TableBatchOperationResponse) TableOperationResponses() []*TableOperationResponse {
 	return r.tableOperationResponses
 }
