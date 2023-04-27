@@ -2,7 +2,6 @@ package protocol
 
 import (
 	"bytes"
-
 	"github.com/pkg/errors"
 
 	"github.com/oceanbase/obkv-table-client-go/util"
@@ -113,4 +112,10 @@ func (o *TableOperation) Encode(buffer *bytes.Buffer) {
 func (o *TableOperation) Decode(buffer *bytes.Buffer) {
 	// TODO implement me
 	panic("implement me")
+}
+
+func (o *TableOperation) String() string {
+	// todo:impl
+	return "TableOperation{" +
+		"}"
 }

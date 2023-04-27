@@ -67,6 +67,7 @@ type Client interface {
 	AddRowkey(tableName string, rowkey []string) error
 	Insert(tableName string, rowkey []*table.Column, mutateColumns []*table.Column, opts ...ObkvOption) (int64, error)
 	Get(tableName string, rowkey []*table.Column, getColumns []string, opts ...ObkvOption) (map[string]interface{}, error)
+	NewBatchExecutor(tableName string) BatchExecutor
 }
 
 type ObClient struct {
@@ -251,6 +252,10 @@ func (c *ObClient) Get(
 	return res.Entity().GetSimpleProperties(), nil
 }
 
+func (c *ObClient) NewBatchExecutor(tableName string) BatchExecutor {
+	return newObBatchExecutor(tableName, c)
+}
+
 func (c *ObClient) execute(
 	tableName string,
 	opType protocol.TableOperationType,
@@ -345,7 +350,8 @@ func (c *ObClient) needRefreshTableEntry(entry *route.ObTableEntry) (int64, bool
 	intervalMs := float64(c.config.TableEntryRefreshIntervalBase) / ratio
 	ceilingMs := float64(c.config.TableEntryRefreshIntervalCeiling)
 	intervalMs = math.Min(intervalMs, ceilingMs)
-	return int64(intervalMs) - (time.Now().UnixMilli() - entry.RefreshTimeMills()), float64(time.Now().UnixMilli()-entry.RefreshTimeMills()) >= intervalMs
+	return int64(intervalMs) - (time.Now().UnixMilli() - entry.RefreshTimeMills()),
+		float64(time.Now().UnixMilli()-entry.RefreshTimeMills()) >= intervalMs
 }
 
 func (c *ObClient) getOrRefreshTableEntry(tableName string, refresh bool, waitForRefresh bool) (*route.ObTableEntry, error) {

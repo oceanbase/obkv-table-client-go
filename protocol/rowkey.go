@@ -56,3 +56,11 @@ func (k *RowKey) EncodedLength() int {
 
 	return totalLen
 }
+
+func (k *RowKey) GetRowkeyValue() []interface{} {
+	rowkey := make([]interface{}, 0, len(k.keys))
+	for _, key := range k.keys {
+		rowkey = append(rowkey, key.value)
+	}
+	return rowkey
+}

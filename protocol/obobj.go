@@ -3,7 +3,6 @@ package protocol
 import (
 	"bytes"
 	"errors"
-	"fmt"
 	"github.com/oceanbase/obkv-table-client-go/log"
 	"github.com/oceanbase/obkv-table-client-go/util"
 	"math"
@@ -110,7 +109,7 @@ func ParseToLong(obj interface{}) (interface{}, error) {
 	} else if v, ok := obj.(int8); ok {
 		return int64(v), nil
 	} else {
-		fmt.Printf("%T\n\n\n\n", obj)
+		log.Warn("invalid type to convert to long", log.String("obj", util.InterfaceToString(obj)))
 		return nil, errors.New("invalid type to convert to long")
 	}
 }
