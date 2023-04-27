@@ -18,6 +18,11 @@ type ClientConfig struct {
 
 	MetadataRefreshInterval    time.Duration
 	MetadataRefreshLockTimeout time.Duration
+
+	RslistLocalFileLocation    string
+	RslistHttpGetTimeout       time.Duration
+	RslistHttpGetRetryTimes    int
+	RslistHttpGetRetryInterval time.Duration
 }
 
 func NewDefaultClientConfig() *ClientConfig {
@@ -32,6 +37,11 @@ func NewDefaultClientConfig() *ClientConfig {
 		TableEntryRefreshIntervalCeiling: time.Duration(1600) * time.Millisecond,  // 1.6s
 		MetadataRefreshInterval:          time.Duration(60000) * time.Millisecond, // 60s
 		MetadataRefreshLockTimeout:       time.Duration(8000) * time.Millisecond,  // 8s
+
+		RslistLocalFileLocation:    "",
+		RslistHttpGetTimeout:       time.Duration(1000) * time.Millisecond, // 1s
+		RslistHttpGetRetryTimes:    3,
+		RslistHttpGetRetryInterval: time.Duration(100) * time.Millisecond, // 100ms,
 	}
 }
 

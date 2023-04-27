@@ -80,8 +80,7 @@ type ObClient struct {
 	database     string
 	sysUA        route.ObUserAuth
 
-	ocpModel      *route.ObOcpModel
-	localFileName string // local RsList config file name
+	ocpModel *route.ObOcpModel
 
 	tableMutexes       sync.Map // map[tableName]sync.RWMutex
 	tableLocations     sync.Map // map[tableName]*route.ObTableEntry
@@ -548,11 +547,17 @@ func (c *ObClient) syncRefreshMetadata() error {
 
 func (c *ObClient) fetchMetadata() error {
 	// 1. Load ocp mode to get RsList
-	ocpModel, err := route.LoadOcpModel(c.configUrl, c.localFileName)
+	ocpModel, err := route.LoadOcpModel(
+		c.configUrl,
+		c.config.RslistLocalFileLocation,
+		c.config.RslistHttpGetTimeout,
+		c.config.RslistHttpGetRetryTimes,
+		c.config.RslistHttpGetRetryInterval,
+	)
 	if err != nil {
 		log.Warn("failed to load ocp model",
 			log.String("configUrl", c.configUrl),
-			log.String("localFileName", c.localFileName))
+			log.String("localFileName", c.config.RslistLocalFileLocation))
 		return err
 	}
 	c.ocpModel = ocpModel
@@ -623,7 +628,7 @@ func (c *ObClient) fetchMetadata() error {
 	c.tableRoster.Range(func(k, v interface{}) bool {
 		contain := false
 		for _, addr := range servers {
-			if addr == k {
+			if *addr == k {
 				contain = true
 				break
 			}
