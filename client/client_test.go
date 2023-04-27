@@ -155,3 +155,58 @@ func TestObTableParam_ToString(t *testing.T) {
 	param = ObTableParam{nil, 500023, 500012}
 	assert.Equal(t, param.String(), "ObTableParam{table:nil, tableId:500023, partitionId:500012}")
 }
+
+func TestInsert(t *testing.T) {
+	const (
+		configUrl    = "..."
+		fullUserName = "..."
+		passWord     = ""
+		sysUserName  = "root"
+		sysPassWord  = ""
+		tableName    = "test"
+	)
+
+	cfg := config.NewDefaultClientConfig()
+	cli, err := NewClient(configUrl, fullUserName, passWord, sysUserName, sysPassWord, cfg)
+	assert.Equal(t, nil, err)
+
+	err = cli.AddRowkey(tableName, []string{"c1"})
+	assert.Equal(t, nil, err)
+	rowkey := []*table.Column{table.NewColumn("c1", int64(1))}
+	mutateColumns := []*table.Column{table.NewColumn("c2", int64(1))}
+	affectRows, err := cli.Insert(
+		tableName,
+		rowkey,
+		mutateColumns,
+	)
+	assert.Equal(t, nil, err)
+	assert.EqualValues(t, 1, affectRows)
+}
+
+func TestGet(t *testing.T) {
+	const (
+		configUrl    = "..."
+		fullUserName = "..."
+		passWord     = ""
+		sysUserName  = "root"
+		sysPassWord  = ""
+		tableName    = "test"
+	)
+
+	cfg := config.NewDefaultClientConfig()
+	cli, err := NewClient(configUrl, fullUserName, passWord, sysUserName, sysPassWord, cfg)
+	assert.Equal(t, nil, err)
+
+	err = cli.AddRowkey(tableName, []string{"c1"})
+	assert.Equal(t, nil, err)
+	rowkey := []*table.Column{table.NewColumn("c1", int64(1))}
+	selectColumns := []string{"c1", "c2"}
+	m, err := cli.Get(
+		tableName,
+		rowkey,
+		selectColumns,
+	)
+	assert.Equal(t, nil, err)
+	assert.EqualValues(t, 1, m["c1"])
+	assert.EqualValues(t, 1, m["c2"])
+}
