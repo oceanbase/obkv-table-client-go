@@ -38,6 +38,19 @@ func InterfaceToString(i interface{}) string {
 	}
 }
 
+func InterfacesToString(values []interface{}) string {
+	var str string
+	str = str + "["
+	for i := 0; i < len(values); i++ {
+		if i > 0 {
+			str += ", "
+		}
+		str += InterfaceToString(values[i])
+	}
+	str += "]"
+	return str
+}
+
 func StringArrayToString(strArr []string) string {
 	var str string
 	str = str + "["
@@ -78,11 +91,4 @@ func BoolToByte(b bool) byte {
 		return 1
 	}
 	return 0
-}
-
-func ByteToBool(b byte) bool {
-	if b == 0 {
-		return false
-	}
-	return true
 }

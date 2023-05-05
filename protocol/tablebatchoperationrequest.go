@@ -28,7 +28,7 @@ func NewTableBatchOperationRequest(
 	partitionId int64,
 	tableBatchOperation *TableBatchOperation,
 	timeout time.Duration,
-	flag uint16) (*TableBatchOperationRequest, error) {
+	flag uint16) *TableBatchOperationRequest {
 
 	uniVersionHeader := NewUniVersionHeader()
 	uniVersionHeader.SetFlag(flag)
@@ -47,7 +47,7 @@ func NewTableBatchOperationRequest(
 		returnAffectedRows:   false,
 		partitionId:          partitionId,
 		atomicOperation:      false,
-	}, nil
+	}
 }
 
 func (r *TableBatchOperationRequest) Credential() []byte {
@@ -203,4 +203,9 @@ func (r *TableBatchOperationRequest) Encode(buffer *bytes.Buffer) {
 func (r *TableBatchOperationRequest) Decode(buffer *bytes.Buffer) {
 	// TODO implement me
 	panic("implement me")
+}
+
+func (r *TableBatchOperationRequest) String() string {
+	// todo: impl
+	return ""
 }
