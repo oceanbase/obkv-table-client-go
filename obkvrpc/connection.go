@@ -14,6 +14,7 @@ import (
 	"github.com/google/uuid"
 	"github.com/pkg/errors"
 
+	oberror "github.com/oceanbase/obkv-table-client-go/error"
 	"github.com/oceanbase/obkv-table-client-go/protocol"
 	"github.com/oceanbase/obkv-table-client-go/util"
 )
@@ -121,15 +122,20 @@ func (c *Connection) Execute(ctx context.Context, request protocol.Payload, resp
 	contentBuf := call.Content
 	contentBuffer := bytes.NewBuffer(contentBuf)
 
-	c.decodeRpcHeader(contentBuffer)
+	rpcHeader := c.decodeRpcHeader(contentBuffer)
 
 	rpcResponseCode := protocol.NewRpcResponseCode()
 
 	rpcResponseCode.Decode(contentBuffer)
 
-	if rpcResponseCode.Code() != protocol.ObSuccess {
-		fmt.Printf("failed to rpc response code not success, code: %d\n", rpcResponseCode.Code())
-		return errors.Errorf("rpc response code not success, code: %d", rpcResponseCode.Code())
+	if rpcResponseCode.Code() != oberror.ObSuccess {
+		return oberror.NewProtocolError(
+			c.option.ip,
+			c.option.port,
+			rpcResponseCode.Code(),
+			rpcHeader.TraceId1(),
+			rpcHeader.TraceId0(),
+		)
 	}
 
 	c.decodePayload(response, contentBuffer)

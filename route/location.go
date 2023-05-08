@@ -154,30 +154,6 @@ func GetObVersionFromRemote(addr *ObServerAddr, sysUA *ObUserAuth) (float32, err
 	return res, nil
 }
 
-type ObUserAuth struct {
-	userName string
-	password string
-}
-
-func (a *ObUserAuth) Password() string {
-	return a.password
-}
-
-func (a *ObUserAuth) UserName() string {
-	return a.userName
-}
-
-func NewObUserAuth(userName string, password string) *ObUserAuth {
-	return &ObUserAuth{userName, password}
-}
-
-func (a *ObUserAuth) String() string {
-	return "ObUserAuth{" +
-		"userName:" + a.userName + ", " +
-		"password:" + a.password +
-		"}"
-}
-
 func GetTableEntryFromRemote(
 	addr *ObServerAddr,
 	sysUA *ObUserAuth,

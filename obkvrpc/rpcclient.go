@@ -89,7 +89,7 @@ func (c *RpcClient) Connect() error {
 }
 
 func (c *RpcClient) Execute(ctx context.Context, request protocol.Payload, response protocol.Payload) error {
-	if c.connection.active.Load() == true {
+	if c.connection.active.Load() {
 		err := c.connection.Execute(ctx, request, response)
 		if err != nil {
 			return errors.Wrap(err, "rpc client execute")
