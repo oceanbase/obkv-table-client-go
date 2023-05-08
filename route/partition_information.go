@@ -2,7 +2,6 @@ package route
 
 import (
 	"github.com/oceanbase/obkv-table-client-go/log"
-	"github.com/oceanbase/obkv-table-client-go/protocol"
 	"github.com/oceanbase/obkv-table-client-go/table"
 	"github.com/pkg/errors"
 	"strconv"
@@ -12,7 +11,7 @@ type ObPartitionInfo struct {
 	level           ObPartitionLevel
 	firstPartDesc   ObPartDesc
 	subPartDesc     ObPartDesc
-	partColumns     []*protocol.ObColumn
+	partColumns     []*ObColumn
 	partTabletIdMap map[int64]int64
 	partNameIdMap   map[string]int64
 }

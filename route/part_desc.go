@@ -3,7 +3,6 @@ package route
 import (
 	"errors"
 	"github.com/oceanbase/obkv-table-client-go/log"
-	"github.com/oceanbase/obkv-table-client-go/protocol"
 	"github.com/oceanbase/obkv-table-client-go/table"
 	"strconv"
 	"strings"
@@ -18,11 +17,11 @@ const (
 )
 
 type ObColumnIndexesPair struct {
-	column  *protocol.ObColumn
+	column  *ObColumn
 	indexes []int
 }
 
-func NewObColumnIndexesPair(column *protocol.ObColumn, indexes []int) *ObColumnIndexesPair {
+func NewObColumnIndexesPair(column *ObColumn, indexes []int) *ObColumnIndexesPair {
 	return &ObColumnIndexesPair{column, indexes}
 }
 
@@ -55,7 +54,7 @@ type ObPartDescCommon struct {
 	//    orderedPartColumnNames = ["c1", "c2"]
 	OrderedPartColumnNames              []string
 	OrderedPartRefColumnRowKeyRelations []*ObColumnIndexesPair
-	PartColumns                         []*protocol.ObColumn
+	PartColumns                         []*ObColumn
 	RowKeyElement                       *table.ObRowkeyElement
 }
 
@@ -130,7 +129,7 @@ type ObPartDesc interface {
 	orderedPartRefColumnRowKeyRelations() []*ObColumnIndexesPair
 	rowKeyElement() *table.ObRowkeyElement
 	setRowKeyElement(rowKeyElement *table.ObRowkeyElement)
-	setPartColumns(partColumns []*protocol.ObColumn)
+	setPartColumns(partColumns []*ObColumn)
 	GetPartId(rowkey []interface{}) (int64, error)
 }
 

@@ -511,7 +511,7 @@ func getPartitionInfoFromResultSet(rows *Rows) (*ObPartitionInfo, error) {
 
 		partKeyExtra = strings.ReplaceAll(partKeyExtra, "`", "") // '`' is not supported by druid
 		partKeyExtra = strings.ReplaceAll(partKeyExtra, " ", "") // ' ' should be removed
-		var column *protocol.ObColumn
+		var column *ObColumn
 		if partKeyExtra != "" {
 			// todo: support generate column
 			return nil, errors.New("not impl generate column")
@@ -521,7 +521,7 @@ func getPartitionInfoFromResultSet(rows *Rows) (*ObPartitionInfo, error) {
 				log.Warn("failed to generate object type", log.Int("partKeyType", partKeyType))
 				return nil, err
 			}
-			column = protocol.NewObSimpleColumn(
+			column = NewObSimpleColumn(
 				partKeyName,
 				partKeyIdx,
 				objType,
@@ -533,7 +533,7 @@ func getPartitionInfoFromResultSet(rows *Rows) (*ObPartitionInfo, error) {
 	info.partTabletIdMap = make(map[int64]int64, partNum)
 	info.partNameIdMap = make(map[string]int64, partNum)
 
-	var orderedPartedColumns1 []*protocol.ObColumn
+	var orderedPartedColumns1 []*ObColumn
 	if info.level.index >= PartLevelOneIndex {
 		if info.firstPartDesc.partFuncType().isListPart() ||
 			info.firstPartDesc.partFuncType().isRangePart() {
@@ -547,7 +547,7 @@ func getPartitionInfoFromResultSet(rows *Rows) (*ObPartitionInfo, error) {
 		}
 	}
 
-	var orderedPartedColumns2 []*protocol.ObColumn
+	var orderedPartedColumns2 []*ObColumn
 	if info.level.index == PartLevelTwoIndex {
 		if info.firstPartDesc.partFuncType().isListPart() ||
 			info.firstPartDesc.partFuncType().isRangePart() {
@@ -565,9 +565,9 @@ func getPartitionInfoFromResultSet(rows *Rows) (*ObPartitionInfo, error) {
 }
 
 func getOrderedPartColumns(
-	partitionKeyColumns []*protocol.ObColumn,
-	partDesc ObPartDesc) []*protocol.ObColumn {
-	columns := make([]*protocol.ObColumn, 0, len(partitionKeyColumns))
+	partitionKeyColumns []*ObColumn,
+	partDesc ObPartDesc) []*ObColumn {
+	columns := make([]*ObColumn, 0, len(partitionKeyColumns))
 	for _, partColumnName := range partDesc.orderedPartColumnNames() {
 		for _, keyColumn := range partitionKeyColumns {
 			if strings.EqualFold(keyColumn.ColumnName(), partColumnName) {
@@ -580,8 +580,8 @@ func getOrderedPartColumns(
 
 func setPartDescProperty(
 	partDesc ObPartDesc,
-	partColumns []*protocol.ObColumn,
-	orderedCompareColumns []*protocol.ObColumn) error {
+	partColumns []*ObColumn,
+	orderedCompareColumns []*ObColumn) error {
 	partDesc.setPartColumns(partColumns)
 	if partDesc.partFuncType().isKeyPart() {
 		if len(partColumns) == 0 {

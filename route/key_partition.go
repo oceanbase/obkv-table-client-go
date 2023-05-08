@@ -48,7 +48,7 @@ func (d *ObKeyPartDesc) setRowKeyElement(rowKeyElement *table.ObRowkeyElement) {
 	d.setCommRowKeyElement(rowKeyElement)
 }
 
-func (d *ObKeyPartDesc) setPartColumns(partColumns []*protocol.ObColumn) {
+func (d *ObKeyPartDesc) setPartColumns(partColumns []*ObColumn) {
 	d.PartColumns = partColumns
 }
 
@@ -120,7 +120,7 @@ func intToInt64(value interface{}) (int64, error) {
 
 func (d *ObKeyPartDesc) toHashCode(
 	value interface{},
-	refColumn *protocol.ObColumn,
+	refColumn *ObColumn,
 	hashCode int64,
 	partFuncType ObPartFuncType) (int64, error) {
 	objType := refColumn.ObjType()

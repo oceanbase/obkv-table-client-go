@@ -10,42 +10,6 @@ import (
 	"time"
 )
 
-type ObVString struct {
-	stringVal   string
-	bytesVal    []byte
-	encodeBytes []byte
-}
-
-func (v *ObVString) String() string {
-	return "ObVString{" +
-		"stringVal:" + v.stringVal + ", " +
-		"bytesVal:" + string(v.bytesVal) + ", " +
-		"encodeBytes:" + string(v.encodeBytes) +
-		"}"
-}
-
-type ObBytesString struct {
-	bytesVal []byte
-}
-
-func (v *ObBytesString) BytesVal() []byte {
-	return v.bytesVal
-}
-
-func (v *ObBytesString) String() string {
-	return "ObBytesString{" +
-		"bytesVal:" + string(v.bytesVal) +
-		"}"
-}
-
-func newObBytesString(bytesVal []byte) *ObBytesString {
-	return &ObBytesString{bytesVal: bytesVal}
-}
-
-func newObBytesStringFromString(str string) *ObBytesString {
-	return &ObBytesString{util.StringToBytes(str)}
-}
-
 type ObObjMeta struct {
 	objType ObObjType
 	csLevel ObCollationLevel
@@ -200,7 +164,7 @@ type ObObjType interface {
 	decode(buf bytes.Buffer, csType ObCollationType) interface{}
 	getEncodeSize(obj interface{}) int
 	getDefaultObjMeta() ObObjMeta
-	parseToComparable(obj interface{}, csType ObCollationType) (interface{}, error)
+	ParseToComparable(obj interface{}, csType ObCollationType) (interface{}, error)
 	GetValue() int
 }
 
@@ -307,7 +271,7 @@ func (t ObNullType) getDefaultObjMeta() ObObjMeta {
 	}
 }
 
-func (t ObNullType) parseToComparable(obj interface{}, csType ObCollationType) (interface{}, error) {
+func (t ObNullType) ParseToComparable(obj interface{}, csType ObCollationType) (interface{}, error) {
 	return nil, nil
 }
 
@@ -348,7 +312,7 @@ func (t ObTinyIntType) getDefaultObjMeta() ObObjMeta {
 	}
 }
 
-func (t ObTinyIntType) parseToComparable(obj interface{}, csType ObCollationType) (interface{}, error) {
+func (t ObTinyIntType) ParseToComparable(obj interface{}, csType ObCollationType) (interface{}, error) {
 	value, err := ParseToLong(obj)
 	if err != nil {
 		log.Warn("failed to parse to long or null")
@@ -404,7 +368,7 @@ func (t ObSmallIntType) getDefaultObjMeta() ObObjMeta {
 	}
 }
 
-func (t ObSmallIntType) parseToComparable(obj interface{}, csType ObCollationType) (interface{}, error) {
+func (t ObSmallIntType) ParseToComparable(obj interface{}, csType ObCollationType) (interface{}, error) {
 	value, err := ParseToLong(obj)
 	if err != nil {
 		log.Warn("failed to parse to long or null")
@@ -460,7 +424,7 @@ func (t ObMediumIntType) getDefaultObjMeta() ObObjMeta {
 	}
 }
 
-func (t ObMediumIntType) parseToComparable(obj interface{}, csType ObCollationType) (interface{}, error) {
+func (t ObMediumIntType) ParseToComparable(obj interface{}, csType ObCollationType) (interface{}, error) {
 	return nil, errors.New("ObMediumIntType is not supported")
 }
 
@@ -501,7 +465,7 @@ func (t ObInt32Type) getDefaultObjMeta() ObObjMeta {
 	}
 }
 
-func (t ObInt32Type) parseToComparable(obj interface{}, csType ObCollationType) (interface{}, error) {
+func (t ObInt32Type) ParseToComparable(obj interface{}, csType ObCollationType) (interface{}, error) {
 	value, err := ParseToLong(obj)
 	if err != nil {
 		log.Warn("failed to parse to long or null")
@@ -557,7 +521,7 @@ func (t ObInt64Type) getDefaultObjMeta() ObObjMeta {
 	}
 }
 
-func (t ObInt64Type) parseToComparable(obj interface{}, csType ObCollationType) (interface{}, error) {
+func (t ObInt64Type) ParseToComparable(obj interface{}, csType ObCollationType) (interface{}, error) {
 	return ParseToLong(obj)
 }
 
@@ -598,7 +562,7 @@ func (t ObUTinyIntType) getDefaultObjMeta() ObObjMeta {
 	}
 }
 
-func (t ObUTinyIntType) parseToComparable(obj interface{}, csType ObCollationType) (interface{}, error) {
+func (t ObUTinyIntType) ParseToComparable(obj interface{}, csType ObCollationType) (interface{}, error) {
 	value, err := ParseToLong(obj)
 	if err != nil {
 		log.Warn("failed to parse to long or null")
@@ -654,7 +618,7 @@ func (t ObUSmallIntType) getDefaultObjMeta() ObObjMeta {
 	}
 }
 
-func (t ObUSmallIntType) parseToComparable(obj interface{}, csType ObCollationType) (interface{}, error) {
+func (t ObUSmallIntType) ParseToComparable(obj interface{}, csType ObCollationType) (interface{}, error) {
 	value, err := ParseToLong(obj)
 	if err != nil {
 		log.Warn("failed to parse to long or null")
@@ -710,7 +674,7 @@ func (t ObUMediumIntType) getDefaultObjMeta() ObObjMeta {
 	}
 }
 
-func (t ObUMediumIntType) parseToComparable(obj interface{}, csType ObCollationType) (interface{}, error) {
+func (t ObUMediumIntType) ParseToComparable(obj interface{}, csType ObCollationType) (interface{}, error) {
 	value, err := ParseToLong(obj)
 	if err != nil {
 		log.Warn("failed to parse to long or null")
@@ -767,7 +731,7 @@ func (t ObUInt32Type) getDefaultObjMeta() ObObjMeta {
 	}
 }
 
-func (t ObUInt32Type) parseToComparable(obj interface{}, csType ObCollationType) (interface{}, error) {
+func (t ObUInt32Type) ParseToComparable(obj interface{}, csType ObCollationType) (interface{}, error) {
 	value, err := ParseToLong(obj)
 	if err != nil {
 		log.Warn("failed to parse to long or null")
@@ -823,7 +787,7 @@ func (t ObUInt64Type) getDefaultObjMeta() ObObjMeta {
 	}
 }
 
-func (t ObUInt64Type) parseToComparable(obj interface{}, csType ObCollationType) (interface{}, error) {
+func (t ObUInt64Type) ParseToComparable(obj interface{}, csType ObCollationType) (interface{}, error) {
 	return ParseToLong(obj)
 }
 
@@ -864,7 +828,7 @@ func (t ObFloatType) getDefaultObjMeta() ObObjMeta {
 	}
 }
 
-func (t ObFloatType) parseToComparable(obj interface{}, csType ObCollationType) (interface{}, error) {
+func (t ObFloatType) ParseToComparable(obj interface{}, csType ObCollationType) (interface{}, error) {
 	if v, ok := obj.(float32); ok {
 		return v, nil
 	} else if v, ok := obj.(string); ok {
@@ -924,7 +888,7 @@ func (t ObDoubleType) getDefaultObjMeta() ObObjMeta {
 	}
 }
 
-func (t ObDoubleType) parseToComparable(obj interface{}, csType ObCollationType) (interface{}, error) {
+func (t ObDoubleType) ParseToComparable(obj interface{}, csType ObCollationType) (interface{}, error) {
 	if v, ok := obj.(float64); ok {
 		return v, nil
 	} else if v, ok := obj.(string); ok {
@@ -984,7 +948,7 @@ func (t ObUFloatType) getDefaultObjMeta() ObObjMeta {
 	}
 }
 
-func (t ObUFloatType) parseToComparable(obj interface{}, csType ObCollationType) (interface{}, error) {
+func (t ObUFloatType) ParseToComparable(obj interface{}, csType ObCollationType) (interface{}, error) {
 	return nil, errors.New("ObUFloatType is not supported")
 }
 
@@ -1025,7 +989,7 @@ func (t ObUDoubleType) getDefaultObjMeta() ObObjMeta {
 	}
 }
 
-func (t ObUDoubleType) parseToComparable(obj interface{}, csType ObCollationType) (interface{}, error) {
+func (t ObUDoubleType) ParseToComparable(obj interface{}, csType ObCollationType) (interface{}, error) {
 	return nil, errors.New("ObUDoubleType is not supported")
 }
 
@@ -1066,7 +1030,7 @@ func (t ObNumberType) getDefaultObjMeta() ObObjMeta {
 	}
 }
 
-func (t ObNumberType) parseToComparable(obj interface{}, csType ObCollationType) (interface{}, error) {
+func (t ObNumberType) ParseToComparable(obj interface{}, csType ObCollationType) (interface{}, error) {
 	return nil, errors.New("ObNumberType is not supported")
 }
 
@@ -1107,7 +1071,7 @@ func (t ObUNumberType) getDefaultObjMeta() ObObjMeta {
 	}
 }
 
-func (t ObUNumberType) parseToComparable(obj interface{}, csType ObCollationType) (interface{}, error) {
+func (t ObUNumberType) ParseToComparable(obj interface{}, csType ObCollationType) (interface{}, error) {
 	return nil, errors.New("ObUNumberType is not supported")
 }
 
@@ -1148,7 +1112,7 @@ func (t ObDateTimeType) getDefaultObjMeta() ObObjMeta {
 	}
 }
 
-func (t ObDateTimeType) parseToComparable(obj interface{}, csType ObCollationType) (interface{}, error) {
+func (t ObDateTimeType) ParseToComparable(obj interface{}, csType ObCollationType) (interface{}, error) {
 	return parseTimestamp(obj)
 }
 
@@ -1189,7 +1153,7 @@ func (t ObTimestampType) getDefaultObjMeta() ObObjMeta {
 	}
 }
 
-func (t ObTimestampType) parseToComparable(obj interface{}, csType ObCollationType) (interface{}, error) {
+func (t ObTimestampType) ParseToComparable(obj interface{}, csType ObCollationType) (interface{}, error) {
 	return parseTimestamp(obj)
 }
 
@@ -1230,7 +1194,7 @@ func (t ObDateType) getDefaultObjMeta() ObObjMeta {
 	}
 }
 
-func (t ObDateType) parseToComparable(obj interface{}, csType ObCollationType) (interface{}, error) {
+func (t ObDateType) ParseToComparable(obj interface{}, csType ObCollationType) (interface{}, error) {
 	if v, ok := obj.(time.Time); ok {
 		return v, nil
 	} else if v, ok := obj.(string); ok {
@@ -1278,7 +1242,7 @@ func (t ObTimeType) getDefaultObjMeta() ObObjMeta {
 	}
 }
 
-func (t ObTimeType) parseToComparable(obj interface{}, csType ObCollationType) (interface{}, error) {
+func (t ObTimeType) ParseToComparable(obj interface{}, csType ObCollationType) (interface{}, error) {
 	return nil, errors.New("ObTimeType is not supported")
 }
 
@@ -1319,7 +1283,7 @@ func (t ObYearType) getDefaultObjMeta() ObObjMeta {
 	}
 }
 
-func (t ObYearType) parseToComparable(obj interface{}, csType ObCollationType) (interface{}, error) {
+func (t ObYearType) ParseToComparable(obj interface{}, csType ObCollationType) (interface{}, error) {
 	return nil, errors.New("ObYearType is not supported")
 }
 
@@ -1360,7 +1324,7 @@ func (t ObVarcharType) getDefaultObjMeta() ObObjMeta {
 	}
 }
 
-func (t ObVarcharType) parseToComparable(obj interface{}, csType ObCollationType) (interface{}, error) {
+func (t ObVarcharType) ParseToComparable(obj interface{}, csType ObCollationType) (interface{}, error) {
 	return parseTextToComparable(obj, csType)
 }
 
@@ -1401,7 +1365,7 @@ func (t ObCharType) getDefaultObjMeta() ObObjMeta {
 	}
 }
 
-func (t ObCharType) parseToComparable(obj interface{}, csType ObCollationType) (interface{}, error) {
+func (t ObCharType) ParseToComparable(obj interface{}, csType ObCollationType) (interface{}, error) {
 	return parseTextToComparable(obj, csType)
 }
 
@@ -1442,7 +1406,7 @@ func (t ObHexStringType) getDefaultObjMeta() ObObjMeta {
 	}
 }
 
-func (t ObHexStringType) parseToComparable(obj interface{}, csType ObCollationType) (interface{}, error) {
+func (t ObHexStringType) ParseToComparable(obj interface{}, csType ObCollationType) (interface{}, error) {
 	return nil, errors.New("ObHexStringType is not supported")
 }
 
@@ -1483,7 +1447,7 @@ func (t ObExtendType) getDefaultObjMeta() ObObjMeta {
 	}
 }
 
-func (t ObExtendType) parseToComparable(obj interface{}, csType ObCollationType) (interface{}, error) {
+func (t ObExtendType) ParseToComparable(obj interface{}, csType ObCollationType) (interface{}, error) {
 	return nil, errors.New("ObExtendType is not supported")
 }
 
@@ -1524,7 +1488,7 @@ func (t ObUnknownType) getDefaultObjMeta() ObObjMeta {
 	}
 }
 
-func (t ObUnknownType) parseToComparable(obj interface{}, csType ObCollationType) (interface{}, error) {
+func (t ObUnknownType) ParseToComparable(obj interface{}, csType ObCollationType) (interface{}, error) {
 	return nil, errors.New("ObUnknownType is not supported")
 }
 
@@ -1565,7 +1529,7 @@ func (t ObTinyTextType) getDefaultObjMeta() ObObjMeta {
 	}
 }
 
-func (t ObTinyTextType) parseToComparable(obj interface{}, csType ObCollationType) (interface{}, error) {
+func (t ObTinyTextType) ParseToComparable(obj interface{}, csType ObCollationType) (interface{}, error) {
 	return parseTextToComparable(obj, csType)
 }
 
@@ -1606,7 +1570,7 @@ func (t ObTextType) getDefaultObjMeta() ObObjMeta {
 	}
 }
 
-func (t ObTextType) parseToComparable(obj interface{}, csType ObCollationType) (interface{}, error) {
+func (t ObTextType) ParseToComparable(obj interface{}, csType ObCollationType) (interface{}, error) {
 	return parseTextToComparable(obj, csType)
 }
 
@@ -1647,7 +1611,7 @@ func (t ObMediumTextType) getDefaultObjMeta() ObObjMeta {
 	}
 }
 
-func (t ObMediumTextType) parseToComparable(obj interface{}, csType ObCollationType) (interface{}, error) {
+func (t ObMediumTextType) ParseToComparable(obj interface{}, csType ObCollationType) (interface{}, error) {
 	return parseTextToComparable(obj, csType)
 }
 
@@ -1688,7 +1652,7 @@ func (t ObLongTextType) getDefaultObjMeta() ObObjMeta {
 	}
 }
 
-func (t ObLongTextType) parseToComparable(obj interface{}, csType ObCollationType) (interface{}, error) {
+func (t ObLongTextType) ParseToComparable(obj interface{}, csType ObCollationType) (interface{}, error) {
 	return parseTextToComparable(obj, csType)
 }
 
@@ -1729,7 +1693,7 @@ func (t ObBitType) getDefaultObjMeta() ObObjMeta {
 	}
 }
 
-func (t ObBitType) parseToComparable(obj interface{}, csType ObCollationType) (interface{}, error) {
+func (t ObBitType) ParseToComparable(obj interface{}, csType ObCollationType) (interface{}, error) {
 	return nil, errors.New("ObBitType is not supported")
 }
 

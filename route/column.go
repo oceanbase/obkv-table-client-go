@@ -1,8 +1,9 @@
-package protocol
+package route
 
 import (
 	"errors"
 	"github.com/oceanbase/obkv-table-client-go/log"
+	"github.com/oceanbase/obkv-table-client-go/protocol"
 	"strconv"
 	"strings"
 )
@@ -10,8 +11,8 @@ import (
 func NewObGeneratedColumn(
 	columnName string,
 	index int,
-	objType ObObjType,
-	collType ObCollationType,
+	objType protocol.ObObjType,
+	collType protocol.ObCollationType,
 	columnExpress ObGeneratedColumnSimpleFunc) *ObColumn {
 	return &ObColumn{
 		columnName:     columnName,
@@ -27,8 +28,8 @@ func NewObGeneratedColumn(
 func NewObSimpleColumn(
 	columnName string,
 	index int,
-	objType ObObjType,
-	collType ObCollationType) *ObColumn {
+	objType protocol.ObObjType,
+	collType protocol.ObCollationType) *ObColumn {
 	return &ObColumn{
 		columnName:     columnName,
 		index:          index,
@@ -43,8 +44,8 @@ func NewObSimpleColumn(
 type ObColumn struct {
 	columnName    string
 	index         int
-	objType       ObObjType
-	collationType ObCollationType
+	objType       protocol.ObObjType
+	collationType protocol.ObCollationType
 	// refColumnNames: Represents which columns are referenced by the current column
 	// 1. generate column: key_prefix VARCHAR(1024) GENERATED ALWAYS AS (SUBSTRING(`col1`, 1, 4)
 	// 					   refColumnNames = ["col1"]
@@ -55,11 +56,11 @@ type ObColumn struct {
 	columnExpress  ObGeneratedColumnSimpleFunc // only support 'SUBSTRING' expr now
 }
 
-func (c *ObColumn) CollationType() ObCollationType {
+func (c *ObColumn) CollationType() protocol.ObCollationType {
 	return c.collationType
 }
 
-func (c *ObColumn) ObjType() ObObjType {
+func (c *ObColumn) ObjType() protocol.ObObjType {
 	return c.objType
 }
 
@@ -78,7 +79,7 @@ func (c *ObColumn) EvalValue(refs ...interface{}) (interface{}, error) {
 				log.Int("refs len", len(refs)))
 			return nil, errors.New("simple column is refer to itself so that the length of the refs must be 1")
 		}
-		return c.objType.parseToComparable(refs[0], c.collationType)
+		return c.objType.ParseToComparable(refs[0], c.collationType)
 	} else {
 		if len(refs) != len(c.refColumnNames) {
 			log.Warn("input refs count is not equal to refColumnNames count when column is generate column",
