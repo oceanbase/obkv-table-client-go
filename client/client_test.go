@@ -157,6 +157,7 @@ func TestObTableParam_ToString(t *testing.T) {
 }
 
 func TestInsert(t *testing.T) {
+	// CREATE TABLE test(c1 INT, c2 int, c3 varchar(10), primary key c1) PARTITION BY hash(c1) partitions 2;
 	const (
 		configUrl    = "..."
 		fullUserName = "..."

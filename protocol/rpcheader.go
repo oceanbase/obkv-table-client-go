@@ -7,9 +7,6 @@ import (
 	"github.com/oceanbase/obkv-table-client-go/util"
 )
 
-// TODO Init global version
-var globalVersion = 4
-
 const (
 	defaultFlag uint16 = 7
 
@@ -65,8 +62,8 @@ type RpcHeader struct {
 	tenantId     uint64
 	prevTenantId uint64
 	sessionId    uint64
-	traceId0     uint64
-	traceId1     uint64
+	traceId0     uint64 // uniqueId
+	traceId1     uint64 // sequence
 	timeout      time.Duration
 	timestamp    int64
 	rpcCostTime  *RpcCostTime
@@ -309,7 +306,7 @@ func (h *RpcHeader) SetClusterNameHash(clusterNameHash int64) {
 func (h *RpcHeader) Encode() []byte {
 	var rpcHeaderBuf []byte
 	// TODO Maybe it would be better to use the version number to judge
-	if globalVersion >= 4 { // todo version
+	if util.ObVersion() >= 4 {
 		rpcHeaderBuf = make([]byte, encodeSizeV4)
 		h.hLen = encodeSizeV4
 	} else { // v3
@@ -340,7 +337,7 @@ func (h *RpcHeader) Encode() []byte {
 	util.PutUint32(rpcHeaderBuffer, uint32(h.compressType))
 	util.PutUint32(rpcHeaderBuffer, uint32(h.originalLen))
 
-	if globalVersion >= 4 { // todo version
+	if util.ObVersion() >= 4 {
 		util.PutUint64(rpcHeaderBuffer, uint64(h.srcClusterId))
 		util.PutUint64(rpcHeaderBuffer, uint64(h.unisVersion))
 		util.PutUint32(rpcHeaderBuffer, uint32(h.requestLevel))

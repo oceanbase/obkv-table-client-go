@@ -2,13 +2,14 @@ package protocol
 
 import (
 	"bytes"
+	oberror "github.com/oceanbase/obkv-table-client-go/error"
 
 	"github.com/oceanbase/obkv-table-client-go/util"
 )
 
 type RpcResponseCode struct {
 	*UniVersionHeader
-	code        ResponseCode
+	code        oberror.ObErrorCode
 	msg         []byte
 	warningMsgs []*RpcResponseWarningMsg
 }
@@ -22,11 +23,11 @@ func NewRpcResponseCode() *RpcResponseCode {
 	}
 }
 
-func (c *RpcResponseCode) Code() ResponseCode {
+func (c *RpcResponseCode) Code() oberror.ObErrorCode {
 	return c.code
 }
 
-func (c *RpcResponseCode) SetCode(code ResponseCode) {
+func (c *RpcResponseCode) SetCode(code oberror.ObErrorCode) {
 	c.code = code
 }
 
@@ -54,7 +55,7 @@ func (c *RpcResponseCode) Encode(buffer *bytes.Buffer) {
 func (c *RpcResponseCode) Decode(buffer *bytes.Buffer) {
 	c.UniVersionHeader.Decode(buffer)
 
-	c.code = ResponseCode(util.DecodeVi32(buffer))
+	c.code = oberror.ObErrorCode(util.DecodeVi32(buffer))
 	c.msg = util.DecodeBytes(buffer)
 
 	waringMsgsLen := int(util.DecodeVi32(buffer))

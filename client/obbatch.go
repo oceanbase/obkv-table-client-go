@@ -10,18 +10,6 @@ import (
 	"sync"
 )
 
-type BatchExecutor interface {
-	AddInsertOp(rowkey []*table.Column, mutateValues []*table.Column, opts ...ObkvOption) error
-	AddUpdateOp(rowkey []*table.Column, mutateValues []*table.Column, opts ...ObkvOption) error
-	AddInsertOrUpdateOp(rowkey []*table.Column, mutateValues []*table.Column, opts ...ObkvOption) error
-	AddReplaceOp(rowkey []*table.Column, mutateValues []*table.Column, opts ...ObkvOption) error
-	AddIncrementOp(rowkey []*table.Column, mutateValues []*table.Column, opts ...ObkvOption) error
-	AddAppendOp(rowkey []*table.Column, mutateValues []*table.Column, opts ...ObkvOption) error
-	AddDeleteOp(rowkey []*table.Column, opts ...ObkvOption) error
-	AddGetOp(rowkey []*table.Column, getColumns []string, opts ...ObkvOption) error
-	Execute() (BatchOperationResult, error)
-}
-
 type ObBatchExecutor struct {
 	tableName string
 	batchOps  *protocol.TableBatchOperation
@@ -171,7 +159,7 @@ func (b *ObBatchExecutor) partitionExecute(
 	err := partOp.tableParam.table.execute(request, partRes)
 	if err != nil {
 		log.Warn("failed to execute batch request", log.String("request", request.String()))
-		return err
+		return errors.WithMessagef(err, "[%s]", request.String())
 	}
 
 	// 3. Handle result

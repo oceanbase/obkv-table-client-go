@@ -148,7 +148,7 @@ func (r *TableBatchOperationRequest) PayloadLen() int {
 
 func (r *TableBatchOperationRequest) PayloadContentLen() int {
 	totalLen := 0
-	if globalVersion >= 4 { // todo version
+	if util.ObVersion() >= 4 {
 		totalLen =
 			util.EncodedLengthByBytesString(r.credential) +
 				util.EncodedLengthByVString(r.tableName) +
@@ -191,7 +191,7 @@ func (r *TableBatchOperationRequest) Encode(buffer *bytes.Buffer) {
 
 	util.PutUint8(buffer, util.BoolToByte(r.returnAffectedRows))
 
-	if globalVersion >= 4 { // todo version
+	if util.ObVersion() >= 4 {
 		util.PutUint64(buffer, uint64(r.partitionId))
 	} else {
 		util.EncodeVi64(buffer, r.partitionId)
