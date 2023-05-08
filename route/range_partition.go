@@ -12,7 +12,7 @@ type ObRangePartDesc struct {
 	ObPartDescCommon
 	partSpace                 int
 	partNum                   int
-	orderedCompareColumns     []*protocol.ObColumn
+	orderedCompareColumns     []*ObColumn
 	orderedCompareColumnTypes []protocol.ObObjType
 	//todo: List<ObComparableKV<ObPartitionKey, Long>> bounds
 }
@@ -46,7 +46,7 @@ func (d *ObRangePartDesc) setRowKeyElement(rowKeyElement *table.ObRowkeyElement)
 	d.setCommRowKeyElement(rowKeyElement)
 }
 
-func (d *ObRangePartDesc) setPartColumns(partColumns []*protocol.ObColumn) {
+func (d *ObRangePartDesc) setPartColumns(partColumns []*ObColumn) {
 	d.PartColumns = partColumns
 }
 

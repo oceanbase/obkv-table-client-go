@@ -1,6 +1,7 @@
 package protocol
 
 import (
+	"github.com/oceanbase/obkv-table-client-go/route"
 	"github.com/stretchr/testify/assert"
 	"testing"
 	"time"
@@ -45,7 +46,7 @@ func TestObCollationLevel_ToString(t *testing.T) {
 }
 
 func TestObColumn_ToString(t *testing.T) {
-	column := &ObColumn{}
+	column := &route.ObColumn{}
 	assert.Equal(t, "ObColumn{"+
 		"columnName:, "+
 		"index:0, "+
@@ -58,7 +59,7 @@ func TestObColumn_ToString(t *testing.T) {
 	)
 	objType, _ := NewObObjType(1)
 	collType := NewObCollationType(63)
-	column = NewObSimpleColumn("testColumnName", 0, objType, collType)
+	column = route.NewObSimpleColumn("testColumnName", 0, objType, collType)
 	assert.Equal(t, "ObColumn{"+
 		"columnName:testColumnName, "+
 		"index:0, "+

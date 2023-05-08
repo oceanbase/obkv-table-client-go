@@ -1,12 +1,3 @@
-/*
-	日志模块需要实现的功能：
-	1. 提供默认的logger->done
-	2. 封装Debug()/Info()/Error()等接口->done
-	3. 提供日志分级写文件，文件轮转功能->todo
-	4. 提供注册日志句柄功能->todo
-
-*/
-
 package log
 
 import (

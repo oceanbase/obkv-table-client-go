@@ -1,4 +1,4 @@
-package protocol
+package route
 
 type ObGeneratedColumnSimpleFunc interface {
 	String() string

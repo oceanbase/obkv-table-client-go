@@ -399,7 +399,7 @@ func TestObColumnIndexesPair_ToString(t *testing.T) {
 		pair.String())
 	objType, _ := protocol.NewObObjType(1)
 	collType := protocol.NewObCollationType(63)
-	column := protocol.NewObSimpleColumn("testColumnName", 0, objType, collType)
+	column := NewObSimpleColumn("testColumnName", 0, objType, collType)
 	pair = ObColumnIndexesPair{column, []int{1, 2, 3}}
 	assert.Equal(t, "ObColumnIndexesPair{"+
 		"column:ObColumn{"+
@@ -428,13 +428,13 @@ func TestObPartDescCommon_ToString(t *testing.T) {
 	)
 	objType, _ := protocol.NewObObjType(1)
 	collType := protocol.NewObCollationType(63)
-	column := protocol.NewObSimpleColumn("testColumnName", 0, objType, collType)
+	column := NewObSimpleColumn("testColumnName", 0, objType, collType)
 	pair := &ObColumnIndexesPair{column, []int{0}}
 	partFuncType := newObPartFuncType(partFuncTypeHashIndex)
 	partExpr := "c1, c2"
 	orderedPartColumnNames := []string{"c1", "c2"}
 	orderedPartRefColumnRowKeyRelations := []*ObColumnIndexesPair{pair}
-	partColumns := []*protocol.ObColumn{column}
+	partColumns := []*ObColumn{column}
 	nameIdxMap := make(map[string]int, 3)
 	nameIdxMap["c1"] = 0
 	rowKeyElement := table.NewObRowkeyElement(nameIdxMap)
@@ -466,20 +466,20 @@ func TestObRangePartDesc_ToString(t *testing.T) {
 	)
 	objType, _ := protocol.NewObObjType(1)
 	collType := protocol.NewObCollationType(63)
-	column := protocol.NewObSimpleColumn("testColumnName", 0, objType, collType)
+	column := NewObSimpleColumn("testColumnName", 0, objType, collType)
 	pair := &ObColumnIndexesPair{column, []int{0}}
 	partFuncType := newObPartFuncType(partFuncTypeRangeIndex)
 	partExpr := "c1, c2"
 	orderedPartColumnNames := []string{"c1", "c2"}
 	orderedPartRefColumnRowKeyRelations := []*ObColumnIndexesPair{pair}
-	partColumns := []*protocol.ObColumn{column}
+	partColumns := []*ObColumn{column}
 	nameIdxMap := make(map[string]int, 3)
 	nameIdxMap["c1"] = 0
 	rowKeyElement := table.NewObRowkeyElement(nameIdxMap)
 	desc = ObRangePartDesc{
 		partNum:                   10,
 		partSpace:                 0,
-		orderedCompareColumns:     []*protocol.ObColumn{column, column},
+		orderedCompareColumns:     []*ObColumn{column, column},
 		orderedCompareColumnTypes: []protocol.ObObjType{objType, objType},
 	}
 	desc.PartFuncType = partFuncType
@@ -517,13 +517,13 @@ func TestObHashPartDesc_ToString(t *testing.T) {
 	)
 	objType, _ := protocol.NewObObjType(1)
 	collType := protocol.NewObCollationType(63)
-	column := protocol.NewObSimpleColumn("testColumnName", 0, objType, collType)
+	column := NewObSimpleColumn("testColumnName", 0, objType, collType)
 	pair := &ObColumnIndexesPair{column, []int{0}}
 	partFuncType := newObPartFuncType(partFuncTypeHashIndex)
 	partExpr := "c1, c2"
 	orderedPartColumnNames := []string{"c1", "c2"}
 	orderedPartRefColumnRowKeyRelations := []*ObColumnIndexesPair{pair}
-	partColumns := []*protocol.ObColumn{column}
+	partColumns := []*ObColumn{column}
 	nameIdxMap := make(map[string]int, 3)
 	nameIdxMap["c1"] = 0
 	rowKeyElement := table.NewObRowkeyElement(nameIdxMap)
@@ -574,13 +574,13 @@ func TestObKeyPartDesc_ToString(t *testing.T) {
 	)
 	objType, _ := protocol.NewObObjType(1)
 	collType := protocol.NewObCollationType(63)
-	column := protocol.NewObSimpleColumn("testColumnName", 0, objType, collType)
+	column := NewObSimpleColumn("testColumnName", 0, objType, collType)
 	pair := &ObColumnIndexesPair{column, []int{0}}
 	partFuncType := newObPartFuncType(partFuncTypeKeyV2Index)
 	partExpr := "c1, c2"
 	orderedPartColumnNames := []string{"c1", "c2"}
 	orderedPartRefColumnRowKeyRelations := []*ObColumnIndexesPair{pair}
-	partColumns := []*protocol.ObColumn{column}
+	partColumns := []*ObColumn{column}
 	nameIdxMap := make(map[string]int, 3)
 	nameIdxMap["c1"] = 0
 	rowKeyElement := table.NewObRowkeyElement(nameIdxMap)
@@ -749,13 +749,13 @@ func TestObPartitionInfo_ToString(t *testing.T) {
 	level := newObPartitionLevel(PartLevelZeroIndex)
 	objType, _ := protocol.NewObObjType(1)
 	collType := protocol.NewObCollationType(63)
-	column := protocol.NewObSimpleColumn("testColumnName", 0, objType, collType)
+	column := NewObSimpleColumn("testColumnName", 0, objType, collType)
 	pair := &ObColumnIndexesPair{column, []int{0}}
 	partFuncType := newObPartFuncType(partFuncTypeHashIndex)
 	partExpr := "c1, c2"
 	orderedPartColumnNames := []string{"c1", "c2"}
 	orderedPartRefColumnRowKeyRelations := []*ObColumnIndexesPair{pair}
-	partColumns := []*protocol.ObColumn{column}
+	partColumns := []*ObColumn{column}
 	nameIdxMap := make(map[string]int, 3)
 	nameIdxMap["c1"] = 0
 	rowKeyElement := table.NewObRowkeyElement(nameIdxMap)

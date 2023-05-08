@@ -46,7 +46,7 @@ func (d *ObHashPartDesc) setRowKeyElement(rowKeyElement *table.ObRowkeyElement) 
 	d.setCommRowKeyElement(rowKeyElement)
 }
 
-func (d *ObHashPartDesc) setPartColumns(partColumns []*protocol.ObColumn) {
+func (d *ObHashPartDesc) setPartColumns(partColumns []*ObColumn) {
 	d.PartColumns = partColumns
 }
 
