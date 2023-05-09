@@ -2,12 +2,13 @@ package client
 
 import (
 	"context"
+	"strconv"
+	"sync"
+
 	"github.com/oceanbase/obkv-table-client-go/config"
 	"github.com/oceanbase/obkv-table-client-go/log"
 	"github.com/oceanbase/obkv-table-client-go/obkvrpc"
 	"github.com/oceanbase/obkv-table-client-go/protocol"
-	"strconv"
-	"sync"
 )
 
 type ObTable struct {
@@ -45,6 +46,7 @@ func (t *ObTable) init(config *config.ClientConfig) error {
 	opt := obkvrpc.NewRpcClientOption(
 		t.ip,
 		t.port,
+		config.ConnPoolMaxConnSize,
 		config.RpcConnectTimeOut,
 		t.tenantName,
 		t.database,
@@ -68,9 +70,9 @@ func (t *ObTable) close() {
 	if !t.isClosed {
 		t.mutex.Lock()
 		if !t.isClosed { // double check after lock
-			//if t.rpcClient != nil {
+			// if t.rpcClient != nil {
 			// todo: t.rpcClient.Close()
-			//}
+			// }
 			t.isClosed = true
 		}
 		t.mutex.Unlock()

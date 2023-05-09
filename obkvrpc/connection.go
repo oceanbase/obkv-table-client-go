@@ -19,7 +19,7 @@ import (
 	"github.com/oceanbase/obkv-table-client-go/util"
 )
 
-type Option struct {
+type ConnectionOption struct {
 	ip             string
 	port           int
 	connectTimeout time.Duration
@@ -30,12 +30,12 @@ type Option struct {
 	password     string
 }
 
-func NewOption(ip string, port int, connectTimeout time.Duration, tenantName string, databaseName string, userName string, password string) *Option {
-	return &Option{ip: ip, port: port, connectTimeout: connectTimeout, tenantName: tenantName, databaseName: databaseName, userName: userName, password: password}
+func NewConnectionOption(ip string, port int, connectTimeout time.Duration, tenantName string, databaseName string, userName string, password string) *ConnectionOption {
+	return &ConnectionOption{ip: ip, port: port, connectTimeout: connectTimeout, tenantName: tenantName, databaseName: databaseName, userName: userName, password: password}
 }
 
 type Connection struct {
-	option *Option
+	option *ConnectionOption
 
 	conn    net.Conn
 	mutex   sync.Mutex
@@ -57,14 +57,15 @@ type Call struct {
 	Content []byte
 }
 
-func NewConnection(option *Option, uuid uuid.UUID) *Connection {
+func NewConnection(option *ConnectionOption, uuid uuid.UUID) *Connection {
 	return &Connection{option: option, uuid: uuid, pending: make(map[uint32]*Call)}
 }
 
 func (c *Connection) Connect() error {
-	conn, err := net.DialTimeout("tcp", fmt.Sprintf("%s:%s", c.option.ip, strconv.Itoa(c.option.port)), c.option.connectTimeout)
+	address := fmt.Sprintf("%s:%s", c.option.ip, strconv.Itoa(c.option.port))
+	conn, err := net.DialTimeout("tcp", address, c.option.connectTimeout)
 	if err != nil {
-		return errors.Wrap(err, "tcp connect failed")
+		return errors.Wrapf(err, "connection connect failed, uuid: %s remote addr: %s ", c.uuid, address)
 	}
 	c.conn = conn
 
@@ -77,7 +78,9 @@ func (c *Connection) Login() error {
 	loginResponse := protocol.NewLoginResponse()
 	err := c.Execute(context.TODO(), loginRequest, loginResponse)
 	if err != nil {
-		return errors.Wrap(err, "tcp login failed")
+		c.Close()
+		return errors.Wrapf(err, "connection login failed, uuid: %s remote addr: %s tenantname: %s databasename: %s",
+			c.uuid, c.conn.RemoteAddr().String(), c.option.tenantName, c.option.databaseName)
 	}
 
 	c.credential = loginResponse.Credential()
@@ -149,7 +152,7 @@ func (c *Connection) receivePacket() {
 		ezHeaderBuf := make([]byte, protocol.EzHeaderLength)
 		_, err := io.ReadFull(c.conn, ezHeaderBuf)
 		if err != nil {
-			fmt.Printf("failed to tcp connection read ezHeader, connection uuid: %d error: %s\n", c.uuid, err.Error())
+			fmt.Printf("failed to connection read ezHeader, connection uuid: %s error: %s\n", c.uuid.String(), err.Error())
 			return
 		}
 
@@ -157,7 +160,7 @@ func (c *Connection) receivePacket() {
 		ezHeaderBuffer := bytes.NewBuffer(ezHeaderBuf)
 		err = ezHeader.Decode(ezHeaderBuffer)
 		if err != nil {
-			fmt.Printf("failed to decode ezHeader, connection uuid: %d error: %s\n", c.uuid, err.Error())
+			fmt.Printf("failed to decode ezHeader, connection uuid: %s error: %s\n", c.uuid.String(), err.Error())
 			return
 		}
 
@@ -178,7 +181,7 @@ func (c *Connection) receivePacket() {
 			call.Error = err
 			call.done()
 
-			fmt.Printf("failed to tcp connection read content, connection uuid: %d error: %s\n", c.uuid, err.Error())
+			fmt.Printf("failed to connection read content, connection uuid: %d error: %s\n", c.uuid, err.Error())
 			return
 		}
 
