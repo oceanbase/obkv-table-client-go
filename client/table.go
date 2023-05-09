@@ -4,8 +4,8 @@ import (
 	"context"
 	"strconv"
 	"sync"
+	"time"
 
-	"github.com/oceanbase/obkv-table-client-go/config"
 	"github.com/oceanbase/obkv-table-client-go/log"
 	"github.com/oceanbase/obkv-table-client-go/obkvrpc"
 	"github.com/oceanbase/obkv-table-client-go/protocol"
@@ -42,12 +42,12 @@ func NewObTable(
 	}
 }
 
-func (t *ObTable) init(config *config.ClientConfig) error {
+func (t *ObTable) init(connPoolSize int, connectTimeout time.Duration) error {
 	opt := obkvrpc.NewRpcClientOption(
 		t.ip,
 		t.port,
-		config.ConnPoolMaxConnSize,
-		config.RpcConnectTimeOut,
+		connPoolSize,
+		connectTimeout,
 		t.tenantName,
 		t.database,
 		t.userName,

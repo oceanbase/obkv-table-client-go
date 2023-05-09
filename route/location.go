@@ -292,7 +292,7 @@ func getTableEntryFromResultSet(rows *Rows) (*ObTableEntry, error) {
 			log.Warn("replica is invalid", log.String("replica", replica.String()))
 			return nil, errors.New("replica is invalid")
 		}
-		tableLocation.replicaLocations = append(tableLocation.replicaLocations, *replica)
+		tableLocation.replicaLocations = append(tableLocation.replicaLocations, replica)
 	}
 
 	// 2. fill table entry

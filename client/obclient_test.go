@@ -3,6 +3,7 @@ package client
 import (
 	"sync"
 	"testing"
+	"time"
 
 	"github.com/agiledragon/gomonkey/v2"
 	"github.com/stretchr/testify/assert"
@@ -43,7 +44,7 @@ func getMockObClient() (*ObClient, error) {
 		obCli.password,
 		obCli.database,
 	)
-	err = tb.init(cfg)
+	err = tb.init(cfg.ConnPoolMaxConnSize, cfg.RpcConnectTimeOut)
 	if err != nil {
 		return nil, err
 	}
@@ -157,17 +158,18 @@ func TestObTableParam_ToString(t *testing.T) {
 }
 
 func TestInsert(t *testing.T) {
-	// CREATE TABLE test(c1 INT, c2 int, c3 varchar(10), primary key c1) PARTITION BY hash(c1) partitions 2;
+	// CREATE TABLE test(c1 bigint(20), c2 bigint(20), primary key (c1)) PARTITION BY hash(c1) partitions 2;
 	const (
 		configUrl    = "..."
 		fullUserName = "..."
 		passWord     = ""
 		sysUserName  = "root"
-		sysPassWord  = ""
+		sysPassWord  = "..."
 		tableName    = "test"
 	)
 
 	cfg := config.NewDefaultClientConfig()
+	cfg.OperationTimeOut = time.Duration(1000000) * time.Millisecond
 	cli, err := NewClient(configUrl, fullUserName, passWord, sysUserName, sysPassWord, cfg)
 	assert.Equal(t, nil, err)
 
