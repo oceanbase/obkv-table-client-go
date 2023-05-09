@@ -5,7 +5,6 @@ import (
 	"sync"
 	"time"
 
-	"github.com/google/uuid"
 	"github.com/pkg/errors"
 )
 
@@ -43,8 +42,7 @@ func NewConnectionPool(option *PoolOption) (*ConnectionPool, error) {
 
 	for i := 0; i < pool.option.connPoolMaxConnSize; i++ {
 
-		id := uuid.New()
-		connection := NewConnection(connectionOption, id)
+		connection := NewConnection(connectionOption)
 		err := connection.Connect()
 		if err != nil {
 			return nil, errors.Wrap(err, "create connection pool failed")
@@ -93,7 +91,7 @@ func (p *ConnectionPool) GetConnection() (*Connection, error) {
 
 func (p *ConnectionPool) CreateConnection() (*Connection, error) {
 	connectionOption := NewConnectionOption(p.option.ip, p.option.port, p.option.connectTimeout, p.option.tenantName, p.option.databaseName, p.option.userName, p.option.password)
-	connection := NewConnection(connectionOption, uuid.New())
+	connection := NewConnection(connectionOption)
 	err := connection.Connect()
 	if err != nil {
 		return nil, errors.Wrap(err, "create connection failed")
