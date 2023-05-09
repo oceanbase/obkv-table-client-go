@@ -1,19 +1,21 @@
 package client
 
 import (
-	"github.com/oceanbase/obkv-table-client-go/config"
-	"github.com/oceanbase/obkv-table-client-go/log"
-	"github.com/oceanbase/obkv-table-client-go/protocol"
-	"github.com/oceanbase/obkv-table-client-go/route"
-	"github.com/oceanbase/obkv-table-client-go/table"
-	"github.com/oceanbase/obkv-table-client-go/util"
-	"github.com/pkg/errors"
 	"math"
 	"strconv"
 	"strings"
 	"sync"
 	"sync/atomic"
 	"time"
+
+	"github.com/pkg/errors"
+
+	"github.com/oceanbase/obkv-table-client-go/config"
+	"github.com/oceanbase/obkv-table-client-go/log"
+	"github.com/oceanbase/obkv-table-client-go/protocol"
+	"github.com/oceanbase/obkv-table-client-go/route"
+	"github.com/oceanbase/obkv-table-client-go/table"
+	"github.com/oceanbase/obkv-table-client-go/util"
 )
 
 type ObClient struct {
@@ -171,6 +173,54 @@ func (c *ObClient) Insert(
 			log.String("tableName", tableName),
 			log.String("rowkey", columnsToString(rowkey)),
 			log.String("mutateColumns", columnsToString(mutateColumns)))
+		return -1, err
+	}
+	return res.AffectedRows(), nil
+}
+
+func (c *ObClient) InsertOrUpdate(
+	tableName string,
+	rowkey []*table.Column,
+	mutateColumns []*table.Column,
+	opts ...ObkvOption) (int64, error) {
+	var mutateColNames []string
+	var mutateColValues []interface{}
+	for _, col := range mutateColumns {
+		mutateColNames = append(mutateColNames, col.Name())
+		mutateColValues = append(mutateColValues, col.Value())
+	}
+	res, err := c.execute(
+		tableName,
+		protocol.InsertOrUpdate,
+		rowkey,
+		mutateColNames,
+		mutateColValues,
+		opts...)
+	if err != nil {
+		log.Warn("failed to execute insertOrUpdate",
+			log.String("tableName", tableName),
+			log.String("rowkey", columnsToString(rowkey)),
+			log.String("mutateColumns", columnsToString(mutateColumns)))
+		return -1, err
+	}
+	return res.AffectedRows(), nil
+}
+
+func (c *ObClient) Delete(
+	tableName string,
+	rowkey []*table.Column,
+	opts ...ObkvOption) (int64, error) {
+	res, err := c.execute(
+		tableName,
+		protocol.Del,
+		rowkey,
+		nil,
+		nil,
+		opts...)
+	if err != nil {
+		log.Warn("failed to execute del",
+			log.String("tableName", tableName),
+			log.String("rowkey", columnsToString(rowkey)))
 		return -1, err
 	}
 	return res.AffectedRows(), nil

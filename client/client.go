@@ -1,10 +1,11 @@
 package client
 
 import (
+	"github.com/pkg/errors"
+
 	"github.com/oceanbase/obkv-table-client-go/config"
 	"github.com/oceanbase/obkv-table-client-go/log"
 	"github.com/oceanbase/obkv-table-client-go/table"
-	"github.com/pkg/errors"
 )
 
 func NewClient(
@@ -50,6 +51,8 @@ func NewClient(
 type Client interface {
 	AddRowkey(tableName string, rowkey []string) error
 	Insert(tableName string, rowkey []*table.Column, mutateColumns []*table.Column, opts ...ObkvOption) (int64, error)
+	InsertOrUpdate(tableName string, rowkey []*table.Column, mutateColumns []*table.Column, opts ...ObkvOption) (int64, error)
+	Delete(tableName string, rowkey []*table.Column, opts ...ObkvOption) (int64, error)
 	Get(tableName string, rowkey []*table.Column, getColumns []string, opts ...ObkvOption) (map[string]interface{}, error)
 	NewBatchExecutor(tableName string) BatchExecutor
 }

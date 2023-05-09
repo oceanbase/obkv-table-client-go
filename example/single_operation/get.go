@@ -2,6 +2,7 @@ package main
 
 import (
 	"fmt"
+
 	"github.com/oceanbase/obkv-table-client-go/client"
 	"github.com/oceanbase/obkv-table-client-go/config"
 	"github.com/oceanbase/obkv-table-client-go/table"

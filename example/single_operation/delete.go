@@ -8,7 +8,6 @@ import (
 	"github.com/oceanbase/obkv-table-client-go/table"
 )
 
-// CREATE TABLE test(c1 bigint, c2 bigint, PRIMARY KEY(c1)) PARTITION BY hash(c1) partitions 2;
 func main() {
 	const (
 		configUrl    = "xxx"
@@ -30,11 +29,9 @@ func main() {
 		panic(err)
 	}
 	rowkey := []*table.Column{table.NewColumn("c1", int64(1))}
-	mutateColumns := []*table.Column{table.NewColumn("c2", int64(1))}
-	affectRows, err := cli.Insert(
+	affectRows, err := cli.Delete(
 		tableName,
 		rowkey,
-		mutateColumns,
 	)
 	if err != nil {
 		panic(err)

@@ -31,7 +31,7 @@ func main() {
 	}
 	rowkey := []*table.Column{table.NewColumn("c1", int64(1))}
 	mutateColumns := []*table.Column{table.NewColumn("c2", int64(1))}
-	affectRows, err := cli.Insert(
+	affectRows, err := cli.InsertOrUpdate(
 		tableName,
 		rowkey,
 		mutateColumns,
