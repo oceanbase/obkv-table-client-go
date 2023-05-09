@@ -16,6 +16,9 @@ type UniVersionHeader struct {
 	tenantId  uint64
 	sessionId uint64
 	timeout   time.Duration
+
+	uniqueId uint64 // rpc header traceId0
+	sequence uint64 // rpc header traceId1
 }
 
 func NewUniVersionHeader() *UniVersionHeader {
@@ -26,6 +29,8 @@ func NewUniVersionHeader() *UniVersionHeader {
 		tenantId:      1,
 		sessionId:     0,
 		timeout:       10 * 1000 * time.Millisecond,
+		uniqueId:      0,
+		sequence:      0,
 	}
 }
 
@@ -43,6 +48,22 @@ func (h *UniVersionHeader) SetContentLength(contentLength int) {
 
 func (h *UniVersionHeader) PCode() TablePacketCode {
 	return TableApiErrorPacket
+}
+
+func (h *UniVersionHeader) UniqueId() uint64 {
+	return h.uniqueId
+}
+
+func (h *UniVersionHeader) SetUniqueId(uniqueId uint64) {
+	h.uniqueId = uniqueId
+}
+
+func (h *UniVersionHeader) Sequence() uint64 {
+	return h.sequence
+}
+
+func (h *UniVersionHeader) SetSequence(sequence uint64) {
+	h.sequence = sequence
 }
 
 func (h *UniVersionHeader) TenantId() uint64 {

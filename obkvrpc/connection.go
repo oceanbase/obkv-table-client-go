@@ -11,7 +11,6 @@ import (
 	"sync/atomic"
 	"time"
 
-	"github.com/google/uuid"
 	"github.com/pkg/errors"
 
 	oberror "github.com/oceanbase/obkv-table-client-go/error"
@@ -39,12 +38,12 @@ type Connection struct {
 
 	conn    net.Conn
 	mutex   sync.Mutex
-	seq     atomic.Uint32
+	seq     atomic.Uint32 // as channel id in ez header
 	pending map[uint32]*Call
 	active  atomic.Bool
 
-	uuid           uuid.UUID
-	traceIdCounter atomic.Uint32
+	uniqueId uint64        // as trace0 in rpc header
+	sequence atomic.Uint64 // as trace1 in rpc header
 
 	credential []byte
 	tenantId   uint64
@@ -57,17 +56,30 @@ type Call struct {
 	Content []byte
 }
 
-func NewConnection(option *ConnectionOption, uuid uuid.UUID) *Connection {
-	return &Connection{option: option, uuid: uuid, pending: make(map[uint32]*Call)}
+func NewConnection(option *ConnectionOption) *Connection {
+	return &Connection{option: option, pending: make(map[uint32]*Call)}
 }
 
 func (c *Connection) Connect() error {
 	address := fmt.Sprintf("%s:%s", c.option.ip, strconv.Itoa(c.option.port))
 	conn, err := net.DialTimeout("tcp", address, c.option.connectTimeout)
 	if err != nil {
-		return errors.Wrapf(err, "connection connect failed, uuid: %s remote addr: %s ", c.uuid, address)
+		return errors.Wrapf(err, "connection connect failed, uniqueId: %d remote addr: %s", c.uniqueId, address)
 	}
 	c.conn = conn
+
+	/* layout of uniqueId(64 bytes)
+	 * ip_: 32
+	 * port_: 16;
+	 * is_user_request_: 1;
+	 * is_ipv6_:1;
+	 * reserved_: 14;
+	 */
+	ip := int64(util.ConvertIpToUint32(c.conn.LocalAddr().(*net.TCPAddr).IP))
+	port := int64(c.conn.LocalAddr().(*net.TCPAddr).Port << 32)
+	var isUserRequest int64 = 1 << (32 + 16)
+	var reserved int64 = 0
+	c.uniqueId = uint64(ip | port | isUserRequest | reserved)
 
 	go c.receivePacket()
 	return nil
@@ -79,8 +91,8 @@ func (c *Connection) Login() error {
 	err := c.Execute(context.TODO(), loginRequest, loginResponse)
 	if err != nil {
 		c.Close()
-		return errors.Wrapf(err, "connection login failed, uuid: %s remote addr: %s tenantname: %s databasename: %s",
-			c.uuid, c.conn.RemoteAddr().String(), c.option.tenantName, c.option.databaseName)
+		return errors.Wrapf(err, "connection login failed, uniqueId: %d remote addr: %s tenantname: %s databasename: %s",
+			c.uniqueId, c.conn.RemoteAddr().String(), c.option.tenantName, c.option.databaseName)
 	}
 
 	c.credential = loginResponse.Credential()
@@ -93,6 +105,9 @@ func (c *Connection) Login() error {
 
 func (c *Connection) Execute(ctx context.Context, request protocol.Payload, response protocol.Payload) error {
 	seq := c.seq.Add(1)
+
+	request.SetUniqueId(c.uniqueId)
+	request.SetSequence(c.sequence.Add(1))
 
 	request.SetTenantId(c.tenantId)
 	request.SetCredential(c.credential)
@@ -141,6 +156,9 @@ func (c *Connection) Execute(ctx context.Context, request protocol.Payload, resp
 		)
 	}
 
+	response.SetUniqueId(rpcHeader.TraceId0())
+	response.SetSequence(rpcHeader.TraceId1())
+
 	c.decodePayload(response, contentBuffer)
 
 	return nil
@@ -152,7 +170,7 @@ func (c *Connection) receivePacket() {
 		ezHeaderBuf := make([]byte, protocol.EzHeaderLength)
 		_, err := io.ReadFull(c.conn, ezHeaderBuf)
 		if err != nil {
-			fmt.Printf("failed to connection read ezHeader, connection uuid: %s error: %s\n", c.uuid.String(), err.Error())
+			fmt.Printf("failed to connection read ezHeader, connection uniqueId: %d error: %s\n", c.uniqueId, err.Error())
 			return
 		}
 
@@ -160,7 +178,7 @@ func (c *Connection) receivePacket() {
 		ezHeaderBuffer := bytes.NewBuffer(ezHeaderBuf)
 		err = ezHeader.Decode(ezHeaderBuffer)
 		if err != nil {
-			fmt.Printf("failed to decode ezHeader, connection uuid: %s error: %s\n", c.uuid.String(), err.Error())
+			fmt.Printf("failed to decode ezHeader, connection uniqueId: %d error: %s\n", c.uniqueId, err.Error())
 			return
 		}
 
@@ -181,7 +199,7 @@ func (c *Connection) receivePacket() {
 			call.Error = err
 			call.done()
 
-			fmt.Printf("failed to connection read content, connection uuid: %d error: %s\n", c.uuid, err.Error())
+			fmt.Printf("failed to connection read content, connection uniqueId: %d error: %s\n", c.uniqueId, err.Error())
 			return
 		}
 
@@ -193,7 +211,7 @@ func (c *Connection) receivePacket() {
 
 		// call already deleted
 		if call == nil {
-			fmt.Printf("failed to not found table packet, connection uuid: %d seq: %d\n", c.uuid, channelId)
+			fmt.Printf("failed to not found table packet, connection uniqueId: %d seq: %d\n", c.uniqueId, channelId)
 			continue
 		}
 		call.Content = contentBuf
@@ -257,8 +275,8 @@ func (c *Connection) encodeRpcHeader(payload protocol.Payload, payloadBuf []byte
 	rpcHeader.SetTenantId(payload.TenantId())
 	rpcHeader.SetSessionId(payload.SessionId())
 	rpcHeader.SetTimeout(payload.Timeout())
-	rpcHeader.SetTraceId0(uint64(c.uuid.ID()))
-	rpcHeader.SetTraceId1(uint64(c.traceIdCounter.Add(1)))
+	rpcHeader.SetTraceId0(payload.UniqueId())
+	rpcHeader.SetTraceId1(payload.Sequence())
 	// TODO To be added
 	// rpcHeader.SetPriority(0)
 	rpcHeader.SetChecksum(util.Calculate(0, payloadBuf))

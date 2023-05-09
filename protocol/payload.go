@@ -15,6 +15,12 @@ type Payload interface {
 
 	PayloadContentLen() int
 
+	UniqueId() uint64
+	SetUniqueId(uniqueId uint64)
+
+	Sequence() uint64
+	SetSequence(sequence uint64)
+
 	TenantId() uint64
 	SetTenantId(tenantId uint64)
 
