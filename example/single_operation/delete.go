@@ -1,6 +1,7 @@
 package main
 
 import (
+	"context"
 	"fmt"
 
 	"github.com/oceanbase/obkv-table-client-go/client"
@@ -30,6 +31,7 @@ func main() {
 	}
 	rowKey := []*table.Column{table.NewColumn("c1", int64(1))}
 	affectRows, err := cli.Delete(
+		context.TODO(),
 		tableName,
 		rowKey,
 	)

@@ -122,6 +122,8 @@ func (c *Connection) Execute(ctx context.Context, request protocol.Payload, resp
 
 	c.sendPacket(call, seq, rpcHeaderBuf, payloadBuf)
 
+	ctx, _ = context.WithTimeout(ctx, 10*time.Second) // todo temporary use
+
 	// wait call back
 	select {
 	case <-ctx.Done():
