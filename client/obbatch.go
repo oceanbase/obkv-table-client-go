@@ -31,22 +31,12 @@ func (b *obBatchExecutor) addDmlOp(
 	rowKey []*table.Column,
 	mutateValues []*table.Column,
 	opts ...ObkvOption) error {
-	var rowKeyValues []interface{}
-	var columnNames []string
-	var properties []interface{}
-	for _, column := range rowKey {
-		rowKeyValues = append(rowKeyValues, column.Value())
-	}
-	for _, column := range mutateValues {
-		columnNames = append(columnNames, column.Name())
-		properties = append(properties, column.Value())
-	}
-	op, err := protocol.NewTableOperation(opType, rowKeyValues, columnNames, properties)
+	op, err := protocol.NewTableOperation(opType, rowKey, mutateValues)
 	if err != nil {
 		log.Warn("failed to new table operation",
 			log.Int("type", int(opType)),
 			log.String("tableName", b.tableName),
-			log.String("rowkey", table.ColumnsToString(rowKey)),
+			log.String("rowKey", table.ColumnsToString(rowKey)),
 			log.String("mutateValues", table.ColumnsToString(mutateValues)))
 		return err
 	}
@@ -79,16 +69,12 @@ func (b *obBatchExecutor) AddAppendOp(rowKey []*table.Column, mutateValues []*ta
 }
 
 func (b *obBatchExecutor) AddDeleteOp(rowKey []*table.Column, opts ...ObkvOption) error {
-	var rowKeyValues []interface{}
-	for _, column := range rowKey {
-		rowKeyValues = append(rowKeyValues, column.Value())
-	}
-	op, err := protocol.NewTableOperation(protocol.Del, rowKeyValues, nil, nil)
+	op, err := protocol.NewTableOperation(protocol.Del, rowKey, nil)
 	if err != nil {
 		log.Warn("failed to new table operation",
 			log.Int("type", int(protocol.Del)),
 			log.String("tableName", b.tableName),
-			log.String("rowkey", table.ColumnsToString(rowKey)))
+			log.String("rowKey", table.ColumnsToString(rowKey)))
 		return err
 	}
 	b.batchOps.AppendTableOperation(op)
@@ -96,16 +82,16 @@ func (b *obBatchExecutor) AddDeleteOp(rowKey []*table.Column, opts ...ObkvOption
 }
 
 func (b *obBatchExecutor) AddGetOp(rowKey []*table.Column, getColumns []string, opts ...ObkvOption) error {
-	var rowKeyValues []interface{}
-	for _, column := range rowKey {
-		rowKeyValues = append(rowKeyValues, column.Value())
+	var columns []*table.Column
+	for _, columnName := range getColumns {
+		columns = append(columns, table.NewColumn(columnName, nil))
 	}
-	op, err := protocol.NewTableOperation(protocol.Get, rowKeyValues, getColumns, nil)
+	op, err := protocol.NewTableOperation(protocol.Get, rowKey, columns)
 	if err != nil {
 		log.Warn("failed to new table operation",
 			log.Int("type", int(protocol.Get)),
 			log.String("tableName", b.tableName),
-			log.String("rowkey", table.ColumnsToString(rowKey)),
+			log.String("rowKey", table.ColumnsToString(rowKey)),
 			log.String("getColumns", util.StringArrayToString(getColumns)))
 		return err
 	}

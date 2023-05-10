@@ -11,6 +11,7 @@ import (
 	"github.com/pkg/errors"
 
 	"github.com/oceanbase/obkv-table-client-go/config"
+	oberror "github.com/oceanbase/obkv-table-client-go/error"
 	"github.com/oceanbase/obkv-table-client-go/log"
 	"github.com/oceanbase/obkv-table-client-go/protocol"
 	"github.com/oceanbase/obkv-table-client-go/route"
@@ -155,23 +156,16 @@ func (c *ObClient) Insert(
 	rowKey []*table.Column,
 	mutateColumns []*table.Column,
 	opts ...ObkvOption) (int64, error) {
-	var mutateColNames []string
-	var mutateColValues []interface{}
-	for _, col := range mutateColumns {
-		mutateColNames = append(mutateColNames, col.Name())
-		mutateColValues = append(mutateColValues, col.Value())
-	}
 	res, err := c.execute(
 		tableName,
 		protocol.Insert,
 		rowKey,
-		mutateColNames,
-		mutateColValues,
+		mutateColumns,
 		opts...)
 	if err != nil {
 		log.Warn("failed to execute insert",
 			log.String("tableName", tableName),
-			log.String("rowkey", table.ColumnsToString(rowKey)),
+			log.String("rowKey", table.ColumnsToString(rowKey)),
 			log.String("mutateColumns", table.ColumnsToString(mutateColumns)))
 		return -1, err
 	}
@@ -183,23 +177,16 @@ func (c *ObClient) InsertOrUpdate(
 	rowKey []*table.Column,
 	mutateColumns []*table.Column,
 	opts ...ObkvOption) (int64, error) {
-	var mutateColNames []string
-	var mutateColValues []interface{}
-	for _, col := range mutateColumns {
-		mutateColNames = append(mutateColNames, col.Name())
-		mutateColValues = append(mutateColValues, col.Value())
-	}
 	res, err := c.execute(
 		tableName,
 		protocol.InsertOrUpdate,
 		rowKey,
-		mutateColNames,
-		mutateColValues,
+		mutateColumns,
 		opts...)
 	if err != nil {
 		log.Warn("failed to execute insertOrUpdate",
 			log.String("tableName", tableName),
-			log.String("rowkey", table.ColumnsToString(rowKey)),
+			log.String("rowKey", table.ColumnsToString(rowKey)),
 			log.String("mutateColumns", table.ColumnsToString(mutateColumns)))
 		return -1, err
 	}
@@ -215,12 +202,11 @@ func (c *ObClient) Delete(
 		protocol.Del,
 		rowKey,
 		nil,
-		nil,
 		opts...)
 	if err != nil {
 		log.Warn("failed to execute del",
 			log.String("tableName", tableName),
-			log.String("rowkey", table.ColumnsToString(rowKey)))
+			log.String("rowKey", table.ColumnsToString(rowKey)))
 		return -1, err
 	}
 	return res.AffectedRows(), nil
@@ -231,17 +217,20 @@ func (c *ObClient) Get(
 	rowKey []*table.Column,
 	getColumns []string,
 	opts ...ObkvOption) (map[string]interface{}, error) {
+	var columns []*table.Column
+	for _, columnName := range getColumns {
+		columns = append(columns, table.NewColumn(columnName, nil))
+	}
 	res, err := c.execute(
 		tableName,
 		protocol.Get,
 		rowKey,
-		getColumns,
-		nil,
+		columns,
 		opts...)
 	if err != nil {
 		log.Warn("failed to execute get",
 			log.String("tableName", tableName),
-			log.String("rowkey", table.ColumnsToString(rowKey)),
+			log.String("rowKey", table.ColumnsToString(rowKey)),
 			log.String("getColumns", util.StringArrayToString(getColumns)))
 		return nil, err
 	}
@@ -256,8 +245,7 @@ func (c *ObClient) execute(
 	tableName string,
 	opType protocol.TableOperationType,
 	rowKey []*table.Column,
-	columns []string,
-	properties []interface{},
+	columns []*table.Column,
 	opts ...ObkvOption) (*protocol.TableOperationResponse, error) {
 	var rowKeyValue []interface{}
 	for _, col := range rowKey {
@@ -278,9 +266,8 @@ func (c *ObClient) execute(
 		tableParam.tableId,
 		tableParam.partitionId,
 		opType,
-		rowKeyValue,
+		rowKey,
 		columns,
-		properties,
 		c.config.OperationTimeOut,
 		c.config.LogLevel,
 	)
@@ -299,6 +286,17 @@ func (c *ObClient) execute(
 		log.Warn("failed to execute request", log.String("request", request.String()))
 		return nil, errors.WithMessagef(err, "[%s]", request.String())
 	}
+
+	if oberror.ObErrorCode(result.Header().ErrorNo()) != oberror.ObSuccess {
+		return result, oberror.NewProtocolError(
+			tableParam.table.ip,
+			tableParam.table.port,
+			oberror.ObErrorCode(result.Header().ErrorNo()),
+			result.UniqueId(),
+			result.Sequence(),
+		)
+	}
+
 	return result, nil
 }
 

@@ -2,8 +2,10 @@ package protocol
 
 import (
 	"bytes"
+
 	"github.com/pkg/errors"
 
+	"github.com/oceanbase/obkv-table-client-go/table"
 	"github.com/oceanbase/obkv-table-client-go/util"
 )
 
@@ -15,41 +17,36 @@ type TableOperation struct {
 
 func NewTableOperation(
 	operationType TableOperationType,
-	rowKeys []interface{},
-	columnNames []string,
-	properties []interface{}) (*TableOperation, error) {
+	rowKey []*table.Column,
+	columns []*table.Column) (*TableOperation, error) {
 	tableEntity := NewTableEntity()
 
 	// add rowKey
-	for _, rowKey := range rowKeys {
-		objMeta, err := DefaultObjMeta(rowKey)
+	for _, column := range rowKey {
+		objMeta, err := DefaultObjMeta(column.Value())
 		if err != nil {
 			return nil, errors.Wrap(err, "create obj meta by row key")
 		}
 
 		object := NewObject()
 		object.SetMeta(objMeta)
-		object.SetValue(rowKey)
+		object.SetValue(column.Value())
 
 		tableEntity.RowKey().AppendKey(object)
 	}
 
 	// add column
-	for i, columnName := range columnNames {
-		var value interface{} = nil
-		if properties != nil {
-			value = properties[i]
-		}
-		objMeta, err := DefaultObjMeta(value)
+	for _, column := range columns {
+		objMeta, err := DefaultObjMeta(column.Value())
 		if err != nil {
 			return nil, errors.Wrap(err, "create obj meta by column")
 		}
 
 		object := NewObject()
 		object.SetMeta(objMeta)
-		object.SetValue(value)
+		object.SetValue(column.Value())
 
-		tableEntity.SetProperty(columnName, object)
+		tableEntity.SetProperty(column.Name(), object)
 	}
 
 	return &TableOperation{
