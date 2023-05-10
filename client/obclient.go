@@ -11,6 +11,7 @@ import (
 	"github.com/pkg/errors"
 
 	"github.com/oceanbase/obkv-table-client-go/config"
+	oberror "github.com/oceanbase/obkv-table-client-go/error"
 	"github.com/oceanbase/obkv-table-client-go/log"
 	"github.com/oceanbase/obkv-table-client-go/protocol"
 	"github.com/oceanbase/obkv-table-client-go/route"
@@ -285,6 +286,17 @@ func (c *ObClient) execute(
 		log.Warn("failed to execute request", log.String("request", request.String()))
 		return nil, errors.WithMessagef(err, "[%s]", request.String())
 	}
+
+	if oberror.ObErrorCode(result.Header().ErrorNo()) != oberror.ObSuccess {
+		return result, oberror.NewProtocolError(
+			tableParam.table.ip,
+			tableParam.table.port,
+			oberror.ObErrorCode(result.Header().ErrorNo()),
+			result.UniqueId(),
+			result.Sequence(),
+		)
+	}
+
 	return result, nil
 }
 
