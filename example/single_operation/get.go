@@ -1,6 +1,7 @@
 package main
 
 import (
+	"context"
 	"fmt"
 
 	"github.com/oceanbase/obkv-table-client-go/client"
@@ -31,6 +32,7 @@ func main() {
 	rowKey := []*table.Column{table.NewColumn("c1", int64(1))}
 	selectColumns := []string{"c1", "c2"}
 	m, err := cli.Get(
+		context.TODO(),
 		tableName,
 		rowKey,
 		selectColumns,

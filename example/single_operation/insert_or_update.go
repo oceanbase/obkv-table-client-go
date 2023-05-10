@@ -1,6 +1,7 @@
 package main
 
 import (
+	"context"
 	"fmt"
 
 	"github.com/oceanbase/obkv-table-client-go/client"
@@ -32,6 +33,7 @@ func main() {
 	rowKey := []*table.Column{table.NewColumn("c1", int64(1))}
 	mutateColumns := []*table.Column{table.NewColumn("c2", int64(1))}
 	affectRows, err := cli.InsertOrUpdate(
+		context.TODO(),
 		tableName,
 		rowKey,
 		mutateColumns,

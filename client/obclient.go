@@ -1,6 +1,7 @@
 package client
 
 import (
+	"context"
 	"math"
 	"strconv"
 	"strings"
@@ -152,6 +153,7 @@ func (c *ObClient) AddRowKey(tableName string, rowKey []string) error {
 }
 
 func (c *ObClient) Insert(
+	ctx context.Context,
 	tableName string,
 	rowKey []*table.Column,
 	mutateColumns []*table.Column,
@@ -173,6 +175,7 @@ func (c *ObClient) Insert(
 }
 
 func (c *ObClient) InsertOrUpdate(
+	ctx context.Context,
 	tableName string,
 	rowKey []*table.Column,
 	mutateColumns []*table.Column,
@@ -194,6 +197,7 @@ func (c *ObClient) InsertOrUpdate(
 }
 
 func (c *ObClient) Delete(
+	ctx context.Context,
 	tableName string,
 	rowKey []*table.Column,
 	opts ...ObkvOption) (int64, error) {
@@ -213,6 +217,7 @@ func (c *ObClient) Delete(
 }
 
 func (c *ObClient) Get(
+	ctx context.Context,
 	tableName string,
 	rowKey []*table.Column,
 	getColumns []string,

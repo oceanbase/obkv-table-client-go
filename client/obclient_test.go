@@ -1,6 +1,7 @@
 package client
 
 import (
+	"context"
 	"sync"
 	"testing"
 	"time"
@@ -75,6 +76,7 @@ func TestObClient_Insert(t *testing.T) {
 	rowKey := []*table.Column{table.NewColumn("c1", 1)}
 	mutateColumns := []*table.Column{table.NewColumn("c2", 1)}
 	affectRows, err := cli.Insert(
+		context.TODO(),
 		mock_route.MockTestTableName,
 		rowKey,
 		mutateColumns,
@@ -105,6 +107,7 @@ func TestObClient_Get(t *testing.T) {
 	rowKey := []*table.Column{table.NewColumn("c1", 1)}
 	selectColumns := []string{"c1", "c2"}
 	res, err := cli.Get(
+		context.TODO(),
 		mock_route.MockTestTableName,
 		rowKey,
 		selectColumns,
@@ -141,6 +144,7 @@ func TestObClientInsertConcurrent(t *testing.T) {
 			rowKey := []*table.Column{table.NewColumn("c1", 1)}
 			mutateColumns := []*table.Column{table.NewColumn("c2", 1)}
 			_, err := cli.Insert(
+				context.TODO(),
 				mock_route.MockTestTableName,
 				rowKey,
 				mutateColumns,
@@ -178,6 +182,7 @@ func TestInsert(t *testing.T) {
 	rowKey := []*table.Column{table.NewColumn("c1", int64(1))}
 	mutateColumns := []*table.Column{table.NewColumn("c2", int64(1))}
 	affectRows, err := cli.Insert(
+		context.TODO(),
 		tableName,
 		rowKey,
 		mutateColumns,
@@ -205,6 +210,7 @@ func TestGet(t *testing.T) {
 	rowKey := []*table.Column{table.NewColumn("c1", int64(1))}
 	selectColumns := []string{"c1", "c2"}
 	m, err := cli.Get(
+		context.TODO(),
 		tableName,
 		rowKey,
 		selectColumns,
