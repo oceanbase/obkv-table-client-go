@@ -715,13 +715,13 @@ func TestObReplicaLocation_ToString(t *testing.T) {
 func TestObTableLocation_ToString(t *testing.T) {
 	loc := ObTableLocation{}
 	assert.Equal(t, "ObTableLocation{replicaLocations:[]}", loc.String())
-	replica := ObReplicaLocation{
+	replica := &ObReplicaLocation{
 		ObServerAddr{"127.0.0.1", 8080, 1227},
 		ObServerInfo{0, "Active"},
 		newObServerRole(ServerRoleLeaderIndex),
 		newObReplicaType(ReplicaTypeFullIndex),
 	}
-	loc = ObTableLocation{[]ObReplicaLocation{replica, replica}}
+	loc = ObTableLocation{[]*ObReplicaLocation{replica, replica}}
 	assert.Equal(t, "ObTableLocation{"+
 		"replicaLocations:["+
 		"ObReplicaLocation{"+

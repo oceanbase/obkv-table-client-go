@@ -12,21 +12,21 @@ import (
 	"github.com/oceanbase/obkv-table-client-go/util"
 )
 
-type ObBatchExecutor struct {
+type obBatchExecutor struct {
 	tableName string
 	batchOps  *protocol.TableBatchOperation
 	cli       *ObClient
 }
 
-func newObBatchExecutor(tableName string, cli *ObClient) *ObBatchExecutor {
-	return &ObBatchExecutor{
+func newObBatchExecutor(tableName string, cli *ObClient) *obBatchExecutor {
+	return &obBatchExecutor{
 		tableName: tableName,
 		batchOps:  protocol.NewTableBatchOperation(),
 		cli:       cli,
 	}
 }
 
-func (b *ObBatchExecutor) AddDmlOp(
+func (b *obBatchExecutor) addDmlOp(
 	opType protocol.TableOperationType,
 	rowKey []*table.Column,
 	mutateValues []*table.Column,
@@ -46,39 +46,39 @@ func (b *ObBatchExecutor) AddDmlOp(
 		log.Warn("failed to new table operation",
 			log.Int("type", int(opType)),
 			log.String("tableName", b.tableName),
-			log.String("rowKey", columnsToString(rowKey)),
-			log.String("mutateValues", columnsToString(mutateValues)))
+			log.String("rowkey", table.ColumnsToString(rowKey)),
+			log.String("mutateValues", table.ColumnsToString(mutateValues)))
 		return err
 	}
 	b.batchOps.AppendTableOperation(op)
 	return nil
 }
 
-func (b *ObBatchExecutor) AddInsertOp(rowKey []*table.Column, mutateValues []*table.Column, opts ...ObkvOption) error {
-	return b.AddDmlOp(protocol.Insert, rowKey, mutateValues, opts...)
+func (b *obBatchExecutor) AddInsertOp(rowKey []*table.Column, mutateValues []*table.Column, opts ...ObkvOption) error {
+	return b.addDmlOp(protocol.Insert, rowKey, mutateValues, opts...)
 }
 
-func (b *ObBatchExecutor) AddUpdateOp(rowKey []*table.Column, mutateValues []*table.Column, opts ...ObkvOption) error {
-	return b.AddDmlOp(protocol.Update, rowKey, mutateValues, opts...)
+func (b *obBatchExecutor) AddUpdateOp(rowKey []*table.Column, mutateValues []*table.Column, opts ...ObkvOption) error {
+	return b.addDmlOp(protocol.Update, rowKey, mutateValues, opts...)
 }
 
-func (b *ObBatchExecutor) AddInsertOrUpdateOp(rowKey []*table.Column, mutateValues []*table.Column, opts ...ObkvOption) error {
-	return b.AddDmlOp(protocol.InsertOrUpdate, rowKey, mutateValues, opts...)
+func (b *obBatchExecutor) AddInsertOrUpdateOp(rowKey []*table.Column, mutateValues []*table.Column, opts ...ObkvOption) error {
+	return b.addDmlOp(protocol.InsertOrUpdate, rowKey, mutateValues, opts...)
 }
 
-func (b *ObBatchExecutor) AddReplaceOp(rowKey []*table.Column, mutateValues []*table.Column, opts ...ObkvOption) error {
-	return b.AddDmlOp(protocol.Replace, rowKey, mutateValues, opts...)
+func (b *obBatchExecutor) AddReplaceOp(rowKey []*table.Column, mutateValues []*table.Column, opts ...ObkvOption) error {
+	return b.addDmlOp(protocol.Replace, rowKey, mutateValues, opts...)
 }
 
-func (b *ObBatchExecutor) AddIncrementOp(rowKey []*table.Column, mutateValues []*table.Column, opts ...ObkvOption) error {
-	return b.AddDmlOp(protocol.Increment, rowKey, mutateValues, opts...)
+func (b *obBatchExecutor) AddIncrementOp(rowKey []*table.Column, mutateValues []*table.Column, opts ...ObkvOption) error {
+	return b.addDmlOp(protocol.Increment, rowKey, mutateValues, opts...)
 }
 
-func (b *ObBatchExecutor) AddAppendOp(rowKey []*table.Column, mutateValues []*table.Column, opts ...ObkvOption) error {
-	return b.AddDmlOp(protocol.Increment, rowKey, mutateValues, opts...)
+func (b *obBatchExecutor) AddAppendOp(rowKey []*table.Column, mutateValues []*table.Column, opts ...ObkvOption) error {
+	return b.addDmlOp(protocol.Increment, rowKey, mutateValues, opts...)
 }
 
-func (b *ObBatchExecutor) AddDeleteOp(rowKey []*table.Column, opts ...ObkvOption) error {
+func (b *obBatchExecutor) AddDeleteOp(rowKey []*table.Column, opts ...ObkvOption) error {
 	var rowKeyValues []interface{}
 	for _, column := range rowKey {
 		rowKeyValues = append(rowKeyValues, column.Value())
@@ -88,14 +88,14 @@ func (b *ObBatchExecutor) AddDeleteOp(rowKey []*table.Column, opts ...ObkvOption
 		log.Warn("failed to new table operation",
 			log.Int("type", int(protocol.Del)),
 			log.String("tableName", b.tableName),
-			log.String("rowKey", columnsToString(rowKey)))
+			log.String("rowkey", table.ColumnsToString(rowKey)))
 		return err
 	}
 	b.batchOps.AppendTableOperation(op)
 	return nil
 }
 
-func (b *ObBatchExecutor) AddGetOp(rowKey []*table.Column, getColumns []string, opts ...ObkvOption) error {
+func (b *obBatchExecutor) AddGetOp(rowKey []*table.Column, getColumns []string, opts ...ObkvOption) error {
 	var rowKeyValues []interface{}
 	for _, column := range rowKey {
 		rowKeyValues = append(rowKeyValues, column.Value())
@@ -105,7 +105,7 @@ func (b *ObBatchExecutor) AddGetOp(rowKey []*table.Column, getColumns []string, 
 		log.Warn("failed to new table operation",
 			log.Int("type", int(protocol.Get)),
 			log.String("tableName", b.tableName),
-			log.String("rowKey", columnsToString(rowKey)),
+			log.String("rowkey", table.ColumnsToString(rowKey)),
 			log.String("getColumns", util.StringArrayToString(getColumns)))
 		return err
 	}
@@ -113,8 +113,8 @@ func (b *ObBatchExecutor) AddGetOp(rowKey []*table.Column, getColumns []string, 
 	return nil
 }
 
-func (b *ObBatchExecutor) constructPartOpMap() (map[int64]*ObPartOp, error) {
-	partOpMap := make(map[int64]*ObPartOp)
+func (b *obBatchExecutor) constructPartOpMap() (map[int64]*obPartOp, error) {
+	partOpMap := make(map[int64]*obPartOp)
 	for i, op := range b.batchOps.TableOperations() {
 		rowKey := op.Entity().RowKey().GetRowKeyValue()
 		tableParam, err := b.cli.getTableParam(b.tableName, rowKey, false)
@@ -135,8 +135,8 @@ func (b *ObBatchExecutor) constructPartOpMap() (map[int64]*ObPartOp, error) {
 	return partOpMap, nil
 }
 
-func (b *ObBatchExecutor) partitionExecute(
-	partOp *ObPartOp,
+func (b *obBatchExecutor) partitionExecute(
+	partOp *obPartOp,
 	res []*protocol.TableOperationResponse) error {
 	// 1. Construct batch operation request
 	// 1.1 Construct batch operation
@@ -193,7 +193,7 @@ func (b *ObBatchExecutor) partitionExecute(
 	return nil
 }
 
-func (b *ObBatchExecutor) Execute() (BatchOperationResult, error) {
+func (b *obBatchExecutor) Execute() (BatchOperationResult, error) {
 	if b.cli == nil {
 		log.Warn("client handle is nil")
 		return nil, errors.New("client handle is nil")
@@ -217,7 +217,7 @@ func (b *ObBatchExecutor) Execute() (BatchOperationResult, error) {
 		var wg sync.WaitGroup
 		for _, partOp := range partOpMap {
 			wg.Add(1)
-			go func(partOp *ObPartOp) {
+			go func(partOp *obPartOp) {
 				defer wg.Done()
 				err := b.partitionExecute(partOp, res)
 				if err != nil {
@@ -246,21 +246,21 @@ func (b *ObBatchExecutor) Execute() (BatchOperationResult, error) {
 	return newBatchOperationResult(res), nil
 }
 
-type ObPartOp struct {
+type obPartOp struct {
 	tableParam *ObTableParam
-	ops        []*ObSingleOp
+	ops        []*obSingleOp
 }
 
-func newPartOp(tableParam *ObTableParam) *ObPartOp {
-	ops := make([]*ObSingleOp, 0)
-	return &ObPartOp{tableParam, ops}
+func newPartOp(tableParam *ObTableParam) *obPartOp {
+	ops := make([]*obSingleOp, 0)
+	return &obPartOp{tableParam, ops}
 }
 
-func (p *ObPartOp) addOperation(op *ObSingleOp) {
+func (p *obPartOp) addOperation(op *obSingleOp) {
 	p.ops = append(p.ops, op)
 }
 
-func (p *ObPartOp) String() string {
+func (p *obPartOp) String() string {
 	var opsStr string
 	opsStr = opsStr + "["
 	for i := 0; i < len(p.ops); i++ {
@@ -270,23 +270,23 @@ func (p *ObPartOp) String() string {
 		opsStr += p.ops[i].String()
 	}
 	opsStr += "]"
-	return "ObPartOp{" +
+	return "obPartOp{" +
 		"tableParam:" + p.tableParam.String() + ", " +
 		"ops:" + opsStr +
 		"}"
 }
 
-type ObSingleOp struct {
+type obSingleOp struct {
 	indexOfBatch int
 	op           *protocol.TableOperation
 }
 
-func newSingleOp(index int, op *protocol.TableOperation) *ObSingleOp {
-	return &ObSingleOp{index, op}
+func newSingleOp(index int, op *protocol.TableOperation) *obSingleOp {
+	return &obSingleOp{index, op}
 }
 
-func (s *ObSingleOp) String() string {
-	return "ObSingleOp{" +
+func (s *obSingleOp) String() string {
+	return "obSingleOp{" +
 		"indexOfBatch:" + strconv.Itoa(s.indexOfBatch) + ", " +
 		"op:" + s.op.String() +
 		"}"
@@ -296,14 +296,14 @@ type BatchOperationResult interface {
 	GetResults() []*protocol.TableOperationResponse
 }
 
-type ObBatchOperationResult struct {
+type obBatchOperationResult struct {
 	results []*protocol.TableOperationResponse
 }
 
-func newBatchOperationResult(results []*protocol.TableOperationResponse) *ObBatchOperationResult {
-	return &ObBatchOperationResult{results}
+func newBatchOperationResult(results []*protocol.TableOperationResponse) *obBatchOperationResult {
+	return &obBatchOperationResult{results}
 }
 
-func (r *ObBatchOperationResult) GetResults() []*protocol.TableOperationResponse {
+func (r *obBatchOperationResult) GetResults() []*protocol.TableOperationResponse {
 	return r.results
 }

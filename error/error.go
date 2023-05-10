@@ -249,7 +249,7 @@ func NewProtocolError(host string, port int, code ObErrorCode, sequence uint64, 
 			"[%d][%s][%s][%s][%s]",
 			code,
 			"ObErrUnknown",
-			"Unknown error from observer.",
+			"Get an error from observer.",
 			server,
 			trace,
 		)
@@ -258,5 +258,5 @@ func NewProtocolError(host string, port int, code ObErrorCode, sequence uint64, 
 }
 
 func (e *ObProtocolError) Error() string {
-	return fmt.Sprintf("Error code: %d, Error message: %s, Trace: %s", e.code, e.message, e.trace)
+	return e.message
 }

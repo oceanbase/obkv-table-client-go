@@ -171,8 +171,8 @@ func (c *ObClient) Insert(
 	if err != nil {
 		log.Warn("failed to execute insert",
 			log.String("tableName", tableName),
-			log.String("rowKey", columnsToString(rowKey)),
-			log.String("mutateColumns", columnsToString(mutateColumns)))
+			log.String("rowkey", table.ColumnsToString(rowKey)),
+			log.String("mutateColumns", table.ColumnsToString(mutateColumns)))
 		return -1, err
 	}
 	return res.AffectedRows(), nil
@@ -199,8 +199,8 @@ func (c *ObClient) InsertOrUpdate(
 	if err != nil {
 		log.Warn("failed to execute insertOrUpdate",
 			log.String("tableName", tableName),
-			log.String("rowKey", columnsToString(rowKey)),
-			log.String("mutateColumns", columnsToString(mutateColumns)))
+			log.String("rowkey", table.ColumnsToString(rowKey)),
+			log.String("mutateColumns", table.ColumnsToString(mutateColumns)))
 		return -1, err
 	}
 	return res.AffectedRows(), nil
@@ -220,7 +220,7 @@ func (c *ObClient) Delete(
 	if err != nil {
 		log.Warn("failed to execute del",
 			log.String("tableName", tableName),
-			log.String("rowKey", columnsToString(rowKey)))
+			log.String("rowkey", table.ColumnsToString(rowKey)))
 		return -1, err
 	}
 	return res.AffectedRows(), nil
@@ -241,7 +241,7 @@ func (c *ObClient) Get(
 	if err != nil {
 		log.Warn("failed to execute get",
 			log.String("tableName", tableName),
-			log.String("rowKey", columnsToString(rowKey)),
+			log.String("rowkey", table.ColumnsToString(rowKey)),
 			log.String("getColumns", util.StringArrayToString(getColumns)))
 		return nil, err
 	}
@@ -275,8 +275,8 @@ func (c *ObClient) execute(
 	// 2. Construct request.
 	request, err := protocol.NewTableOperationRequest(
 		tableName,
-		tableParam.TableId(),
-		tableParam.PartitionId(),
+		tableParam.tableId,
+		tableParam.partitionId,
 		opType,
 		rowKeyValue,
 		columns,
@@ -615,7 +615,7 @@ func (c *ObClient) fetchMetadata() error {
 		}
 
 		t := NewObTable(addr.Ip(), addr.SvrPort(), c.tenantName, c.userName, c.password, c.database)
-		err = t.init(c.config)
+		err = t.init(c.config.ConnPoolMaxConnSize, c.config.RpcConnectTimeOut)
 		if err != nil {
 			log.Warn("fail to init ob table", log.String("obTable", addr.String()))
 			return err
