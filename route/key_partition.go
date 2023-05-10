@@ -57,7 +57,7 @@ func (d *ObKeyPartDesc) setPartColumns(partColumns []*ObColumn) {
 func (d *ObKeyPartDesc) GetPartId(rowKey []interface{}) (int64, error) {
 	if len(rowKey) == 0 {
 		log.Warn("rowKey size is 0")
-		return ObInvalidPartId, errors.New("rowKeys size is 0")
+		return ObInvalidPartId, errors.New("rowKey size is 0")
 	}
 	evalValues, err := evalPartKeyValues(d, rowKey)
 	if err != nil {

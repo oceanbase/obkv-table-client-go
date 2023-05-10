@@ -6,6 +6,7 @@ import (
 
 	"github.com/pkg/errors"
 
+	"github.com/oceanbase/obkv-table-client-go/table"
 	"github.com/oceanbase/obkv-table-client-go/util"
 )
 
@@ -28,12 +29,11 @@ func NewTableOperationRequest(
 	tableId uint64,
 	partitionId int64,
 	operationType TableOperationType,
-	rowKeys []interface{},
-	columnNames []string,
-	properties []interface{},
+	rowKey []*table.Column,
+	columns []*table.Column,
 	timeout time.Duration,
 	flag uint16) (*TableOperationRequest, error) {
-	tableOperation, err := NewTableOperation(operationType, rowKeys, columnNames, properties)
+	tableOperation, err := NewTableOperation(operationType, rowKey, columns)
 	if err != nil {
 		return nil, errors.Wrap(err, "create table operation")
 	}
