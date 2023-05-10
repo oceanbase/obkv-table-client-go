@@ -67,15 +67,15 @@ func TestObClient_Insert(t *testing.T) {
 		},
 	)
 	defer patch.Reset()
-	// 3. add rowkey element
-	err = cli.AddRowkey(mock_route.MockTestTableName, []string{"c1"})
+	// 3. add rowKey element
+	err = cli.AddRowKey(mock_route.MockTestTableName, []string{"c1"})
 	assert.Equal(t, nil, err)
 	// 4. insert
-	rowkey := []*table.Column{table.NewColumn("c1", 1)}
+	rowKey := []*table.Column{table.NewColumn("c1", 1)}
 	mutateColumns := []*table.Column{table.NewColumn("c2", 1)}
 	affectRows, err := cli.Insert(
 		mock_route.MockTestTableName,
-		rowkey,
+		rowKey,
 		mutateColumns,
 	)
 	assert.Equal(t, nil, err)
@@ -97,15 +97,15 @@ func TestObClient_Get(t *testing.T) {
 		},
 	)
 	defer patch.Reset()
-	// 3. add rowkey element
-	err = cli.AddRowkey(mock_route.MockTestTableName, []string{"c1"})
+	// 3. add rowKey element
+	err = cli.AddRowKey(mock_route.MockTestTableName, []string{"c1"})
 	assert.Equal(t, nil, err)
 	// 4. get
-	rowkey := []*table.Column{table.NewColumn("c1", 1)}
+	rowKey := []*table.Column{table.NewColumn("c1", 1)}
 	selectColumns := []string{"c1", "c2"}
 	res, err := cli.Get(
 		mock_route.MockTestTableName,
-		rowkey,
+		rowKey,
 		selectColumns,
 	)
 	assert.Equal(t, nil, err)
@@ -129,19 +129,19 @@ func TestObClientInsertConcurrent(t *testing.T) {
 		},
 	)
 	defer patch.Reset()
-	// 3. add rowkey element
-	err = cli.AddRowkey(mock_route.MockTestTableName, []string{"c1"})
+	// 3. add rowKey element
+	err = cli.AddRowKey(mock_route.MockTestTableName, []string{"c1"})
 	assert.Equal(t, nil, err)
 	// 4. test
 	for i := 0; i < 2000; i++ {
 		wg.Add(1)
 		go func(i int) {
 			defer wg.Done()
-			rowkey := []*table.Column{table.NewColumn("c1", 1)}
+			rowKey := []*table.Column{table.NewColumn("c1", 1)}
 			mutateColumns := []*table.Column{table.NewColumn("c2", 1)}
 			_, err := cli.Insert(
 				mock_route.MockTestTableName,
-				rowkey,
+				rowKey,
 				mutateColumns,
 			)
 			assert.Equal(t, nil, err)
@@ -171,13 +171,13 @@ func TestInsert(t *testing.T) {
 	cli, err := NewClient(configUrl, fullUserName, passWord, sysUserName, sysPassWord, cfg)
 	assert.Equal(t, nil, err)
 
-	err = cli.AddRowkey(tableName, []string{"c1"})
+	err = cli.AddRowKey(tableName, []string{"c1"})
 	assert.Equal(t, nil, err)
-	rowkey := []*table.Column{table.NewColumn("c1", int64(1))}
+	rowKey := []*table.Column{table.NewColumn("c1", int64(1))}
 	mutateColumns := []*table.Column{table.NewColumn("c2", int64(1))}
 	affectRows, err := cli.Insert(
 		tableName,
-		rowkey,
+		rowKey,
 		mutateColumns,
 	)
 	assert.Equal(t, nil, err)
@@ -198,13 +198,13 @@ func TestGet(t *testing.T) {
 	cli, err := NewClient(configUrl, fullUserName, passWord, sysUserName, sysPassWord, cfg)
 	assert.Equal(t, nil, err)
 
-	err = cli.AddRowkey(tableName, []string{"c1"})
+	err = cli.AddRowKey(tableName, []string{"c1"})
 	assert.Equal(t, nil, err)
-	rowkey := []*table.Column{table.NewColumn("c1", int64(1))}
+	rowKey := []*table.Column{table.NewColumn("c1", int64(1))}
 	selectColumns := []string{"c1", "c2"}
 	m, err := cli.Get(
 		tableName,
-		rowkey,
+		rowKey,
 		selectColumns,
 	)
 	assert.Equal(t, nil, err)

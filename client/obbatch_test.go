@@ -1,10 +1,12 @@
 package client
 
 import (
+	"testing"
+
+	"github.com/stretchr/testify/assert"
+
 	"github.com/oceanbase/obkv-table-client-go/config"
 	"github.com/oceanbase/obkv-table-client-go/table"
-	"github.com/stretchr/testify/assert"
-	"testing"
 )
 
 func TestBatch(t *testing.T) {
@@ -22,24 +24,24 @@ func TestBatch(t *testing.T) {
 	cli, err := NewClient(configUrl, fullUserName, passWord, sysUserName, sysPassWord, cfg)
 	assert.Equal(t, nil, err)
 
-	err = cli.AddRowkey(tableName, []string{"c1"})
+	err = cli.AddRowKey(tableName, []string{"c1"})
 	assert.Equal(t, nil, err)
 	batchExecutor := cli.NewBatchExecutor(tableName)
 
-	rowkey1 := []*table.Column{table.NewColumn("c1", int64(1))}
-	rowkey2 := []*table.Column{table.NewColumn("c1", int64(2))}
+	rowKey1 := []*table.Column{table.NewColumn("c1", int64(1))}
+	rowKey2 := []*table.Column{table.NewColumn("c1", int64(2))}
 	selectColumns1 := []string{"c1"}
 	selectColumns2 := []string{"c2"}
 	mutateColumns1 := []*table.Column{table.NewColumn("c2", int64(1))}
 	mutateColumns2 := []*table.Column{table.NewColumn("c2", int64(2))}
 
-	err = batchExecutor.AddInsertOp(rowkey1, mutateColumns1)
+	err = batchExecutor.AddInsertOp(rowKey1, mutateColumns1)
 	assert.Equal(t, nil, err)
-	err = batchExecutor.AddInsertOp(rowkey2, mutateColumns2)
+	err = batchExecutor.AddInsertOp(rowKey2, mutateColumns2)
 	assert.Equal(t, nil, err)
-	err = batchExecutor.AddGetOp(rowkey1, selectColumns1)
+	err = batchExecutor.AddGetOp(rowKey1, selectColumns1)
 	assert.Equal(t, nil, err)
-	err = batchExecutor.AddGetOp(rowkey2, selectColumns2)
+	err = batchExecutor.AddGetOp(rowKey2, selectColumns2)
 	assert.Equal(t, nil, err)
 	batchRes, err := batchExecutor.Execute()
 	assert.Equal(t, nil, err)

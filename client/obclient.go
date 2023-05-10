@@ -35,7 +35,7 @@ type ObClient struct {
 	tableLocations     sync.Map // map[tableName]*route.ObTableEntry
 	tableRoster        sync.Map
 	serverRoster       route.ObServerRoster
-	tableRowKeyElement map[string]*table.ObRowkeyElement
+	tableRowKeyElement map[string]*table.ObRowKeyElement
 
 	lastRefreshMetadataTimestamp atomic.Int64
 	refreshMetadataLock          sync.Mutex
@@ -66,7 +66,7 @@ func newObClient(
 	cli.password = passWord
 	cli.sysUA = *route.NewObUserAuth(sysUserName, sysPassWord)
 	cli.config = cliConfig
-	cli.tableRowKeyElement = make(map[string]*table.ObRowkeyElement)
+	cli.tableRowKeyElement = make(map[string]*table.ObRowKeyElement)
 
 	return cli, nil
 }
@@ -134,25 +134,25 @@ func (c *ObClient) init() error {
 	return c.fetchMetadata()
 }
 
-func (c *ObClient) AddRowkey(tableName string, rowkey []string) error {
-	if tableName == "" || len(rowkey) == 0 {
-		log.Warn("nil table name or empty rowkey",
+func (c *ObClient) AddRowKey(tableName string, rowKey []string) error {
+	if tableName == "" || len(rowKey) == 0 {
+		log.Warn("nil table name or empty rowKey",
 			log.String("tableName", tableName),
-			log.Int("rowkey size", len(rowkey)))
-		return errors.New("nil table name or empty rowkey")
+			log.Int("rowKey size", len(rowKey)))
+		return errors.New("nil table name or empty rowKey")
 	}
 	m := make(map[string]int, 1)
-	for i := 0; i < len(rowkey); i++ {
-		columnName := rowkey[i]
+	for i := 0; i < len(rowKey); i++ {
+		columnName := rowKey[i]
 		m[columnName] = i
 	}
-	c.tableRowKeyElement[tableName] = table.NewObRowkeyElement(m)
+	c.tableRowKeyElement[tableName] = table.NewObRowKeyElement(m)
 	return nil
 }
 
 func (c *ObClient) Insert(
 	tableName string,
-	rowkey []*table.Column,
+	rowKey []*table.Column,
 	mutateColumns []*table.Column,
 	opts ...ObkvOption) (int64, error) {
 	var mutateColNames []string
@@ -164,14 +164,14 @@ func (c *ObClient) Insert(
 	res, err := c.execute(
 		tableName,
 		protocol.Insert,
-		rowkey,
+		rowKey,
 		mutateColNames,
 		mutateColValues,
 		opts...)
 	if err != nil {
 		log.Warn("failed to execute insert",
 			log.String("tableName", tableName),
-			log.String("rowkey", columnsToString(rowkey)),
+			log.String("rowKey", columnsToString(rowKey)),
 			log.String("mutateColumns", columnsToString(mutateColumns)))
 		return -1, err
 	}
@@ -180,7 +180,7 @@ func (c *ObClient) Insert(
 
 func (c *ObClient) InsertOrUpdate(
 	tableName string,
-	rowkey []*table.Column,
+	rowKey []*table.Column,
 	mutateColumns []*table.Column,
 	opts ...ObkvOption) (int64, error) {
 	var mutateColNames []string
@@ -192,14 +192,14 @@ func (c *ObClient) InsertOrUpdate(
 	res, err := c.execute(
 		tableName,
 		protocol.InsertOrUpdate,
-		rowkey,
+		rowKey,
 		mutateColNames,
 		mutateColValues,
 		opts...)
 	if err != nil {
 		log.Warn("failed to execute insertOrUpdate",
 			log.String("tableName", tableName),
-			log.String("rowkey", columnsToString(rowkey)),
+			log.String("rowKey", columnsToString(rowKey)),
 			log.String("mutateColumns", columnsToString(mutateColumns)))
 		return -1, err
 	}
@@ -208,19 +208,19 @@ func (c *ObClient) InsertOrUpdate(
 
 func (c *ObClient) Delete(
 	tableName string,
-	rowkey []*table.Column,
+	rowKey []*table.Column,
 	opts ...ObkvOption) (int64, error) {
 	res, err := c.execute(
 		tableName,
 		protocol.Del,
-		rowkey,
+		rowKey,
 		nil,
 		nil,
 		opts...)
 	if err != nil {
 		log.Warn("failed to execute del",
 			log.String("tableName", tableName),
-			log.String("rowkey", columnsToString(rowkey)))
+			log.String("rowKey", columnsToString(rowKey)))
 		return -1, err
 	}
 	return res.AffectedRows(), nil
@@ -228,20 +228,20 @@ func (c *ObClient) Delete(
 
 func (c *ObClient) Get(
 	tableName string,
-	rowkey []*table.Column,
+	rowKey []*table.Column,
 	getColumns []string,
 	opts ...ObkvOption) (map[string]interface{}, error) {
 	res, err := c.execute(
 		tableName,
 		protocol.Get,
-		rowkey,
+		rowKey,
 		getColumns,
 		nil,
 		opts...)
 	if err != nil {
 		log.Warn("failed to execute get",
 			log.String("tableName", tableName),
-			log.String("rowkey", columnsToString(rowkey)),
+			log.String("rowKey", columnsToString(rowKey)),
 			log.String("getColumns", util.StringArrayToString(getColumns)))
 		return nil, err
 	}
@@ -255,16 +255,16 @@ func (c *ObClient) NewBatchExecutor(tableName string) BatchExecutor {
 func (c *ObClient) execute(
 	tableName string,
 	opType protocol.TableOperationType,
-	rowkey []*table.Column,
+	rowKey []*table.Column,
 	columns []string,
 	properties []interface{},
 	opts ...ObkvOption) (*protocol.TableOperationResponse, error) {
-	var rowkeyValue []interface{}
-	for _, col := range rowkey {
-		rowkeyValue = append(rowkeyValue, col.Value())
+	var rowKeyValue []interface{}
+	for _, col := range rowKey {
+		rowKeyValue = append(rowKeyValue, col.Value())
 	}
 	// 1. Get table route
-	tableParam, err := c.getTableParam(tableName, rowkeyValue, false /* refresh */)
+	tableParam, err := c.getTableParam(tableName, rowKeyValue, false /* refresh */)
 	if err != nil {
 		log.Warn("failed to get table param",
 			log.String("tableName", tableName),
@@ -278,7 +278,7 @@ func (c *ObClient) execute(
 		tableParam.TableId(),
 		tableParam.PartitionId(),
 		opType,
-		rowkeyValue,
+		rowKeyValue,
 		columns,
 		properties,
 		c.config.OperationTimeOut,
@@ -304,14 +304,14 @@ func (c *ObClient) execute(
 
 func (c *ObClient) getTableParam(
 	tableName string,
-	rowkeyValue []interface{},
+	rowKeyValue []interface{},
 	refresh bool) (*ObTableParam, error) {
 	entry, err := c.getOrRefreshTableEntry(tableName, refresh, false)
 	if err != nil {
 		log.Warn("failed to get or refresh table entry", log.String("tableName", tableName))
 		return nil, err
 	}
-	partId, err := c.getPartitionId(entry, rowkeyValue)
+	partId, err := c.getPartitionId(entry, rowKeyValue)
 	if err != nil {
 		log.Warn("failed to get partition id",
 			log.String("tableName", tableName),
@@ -457,14 +457,14 @@ func (c *ObClient) refreshTableEntry(entry **route.ObTableEntry, tableName strin
 		}
 	}
 
-	// 2. Set rowkey element to entry.
+	// 2. Set rowKey element to entry.
 	if (*entry).IsPartitionTable() {
-		rowkeyElement, ok := c.tableRowKeyElement[tableName]
+		rowKeyElement, ok := c.tableRowKeyElement[tableName]
 		if !ok {
-			log.Warn("failed to get rowkey element by table name", log.String("tableName", tableName))
-			return errors.New("failed to get rowkey element by table name")
+			log.Warn("failed to get rowKey element by table name", log.String("tableName", tableName))
+			return errors.New("failed to get rowKey element by table name")
 		}
-		(*entry).SetRowKeyElement(rowkeyElement)
+		(*entry).SetRowKeyElement(rowKeyElement)
 	}
 
 	// 3. todo:prepare the table entry for weak read.
@@ -654,22 +654,22 @@ func (c *ObClient) fetchMetadata() error {
 	return nil
 }
 
-// get partition id by rowkey
-func (c *ObClient) getPartitionId(entry *route.ObTableEntry, rowkeyValue []interface{}) (int64, error) {
+// get partition id by rowKey
+func (c *ObClient) getPartitionId(entry *route.ObTableEntry, rowKeyValue []interface{}) (int64, error) {
 	if !entry.IsPartitionTable() || entry.PartitionInfo().Level().Index() == route.PartLevelZeroIndex {
 		return 0, nil
 	}
 	if entry.PartitionInfo().Level().Index() == route.PartLevelOneIndex {
-		return entry.PartitionInfo().FirstPartDesc().GetPartId(rowkeyValue)
+		return entry.PartitionInfo().FirstPartDesc().GetPartId(rowKeyValue)
 	}
 	if entry.PartitionInfo().Level().Index() == route.PartLevelTwoIndex {
-		partId1, err := entry.PartitionInfo().FirstPartDesc().GetPartId(rowkeyValue)
+		partId1, err := entry.PartitionInfo().FirstPartDesc().GetPartId(rowKeyValue)
 		if err != nil {
 			log.Warn("failed to get part id from first part desc",
 				log.String("first part desc", entry.PartitionInfo().FirstPartDesc().String()))
 			return -1, err
 		}
-		partId2, err := entry.PartitionInfo().SubPartDesc().GetPartId(rowkeyValue)
+		partId2, err := entry.PartitionInfo().SubPartDesc().GetPartId(rowKeyValue)
 		if err != nil {
 			log.Warn("failed to get part id from sub part desc",
 				log.String("sub part desc", entry.PartitionInfo().SubPartDesc().String()))

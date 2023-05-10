@@ -3,12 +3,14 @@ package mock_route
 
 import (
 	sql2 "database/sql"
-	"github.com/DATA-DOG/go-sqlmock"
-	"github.com/agiledragon/gomonkey/v2"
-	"github.com/oceanbase/obkv-table-client-go/route"
-	"github.com/oceanbase/obkv-table-client-go/util"
 	"math"
 	"regexp"
+
+	"github.com/DATA-DOG/go-sqlmock"
+	"github.com/agiledragon/gomonkey/v2"
+
+	"github.com/oceanbase/obkv-table-client-go/route"
+	"github.com/oceanbase/obkv-table-client-go/util"
 )
 
 var (
@@ -23,7 +25,7 @@ var (
 	MockTestServerPort    = 42704
 	MockTestServerAddr    = route.NewObServerAddr(MockTestIp, MockTestSqlPort, MockTestServerPort)
 	MockTestUserAuth      = route.NewObUserAuth(MockTestUserName, MockTestPassword)
-	MOckTestRowkeyElement = []string{"c1"}
+	MOckTestRowKeyElement = []string{"c1"}
 )
 
 // GetMockHashTableEntryV3 is for get 3.x version hash table entry.

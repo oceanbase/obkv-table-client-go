@@ -1,14 +1,16 @@
 package route
 
 import (
+	"strconv"
+	"strings"
+	"time"
+
+	"github.com/pkg/errors"
+
 	"github.com/oceanbase/obkv-table-client-go/log"
 	"github.com/oceanbase/obkv-table-client-go/protocol"
 	"github.com/oceanbase/obkv-table-client-go/table"
 	"github.com/oceanbase/obkv-table-client-go/util"
-	"github.com/pkg/errors"
-	"strconv"
-	"strings"
-	"time"
 )
 
 type ObKeyPartDesc struct {
@@ -40,11 +42,11 @@ func (d *ObKeyPartDesc) orderedPartRefColumnRowKeyRelations() []*ObColumnIndexes
 	return d.OrderedPartRefColumnRowKeyRelations
 }
 
-func (d *ObKeyPartDesc) rowKeyElement() *table.ObRowkeyElement {
+func (d *ObKeyPartDesc) rowKeyElement() *table.ObRowKeyElement {
 	return d.RowKeyElement
 }
 
-func (d *ObKeyPartDesc) setRowKeyElement(rowKeyElement *table.ObRowkeyElement) {
+func (d *ObKeyPartDesc) setRowKeyElement(rowKeyElement *table.ObRowKeyElement) {
 	d.setCommRowKeyElement(rowKeyElement)
 }
 
@@ -52,12 +54,12 @@ func (d *ObKeyPartDesc) setPartColumns(partColumns []*ObColumn) {
 	d.PartColumns = partColumns
 }
 
-func (d *ObKeyPartDesc) GetPartId(rowkey []interface{}) (int64, error) {
-	if len(rowkey) == 0 {
-		log.Warn("rowkey size is 0")
-		return ObInvalidPartId, errors.New("rowkeys size is 0")
+func (d *ObKeyPartDesc) GetPartId(rowKey []interface{}) (int64, error) {
+	if len(rowKey) == 0 {
+		log.Warn("rowKey size is 0")
+		return ObInvalidPartId, errors.New("rowKeys size is 0")
 	}
-	evalValues, err := evalPartKeyValues(d, rowkey)
+	evalValues, err := evalPartKeyValues(d, rowKey)
 	if err != nil {
 		log.Warn("failed to eval part key values", log.String("part desc", d.String()))
 		return ObInvalidPartId, err

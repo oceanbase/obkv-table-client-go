@@ -1,10 +1,12 @@
 package route
 
 import (
+	"strconv"
+
+	"github.com/pkg/errors"
+
 	"github.com/oceanbase/obkv-table-client-go/log"
 	"github.com/oceanbase/obkv-table-client-go/table"
-	"github.com/pkg/errors"
-	"strconv"
 )
 
 type ObPartitionInfo struct {
@@ -36,7 +38,7 @@ func (p *ObPartitionInfo) Level() ObPartitionLevel {
 	return p.level
 }
 
-func (p *ObPartitionInfo) setRowKeyElement(rowKeyElement *table.ObRowkeyElement) {
+func (p *ObPartitionInfo) setRowKeyElement(rowKeyElement *table.ObRowKeyElement) {
 	if p.firstPartDesc != nil {
 		p.firstPartDesc.setRowKeyElement(rowKeyElement)
 	}

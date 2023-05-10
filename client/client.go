@@ -49,10 +49,10 @@ func NewClient(
 }
 
 type Client interface {
-	AddRowkey(tableName string, rowkey []string) error
-	Insert(tableName string, rowkey []*table.Column, mutateColumns []*table.Column, opts ...ObkvOption) (int64, error)
-	InsertOrUpdate(tableName string, rowkey []*table.Column, mutateColumns []*table.Column, opts ...ObkvOption) (int64, error)
-	Delete(tableName string, rowkey []*table.Column, opts ...ObkvOption) (int64, error)
-	Get(tableName string, rowkey []*table.Column, getColumns []string, opts ...ObkvOption) (map[string]interface{}, error)
+	AddRowKey(tableName string, rowKey []string) error
+	Insert(tableName string, rowKey []*table.Column, mutateColumns []*table.Column, opts ...ObkvOption) (int64, error)
+	InsertOrUpdate(tableName string, rowKey []*table.Column, mutateColumns []*table.Column, opts ...ObkvOption) (int64, error)
+	Delete(tableName string, rowKey []*table.Column, opts ...ObkvOption) (int64, error)
+	Get(tableName string, rowKey []*table.Column, getColumns []string, opts ...ObkvOption) (map[string]interface{}, error)
 	NewBatchExecutor(tableName string) BatchExecutor
 }
