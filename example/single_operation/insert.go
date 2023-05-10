@@ -25,15 +25,15 @@ func main() {
 		panic(err)
 	}
 
-	err = cli.AddRowkey(tableName, []string{"c1"})
+	err = cli.AddRowKey(tableName, []string{"c1"})
 	if err != nil {
 		panic(err)
 	}
-	rowkey := []*table.Column{table.NewColumn("c1", int64(1))}
+	rowKey := []*table.Column{table.NewColumn("c1", int64(1))}
 	mutateColumns := []*table.Column{table.NewColumn("c2", int64(1))}
 	affectRows, err := cli.Insert(
 		tableName,
-		rowkey,
+		rowKey,
 		mutateColumns,
 	)
 	if err != nil {

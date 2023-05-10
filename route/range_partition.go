@@ -1,11 +1,13 @@
 package route
 
 import (
-	"github.com/oceanbase/obkv-table-client-go/protocol"
-	"github.com/oceanbase/obkv-table-client-go/table"
-	"github.com/pkg/errors"
 	"strconv"
 	"strings"
+
+	"github.com/pkg/errors"
+
+	"github.com/oceanbase/obkv-table-client-go/protocol"
+	"github.com/oceanbase/obkv-table-client-go/table"
 )
 
 type ObRangePartDesc struct {
@@ -14,7 +16,7 @@ type ObRangePartDesc struct {
 	partNum                   int
 	orderedCompareColumns     []*ObColumn
 	orderedCompareColumnTypes []protocol.ObObjType
-	//todo: List<ObComparableKV<ObPartitionKey, Long>> bounds
+	// todo: List<ObComparableKV<ObPartitionKey, Long>> bounds
 }
 
 func newObRangePartDesc() *ObRangePartDesc {
@@ -38,11 +40,11 @@ func (d *ObRangePartDesc) setOrderedPartColumnNames(partExpr string) {
 func (d *ObRangePartDesc) orderedPartRefColumnRowKeyRelations() []*ObColumnIndexesPair {
 	return d.OrderedPartRefColumnRowKeyRelations
 }
-func (d *ObRangePartDesc) rowKeyElement() *table.ObRowkeyElement {
+func (d *ObRangePartDesc) rowKeyElement() *table.ObRowKeyElement {
 	return d.RowKeyElement
 }
 
-func (d *ObRangePartDesc) setRowKeyElement(rowKeyElement *table.ObRowkeyElement) {
+func (d *ObRangePartDesc) setRowKeyElement(rowKeyElement *table.ObRowKeyElement) {
 	d.setCommRowKeyElement(rowKeyElement)
 }
 
@@ -50,14 +52,14 @@ func (d *ObRangePartDesc) setPartColumns(partColumns []*ObColumn) {
 	d.PartColumns = partColumns
 }
 
-func (d *ObRangePartDesc) GetPartId(rowkey []interface{}) (int64, error) {
+func (d *ObRangePartDesc) GetPartId(rowKey []interface{}) (int64, error) {
 	// todo: impl
 	return ObInvalidPartId, errors.New("not implement")
 }
 
-//func (d *ObRangePartDesc) setOrderedCompareColumns(orderedPartColumn []protocol.ObColumn) {
+// func (d *ObRangePartDesc) setOrderedCompareColumns(orderedPartColumn []protocol.ObColumn) {
 //	d.orderedCompareColumns = orderedPartColumn
-//}
+// }
 
 func (d *ObRangePartDesc) String() string {
 	// orderedCompareColumns to string

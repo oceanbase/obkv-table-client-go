@@ -2,15 +2,17 @@ package route
 
 import (
 	sql2 "database/sql"
-	"github.com/DATA-DOG/go-sqlmock"
-	"github.com/agiledragon/gomonkey/v2"
-	"github.com/oceanbase/obkv-table-client-go/protocol"
-	"github.com/oceanbase/obkv-table-client-go/table"
-	"github.com/oceanbase/obkv-table-client-go/util"
-	"github.com/stretchr/testify/assert"
 	"math"
 	"regexp"
 	"testing"
+
+	"github.com/DATA-DOG/go-sqlmock"
+	"github.com/agiledragon/gomonkey/v2"
+	"github.com/stretchr/testify/assert"
+
+	"github.com/oceanbase/obkv-table-client-go/protocol"
+	"github.com/oceanbase/obkv-table-client-go/table"
+	"github.com/oceanbase/obkv-table-client-go/util"
 )
 
 // write your true config and create table by sql first
@@ -437,7 +439,7 @@ func TestObPartDescCommon_ToString(t *testing.T) {
 	partColumns := []*ObColumn{column}
 	nameIdxMap := make(map[string]int, 3)
 	nameIdxMap["c1"] = 0
-	rowKeyElement := table.NewObRowkeyElement(nameIdxMap)
+	rowKeyElement := table.NewObRowKeyElement(nameIdxMap)
 	comm = ObPartDescCommon{PartFuncType: partFuncType,
 		PartExpr:                            partExpr,
 		OrderedPartColumnNames:              orderedPartColumnNames,
@@ -451,7 +453,7 @@ func TestObPartDescCommon_ToString(t *testing.T) {
 		"orderedPartColumnNames:c1,c2, "+
 		"orderedPartRefColumnRowKeyRelations:[ObColumnIndexesPair{column:ObColumn{columnName:testColumnName, index:0, objType:ObObjType{type:ObTinyIntType}, collationType:ObCollationType{collationType:CsTypeBinary}, refColumnNames:[testColumnName], isGenColumn:false, columnExpress:nil}, indexes:[0]}], "+
 		"partColumns:[ObColumn{columnName:testColumnName, index:0, objType:ObObjType{type:ObTinyIntType}, collationType:ObCollationType{collationType:CsTypeBinary}, refColumnNames:[testColumnName], isGenColumn:false, columnExpress:nil}], "+
-		"rowKeyElement:ObRowkeyElement{nameIdxMap:{m[c1]=0}}}",
+		"rowKeyElement:ObRowKeyElement{nameIdxMap:{m[c1]=0}}}",
 		comm.CommString(),
 	)
 }
@@ -475,7 +477,7 @@ func TestObRangePartDesc_ToString(t *testing.T) {
 	partColumns := []*ObColumn{column}
 	nameIdxMap := make(map[string]int, 3)
 	nameIdxMap["c1"] = 0
-	rowKeyElement := table.NewObRowkeyElement(nameIdxMap)
+	rowKeyElement := table.NewObRowKeyElement(nameIdxMap)
 	desc = ObRangePartDesc{
 		partNum:                   10,
 		partSpace:                 0,
@@ -489,7 +491,7 @@ func TestObRangePartDesc_ToString(t *testing.T) {
 	desc.PartColumns = partColumns
 	desc.RowKeyElement = rowKeyElement
 	assert.Equal(t, "ObRangePartDesc{"+
-		"comm:ObPartDescCommon{partFuncType:ObPartFuncType{name:RANGE, index:3}, partExpr:c1, c2, orderedPartColumnNames:c1,c2, orderedPartRefColumnRowKeyRelations:[ObColumnIndexesPair{column:ObColumn{columnName:testColumnName, index:0, objType:ObObjType{type:ObTinyIntType}, collationType:ObCollationType{collationType:CsTypeBinary}, refColumnNames:[testColumnName], isGenColumn:false, columnExpress:nil}, indexes:[0]}], partColumns:[ObColumn{columnName:testColumnName, index:0, objType:ObObjType{type:ObTinyIntType}, collationType:ObCollationType{collationType:CsTypeBinary}, refColumnNames:[testColumnName], isGenColumn:false, columnExpress:nil}], rowKeyElement:ObRowkeyElement{nameIdxMap:{m[c1]=0}}}, partSpace:0, partNum:10, "+
+		"comm:ObPartDescCommon{partFuncType:ObPartFuncType{name:RANGE, index:3}, partExpr:c1, c2, orderedPartColumnNames:c1,c2, orderedPartRefColumnRowKeyRelations:[ObColumnIndexesPair{column:ObColumn{columnName:testColumnName, index:0, objType:ObObjType{type:ObTinyIntType}, collationType:ObCollationType{collationType:CsTypeBinary}, refColumnNames:[testColumnName], isGenColumn:false, columnExpress:nil}, indexes:[0]}], partColumns:[ObColumn{columnName:testColumnName, index:0, objType:ObObjType{type:ObTinyIntType}, collationType:ObCollationType{collationType:CsTypeBinary}, refColumnNames:[testColumnName], isGenColumn:false, columnExpress:nil}], rowKeyElement:ObRowKeyElement{nameIdxMap:{m[c1]=0}}}, partSpace:0, partNum:10, "+
 		"orderedCompareColumns:[ObColumn{columnName:testColumnName, index:0, objType:ObObjType{type:ObTinyIntType}, collationType:ObCollationType{collationType:CsTypeBinary}, refColumnNames:[testColumnName], isGenColumn:false, columnExpress:nil}, ObColumn{columnName:testColumnName, index:0, objType:ObObjType{type:ObTinyIntType}, collationType:ObCollationType{collationType:CsTypeBinary}, refColumnNames:[testColumnName], isGenColumn:false, columnExpress:nil}], "+
 		"orderedCompareColumnTypes:[ObObjType{type:ObTinyIntType}, ObObjType{type:ObTinyIntType}]}",
 		desc.String(),
@@ -526,7 +528,7 @@ func TestObHashPartDesc_ToString(t *testing.T) {
 	partColumns := []*ObColumn{column}
 	nameIdxMap := make(map[string]int, 3)
 	nameIdxMap["c1"] = 0
-	rowKeyElement := table.NewObRowkeyElement(nameIdxMap)
+	rowKeyElement := table.NewObRowKeyElement(nameIdxMap)
 	partNameIdMap := make(map[string]int64)
 	partNameIdMap["p0"] = 0
 	desc = &ObHashPartDesc{
@@ -542,7 +544,7 @@ func TestObHashPartDesc_ToString(t *testing.T) {
 	desc.PartColumns = partColumns
 	desc.RowKeyElement = rowKeyElement
 	assert.Equal(t, "ObHashPartDesc{"+
-		"comm:ObPartDescCommon{partFuncType:ObPartFuncType{name:HASH, index:0}, partExpr:c1, c2, orderedPartColumnNames:c1,c2, orderedPartRefColumnRowKeyRelations:[ObColumnIndexesPair{column:ObColumn{columnName:testColumnName, index:0, objType:ObObjType{type:ObTinyIntType}, collationType:ObCollationType{collationType:CsTypeBinary}, refColumnNames:[testColumnName], isGenColumn:false, columnExpress:nil}, indexes:[0]}], partColumns:[ObColumn{columnName:testColumnName, index:0, objType:ObObjType{type:ObTinyIntType}, collationType:ObCollationType{collationType:CsTypeBinary}, refColumnNames:[testColumnName], isGenColumn:false, columnExpress:nil}], rowKeyElement:ObRowkeyElement{nameIdxMap:{m[c1]=0}}}, "+
+		"comm:ObPartDescCommon{partFuncType:ObPartFuncType{name:HASH, index:0}, partExpr:c1, c2, orderedPartColumnNames:c1,c2, orderedPartRefColumnRowKeyRelations:[ObColumnIndexesPair{column:ObColumn{columnName:testColumnName, index:0, objType:ObObjType{type:ObTinyIntType}, collationType:ObCollationType{collationType:CsTypeBinary}, refColumnNames:[testColumnName], isGenColumn:false, columnExpress:nil}, indexes:[0]}], partColumns:[ObColumn{columnName:testColumnName, index:0, objType:ObObjType{type:ObTinyIntType}, collationType:ObCollationType{collationType:CsTypeBinary}, refColumnNames:[testColumnName], isGenColumn:false, columnExpress:nil}], rowKeyElement:ObRowKeyElement{nameIdxMap:{m[c1]=0}}}, "+
 		"completeWorks:[1, 2, 3], "+
 		"partSpace:0, "+
 		"partNum:10, "+
@@ -583,7 +585,7 @@ func TestObKeyPartDesc_ToString(t *testing.T) {
 	partColumns := []*ObColumn{column}
 	nameIdxMap := make(map[string]int, 3)
 	nameIdxMap["c1"] = 0
-	rowKeyElement := table.NewObRowkeyElement(nameIdxMap)
+	rowKeyElement := table.NewObRowKeyElement(nameIdxMap)
 	partNameIdMap := make(map[string]int64)
 	partNameIdMap["p0"] = 0
 	desc = ObKeyPartDesc{
@@ -598,7 +600,7 @@ func TestObKeyPartDesc_ToString(t *testing.T) {
 	desc.PartColumns = partColumns
 	desc.RowKeyElement = rowKeyElement
 	assert.Equal(t, "ObKeyPartDesc{"+
-		"comm:ObPartDescCommon{partFuncType:ObPartFuncType{name:KEY_V2, index:6}, partExpr:c1, c2, orderedPartColumnNames:c1,c2, orderedPartRefColumnRowKeyRelations:[ObColumnIndexesPair{column:ObColumn{columnName:testColumnName, index:0, objType:ObObjType{type:ObTinyIntType}, collationType:ObCollationType{collationType:CsTypeBinary}, refColumnNames:[testColumnName], isGenColumn:false, columnExpress:nil}, indexes:[0]}], partColumns:[ObColumn{columnName:testColumnName, index:0, objType:ObObjType{type:ObTinyIntType}, collationType:ObCollationType{collationType:CsTypeBinary}, refColumnNames:[testColumnName], isGenColumn:false, columnExpress:nil}], rowKeyElement:ObRowkeyElement{nameIdxMap:{m[c1]=0}}}, "+
+		"comm:ObPartDescCommon{partFuncType:ObPartFuncType{name:KEY_V2, index:6}, partExpr:c1, c2, orderedPartColumnNames:c1,c2, orderedPartRefColumnRowKeyRelations:[ObColumnIndexesPair{column:ObColumn{columnName:testColumnName, index:0, objType:ObObjType{type:ObTinyIntType}, collationType:ObCollationType{collationType:CsTypeBinary}, refColumnNames:[testColumnName], isGenColumn:false, columnExpress:nil}, indexes:[0]}], partColumns:[ObColumn{columnName:testColumnName, index:0, objType:ObObjType{type:ObTinyIntType}, collationType:ObCollationType{collationType:CsTypeBinary}, refColumnNames:[testColumnName], isGenColumn:false, columnExpress:nil}], rowKeyElement:ObRowKeyElement{nameIdxMap:{m[c1]=0}}}, "+
 		"partSpace:0, "+
 		"partNum:10, "+
 		"partNameIdMap:{m[p0]=0}}",
@@ -758,7 +760,7 @@ func TestObPartitionInfo_ToString(t *testing.T) {
 	partColumns := []*ObColumn{column}
 	nameIdxMap := make(map[string]int, 3)
 	nameIdxMap["c1"] = 0
-	rowKeyElement := table.NewObRowkeyElement(nameIdxMap)
+	rowKeyElement := table.NewObRowKeyElement(nameIdxMap)
 	partNameIdMap := make(map[string]int64)
 	partNameIdMap["p0"] = 0
 	desc := &ObHashPartDesc{
@@ -785,8 +787,8 @@ func TestObPartitionInfo_ToString(t *testing.T) {
 	}
 	assert.Equal(t, "ObPartitionInfo{"+
 		"level:ObPartitionLevel{name:partLevelZero, index:0}, "+
-		"firstPartDesc:ObHashPartDesc{comm:ObPartDescCommon{partFuncType:ObPartFuncType{name:HASH, index:0}, partExpr:c1, c2, orderedPartColumnNames:c1,c2, orderedPartRefColumnRowKeyRelations:[ObColumnIndexesPair{column:ObColumn{columnName:testColumnName, index:0, objType:ObObjType{type:ObTinyIntType}, collationType:ObCollationType{collationType:CsTypeBinary}, refColumnNames:[testColumnName], isGenColumn:false, columnExpress:nil}, indexes:[0]}], partColumns:[ObColumn{columnName:testColumnName, index:0, objType:ObObjType{type:ObTinyIntType}, collationType:ObCollationType{collationType:CsTypeBinary}, refColumnNames:[testColumnName], isGenColumn:false, columnExpress:nil}], rowKeyElement:ObRowkeyElement{nameIdxMap:{m[c1]=0}}}, completeWorks:[1, 2, 3], partSpace:0, partNum:10, partNameIdMap:{m[p0]=0}}, "+
-		"subPartDesc:ObHashPartDesc{comm:ObPartDescCommon{partFuncType:ObPartFuncType{name:HASH, index:0}, partExpr:c1, c2, orderedPartColumnNames:c1,c2, orderedPartRefColumnRowKeyRelations:[ObColumnIndexesPair{column:ObColumn{columnName:testColumnName, index:0, objType:ObObjType{type:ObTinyIntType}, collationType:ObCollationType{collationType:CsTypeBinary}, refColumnNames:[testColumnName], isGenColumn:false, columnExpress:nil}, indexes:[0]}], partColumns:[ObColumn{columnName:testColumnName, index:0, objType:ObObjType{type:ObTinyIntType}, collationType:ObCollationType{collationType:CsTypeBinary}, refColumnNames:[testColumnName], isGenColumn:false, columnExpress:nil}], rowKeyElement:ObRowkeyElement{nameIdxMap:{m[c1]=0}}}, completeWorks:[1, 2, 3], partSpace:0, partNum:10, partNameIdMap:{m[p0]=0}}, "+
+		"firstPartDesc:ObHashPartDesc{comm:ObPartDescCommon{partFuncType:ObPartFuncType{name:HASH, index:0}, partExpr:c1, c2, orderedPartColumnNames:c1,c2, orderedPartRefColumnRowKeyRelations:[ObColumnIndexesPair{column:ObColumn{columnName:testColumnName, index:0, objType:ObObjType{type:ObTinyIntType}, collationType:ObCollationType{collationType:CsTypeBinary}, refColumnNames:[testColumnName], isGenColumn:false, columnExpress:nil}, indexes:[0]}], partColumns:[ObColumn{columnName:testColumnName, index:0, objType:ObObjType{type:ObTinyIntType}, collationType:ObCollationType{collationType:CsTypeBinary}, refColumnNames:[testColumnName], isGenColumn:false, columnExpress:nil}], rowKeyElement:ObRowKeyElement{nameIdxMap:{m[c1]=0}}}, completeWorks:[1, 2, 3], partSpace:0, partNum:10, partNameIdMap:{m[p0]=0}}, "+
+		"subPartDesc:ObHashPartDesc{comm:ObPartDescCommon{partFuncType:ObPartFuncType{name:HASH, index:0}, partExpr:c1, c2, orderedPartColumnNames:c1,c2, orderedPartRefColumnRowKeyRelations:[ObColumnIndexesPair{column:ObColumn{columnName:testColumnName, index:0, objType:ObObjType{type:ObTinyIntType}, collationType:ObCollationType{collationType:CsTypeBinary}, refColumnNames:[testColumnName], isGenColumn:false, columnExpress:nil}, indexes:[0]}], partColumns:[ObColumn{columnName:testColumnName, index:0, objType:ObObjType{type:ObTinyIntType}, collationType:ObCollationType{collationType:CsTypeBinary}, refColumnNames:[testColumnName], isGenColumn:false, columnExpress:nil}], rowKeyElement:ObRowKeyElement{nameIdxMap:{m[c1]=0}}}, completeWorks:[1, 2, 3], partSpace:0, partNum:10, partNameIdMap:{m[p0]=0}}, "+
 		"partColumns:[ObColumn{columnName:testColumnName, index:0, objType:ObObjType{type:ObTinyIntType}, collationType:ObCollationType{collationType:CsTypeBinary}, refColumnNames:[testColumnName], isGenColumn:false, columnExpress:nil}], "+
 		"partTabletIdMap:{m[0]=500021}, "+
 		"partNameIdMap:{m[p0]=0}}",

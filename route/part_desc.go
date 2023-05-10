@@ -2,10 +2,11 @@ package route
 
 import (
 	"errors"
-	"github.com/oceanbase/obkv-table-client-go/log"
-	"github.com/oceanbase/obkv-table-client-go/table"
 	"strconv"
 	"strings"
+
+	"github.com/oceanbase/obkv-table-client-go/log"
+	"github.com/oceanbase/obkv-table-client-go/table"
 )
 
 const (
@@ -55,10 +56,10 @@ type ObPartDescCommon struct {
 	OrderedPartColumnNames              []string
 	OrderedPartRefColumnRowKeyRelations []*ObColumnIndexesPair
 	PartColumns                         []*ObColumn
-	RowKeyElement                       *table.ObRowkeyElement
+	RowKeyElement                       *table.ObRowKeyElement
 }
 
-func (c *ObPartDescCommon) setCommRowKeyElement(rowKeyElement *table.ObRowkeyElement) {
+func (c *ObPartDescCommon) setCommRowKeyElement(rowKeyElement *table.ObRowKeyElement) {
 	c.RowKeyElement = rowKeyElement
 	if len(c.OrderedPartColumnNames) != 0 && len(c.PartColumns) != 0 {
 		relations := make([]*ObColumnIndexesPair, 0, len(c.OrderedPartColumnNames))
@@ -127,26 +128,26 @@ type ObPartDesc interface {
 	orderedPartColumnNames() []string
 	setOrderedPartColumnNames(partExpr string)
 	orderedPartRefColumnRowKeyRelations() []*ObColumnIndexesPair
-	rowKeyElement() *table.ObRowkeyElement
-	setRowKeyElement(rowKeyElement *table.ObRowkeyElement)
+	rowKeyElement() *table.ObRowKeyElement
+	setRowKeyElement(rowKeyElement *table.ObRowKeyElement)
 	setPartColumns(partColumns []*ObColumn)
-	GetPartId(rowkey []interface{}) (int64, error)
+	GetPartId(rowKey []interface{}) (int64, error)
 }
 
-func evalPartKeyValues(desc ObPartDesc, rowkey []interface{}) ([]interface{}, error) {
+func evalPartKeyValues(desc ObPartDesc, rowKey []interface{}) ([]interface{}, error) {
 	if desc == nil {
 		log.Warn("part desc is nil")
 		return nil, errors.New("part desc is nil")
 	}
 	if desc.rowKeyElement() == nil {
-		log.Warn("rowkey element is nil")
-		return nil, errors.New("rowkey element is nil")
+		log.Warn("rowKey element is nil")
+		return nil, errors.New("rowKey element is nil")
 	}
-	if len(rowkey) < len(desc.rowKeyElement().NameIdxMap()) {
-		log.Warn("rowkey count not match",
-			log.Int("rowkey len", len(rowkey)),
+	if len(rowKey) < len(desc.rowKeyElement().NameIdxMap()) {
+		log.Warn("rowKey count not match",
+			log.Int("rowKey len", len(rowKey)),
 			log.Int("rowKeyElement len", len(desc.rowKeyElement().NameIdxMap())))
-		return nil, errors.New("rowkey count not match")
+		return nil, errors.New("rowKey count not match")
 	}
 	partRefColumnSize := len(desc.orderedPartRefColumnRowKeyRelations())
 	evalValues := make([]interface{}, 0, partRefColumnSize)
@@ -154,7 +155,7 @@ func evalPartKeyValues(desc ObPartDesc, rowkey []interface{}) ([]interface{}, er
 		relation := desc.orderedPartRefColumnRowKeyRelations()[i]
 		evalParams := make([]interface{}, len(relation.indexes))
 		for i := 0; i < len(relation.indexes); i++ {
-			evalParams[i] = rowkey[relation.indexes[i]]
+			evalParams[i] = rowKey[relation.indexes[i]]
 		}
 		val, err := relation.column.EvalValue(evalParams...)
 		if err != nil {

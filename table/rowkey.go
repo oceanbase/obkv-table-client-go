@@ -4,19 +4,19 @@ import (
 	"strconv"
 )
 
-type ObRowkeyElement struct {
+type ObRowKeyElement struct {
 	nameIdxMap map[string]int
 }
 
-func NewObRowkeyElement(nameIdxMap map[string]int) *ObRowkeyElement {
-	return &ObRowkeyElement{nameIdxMap}
+func NewObRowKeyElement(nameIdxMap map[string]int) *ObRowKeyElement {
+	return &ObRowKeyElement{nameIdxMap}
 }
 
-func (e *ObRowkeyElement) NameIdxMap() map[string]int {
+func (e *ObRowKeyElement) NameIdxMap() map[string]int {
 	return e.nameIdxMap
 }
 
-func (e *ObRowkeyElement) String() string {
+func (e *ObRowKeyElement) String() string {
 	var nameIdxMapStr string
 	var i = 0
 	nameIdxMapStr = nameIdxMapStr + "{"
@@ -28,7 +28,7 @@ func (e *ObRowkeyElement) String() string {
 		nameIdxMapStr += "m[" + k + "]=" + strconv.Itoa(v)
 	}
 	nameIdxMapStr += "}"
-	return "ObRowkeyElement{" +
+	return "ObRowKeyElement{" +
 		"nameIdxMap:" + nameIdxMapStr +
 		"}"
 }
