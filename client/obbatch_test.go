@@ -1,6 +1,7 @@
 package client
 
 import (
+	"context"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -43,7 +44,7 @@ func TestBatch(t *testing.T) {
 	assert.Equal(t, nil, err)
 	err = batchExecutor.AddGetOp(rowKey2, selectColumns2)
 	assert.Equal(t, nil, err)
-	batchRes, err := batchExecutor.Execute()
+	batchRes, err := batchExecutor.Execute(context.TODO())
 	assert.Equal(t, nil, err)
 	allResults := batchRes.GetResults()
 	assert.Equal(t, 4, len(allResults))

@@ -11,48 +11,48 @@ import (
 	"github.com/oceanbase/obkv-table-client-go/table"
 )
 
-type ObHashPartDesc struct {
-	ObPartDescCommon
+type obHashPartDesc struct {
+	obPartDescCommon
 	completeWorks []int64
 	partSpace     int
 	partNum       int
 	partNameIdMap map[string]int64
 }
 
-func newObHashPartDesc() *ObHashPartDesc {
-	return &ObHashPartDesc{}
+func newObHashPartDesc() *obHashPartDesc {
+	return &obHashPartDesc{}
 }
 
-func (d *ObHashPartDesc) partFuncType() ObPartFuncType {
+func (d *obHashPartDesc) partFuncType() obPartFuncType {
 	return d.PartFuncType
 }
 
-func (d *ObHashPartDesc) orderedPartColumnNames() []string {
+func (d *obHashPartDesc) orderedPartColumnNames() []string {
 	return d.OrderedPartColumnNames
 }
 
-func (d *ObHashPartDesc) setOrderedPartColumnNames(partExpr string) {
+func (d *obHashPartDesc) setOrderedPartColumnNames(partExpr string) {
 	// eg:"c1, c2", need to remove ' '
 	str := strings.ReplaceAll(partExpr, " ", "")
 	d.OrderedPartColumnNames = strings.Split(str, ",")
 }
 
-func (d *ObHashPartDesc) orderedPartRefColumnRowKeyRelations() []*ObColumnIndexesPair {
+func (d *obHashPartDesc) orderedPartRefColumnRowKeyRelations() []*obColumnIndexesPair {
 	return d.OrderedPartRefColumnRowKeyRelations
 }
-func (d *ObHashPartDesc) rowKeyElement() *table.ObRowKeyElement {
+func (d *obHashPartDesc) rowKeyElement() *table.ObRowKeyElement {
 	return d.RowKeyElement
 }
 
-func (d *ObHashPartDesc) setRowKeyElement(rowKeyElement *table.ObRowKeyElement) {
+func (d *obHashPartDesc) setRowKeyElement(rowKeyElement *table.ObRowKeyElement) {
 	d.setCommRowKeyElement(rowKeyElement)
 }
 
-func (d *ObHashPartDesc) setPartColumns(partColumns []*ObColumn) {
+func (d *obHashPartDesc) setPartColumns(partColumns []*obColumn) {
 	d.PartColumns = partColumns
 }
 
-func (d *ObHashPartDesc) GetPartId(rowKey []interface{}) (int64, error) {
+func (d *obHashPartDesc) GetPartId(rowKey []interface{}) (int64, error) {
 	if len(rowKey) == 0 {
 		log.Warn("rowKey size is 0")
 		return ObInvalidPartId, errors.New("rowKey size is 0")
@@ -75,7 +75,7 @@ func (d *ObHashPartDesc) GetPartId(rowKey []interface{}) (int64, error) {
 	}
 }
 
-func (d *ObHashPartDesc) innerHash(hashVal int64) int64 {
+func (d *obHashPartDesc) innerHash(hashVal int64) int64 {
 	// abs(hashVal)
 	if hashVal < 0 {
 		hashVal = -hashVal
@@ -83,7 +83,7 @@ func (d *ObHashPartDesc) innerHash(hashVal int64) int64 {
 	return (int64(d.partSpace) << ObPartIdBitNum) | (hashVal % int64(d.partNum))
 }
 
-func (d *ObHashPartDesc) String() string {
+func (d *obHashPartDesc) String() string {
 	// completeWorks to string
 	var completeWorksStr string
 	completeWorksStr = completeWorksStr + "["
@@ -108,7 +108,7 @@ func (d *ObHashPartDesc) String() string {
 	}
 	partNameIdMapStr += "}"
 
-	return "ObHashPartDesc{" +
+	return "obHashPartDesc{" +
 		"comm:" + d.CommString() + ", " +
 		"completeWorks:" + completeWorksStr + ", " +
 		"partSpace:" + strconv.Itoa(d.partSpace) + ", " +

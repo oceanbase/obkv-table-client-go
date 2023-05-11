@@ -15,12 +15,12 @@ type ObTableEntry struct {
 	replicaNum        int
 	refreshTimeMills  int64
 	tableEntryKey     ObTableEntryKey
-	partitionInfo     *ObPartitionInfo
+	partitionInfo     *obPartitionInfo
 	tableLocation     *ObTableLocation
-	partLocationEntry *ObPartLocationEntry
+	partLocationEntry *obPartLocationEntry
 }
 
-func (e *ObTableEntry) SetPartLocationEntry(partLocationEntry *ObPartLocationEntry) {
+func (e *ObTableEntry) SetPartLocationEntry(partLocationEntry *obPartLocationEntry) {
 	e.partLocationEntry = partLocationEntry
 }
 
@@ -36,7 +36,7 @@ func (e *ObTableEntry) TableId() uint64 {
 	return e.tableId
 }
 
-func (e *ObTableEntry) PartitionInfo() *ObPartitionInfo {
+func (e *ObTableEntry) PartitionInfo() *obPartitionInfo {
 	return e.partitionInfo
 }
 
@@ -85,7 +85,7 @@ func (e *ObTableEntry) extractSubpartIdx(id int64) int64 {
 	return id & ObSubPartIdMask
 }
 
-func (e *ObTableEntry) getPartitionLocation(partId int64, route *ObServerRoute) (*ObReplicaLocation, error) {
+func (e *ObTableEntry) getPartitionLocation(partId int64, consistency ObConsistency) (*obReplicaLocation, error) {
 	if util.ObVersion() >= 4 && e.IsPartitionTable() {
 		tabletId, ok := e.partitionInfo.partTabletIdMap[partId]
 		if !ok {
@@ -101,7 +101,7 @@ func (e *ObTableEntry) getPartitionLocation(partId int64, route *ObServerRoute) 
 				log.String("part entry", e.partLocationEntry.String()))
 			return nil, errors.New("part location not found")
 		}
-		return partLoc.getReplica(route), nil
+		return partLoc.getReplica(consistency), nil
 	} else {
 		partLoc, ok := e.partLocationEntry.partLocations[partId]
 		if !ok {
@@ -110,16 +110,16 @@ func (e *ObTableEntry) getPartitionLocation(partId int64, route *ObServerRoute) 
 				log.String("part entry", e.partLocationEntry.String()))
 			return nil, errors.New("part location not found")
 		}
-		return partLoc.getReplica(route), nil
+		return partLoc.getReplica(consistency), nil
 	}
 }
 
-func (e *ObTableEntry) GetPartitionReplicaLocation(partId int64, route *ObServerRoute) (*ObReplicaLocation, error) {
+func (e *ObTableEntry) GetPartitionReplicaLocation(partId int64, consistency ObConsistency) (*obReplicaLocation, error) {
 	logicId := partId
-	if e.partitionInfo != nil && e.partitionInfo.level.index == PartLevelTwoIndex {
+	if e.partitionInfo != nil && e.partitionInfo.level == PartLevelTwo {
 		logicId = e.extractSubpartIdx(partId)
 	}
-	return e.getPartitionLocation(logicId, route)
+	return e.getPartitionLocation(logicId, consistency)
 }
 
 func (e *ObTableEntry) SetRowKeyElement(rowKeyElement *table.ObRowKeyElement) {

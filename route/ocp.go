@@ -32,7 +32,7 @@ func LoadOcpModel(
 	retryTimes int,
 	retryInternal time.Duration) (*ObOcpModel, error) {
 	servers := make([]*ObServerAddr, 0, 3)
-	var resp ObHttpRslistResponse
+	var resp obHttpRslistResponse
 	err := getRemoteOcpResponseOrNull(configUrl, fileName, timeout, retryTimes, retryInternal, &resp)
 	if err != nil {
 		log.Warn("failed to get remote ocp response", log.String("url", configUrl))
@@ -70,7 +70,7 @@ func LoadOcpModel(
 	return newOcpModel(servers, resp.Data.ObClusterId), nil
 }
 
-type ObHttpRslistResponse struct {
+type obHttpRslistResponse struct {
 	Code int `json:"Code"`
 	Cost int `json:"Cost"`
 	Data struct {
@@ -99,7 +99,7 @@ func getRemoteOcpResponseOrNull(
 	timeout time.Duration,
 	retryTimes int,
 	retryInternal time.Duration,
-	resp *ObHttpRslistResponse) error {
+	resp *obHttpRslistResponse) error {
 	var httpResp *http.Response
 	var err error
 	var times int

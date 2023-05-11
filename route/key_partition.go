@@ -13,48 +13,48 @@ import (
 	"github.com/oceanbase/obkv-table-client-go/util"
 )
 
-type ObKeyPartDesc struct {
-	ObPartDescCommon
+type obKeyPartDesc struct {
+	obPartDescCommon
 	partSpace     int
 	partNum       int
 	partNameIdMap map[string]int64
 }
 
-func newObKeyPartDesc() *ObKeyPartDesc {
-	return &ObKeyPartDesc{}
+func newObKeyPartDesc() *obKeyPartDesc {
+	return &obKeyPartDesc{}
 }
 
-func (d *ObKeyPartDesc) partFuncType() ObPartFuncType {
+func (d *obKeyPartDesc) partFuncType() obPartFuncType {
 	return d.PartFuncType
 }
 
-func (d *ObKeyPartDesc) orderedPartColumnNames() []string {
+func (d *obKeyPartDesc) orderedPartColumnNames() []string {
 	return d.OrderedPartColumnNames
 }
 
-func (d *ObKeyPartDesc) setOrderedPartColumnNames(partExpr string) {
+func (d *obKeyPartDesc) setOrderedPartColumnNames(partExpr string) {
 	// eg:"c1, c2", need to remove ' '
 	str := strings.ReplaceAll(partExpr, " ", "")
 	d.OrderedPartColumnNames = strings.Split(str, ",")
 }
 
-func (d *ObKeyPartDesc) orderedPartRefColumnRowKeyRelations() []*ObColumnIndexesPair {
+func (d *obKeyPartDesc) orderedPartRefColumnRowKeyRelations() []*obColumnIndexesPair {
 	return d.OrderedPartRefColumnRowKeyRelations
 }
 
-func (d *ObKeyPartDesc) rowKeyElement() *table.ObRowKeyElement {
+func (d *obKeyPartDesc) rowKeyElement() *table.ObRowKeyElement {
 	return d.RowKeyElement
 }
 
-func (d *ObKeyPartDesc) setRowKeyElement(rowKeyElement *table.ObRowKeyElement) {
+func (d *obKeyPartDesc) setRowKeyElement(rowKeyElement *table.ObRowKeyElement) {
 	d.setCommRowKeyElement(rowKeyElement)
 }
 
-func (d *ObKeyPartDesc) setPartColumns(partColumns []*ObColumn) {
+func (d *obKeyPartDesc) setPartColumns(partColumns []*obColumn) {
 	d.PartColumns = partColumns
 }
 
-func (d *ObKeyPartDesc) GetPartId(rowKey []interface{}) (int64, error) {
+func (d *obKeyPartDesc) GetPartId(rowKey []interface{}) (int64, error) {
 	if len(rowKey) == 0 {
 		log.Warn("rowKey size is 0")
 		return ObInvalidPartId, errors.New("rowKey size is 0")
@@ -120,14 +120,12 @@ func intToInt64(value interface{}) (int64, error) {
 	}
 }
 
-func (d *ObKeyPartDesc) toHashCode(
+func (d *obKeyPartDesc) toHashCode(
 	value interface{},
-	refColumn *ObColumn,
+	refColumn *obColumn,
 	hashCode int64,
-	partFuncType ObPartFuncType) (int64, error) {
-	objType := refColumn.ObjType()
-	typeValue := objType.GetValue()
-	collType := refColumn.CollationType()
+	partFuncType obPartFuncType) (int64, error) {
+	typeValue := refColumn.objType.GetValue()
 	if typeValue >= protocol.ObTinyIntTypeValue && typeValue <= protocol.ObUInt64TypeValue {
 		i64, err := intToInt64(value)
 		if err != nil {
@@ -135,7 +133,7 @@ func (d *ObKeyPartDesc) toHashCode(
 			return -1, err
 		}
 		arr := d.longToByteArray(i64)
-		return MurmurHash64A(arr, len(arr), hashCode), nil
+		return murmurHash64A(arr, len(arr), hashCode), nil
 	} else if typeValue == protocol.ObDateTimeTypeValue || typeValue == protocol.ObTimestampTypeValue {
 		t, ok := value.(time.Time)
 		if !ok {
@@ -151,37 +149,37 @@ func (d *ObKeyPartDesc) toHashCode(
 		}
 		return d.dateHash(date, hashCode), nil
 	} else if typeValue == protocol.ObVarcharTypeValue || typeValue == protocol.ObCharTypeValue {
-		return d.varcharHash(value, collType, hashCode, partFuncType)
+		return d.varcharHash(value, refColumn.collationType, hashCode, partFuncType)
 	} else {
-		log.Warn("unsupported type for key hash", log.String("objType", objType.String()))
+		log.Warn("unsupported type for key hash", log.String("objType", refColumn.objType.String()))
 		return -1, errors.New("unsupported type for key hash")
 	}
 }
 
-func (d *ObKeyPartDesc) longToByteArray(l int64) []byte {
+func (d *obKeyPartDesc) longToByteArray(l int64) []byte {
 	return []byte{(byte)(l & 0xFF), (byte)((l >> 8) & 0xFF), (byte)((l >> 16) & 0xFF),
 		(byte)((l >> 24) & 0xFF), (byte)((l >> 32) & 0xFF), (byte)((l >> 40) & 0xFF),
 		(byte)((l >> 48) & 0xFF), (byte)((l >> 56) & 0xFF)}
 }
 
-func (d *ObKeyPartDesc) longHash(value int64, hashCode int64) int64 {
+func (d *obKeyPartDesc) longHash(value int64, hashCode int64) int64 {
 	arr := d.longToByteArray(value)
-	return MurmurHash64A(arr, len(arr), hashCode)
+	return murmurHash64A(arr, len(arr), hashCode)
 }
 
-func (d *ObKeyPartDesc) timeStampHash(ts time.Time, hashCode int64) int64 {
+func (d *obKeyPartDesc) timeStampHash(ts time.Time, hashCode int64) int64 {
 	return d.longHash(ts.UnixMilli(), hashCode)
 }
 
-func (d *ObKeyPartDesc) dateHash(ts time.Time, hashCode int64) int64 {
+func (d *obKeyPartDesc) dateHash(ts time.Time, hashCode int64) int64 {
 	return d.longHash(ts.UnixMilli(), hashCode)
 }
 
-func (d *ObKeyPartDesc) varcharHash(
+func (d *obKeyPartDesc) varcharHash(
 	value interface{},
 	collType protocol.ObCollationType,
 	hashCode int64,
-	partFuncType ObPartFuncType) (int64, error) {
+	partFuncType obPartFuncType) (int64, error) {
 	var seed uint64 = 0xc6a4a7935bd1e995
 	var bytes []byte
 	if v, ok := value.(string); ok {
@@ -198,8 +196,8 @@ func (d *ObKeyPartDesc) varcharHash(
 	}
 	switch collType.Value() {
 	case protocol.CsTypeUtf8mb4GeneralCi:
-		if partFuncType.index == partFuncTypeKeyV3Index ||
-			partFuncType.index == partFuncTypeKeyImplV2Index ||
+		if partFuncType == partFuncTypeKeyV3 ||
+			partFuncType == partFuncTypeKeyImplV2 ||
 			util.ObVersion() >= 4 {
 			hashCode = hashSortUtf8Mb4(bytes, hashCode, seed, true)
 		} else {
@@ -207,10 +205,10 @@ func (d *ObKeyPartDesc) varcharHash(
 		}
 	case protocol.CsTypeUtf8mb4Bin:
 	case protocol.CsTypeBinary:
-		if partFuncType.index == partFuncTypeKeyV3Index ||
-			partFuncType.index == partFuncTypeKeyImplV2Index ||
+		if partFuncType == partFuncTypeKeyV3 ||
+			partFuncType == partFuncTypeKeyImplV2 ||
 			util.ObVersion() >= 4 {
-			hashCode = MurmurHash64A(bytes, len(bytes), hashCode)
+			hashCode = murmurHash64A(bytes, len(bytes), hashCode)
 		} else {
 			hashCode = hashSortMbBin(bytes, hashCode, seed)
 		}
@@ -223,7 +221,7 @@ func (d *ObKeyPartDesc) varcharHash(
 	return hashCode, nil
 }
 
-func (d *ObKeyPartDesc) String() string {
+func (d *obKeyPartDesc) String() string {
 	// partNameIdMap to string
 	var partNameIdMapStr string
 	partNameIdMapStr = partNameIdMapStr + "{"
@@ -236,7 +234,7 @@ func (d *ObKeyPartDesc) String() string {
 		partNameIdMapStr += "m[" + k + "]=" + strconv.Itoa(int(v))
 	}
 	partNameIdMapStr += "}"
-	return "ObKeyPartDesc{" +
+	return "obKeyPartDesc{" +
 		"comm:" + d.CommString() + ", " +
 		"partSpace:" + strconv.Itoa(d.partSpace) + ", " +
 		"partNum:" + strconv.Itoa(d.partNum) + ", " +

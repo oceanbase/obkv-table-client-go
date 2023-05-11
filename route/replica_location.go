@@ -1,33 +1,69 @@
 package route
 
-type ObReplicaLocation struct {
-	addr        ObServerAddr
-	info        ObServerInfo
-	role        ObServerRole
-	replicaType ObReplicaType
+import "strconv"
+
+type obServerRole int
+
+const (
+	serverRoleInvalid  obServerRole = -1
+	serverRoleLeader   obServerRole = 1
+	serverRoleFollower obServerRole = 2
+)
+
+type obReplicaType int
+
+const (
+	replicaTypeInvalid  obReplicaType = -1
+	replicaTypeFull     obReplicaType = 0
+	replicaTypeLogOnly  obReplicaType = 5
+	replicaTypeReadOnly obReplicaType = 16
+)
+
+type obReplicaLocation struct {
+	addr        *ObServerAddr
+	svrStatus   *obServerStatus
+	role        obServerRole
+	replicaType obReplicaType
 }
 
-func (l *ObReplicaLocation) Info() ObServerInfo {
-	return l.info
+func (l *obReplicaLocation) SvrStatus() *obServerStatus {
+	return l.svrStatus
 }
 
-func (l *ObReplicaLocation) Addr() *ObServerAddr {
-	return &l.addr
+func newReplicaLocation(addr *ObServerAddr, svrStatus *obServerStatus, role obServerRole, replicaType obReplicaType) *obReplicaLocation {
+	return &obReplicaLocation{addr, svrStatus, role, replicaType}
 }
 
-func (l *ObReplicaLocation) isValid() bool {
-	return !l.role.isInvalid() && l.info.IsActive()
+func (l *obReplicaLocation) Addr() *ObServerAddr {
+	return l.addr
 }
 
-func (l *ObReplicaLocation) isLeader() bool {
-	return l.role.isLeader()
+func (l *obReplicaLocation) isValid() bool {
+	return (l.addr != nil) && (l.role != serverRoleInvalid) && (l.svrStatus != nil) &&
+		l.svrStatus.IsActive() && (l.replicaType != replicaTypeInvalid)
 }
 
-func (l *ObReplicaLocation) String() string {
-	return "ObReplicaLocation{" +
-		"addr:" + l.addr.String() + ", " +
-		"info:" + l.info.String() + ", " +
-		"role:" + l.role.String() + ", " +
-		"replicaType:" + l.replicaType.String() +
+func (l *obReplicaLocation) isLeader() bool {
+	return l.role == serverRoleLeader
+}
+
+func (l *obReplicaLocation) String() string {
+	var addrStr string
+	if l.addr == nil {
+		addrStr = "nil"
+	} else {
+		addrStr = l.addr.String()
+	}
+	var statusStr string
+	if l.svrStatus == nil {
+		statusStr = "nil"
+	} else {
+		statusStr = l.svrStatus.String()
+	}
+	return "obReplicaLocation{" +
+		"addr:" + addrStr + ", " +
+		"info:" + statusStr + ", " +
+		"role:" + strconv.Itoa(int(l.role)) + ", " +
+		"replicaType:" + strconv.Itoa(int(l.replicaType)) +
 		"}"
 }

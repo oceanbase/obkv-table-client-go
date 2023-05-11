@@ -94,7 +94,7 @@ func GetMockHashTableEntryV3() *route.ObTableEntry {
 
 	// 4.7 mock proxyPartitionLocationSql result
 	sql = proxyPartitionLocationSql
-	sql += route.CreateInStatement([]int{0, 1})
+	sql += "(0, 1);"
 	queryFields = []string{"partition_id", "svr_ip", "sql_port", "table_id",
 		"role", "replica_num", "part_num", "svr_port", "status", "stop_time", "replica_type",
 	}
@@ -186,7 +186,7 @@ func GetMockHashTableEntryV4() *route.ObTableEntry {
 
 	// 4.6 mock proxyPartitionLocationSql result
 	sql = proxyPartitionLocationSql
-	sql += route.CreateInStatement([]int{200009, 200010})
+	sql += "(0, 1);"
 	queryFields = []string{"tablet_id", "svr_ip", "sql_port", "table_id",
 		"role", "replica_num", "part_num", "svr_port", "status", "stop_time", "replica_type",
 	}

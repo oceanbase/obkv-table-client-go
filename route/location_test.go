@@ -10,8 +10,6 @@ import (
 	"github.com/agiledragon/gomonkey/v2"
 	"github.com/stretchr/testify/assert"
 
-	"github.com/oceanbase/obkv-table-client-go/protocol"
-	"github.com/oceanbase/obkv-table-client-go/table"
 	"github.com/oceanbase/obkv-table-client-go/util"
 )
 
@@ -109,7 +107,7 @@ func TestGetTableEntryFromRemoteV3(t *testing.T) {
 
 	// 4.7 mock proxyPartitionLocationSql result
 	sql = proxyPartitionLocationSql
-	sql += CreateInStatement([]int{0, 1, 2, 3})
+	sql += createInStatement([]int{0, 1, 2, 3})
 	queryFields = []string{"partition_id", "svr_ip", "sql_port", "table_id",
 		"role", "replica_num", "part_num", "svr_port", "status", "stop_time", "replica_type",
 	}
@@ -143,68 +141,68 @@ func TestGetTableEntryFromRemoteV3(t *testing.T) {
 	assert.Equal(t, entry.partNum, 4)
 	assert.Equal(t, entry.replicaNum, 3)
 	assert.Equal(t, entry.tableEntryKey, key)
-	assert.Equal(t, entry.partitionInfo.level, ObPartitionLevel{"partLevelTwo", PartLevelTwoIndex})
-	assert.Equal(t, entry.partitionInfo.firstPartDesc.String(), "ObRangePartDesc{"+
-		"comm:ObPartDescCommon{partFuncType:ObPartFuncType{name:RANGE_COLUMNS, index:4}, "+
+	assert.EqualValues(t, entry.partitionInfo.level, PartLevelTwo)
+	assert.Equal(t, entry.partitionInfo.firstPartDesc.String(), "obRangePartDesc{"+
+		"comm:obPartDescCommon{partFuncType:obPartFuncType{name:RANGE_COLUMNS, index:4}, "+
 		"partExpr:c1, orderedPartColumnNames:c1, orderedPartRefColumnRowKeyRelations:[], "+
-		"partColumns:[ObColumn{columnName:c1, index:0, objType:ObObjType{type:ObInt32Type}, "+
+		"partColumns:[obColumn{columnName:c1, index:0, objType:ObObjType{type:ObInt32Type}, "+
 		"collationType:ObCollationType{collationType:CsTypeBinary}, refColumnNames:[c1], "+
 		"isGenColumn:false, columnExpress:nil}, "+
-		"ObColumn{columnName:c2, index:1, objType:ObObjType{type:ObInt32Type}, "+
+		"obColumn{columnName:c2, index:1, objType:ObObjType{type:ObInt32Type}, "+
 		"collationType:ObCollationType{collationType:CsTypeBinary}, "+
 		"refColumnNames:[c2], isGenColumn:false, columnExpress:nil}], "+
 		"rowKeyElement:nil}, partSpace:0, partNum:2, "+
-		"orderedCompareColumns:[ObColumn{columnName:c1, index:0, "+
+		"orderedCompareColumns:[obColumn{columnName:c1, index:0, "+
 		"objType:ObObjType{type:ObInt32Type}, "+
 		"collationType:ObCollationType{collationType:CsTypeBinary}, "+
 		"refColumnNames:[c1], isGenColumn:false, columnExpress:nil}], "+
 		"orderedCompareColumnTypes:[ObObjType{type:ObInt64Type}]}")
-	assert.Contains(t, entry.partitionInfo.subPartDesc.String(), "ObHashPartDesc{"+
-		"comm:ObPartDescCommon{partFuncType:ObPartFuncType{name:HASH_V2, index:8}, "+
+	assert.Contains(t, entry.partitionInfo.subPartDesc.String(), "obHashPartDesc{"+
+		"comm:obPartDescCommon{partFuncType:obPartFuncType{name:HASH_V2, index:8}, "+
 		"partExpr:c2, orderedPartColumnNames:c2, orderedPartRefColumnRowKeyRelations:[], "+
-		"partColumns:[ObColumn{columnName:c1, index:0, objType:ObObjType{type:ObInt32Type}, "+
+		"partColumns:[obColumn{columnName:c1, index:0, objType:ObObjType{type:ObInt32Type}, "+
 		"collationType:ObCollationType{collationType:CsTypeBinary}, refColumnNames:[c1], "+
 		"isGenColumn:false, columnExpress:nil}, "+
-		"ObColumn{columnName:c2, index:1, objType:ObObjType{type:ObInt32Type}, "+
+		"obColumn{columnName:c2, index:1, objType:ObObjType{type:ObInt32Type}, "+
 		"collationType:ObCollationType{collationType:CsTypeBinary}, "+
 		"refColumnNames:[c2], isGenColumn:false, columnExpress:nil}], "+
 		"rowKeyElement:nil}, completeWorks:[], partSpace:0, partNum:2, "+
 		"partNameIdMap:{m[p")
 	assert.Equal(t, entry.tableLocation.String(), "ObTableLocation{"+
 		"replicaLocations:["+
-		"ObReplicaLocation{addr:ObServerAddr{ip:127.0.0.1, sqlPort:42705, svrPort:42704}, "+
-		"info:ObServerInfo{stopTime:0, status:ACTIVE}, "+
-		"role:ObServerRole{name:FOLLOWER, index:2}, "+
+		"obReplicaLocation{addr:ObServerAddr{ip:127.0.0.1, sqlPort:42705, svrPort:42704}, "+
+		"info:obServerStatus{stopTime:0, status:ACTIVE}, "+
+		"role:obServerRole{name:FOLLOWER, index:2}, "+
 		"replicaType:ObReplicaType{name:FULL, index:0}}, "+
-		"ObReplicaLocation{addr:ObServerAddr{ip:127.0.0.2, sqlPort:42707, svrPort:42706}, "+
-		"info:ObServerInfo{stopTime:0, status:ACTIVE}, "+
-		"role:ObServerRole{name:FOLLOWER, index:2}, "+
+		"obReplicaLocation{addr:ObServerAddr{ip:127.0.0.2, sqlPort:42707, svrPort:42706}, "+
+		"info:obServerStatus{stopTime:0, status:ACTIVE}, "+
+		"role:obServerRole{name:FOLLOWER, index:2}, "+
 		"replicaType:ObReplicaType{name:FULL, index:0}}, "+
-		"ObReplicaLocation{addr:ObServerAddr{ip:127.0.0.3, sqlPort:42701, svrPort:42700}, "+
-		"info:ObServerInfo{stopTime:0, status:ACTIVE}, "+
-		"role:ObServerRole{name:LEADER, index:1}, "+
+		"obReplicaLocation{addr:ObServerAddr{ip:127.0.0.3, sqlPort:42701, svrPort:42700}, "+
+		"info:obServerStatus{stopTime:0, status:ACTIVE}, "+
+		"role:obServerRole{name:LEADER, index:1}, "+
 		"replicaType:ObReplicaType{name:FULL, index:0}}]}")
 	assert.Equal(t, len(entry.partLocationEntry.partLocations), 4)
-	assert.Equal(t, entry.partLocationEntry.partLocations[0].String(), "ObPartitionLocation{"+
-		"leader:ObReplicaLocation{addr:ObServerAddr{ip:127.0.0.3, sqlPort:42701, svrPort:42700}, info:ObServerInfo{stopTime:0, status:ACTIVE}, role:ObServerRole{name:LEADER, index:1}, replicaType:ObReplicaType{name:FULL, index:0}}, "+
-		"replicas:[ObReplicaLocation{addr:ObServerAddr{ip:127.0.0.1, sqlPort:42705, svrPort:42704}, info:ObServerInfo{stopTime:0, status:ACTIVE}, role:ObServerRole{name:FOLLOWER, index:2}, replicaType:ObReplicaType{name:FULL, index:0}}, "+
-		"ObReplicaLocation{addr:ObServerAddr{ip:127.0.0.2, sqlPort:42707, svrPort:42706}, info:ObServerInfo{stopTime:0, status:ACTIVE}, role:ObServerRole{name:FOLLOWER, index:2}, replicaType:ObReplicaType{name:FULL, index:0}}, "+
-		"ObReplicaLocation{addr:ObServerAddr{ip:127.0.0.3, sqlPort:42701, svrPort:42700}, info:ObServerInfo{stopTime:0, status:ACTIVE}, role:ObServerRole{name:LEADER, index:1}, replicaType:ObReplicaType{name:FULL, index:0}}]}")
-	assert.Equal(t, entry.partLocationEntry.partLocations[1].String(), "ObPartitionLocation{"+
-		"leader:ObReplicaLocation{addr:ObServerAddr{ip:127.0.0.3, sqlPort:42701, svrPort:42700}, info:ObServerInfo{stopTime:0, status:ACTIVE}, role:ObServerRole{name:LEADER, index:1}, replicaType:ObReplicaType{name:FULL, index:0}}, "+
-		"replicas:[ObReplicaLocation{addr:ObServerAddr{ip:127.0.0.1, sqlPort:42705, svrPort:42704}, info:ObServerInfo{stopTime:0, status:ACTIVE}, role:ObServerRole{name:FOLLOWER, index:2}, replicaType:ObReplicaType{name:FULL, index:0}}, "+
-		"ObReplicaLocation{addr:ObServerAddr{ip:127.0.0.2, sqlPort:42707, svrPort:42706}, info:ObServerInfo{stopTime:0, status:ACTIVE}, role:ObServerRole{name:FOLLOWER, index:2}, replicaType:ObReplicaType{name:FULL, index:0}}, "+
-		"ObReplicaLocation{addr:ObServerAddr{ip:127.0.0.3, sqlPort:42701, svrPort:42700}, info:ObServerInfo{stopTime:0, status:ACTIVE}, role:ObServerRole{name:LEADER, index:1}, replicaType:ObReplicaType{name:FULL, index:0}}]}")
-	assert.Equal(t, entry.partLocationEntry.partLocations[2].String(), "ObPartitionLocation{"+
-		"leader:ObReplicaLocation{addr:ObServerAddr{ip:127.0.0.3, sqlPort:42701, svrPort:42700}, info:ObServerInfo{stopTime:0, status:ACTIVE}, role:ObServerRole{name:LEADER, index:1}, replicaType:ObReplicaType{name:FULL, index:0}}, "+
-		"replicas:[ObReplicaLocation{addr:ObServerAddr{ip:127.0.0.1, sqlPort:42705, svrPort:42704}, info:ObServerInfo{stopTime:0, status:ACTIVE}, role:ObServerRole{name:FOLLOWER, index:2}, replicaType:ObReplicaType{name:FULL, index:0}}, "+
-		"ObReplicaLocation{addr:ObServerAddr{ip:127.0.0.2, sqlPort:42707, svrPort:42706}, info:ObServerInfo{stopTime:0, status:ACTIVE}, role:ObServerRole{name:FOLLOWER, index:2}, replicaType:ObReplicaType{name:FULL, index:0}}, "+
-		"ObReplicaLocation{addr:ObServerAddr{ip:127.0.0.3, sqlPort:42701, svrPort:42700}, info:ObServerInfo{stopTime:0, status:ACTIVE}, role:ObServerRole{name:LEADER, index:1}, replicaType:ObReplicaType{name:FULL, index:0}}]}")
-	assert.Equal(t, entry.partLocationEntry.partLocations[3].String(), "ObPartitionLocation{"+
-		"leader:ObReplicaLocation{addr:ObServerAddr{ip:127.0.0.3, sqlPort:42701, svrPort:42700}, info:ObServerInfo{stopTime:0, status:ACTIVE}, role:ObServerRole{name:LEADER, index:1}, replicaType:ObReplicaType{name:FULL, index:0}}, "+
-		"replicas:[ObReplicaLocation{addr:ObServerAddr{ip:127.0.0.1, sqlPort:42705, svrPort:42704}, info:ObServerInfo{stopTime:0, status:ACTIVE}, role:ObServerRole{name:FOLLOWER, index:2}, replicaType:ObReplicaType{name:FULL, index:0}}, "+
-		"ObReplicaLocation{addr:ObServerAddr{ip:127.0.0.2, sqlPort:42707, svrPort:42706}, info:ObServerInfo{stopTime:0, status:ACTIVE}, role:ObServerRole{name:FOLLOWER, index:2}, replicaType:ObReplicaType{name:FULL, index:0}}, "+
-		"ObReplicaLocation{addr:ObServerAddr{ip:127.0.0.3, sqlPort:42701, svrPort:42700}, info:ObServerInfo{stopTime:0, status:ACTIVE}, role:ObServerRole{name:LEADER, index:1}, replicaType:ObReplicaType{name:FULL, index:0}}]}")
+	assert.Equal(t, entry.partLocationEntry.partLocations[0].String(), "obPartitionLocation{"+
+		"leader:obReplicaLocation{addr:ObServerAddr{ip:127.0.0.3, sqlPort:42701, svrPort:42700}, info:obServerStatus{stopTime:0, status:ACTIVE}, role:obServerRole{name:LEADER, index:1}, replicaType:ObReplicaType{name:FULL, index:0}}, "+
+		"replicas:[obReplicaLocation{addr:ObServerAddr{ip:127.0.0.1, sqlPort:42705, svrPort:42704}, info:obServerStatus{stopTime:0, status:ACTIVE}, role:obServerRole{name:FOLLOWER, index:2}, replicaType:ObReplicaType{name:FULL, index:0}}, "+
+		"obReplicaLocation{addr:ObServerAddr{ip:127.0.0.2, sqlPort:42707, svrPort:42706}, info:obServerStatus{stopTime:0, status:ACTIVE}, role:obServerRole{name:FOLLOWER, index:2}, replicaType:ObReplicaType{name:FULL, index:0}}, "+
+		"obReplicaLocation{addr:ObServerAddr{ip:127.0.0.3, sqlPort:42701, svrPort:42700}, info:obServerStatus{stopTime:0, status:ACTIVE}, role:obServerRole{name:LEADER, index:1}, replicaType:ObReplicaType{name:FULL, index:0}}]}")
+	assert.Equal(t, entry.partLocationEntry.partLocations[1].String(), "obPartitionLocation{"+
+		"leader:obReplicaLocation{addr:ObServerAddr{ip:127.0.0.3, sqlPort:42701, svrPort:42700}, info:obServerStatus{stopTime:0, status:ACTIVE}, role:obServerRole{name:LEADER, index:1}, replicaType:ObReplicaType{name:FULL, index:0}}, "+
+		"replicas:[obReplicaLocation{addr:ObServerAddr{ip:127.0.0.1, sqlPort:42705, svrPort:42704}, info:obServerStatus{stopTime:0, status:ACTIVE}, role:obServerRole{name:FOLLOWER, index:2}, replicaType:ObReplicaType{name:FULL, index:0}}, "+
+		"obReplicaLocation{addr:ObServerAddr{ip:127.0.0.2, sqlPort:42707, svrPort:42706}, info:obServerStatus{stopTime:0, status:ACTIVE}, role:obServerRole{name:FOLLOWER, index:2}, replicaType:ObReplicaType{name:FULL, index:0}}, "+
+		"obReplicaLocation{addr:ObServerAddr{ip:127.0.0.3, sqlPort:42701, svrPort:42700}, info:obServerStatus{stopTime:0, status:ACTIVE}, role:obServerRole{name:LEADER, index:1}, replicaType:ObReplicaType{name:FULL, index:0}}]}")
+	assert.Equal(t, entry.partLocationEntry.partLocations[2].String(), "obPartitionLocation{"+
+		"leader:obReplicaLocation{addr:ObServerAddr{ip:127.0.0.3, sqlPort:42701, svrPort:42700}, info:obServerStatus{stopTime:0, status:ACTIVE}, role:obServerRole{name:LEADER, index:1}, replicaType:ObReplicaType{name:FULL, index:0}}, "+
+		"replicas:[obReplicaLocation{addr:ObServerAddr{ip:127.0.0.1, sqlPort:42705, svrPort:42704}, info:obServerStatus{stopTime:0, status:ACTIVE}, role:obServerRole{name:FOLLOWER, index:2}, replicaType:ObReplicaType{name:FULL, index:0}}, "+
+		"obReplicaLocation{addr:ObServerAddr{ip:127.0.0.2, sqlPort:42707, svrPort:42706}, info:obServerStatus{stopTime:0, status:ACTIVE}, role:obServerRole{name:FOLLOWER, index:2}, replicaType:ObReplicaType{name:FULL, index:0}}, "+
+		"obReplicaLocation{addr:ObServerAddr{ip:127.0.0.3, sqlPort:42701, svrPort:42700}, info:obServerStatus{stopTime:0, status:ACTIVE}, role:obServerRole{name:LEADER, index:1}, replicaType:ObReplicaType{name:FULL, index:0}}]}")
+	assert.Equal(t, entry.partLocationEntry.partLocations[3].String(), "obPartitionLocation{"+
+		"leader:obReplicaLocation{addr:ObServerAddr{ip:127.0.0.3, sqlPort:42701, svrPort:42700}, info:obServerStatus{stopTime:0, status:ACTIVE}, role:obServerRole{name:LEADER, index:1}, replicaType:ObReplicaType{name:FULL, index:0}}, "+
+		"replicas:[obReplicaLocation{addr:ObServerAddr{ip:127.0.0.1, sqlPort:42705, svrPort:42704}, info:obServerStatus{stopTime:0, status:ACTIVE}, role:obServerRole{name:FOLLOWER, index:2}, replicaType:ObReplicaType{name:FULL, index:0}}, "+
+		"obReplicaLocation{addr:ObServerAddr{ip:127.0.0.2, sqlPort:42707, svrPort:42706}, info:obServerStatus{stopTime:0, status:ACTIVE}, role:obServerRole{name:FOLLOWER, index:2}, replicaType:ObReplicaType{name:FULL, index:0}}, "+
+		"obReplicaLocation{addr:ObServerAddr{ip:127.0.0.3, sqlPort:42701, svrPort:42700}, info:obServerStatus{stopTime:0, status:ACTIVE}, role:obServerRole{name:LEADER, index:1}, replicaType:ObReplicaType{name:FULL, index:0}}]}")
 	println(entry.String())
 }
 
@@ -289,7 +287,7 @@ func TestGetTableEntryFromRemoteV4(t *testing.T) {
 
 	// 4.7 mock proxyPartitionLocationSql result
 	sql = proxyPartitionLocationSql
-	sql += CreateInStatement([]int{200005, 200006, 200007, 200008})
+	sql += createInStatement([]int{200005, 200006, 200007, 200008})
 	queryFields = []string{"tablet_id", "svr_ip", "sql_port", "table_id",
 		"role", "replica_num", "part_num", "svr_port", "status", "stop_time", "replica_type",
 	}
@@ -323,183 +321,73 @@ func TestGetTableEntryFromRemoteV4(t *testing.T) {
 	assert.Equal(t, entry.partNum, 4)
 	assert.Equal(t, entry.replicaNum, 3)
 	assert.Equal(t, entry.tableEntryKey, key)
-	assert.Equal(t, entry.partitionInfo.level, ObPartitionLevel{"partLevelTwo", PartLevelTwoIndex})
-	assert.Equal(t, entry.partitionInfo.firstPartDesc.String(), "ObRangePartDesc{"+
-		"comm:ObPartDescCommon{partFuncType:ObPartFuncType{name:RANGE_COLUMNS, index:4}, "+
+	assert.EqualValues(t, entry.partitionInfo.level, PartLevelTwo)
+	assert.Equal(t, entry.partitionInfo.firstPartDesc.String(), "obRangePartDesc{"+
+		"comm:obPartDescCommon{partFuncType:obPartFuncType{name:RANGE_COLUMNS, index:4}, "+
 		"partExpr:c1, orderedPartColumnNames:c1, orderedPartRefColumnRowKeyRelations:[], "+
-		"partColumns:[ObColumn{columnName:c1, index:0, objType:ObObjType{type:ObInt32Type}, "+
+		"partColumns:[obColumn{columnName:c1, index:0, objType:ObObjType{type:ObInt32Type}, "+
 		"collationType:ObCollationType{collationType:CsTypeBinary}, refColumnNames:[c1], "+
 		"isGenColumn:false, columnExpress:nil}, "+
-		"ObColumn{columnName:c2, index:1, objType:ObObjType{type:ObInt32Type}, "+
+		"obColumn{columnName:c2, index:1, objType:ObObjType{type:ObInt32Type}, "+
 		"collationType:ObCollationType{collationType:CsTypeBinary}, "+
 		"refColumnNames:[c2], isGenColumn:false, columnExpress:nil}], "+
 		"rowKeyElement:nil}, partSpace:0, partNum:2, "+
-		"orderedCompareColumns:[ObColumn{columnName:c1, index:0, "+
+		"orderedCompareColumns:[obColumn{columnName:c1, index:0, "+
 		"objType:ObObjType{type:ObInt32Type}, "+
 		"collationType:ObCollationType{collationType:CsTypeBinary}, "+
 		"refColumnNames:[c1], isGenColumn:false, columnExpress:nil}], "+
 		"orderedCompareColumnTypes:[ObObjType{type:ObInt64Type}]}")
-	assert.Equal(t, entry.partitionInfo.subPartDesc.String(), "ObHashPartDesc{"+
-		"comm:ObPartDescCommon{partFuncType:ObPartFuncType{name:HASH_V2, index:8}, "+
+	assert.Equal(t, entry.partitionInfo.subPartDesc.String(), "obHashPartDesc{"+
+		"comm:obPartDescCommon{partFuncType:obPartFuncType{name:HASH_V2, index:8}, "+
 		"partExpr:c2, orderedPartColumnNames:c2, orderedPartRefColumnRowKeyRelations:[], "+
-		"partColumns:[ObColumn{columnName:c1, index:0, objType:ObObjType{type:ObInt32Type}, "+
+		"partColumns:[obColumn{columnName:c1, index:0, objType:ObObjType{type:ObInt32Type}, "+
 		"collationType:ObCollationType{collationType:CsTypeBinary}, refColumnNames:[c1], "+
 		"isGenColumn:false, columnExpress:nil}, "+
-		"ObColumn{columnName:c2, index:1, objType:ObObjType{type:ObInt32Type}, "+
+		"obColumn{columnName:c2, index:1, objType:ObObjType{type:ObInt32Type}, "+
 		"collationType:ObCollationType{collationType:CsTypeBinary}, "+
 		"refColumnNames:[c2], isGenColumn:false, columnExpress:nil}], "+
 		"rowKeyElement:nil}, completeWorks:[], partSpace:0, partNum:2, "+
 		"partNameIdMap:{}}")
 	assert.Equal(t, entry.tableLocation.String(), "ObTableLocation{"+
 		"replicaLocations:["+
-		"ObReplicaLocation{addr:ObServerAddr{ip:127.0.0.1, sqlPort:42705, svrPort:42704}, "+
-		"info:ObServerInfo{stopTime:0, status:ACTIVE}, "+
-		"role:ObServerRole{name:FOLLOWER, index:2}, "+
+		"obReplicaLocation{addr:ObServerAddr{ip:127.0.0.1, sqlPort:42705, svrPort:42704}, "+
+		"info:obServerStatus{stopTime:0, status:ACTIVE}, "+
+		"role:obServerRole{name:FOLLOWER, index:2}, "+
 		"replicaType:ObReplicaType{name:FULL, index:0}}, "+
-		"ObReplicaLocation{addr:ObServerAddr{ip:127.0.0.2, sqlPort:42707, svrPort:42706}, "+
-		"info:ObServerInfo{stopTime:0, status:ACTIVE}, "+
-		"role:ObServerRole{name:FOLLOWER, index:2}, "+
+		"obReplicaLocation{addr:ObServerAddr{ip:127.0.0.2, sqlPort:42707, svrPort:42706}, "+
+		"info:obServerStatus{stopTime:0, status:ACTIVE}, "+
+		"role:obServerRole{name:FOLLOWER, index:2}, "+
 		"replicaType:ObReplicaType{name:FULL, index:0}}, "+
-		"ObReplicaLocation{addr:ObServerAddr{ip:127.0.0.3, sqlPort:42701, svrPort:42700}, "+
-		"info:ObServerInfo{stopTime:0, status:ACTIVE}, "+
-		"role:ObServerRole{name:LEADER, index:1}, "+
+		"obReplicaLocation{addr:ObServerAddr{ip:127.0.0.3, sqlPort:42701, svrPort:42700}, "+
+		"info:obServerStatus{stopTime:0, status:ACTIVE}, "+
+		"role:obServerRole{name:LEADER, index:1}, "+
 		"replicaType:ObReplicaType{name:FULL, index:0}}]}")
 	assert.Equal(t, len(entry.partLocationEntry.partLocations), 4)
-	assert.Equal(t, entry.partLocationEntry.partLocations[200005].String(), "ObPartitionLocation{"+
-		"leader:ObReplicaLocation{addr:ObServerAddr{ip:127.0.0.3, sqlPort:42701, svrPort:42700}, info:ObServerInfo{stopTime:0, status:ACTIVE}, role:ObServerRole{name:LEADER, index:1}, replicaType:ObReplicaType{name:FULL, index:0}}, "+
-		"replicas:[ObReplicaLocation{addr:ObServerAddr{ip:127.0.0.1, sqlPort:42705, svrPort:42704}, info:ObServerInfo{stopTime:0, status:ACTIVE}, role:ObServerRole{name:FOLLOWER, index:2}, replicaType:ObReplicaType{name:FULL, index:0}}, "+
-		"ObReplicaLocation{addr:ObServerAddr{ip:127.0.0.2, sqlPort:42707, svrPort:42706}, info:ObServerInfo{stopTime:0, status:ACTIVE}, role:ObServerRole{name:FOLLOWER, index:2}, replicaType:ObReplicaType{name:FULL, index:0}}, "+
-		"ObReplicaLocation{addr:ObServerAddr{ip:127.0.0.3, sqlPort:42701, svrPort:42700}, info:ObServerInfo{stopTime:0, status:ACTIVE}, role:ObServerRole{name:LEADER, index:1}, replicaType:ObReplicaType{name:FULL, index:0}}]}")
-	assert.Equal(t, entry.partLocationEntry.partLocations[200006].String(), "ObPartitionLocation{"+
-		"leader:ObReplicaLocation{addr:ObServerAddr{ip:127.0.0.3, sqlPort:42701, svrPort:42700}, info:ObServerInfo{stopTime:0, status:ACTIVE}, role:ObServerRole{name:LEADER, index:1}, replicaType:ObReplicaType{name:FULL, index:0}}, "+
-		"replicas:[ObReplicaLocation{addr:ObServerAddr{ip:127.0.0.1, sqlPort:42705, svrPort:42704}, info:ObServerInfo{stopTime:0, status:ACTIVE}, role:ObServerRole{name:FOLLOWER, index:2}, replicaType:ObReplicaType{name:FULL, index:0}}, "+
-		"ObReplicaLocation{addr:ObServerAddr{ip:127.0.0.2, sqlPort:42707, svrPort:42706}, info:ObServerInfo{stopTime:0, status:ACTIVE}, role:ObServerRole{name:FOLLOWER, index:2}, replicaType:ObReplicaType{name:FULL, index:0}}, "+
-		"ObReplicaLocation{addr:ObServerAddr{ip:127.0.0.3, sqlPort:42701, svrPort:42700}, info:ObServerInfo{stopTime:0, status:ACTIVE}, role:ObServerRole{name:LEADER, index:1}, replicaType:ObReplicaType{name:FULL, index:0}}]}")
-	assert.Equal(t, entry.partLocationEntry.partLocations[200007].String(), "ObPartitionLocation{"+
-		"leader:ObReplicaLocation{addr:ObServerAddr{ip:127.0.0.3, sqlPort:42701, svrPort:42700}, info:ObServerInfo{stopTime:0, status:ACTIVE}, role:ObServerRole{name:LEADER, index:1}, replicaType:ObReplicaType{name:FULL, index:0}}, "+
-		"replicas:[ObReplicaLocation{addr:ObServerAddr{ip:127.0.0.1, sqlPort:42705, svrPort:42704}, info:ObServerInfo{stopTime:0, status:ACTIVE}, role:ObServerRole{name:FOLLOWER, index:2}, replicaType:ObReplicaType{name:FULL, index:0}}, "+
-		"ObReplicaLocation{addr:ObServerAddr{ip:127.0.0.2, sqlPort:42707, svrPort:42706}, info:ObServerInfo{stopTime:0, status:ACTIVE}, role:ObServerRole{name:FOLLOWER, index:2}, replicaType:ObReplicaType{name:FULL, index:0}}, "+
-		"ObReplicaLocation{addr:ObServerAddr{ip:127.0.0.3, sqlPort:42701, svrPort:42700}, info:ObServerInfo{stopTime:0, status:ACTIVE}, role:ObServerRole{name:LEADER, index:1}, replicaType:ObReplicaType{name:FULL, index:0}}]}")
-	assert.Equal(t, entry.partLocationEntry.partLocations[200008].String(), "ObPartitionLocation{"+
-		"leader:ObReplicaLocation{addr:ObServerAddr{ip:127.0.0.3, sqlPort:42701, svrPort:42700}, info:ObServerInfo{stopTime:0, status:ACTIVE}, role:ObServerRole{name:LEADER, index:1}, replicaType:ObReplicaType{name:FULL, index:0}}, "+
-		"replicas:[ObReplicaLocation{addr:ObServerAddr{ip:127.0.0.1, sqlPort:42705, svrPort:42704}, info:ObServerInfo{stopTime:0, status:ACTIVE}, role:ObServerRole{name:FOLLOWER, index:2}, replicaType:ObReplicaType{name:FULL, index:0}}, "+
-		"ObReplicaLocation{addr:ObServerAddr{ip:127.0.0.2, sqlPort:42707, svrPort:42706}, info:ObServerInfo{stopTime:0, status:ACTIVE}, role:ObServerRole{name:FOLLOWER, index:2}, replicaType:ObReplicaType{name:FULL, index:0}}, "+
-		"ObReplicaLocation{addr:ObServerAddr{ip:127.0.0.3, sqlPort:42701, svrPort:42700}, info:ObServerInfo{stopTime:0, status:ACTIVE}, role:ObServerRole{name:LEADER, index:1}, replicaType:ObReplicaType{name:FULL, index:0}}]}")
+	assert.Equal(t, entry.partLocationEntry.partLocations[200005].String(), "obPartitionLocation{"+
+		"leader:obReplicaLocation{addr:ObServerAddr{ip:127.0.0.3, sqlPort:42701, svrPort:42700}, info:obServerStatus{stopTime:0, status:ACTIVE}, role:obServerRole{name:LEADER, index:1}, replicaType:ObReplicaType{name:FULL, index:0}}, "+
+		"replicas:[obReplicaLocation{addr:ObServerAddr{ip:127.0.0.1, sqlPort:42705, svrPort:42704}, info:obServerStatus{stopTime:0, status:ACTIVE}, role:obServerRole{name:FOLLOWER, index:2}, replicaType:ObReplicaType{name:FULL, index:0}}, "+
+		"obReplicaLocation{addr:ObServerAddr{ip:127.0.0.2, sqlPort:42707, svrPort:42706}, info:obServerStatus{stopTime:0, status:ACTIVE}, role:obServerRole{name:FOLLOWER, index:2}, replicaType:ObReplicaType{name:FULL, index:0}}, "+
+		"obReplicaLocation{addr:ObServerAddr{ip:127.0.0.3, sqlPort:42701, svrPort:42700}, info:obServerStatus{stopTime:0, status:ACTIVE}, role:obServerRole{name:LEADER, index:1}, replicaType:ObReplicaType{name:FULL, index:0}}]}")
+	assert.Equal(t, entry.partLocationEntry.partLocations[200006].String(), "obPartitionLocation{"+
+		"leader:obReplicaLocation{addr:ObServerAddr{ip:127.0.0.3, sqlPort:42701, svrPort:42700}, info:obServerStatus{stopTime:0, status:ACTIVE}, role:obServerRole{name:LEADER, index:1}, replicaType:ObReplicaType{name:FULL, index:0}}, "+
+		"replicas:[obReplicaLocation{addr:ObServerAddr{ip:127.0.0.1, sqlPort:42705, svrPort:42704}, info:obServerStatus{stopTime:0, status:ACTIVE}, role:obServerRole{name:FOLLOWER, index:2}, replicaType:ObReplicaType{name:FULL, index:0}}, "+
+		"obReplicaLocation{addr:ObServerAddr{ip:127.0.0.2, sqlPort:42707, svrPort:42706}, info:obServerStatus{stopTime:0, status:ACTIVE}, role:obServerRole{name:FOLLOWER, index:2}, replicaType:ObReplicaType{name:FULL, index:0}}, "+
+		"obReplicaLocation{addr:ObServerAddr{ip:127.0.0.3, sqlPort:42701, svrPort:42700}, info:obServerStatus{stopTime:0, status:ACTIVE}, role:obServerRole{name:LEADER, index:1}, replicaType:ObReplicaType{name:FULL, index:0}}]}")
+	assert.Equal(t, entry.partLocationEntry.partLocations[200007].String(), "obPartitionLocation{"+
+		"leader:obReplicaLocation{addr:ObServerAddr{ip:127.0.0.3, sqlPort:42701, svrPort:42700}, info:obServerStatus{stopTime:0, status:ACTIVE}, role:obServerRole{name:LEADER, index:1}, replicaType:ObReplicaType{name:FULL, index:0}}, "+
+		"replicas:[obReplicaLocation{addr:ObServerAddr{ip:127.0.0.1, sqlPort:42705, svrPort:42704}, info:obServerStatus{stopTime:0, status:ACTIVE}, role:obServerRole{name:FOLLOWER, index:2}, replicaType:ObReplicaType{name:FULL, index:0}}, "+
+		"obReplicaLocation{addr:ObServerAddr{ip:127.0.0.2, sqlPort:42707, svrPort:42706}, info:obServerStatus{stopTime:0, status:ACTIVE}, role:obServerRole{name:FOLLOWER, index:2}, replicaType:ObReplicaType{name:FULL, index:0}}, "+
+		"obReplicaLocation{addr:ObServerAddr{ip:127.0.0.3, sqlPort:42701, svrPort:42700}, info:obServerStatus{stopTime:0, status:ACTIVE}, role:obServerRole{name:LEADER, index:1}, replicaType:ObReplicaType{name:FULL, index:0}}]}")
+	assert.Equal(t, entry.partLocationEntry.partLocations[200008].String(), "obPartitionLocation{"+
+		"leader:obReplicaLocation{addr:ObServerAddr{ip:127.0.0.3, sqlPort:42701, svrPort:42700}, info:obServerStatus{stopTime:0, status:ACTIVE}, role:obServerRole{name:LEADER, index:1}, replicaType:ObReplicaType{name:FULL, index:0}}, "+
+		"replicas:[obReplicaLocation{addr:ObServerAddr{ip:127.0.0.1, sqlPort:42705, svrPort:42704}, info:obServerStatus{stopTime:0, status:ACTIVE}, role:obServerRole{name:FOLLOWER, index:2}, replicaType:ObReplicaType{name:FULL, index:0}}, "+
+		"obReplicaLocation{addr:ObServerAddr{ip:127.0.0.2, sqlPort:42707, svrPort:42706}, info:obServerStatus{stopTime:0, status:ACTIVE}, role:obServerRole{name:FOLLOWER, index:2}, replicaType:ObReplicaType{name:FULL, index:0}}, "+
+		"obReplicaLocation{addr:ObServerAddr{ip:127.0.0.3, sqlPort:42701, svrPort:42700}, info:obServerStatus{stopTime:0, status:ACTIVE}, role:obServerRole{name:LEADER, index:1}, replicaType:ObReplicaType{name:FULL, index:0}}]}")
 	println(entry.String())
 }
 
-func TestObUserAuth_ToString(t *testing.T) {
-	auth := ObUserAuth{}
-	assert.Equal(t, "ObUserAuth{userName:, password:}", auth.String())
-	auth = ObUserAuth{"testUserName", "testPassword"}
-	assert.Equal(t, "ObUserAuth{userName:testUserName, password:testPassword}", auth.String())
-}
-
-func TestObColumnIndexesPair_ToString(t *testing.T) {
-	pair := ObColumnIndexesPair{}
-	assert.Equal(t, "ObColumnIndexesPair{column:nil, indexes:[]}",
-		pair.String())
-	objType, _ := protocol.NewObObjType(1)
-	collType := protocol.NewObCollationType(63)
-	column := NewObSimpleColumn("testColumnName", 0, objType, collType)
-	pair = ObColumnIndexesPair{column, []int{1, 2, 3}}
-	assert.Equal(t, "ObColumnIndexesPair{"+
-		"column:ObColumn{"+
-		"columnName:testColumnName, "+
-		"index:0, "+
-		"objType:ObObjType{type:ObTinyIntType}, "+
-		"collationType:ObCollationType{collationType:CsTypeBinary}, "+
-		"refColumnNames:[testColumnName], "+
-		"isGenColumn:false, "+
-		"columnExpress:nil}, "+
-		"indexes:[1, 2, 3]}",
-		pair.String(),
-	)
-}
-
-func TestObPartDescCommon_ToString(t *testing.T) {
-	comm := ObPartDescCommon{}
-	assert.Equal(t, "ObPartDescCommon{"+
-		"partFuncType:ObPartFuncType{name:, index:0}, "+
-		"partExpr:, "+
-		"orderedPartColumnNames:, "+
-		"orderedPartRefColumnRowKeyRelations:[], "+
-		"partColumns:[], "+
-		"rowKeyElement:nil}",
-		comm.CommString(),
-	)
-	objType, _ := protocol.NewObObjType(1)
-	collType := protocol.NewObCollationType(63)
-	column := NewObSimpleColumn("testColumnName", 0, objType, collType)
-	pair := &ObColumnIndexesPair{column, []int{0}}
-	partFuncType := newObPartFuncType(partFuncTypeHashIndex)
-	partExpr := "c1, c2"
-	orderedPartColumnNames := []string{"c1", "c2"}
-	orderedPartRefColumnRowKeyRelations := []*ObColumnIndexesPair{pair}
-	partColumns := []*ObColumn{column}
-	nameIdxMap := make(map[string]int, 3)
-	nameIdxMap["c1"] = 0
-	rowKeyElement := table.NewObRowKeyElement(nameIdxMap)
-	comm = ObPartDescCommon{PartFuncType: partFuncType,
-		PartExpr:                            partExpr,
-		OrderedPartColumnNames:              orderedPartColumnNames,
-		OrderedPartRefColumnRowKeyRelations: orderedPartRefColumnRowKeyRelations,
-		PartColumns:                         partColumns,
-		RowKeyElement:                       rowKeyElement,
-	}
-	assert.Equal(t, "ObPartDescCommon{"+
-		"partFuncType:ObPartFuncType{name:HASH, index:0}, "+
-		"partExpr:c1, c2, "+
-		"orderedPartColumnNames:c1,c2, "+
-		"orderedPartRefColumnRowKeyRelations:[ObColumnIndexesPair{column:ObColumn{columnName:testColumnName, index:0, objType:ObObjType{type:ObTinyIntType}, collationType:ObCollationType{collationType:CsTypeBinary}, refColumnNames:[testColumnName], isGenColumn:false, columnExpress:nil}, indexes:[0]}], "+
-		"partColumns:[ObColumn{columnName:testColumnName, index:0, objType:ObObjType{type:ObTinyIntType}, collationType:ObCollationType{collationType:CsTypeBinary}, refColumnNames:[testColumnName], isGenColumn:false, columnExpress:nil}], "+
-		"rowKeyElement:ObRowKeyElement{nameIdxMap:{m[c1]=0}}}",
-		comm.CommString(),
-	)
-}
-
-func TestObRangePartDesc_ToString(t *testing.T) {
-	desc := ObRangePartDesc{}
-	assert.Equal(t, "ObRangePartDesc{"+
-		"comm:ObPartDescCommon{partFuncType:ObPartFuncType{name:, index:0}, partExpr:, orderedPartColumnNames:, orderedPartRefColumnRowKeyRelations:[], partColumns:[], rowKeyElement:nil}, partSpace:0, partNum:0, "+
-		"orderedCompareColumns:[], "+
-		"orderedCompareColumnTypes:[]}",
-		desc.String(),
-	)
-	objType, _ := protocol.NewObObjType(1)
-	collType := protocol.NewObCollationType(63)
-	column := NewObSimpleColumn("testColumnName", 0, objType, collType)
-	pair := &ObColumnIndexesPair{column, []int{0}}
-	partFuncType := newObPartFuncType(partFuncTypeRangeIndex)
-	partExpr := "c1, c2"
-	orderedPartColumnNames := []string{"c1", "c2"}
-	orderedPartRefColumnRowKeyRelations := []*ObColumnIndexesPair{pair}
-	partColumns := []*ObColumn{column}
-	nameIdxMap := make(map[string]int, 3)
-	nameIdxMap["c1"] = 0
-	rowKeyElement := table.NewObRowKeyElement(nameIdxMap)
-	desc = ObRangePartDesc{
-		partNum:                   10,
-		partSpace:                 0,
-		orderedCompareColumns:     []*ObColumn{column, column},
-		orderedCompareColumnTypes: []protocol.ObObjType{objType, objType},
-	}
-	desc.PartFuncType = partFuncType
-	desc.PartExpr = partExpr
-	desc.OrderedPartColumnNames = orderedPartColumnNames
-	desc.OrderedPartRefColumnRowKeyRelations = orderedPartRefColumnRowKeyRelations
-	desc.PartColumns = partColumns
-	desc.RowKeyElement = rowKeyElement
-	assert.Equal(t, "ObRangePartDesc{"+
-		"comm:ObPartDescCommon{partFuncType:ObPartFuncType{name:RANGE, index:3}, partExpr:c1, c2, orderedPartColumnNames:c1,c2, orderedPartRefColumnRowKeyRelations:[ObColumnIndexesPair{column:ObColumn{columnName:testColumnName, index:0, objType:ObObjType{type:ObTinyIntType}, collationType:ObCollationType{collationType:CsTypeBinary}, refColumnNames:[testColumnName], isGenColumn:false, columnExpress:nil}, indexes:[0]}], partColumns:[ObColumn{columnName:testColumnName, index:0, objType:ObObjType{type:ObTinyIntType}, collationType:ObCollationType{collationType:CsTypeBinary}, refColumnNames:[testColumnName], isGenColumn:false, columnExpress:nil}], rowKeyElement:ObRowKeyElement{nameIdxMap:{m[c1]=0}}}, partSpace:0, partNum:10, "+
-		"orderedCompareColumns:[ObColumn{columnName:testColumnName, index:0, objType:ObObjType{type:ObTinyIntType}, collationType:ObCollationType{collationType:CsTypeBinary}, refColumnNames:[testColumnName], isGenColumn:false, columnExpress:nil}, ObColumn{columnName:testColumnName, index:0, objType:ObObjType{type:ObTinyIntType}, collationType:ObCollationType{collationType:CsTypeBinary}, refColumnNames:[testColumnName], isGenColumn:false, columnExpress:nil}], "+
-		"orderedCompareColumnTypes:[ObObjType{type:ObTinyIntType}, ObObjType{type:ObTinyIntType}]}",
-		desc.String(),
-	)
-}
-
 func TestObHashPartDesc_GetPartId(t *testing.T) {
-	desc := &ObHashPartDesc{}
+	desc := &obHashPartDesc{}
 	partId, err := desc.GetPartId(nil)
 	assert.NotEqual(t, nil, err)
 	assert.EqualValues(t, ObInvalidPartId, partId)
@@ -508,405 +396,17 @@ func TestObHashPartDesc_GetPartId(t *testing.T) {
 	assert.EqualValues(t, ObInvalidPartId, partId)
 }
 
-func TestObHashPartDesc_ToString(t *testing.T) {
-	desc := &ObHashPartDesc{}
-	assert.Equal(t, "ObHashPartDesc{comm:ObPartDescCommon{partFuncType:ObPartFuncType{name:, index:0}, partExpr:, orderedPartColumnNames:, orderedPartRefColumnRowKeyRelations:[], partColumns:[], rowKeyElement:nil}, "+
-		"completeWorks:[], "+
-		"partSpace:0, "+
-		"partNum:0, "+
-		"partNameIdMap:{}}",
-		desc.String(),
-	)
-	objType, _ := protocol.NewObObjType(1)
-	collType := protocol.NewObCollationType(63)
-	column := NewObSimpleColumn("testColumnName", 0, objType, collType)
-	pair := &ObColumnIndexesPair{column, []int{0}}
-	partFuncType := newObPartFuncType(partFuncTypeHashIndex)
-	partExpr := "c1, c2"
-	orderedPartColumnNames := []string{"c1", "c2"}
-	orderedPartRefColumnRowKeyRelations := []*ObColumnIndexesPair{pair}
-	partColumns := []*ObColumn{column}
-	nameIdxMap := make(map[string]int, 3)
-	nameIdxMap["c1"] = 0
-	rowKeyElement := table.NewObRowKeyElement(nameIdxMap)
-	partNameIdMap := make(map[string]int64)
-	partNameIdMap["p0"] = 0
-	desc = &ObHashPartDesc{
-		completeWorks: []int64{1, 2, 3},
-		partSpace:     0,
-		partNum:       10,
-		partNameIdMap: partNameIdMap,
-	}
-	desc.PartFuncType = partFuncType
-	desc.PartExpr = partExpr
-	desc.OrderedPartColumnNames = orderedPartColumnNames
-	desc.OrderedPartRefColumnRowKeyRelations = orderedPartRefColumnRowKeyRelations
-	desc.PartColumns = partColumns
-	desc.RowKeyElement = rowKeyElement
-	assert.Equal(t, "ObHashPartDesc{"+
-		"comm:ObPartDescCommon{partFuncType:ObPartFuncType{name:HASH, index:0}, partExpr:c1, c2, orderedPartColumnNames:c1,c2, orderedPartRefColumnRowKeyRelations:[ObColumnIndexesPair{column:ObColumn{columnName:testColumnName, index:0, objType:ObObjType{type:ObTinyIntType}, collationType:ObCollationType{collationType:CsTypeBinary}, refColumnNames:[testColumnName], isGenColumn:false, columnExpress:nil}, indexes:[0]}], partColumns:[ObColumn{columnName:testColumnName, index:0, objType:ObObjType{type:ObTinyIntType}, collationType:ObCollationType{collationType:CsTypeBinary}, refColumnNames:[testColumnName], isGenColumn:false, columnExpress:nil}], rowKeyElement:ObRowKeyElement{nameIdxMap:{m[c1]=0}}}, "+
-		"completeWorks:[1, 2, 3], "+
-		"partSpace:0, "+
-		"partNum:10, "+
-		"partNameIdMap:{m[p0]=0}}",
-		desc.String(),
-	)
-}
-
 func TestObHashPartDesc_innerHash(t *testing.T) {
-	hashDesc := ObHashPartDesc{partSpace: 0, partNum: 10}
+	hashDesc := obHashPartDesc{partSpace: 0, partNum: 10}
 	hashVal := hashDesc.innerHash(0)
 	assert.Equal(t, int64(0), hashVal)
-	hashDesc = ObHashPartDesc{partSpace: 0, partNum: 10}
+	hashDesc = obHashPartDesc{partSpace: 0, partNum: 10}
 	hashVal = hashDesc.innerHash(1)
 	assert.Equal(t, int64(1), hashVal)
 	hashVal = hashDesc.innerHash(11)
 	assert.Equal(t, int64(1), hashVal)
 	hashVal = hashDesc.innerHash(-1)
 	assert.Equal(t, int64(1), hashVal)
-}
-
-func TestObKeyPartDesc_ToString(t *testing.T) {
-	desc := ObKeyPartDesc{}
-	assert.Equal(t, "ObKeyPartDesc{comm:ObPartDescCommon{partFuncType:ObPartFuncType{name:, index:0}, partExpr:, orderedPartColumnNames:, orderedPartRefColumnRowKeyRelations:[], partColumns:[], rowKeyElement:nil}, "+
-		"partSpace:0, "+
-		"partNum:0, "+
-		"partNameIdMap:{}}",
-		desc.String(),
-	)
-	objType, _ := protocol.NewObObjType(1)
-	collType := protocol.NewObCollationType(63)
-	column := NewObSimpleColumn("testColumnName", 0, objType, collType)
-	pair := &ObColumnIndexesPair{column, []int{0}}
-	partFuncType := newObPartFuncType(partFuncTypeKeyV2Index)
-	partExpr := "c1, c2"
-	orderedPartColumnNames := []string{"c1", "c2"}
-	orderedPartRefColumnRowKeyRelations := []*ObColumnIndexesPair{pair}
-	partColumns := []*ObColumn{column}
-	nameIdxMap := make(map[string]int, 3)
-	nameIdxMap["c1"] = 0
-	rowKeyElement := table.NewObRowKeyElement(nameIdxMap)
-	partNameIdMap := make(map[string]int64)
-	partNameIdMap["p0"] = 0
-	desc = ObKeyPartDesc{
-		partSpace:     0,
-		partNum:       10,
-		partNameIdMap: partNameIdMap,
-	}
-	desc.PartFuncType = partFuncType
-	desc.PartExpr = partExpr
-	desc.OrderedPartColumnNames = orderedPartColumnNames
-	desc.OrderedPartRefColumnRowKeyRelations = orderedPartRefColumnRowKeyRelations
-	desc.PartColumns = partColumns
-	desc.RowKeyElement = rowKeyElement
-	assert.Equal(t, "ObKeyPartDesc{"+
-		"comm:ObPartDescCommon{partFuncType:ObPartFuncType{name:KEY_V2, index:6}, partExpr:c1, c2, orderedPartColumnNames:c1,c2, orderedPartRefColumnRowKeyRelations:[ObColumnIndexesPair{column:ObColumn{columnName:testColumnName, index:0, objType:ObObjType{type:ObTinyIntType}, collationType:ObCollationType{collationType:CsTypeBinary}, refColumnNames:[testColumnName], isGenColumn:false, columnExpress:nil}, indexes:[0]}], partColumns:[ObColumn{columnName:testColumnName, index:0, objType:ObObjType{type:ObTinyIntType}, collationType:ObCollationType{collationType:CsTypeBinary}, refColumnNames:[testColumnName], isGenColumn:false, columnExpress:nil}], rowKeyElement:ObRowKeyElement{nameIdxMap:{m[c1]=0}}}, "+
-		"partSpace:0, "+
-		"partNum:10, "+
-		"partNameIdMap:{m[p0]=0}}",
-		desc.String(),
-	)
-}
-
-func TestObPartitionLevel_ToString(t *testing.T) {
-	level := ObPartitionLevel{}
-	assert.Equal(t, "ObPartitionLevel{name:, index:0}", level.String())
-	level = newObPartitionLevel(PartLevelZeroIndex)
-	assert.Equal(t, "ObPartitionLevel{name:partLevelZero, index:0}", level.String())
-	level = newObPartitionLevel(PartLevelOneIndex)
-	assert.Equal(t, "ObPartitionLevel{name:partLevelOne, index:1}", level.String())
-	level = newObPartitionLevel(PartLevelTwoIndex)
-	assert.Equal(t, "ObPartitionLevel{name:partLevelTwo, index:2}", level.String())
-	level = newObPartitionLevel(PartLevelUnknownIndex)
-	assert.Equal(t, "ObPartitionLevel{name:partLevelUnknown, index:-1}", level.String())
-
-}
-
-func TestObPartFuncType_ToString(t *testing.T) {
-	part := ObPartFuncType{}
-	assert.Equal(t, "ObPartFuncType{name:, index:0}", part.String())
-	part = newObPartFuncType(partFuncTypeHashIndex)
-	assert.Equal(t, "ObPartFuncType{name:HASH, index:0}", part.String())
-	part = newObPartFuncType(partFuncTypeKeyIndex)
-	assert.Equal(t, "ObPartFuncType{name:KEY, index:1}", part.String())
-	part = newObPartFuncType(partFuncTypeKeyImplIndex)
-	assert.Equal(t, "ObPartFuncType{name:KEY_IMPLICIT, index:2}", part.String())
-	part = newObPartFuncType(partFuncTypeRangeIndex)
-	assert.Equal(t, "ObPartFuncType{name:RANGE, index:3}", part.String())
-	part = newObPartFuncType(partFuncTypeRangeColIndex)
-	assert.Equal(t, "ObPartFuncType{name:RANGE_COLUMNS, index:4}", part.String())
-	part = newObPartFuncType(partFuncTypeListIndex)
-	assert.Equal(t, "ObPartFuncType{name:LIST, index:5}", part.String())
-	part = newObPartFuncType(partFuncTypeKeyV2Index)
-	assert.Equal(t, "ObPartFuncType{name:KEY_V2, index:6}", part.String())
-	part = newObPartFuncType(partFuncTypeListColIndex)
-	assert.Equal(t, "ObPartFuncType{name:LIST_COLUMNS, index:7}", part.String())
-	part = newObPartFuncType(partFuncTypeHashV2Index)
-	assert.Equal(t, "ObPartFuncType{name:HASH_V2, index:8}", part.String())
-	part = newObPartFuncType(partFuncTypeKeyV3Index)
-	assert.Equal(t, "ObPartFuncType{name:KEY_V3, index:9}", part.String())
-	part = newObPartFuncType(partFuncTypeUnknownIndex)
-	assert.Equal(t, "ObPartFuncType{name:UNKNOWN, index:-1}", part.String())
-}
-
-func TestObServerAddr_ToString(t *testing.T) {
-	addr := ObServerAddr{}
-	assert.Equal(t, "ObServerAddr{ip:, sqlPort:0, svrPort:0}", addr.String())
-	addr = ObServerAddr{"127.0.0.1", 8080, 1227}
-	assert.Equal(t, "ObServerAddr{ip:127.0.0.1, sqlPort:8080, svrPort:1227}", addr.String())
-}
-
-func TestObServerInfo_ToString(t *testing.T) {
-	info := ObServerInfo{}
-	assert.Equal(t, "ObServerInfo{stopTime:0, status:}", info.String())
-	info = ObServerInfo{0, "Active"}
-	assert.Equal(t, info.IsActive(), true)
-	assert.Equal(t, "ObServerInfo{stopTime:0, status:Active}", info.String())
-}
-
-func TestObServerRole_ToString(t *testing.T) {
-	role := ObServerRole{}
-	assert.Equal(t, "ObServerRole{name:, index:0}", role.String())
-	role = newObServerRole(ServerRoleLeaderIndex)
-	assert.Equal(t, "ObServerRole{name:LEADER, index:1}", role.String())
-	role = newObServerRole(ServerRoleFollowerIndex)
-	assert.Equal(t, "ObServerRole{name:FOLLOWER, index:2}", role.String())
-	role = newObServerRole(ServerRoleInvalidIndex)
-	assert.Equal(t, "ObServerRole{name:INVALID_ROLE, index:-1}", role.String())
-}
-
-func TestObReplicaType_ToString(t *testing.T) {
-	replica := ObReplicaType{}
-	assert.Equal(t, "ObReplicaType{name:, index:0}", replica.String())
-	replica = newObReplicaType(ReplicaTypeFullIndex)
-	assert.Equal(t, "ObReplicaType{name:FULL, index:0}", replica.String())
-	replica = newObReplicaType(ReplicaTypeLogOnlyIndex)
-	assert.Equal(t, "ObReplicaType{name:LOGONLY, index:5}", replica.String())
-	replica = newObReplicaType(ReplicaTypeReadOnlyIndex)
-	assert.Equal(t, "ObReplicaType{name:READONLY, index:16}", replica.String())
-	replica = newObReplicaType(ReplicaTypeInvalidIndex)
-	assert.Equal(t, "ObReplicaType{name:INVALID, index:-1}", replica.String())
-}
-
-func TestObReplicaLocation_ToString(t *testing.T) {
-	replica := ObReplicaLocation{}
-	assert.Equal(t, "ObReplicaLocation{"+
-		"addr:ObServerAddr{ip:, sqlPort:0, svrPort:0}, "+
-		"info:ObServerInfo{stopTime:0, status:}, "+
-		"role:ObServerRole{name:, index:0}, "+
-		"replicaType:ObReplicaType{name:, index:0}}",
-		replica.String(),
-	)
-	replica = ObReplicaLocation{
-		ObServerAddr{"127.0.0.1", 8080, 1227},
-		ObServerInfo{0, "Active"},
-		newObServerRole(ServerRoleLeaderIndex),
-		newObReplicaType(ReplicaTypeFullIndex),
-	}
-	assert.Equal(t, "ObReplicaLocation{"+
-		"addr:ObServerAddr{ip:127.0.0.1, sqlPort:8080, svrPort:1227}, "+
-		"info:ObServerInfo{stopTime:0, status:Active}, "+
-		"role:ObServerRole{name:LEADER, index:1}, "+
-		"replicaType:ObReplicaType{name:FULL, index:0}}",
-		replica.String(),
-	)
-}
-
-func TestObTableLocation_ToString(t *testing.T) {
-	loc := ObTableLocation{}
-	assert.Equal(t, "ObTableLocation{replicaLocations:[]}", loc.String())
-	replica := &ObReplicaLocation{
-		ObServerAddr{"127.0.0.1", 8080, 1227},
-		ObServerInfo{0, "Active"},
-		newObServerRole(ServerRoleLeaderIndex),
-		newObReplicaType(ReplicaTypeFullIndex),
-	}
-	loc = ObTableLocation{[]*ObReplicaLocation{replica, replica}}
-	assert.Equal(t, "ObTableLocation{"+
-		"replicaLocations:["+
-		"ObReplicaLocation{"+
-		"addr:ObServerAddr{ip:127.0.0.1, sqlPort:8080, svrPort:1227}, "+
-		"info:ObServerInfo{stopTime:0, status:Active}, "+
-		"role:ObServerRole{name:LEADER, index:1}, "+
-		"replicaType:ObReplicaType{name:FULL, index:0}}, "+
-		"ObReplicaLocation{"+
-		"addr:ObServerAddr{ip:127.0.0.1, sqlPort:8080, svrPort:1227}, "+
-		"info:ObServerInfo{stopTime:0, status:Active}, "+
-		"role:ObServerRole{name:LEADER, index:1}, "+
-		"replicaType:ObReplicaType{name:FULL, index:0}}]}", loc.String(),
-	)
-}
-
-func TestObPartitionInfo_ToString(t *testing.T) {
-	info := ObPartitionInfo{}
-	assert.Equal(t, "ObPartitionInfo{"+
-		"level:ObPartitionLevel{name:, index:0}, "+
-		"firstPartDesc:nil, "+
-		"subPartDesc:nil, "+
-		"partColumns:[], "+
-		"partTabletIdMap:{}, "+
-		"partNameIdMap:{}}",
-		info.String(),
-	)
-	level := newObPartitionLevel(PartLevelZeroIndex)
-	objType, _ := protocol.NewObObjType(1)
-	collType := protocol.NewObCollationType(63)
-	column := NewObSimpleColumn("testColumnName", 0, objType, collType)
-	pair := &ObColumnIndexesPair{column, []int{0}}
-	partFuncType := newObPartFuncType(partFuncTypeHashIndex)
-	partExpr := "c1, c2"
-	orderedPartColumnNames := []string{"c1", "c2"}
-	orderedPartRefColumnRowKeyRelations := []*ObColumnIndexesPair{pair}
-	partColumns := []*ObColumn{column}
-	nameIdxMap := make(map[string]int, 3)
-	nameIdxMap["c1"] = 0
-	rowKeyElement := table.NewObRowKeyElement(nameIdxMap)
-	partNameIdMap := make(map[string]int64)
-	partNameIdMap["p0"] = 0
-	desc := &ObHashPartDesc{
-		completeWorks: []int64{1, 2, 3},
-		partSpace:     0,
-		partNum:       10,
-		partNameIdMap: partNameIdMap,
-	}
-	desc.PartFuncType = partFuncType
-	desc.PartExpr = partExpr
-	desc.OrderedPartColumnNames = orderedPartColumnNames
-	desc.OrderedPartRefColumnRowKeyRelations = orderedPartRefColumnRowKeyRelations
-	desc.PartColumns = partColumns
-	desc.RowKeyElement = rowKeyElement
-	partTabletIdMap := make(map[int64]int64)
-	partTabletIdMap[0] = 500021
-	info = ObPartitionInfo{
-		level:           level,
-		firstPartDesc:   desc,
-		subPartDesc:     desc,
-		partColumns:     partColumns,
-		partTabletIdMap: partTabletIdMap,
-		partNameIdMap:   partNameIdMap,
-	}
-	assert.Equal(t, "ObPartitionInfo{"+
-		"level:ObPartitionLevel{name:partLevelZero, index:0}, "+
-		"firstPartDesc:ObHashPartDesc{comm:ObPartDescCommon{partFuncType:ObPartFuncType{name:HASH, index:0}, partExpr:c1, c2, orderedPartColumnNames:c1,c2, orderedPartRefColumnRowKeyRelations:[ObColumnIndexesPair{column:ObColumn{columnName:testColumnName, index:0, objType:ObObjType{type:ObTinyIntType}, collationType:ObCollationType{collationType:CsTypeBinary}, refColumnNames:[testColumnName], isGenColumn:false, columnExpress:nil}, indexes:[0]}], partColumns:[ObColumn{columnName:testColumnName, index:0, objType:ObObjType{type:ObTinyIntType}, collationType:ObCollationType{collationType:CsTypeBinary}, refColumnNames:[testColumnName], isGenColumn:false, columnExpress:nil}], rowKeyElement:ObRowKeyElement{nameIdxMap:{m[c1]=0}}}, completeWorks:[1, 2, 3], partSpace:0, partNum:10, partNameIdMap:{m[p0]=0}}, "+
-		"subPartDesc:ObHashPartDesc{comm:ObPartDescCommon{partFuncType:ObPartFuncType{name:HASH, index:0}, partExpr:c1, c2, orderedPartColumnNames:c1,c2, orderedPartRefColumnRowKeyRelations:[ObColumnIndexesPair{column:ObColumn{columnName:testColumnName, index:0, objType:ObObjType{type:ObTinyIntType}, collationType:ObCollationType{collationType:CsTypeBinary}, refColumnNames:[testColumnName], isGenColumn:false, columnExpress:nil}, indexes:[0]}], partColumns:[ObColumn{columnName:testColumnName, index:0, objType:ObObjType{type:ObTinyIntType}, collationType:ObCollationType{collationType:CsTypeBinary}, refColumnNames:[testColumnName], isGenColumn:false, columnExpress:nil}], rowKeyElement:ObRowKeyElement{nameIdxMap:{m[c1]=0}}}, completeWorks:[1, 2, 3], partSpace:0, partNum:10, partNameIdMap:{m[p0]=0}}, "+
-		"partColumns:[ObColumn{columnName:testColumnName, index:0, objType:ObObjType{type:ObTinyIntType}, collationType:ObCollationType{collationType:CsTypeBinary}, refColumnNames:[testColumnName], isGenColumn:false, columnExpress:nil}], "+
-		"partTabletIdMap:{m[0]=500021}, "+
-		"partNameIdMap:{m[p0]=0}}",
-		info.String(),
-	)
-}
-
-func TestObPartitionLocation_ToString(t *testing.T) {
-	loc := ObPartitionLocation{}
-	assert.Equal(t, "ObPartitionLocation{"+
-		"leader:ObReplicaLocation{addr:ObServerAddr{ip:, sqlPort:0, svrPort:0}, info:ObServerInfo{stopTime:0, status:}, role:ObServerRole{name:, index:0}, replicaType:ObReplicaType{name:, index:0}}, "+
-		"replicas:[]}",
-		loc.String(),
-	)
-	leader := ObReplicaLocation{
-		ObServerAddr{"127.0.0.1", 8080, 1227},
-		ObServerInfo{0, "Active"},
-		newObServerRole(ServerRoleLeaderIndex),
-		newObReplicaType(ReplicaTypeFullIndex),
-	}
-	follower := ObReplicaLocation{
-		ObServerAddr{"127.0.0.1", 8080, 1227},
-		ObServerInfo{0, "Active"},
-		newObServerRole(ServerRoleLeaderIndex),
-		newObReplicaType(ReplicaTypeFullIndex),
-	}
-	loc = ObPartitionLocation{
-		leader,
-		[]ObReplicaLocation{follower, follower},
-	}
-	assert.Equal(t, "ObPartitionLocation{"+
-		"leader:ObReplicaLocation{addr:ObServerAddr{ip:127.0.0.1, sqlPort:8080, svrPort:1227}, info:ObServerInfo{stopTime:0, status:Active}, role:ObServerRole{name:LEADER, index:1}, replicaType:ObReplicaType{name:FULL, index:0}}, "+
-		"replicas:[ObReplicaLocation{addr:ObServerAddr{ip:127.0.0.1, sqlPort:8080, svrPort:1227}, info:ObServerInfo{stopTime:0, status:Active}, role:ObServerRole{name:LEADER, index:1}, replicaType:ObReplicaType{name:FULL, index:0}}, ObReplicaLocation{addr:ObServerAddr{ip:127.0.0.1, sqlPort:8080, svrPort:1227}, info:ObServerInfo{stopTime:0, status:Active}, role:ObServerRole{name:LEADER, index:1}, replicaType:ObReplicaType{name:FULL, index:0}}]}",
-		loc.String(),
-	)
-}
-
-func TestObPartLocationEntry_ToString(t *testing.T) {
-	entry := ObPartLocationEntry{}
-	assert.Equal(t, "ObPartLocationEntry{partLocations:{}}", entry.String())
-	loc := ObPartitionLocation{}
-	m := make(map[int64]*ObPartitionLocation, 2)
-	m[0] = &loc
-	entry = ObPartLocationEntry{m}
-	assert.Equal(t, "ObPartLocationEntry{"+
-		"partLocations:{m[0]=ObPartitionLocation{leader:ObReplicaLocation{addr:ObServerAddr{ip:, sqlPort:0, svrPort:0}, info:ObServerInfo{stopTime:0, status:}, role:ObServerRole{name:, index:0}, replicaType:ObReplicaType{name:, index:0}}, replicas:[]}}}",
-		entry.String(),
-	)
-	m[1] = nil // test null pointer
-	assert.Equal(t, 274, len(entry.String()))
-}
-
-func TestObTableEntryKey_ToString(t *testing.T) {
-	key := ObTableEntryKey{}
-	assert.Equal(t, "ObTableEntryKey{clusterName:, tenantNane:, databaseName:, tableName:}", key.String())
-	key = ObTableEntryKey{
-		"testClusterName",
-		"testTenantNane",
-		"testDatabaseName",
-		"testTableName",
-	}
-	assert.Equal(t, "ObTableEntryKey{"+
-		"clusterName:testClusterName, "+
-		"tenantNane:testDatabaseName, "+
-		"databaseName:testDatabaseName, "+
-		"tableName:testTableName}",
-		key.String(),
-	)
-}
-
-func TestObTableEntry_ToString(t *testing.T) {
-	entry := ObTableEntry{}
-	assert.Equal(t, "ObTableEntry{"+
-		"tableId:0, "+
-		"partNum:0, "+
-		"replicaNum:0, "+
-		"refreshTimeMills:0, "+
-		"tableEntryKey:ObTableEntryKey{clusterName:, tenantNane:, databaseName:, tableName:}, "+
-		"partitionInfo:nil, "+
-		"tableLocation:nil, "+
-		"partitionEntry:nil}",
-		entry.String(),
-	)
-}
-
-func TestObServerRoster_ToString(t *testing.T) {
-	r := ObServerRoster{}
-	assert.Equal(t, r.String(), "ObServerRoster{maxPriority:0, roster:[]}")
-	addr := NewObServerAddr("127.0.0.1", 8000, 8080)
-	roster := make([]*ObServerAddr, 4)
-	roster = append(roster, addr)
-	roster = append(roster, addr)
-	roster = append(roster, addr)
-	r = ObServerRoster{roster: roster}
-	r.maxPriority.Store(1)
-	assert.Equal(t, r.String(), "ObServerRoster{maxPriority:1, "+
-		"roster:[nil, nil, nil, nil, "+
-		"ObServerAddr{ip:127.0.0.1, sqlPort:8000, svrPort:8080}, "+
-		"ObServerAddr{ip:127.0.0.1, sqlPort:8000, svrPort:8080}, "+
-		"ObServerAddr{ip:127.0.0.1, sqlPort:8000, svrPort:8080}]}")
-}
-
-func TestObServerRoute_ToString(t *testing.T) {
-	r := ObServerRoute{}
-	assert.Equal(t, r.String(), "ObServerRoute{readConsistency:0}")
-	r = ObServerRoute{ObReadConsistencyStrong}
-	assert.Equal(t, r.String(), "ObServerRoute{readConsistency:0}")
-	r = ObServerRoute{ObReadConsistencyWeak}
-	assert.Equal(t, r.String(), "ObServerRoute{readConsistency:1}")
-}
-
-func TestHash64a(t *testing.T) {
-	result := MurmurHash64A([]byte{1}, len([]byte{1}), int64(0))
-	assert.Equal(t, int64(-5720937396023583481), result)
-	result = MurmurHash64A([]byte{1}, len([]byte{1}), int64(1))
-	assert.Equal(t, int64(6351753276682545529), result)
-	result = MurmurHash64A([]byte{1, 2, 3}, len([]byte{1, 2, 3}), int64(123456789))
-	assert.Equal(t, int64(-4356950700900923028), result)
 }
 
 func TestHashSortUtf8Mb4(t *testing.T) {

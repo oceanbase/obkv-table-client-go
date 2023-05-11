@@ -10,58 +10,53 @@ import (
 	"github.com/oceanbase/obkv-table-client-go/table"
 )
 
-type ObRangePartDesc struct {
-	ObPartDescCommon
+type obRangePartDesc struct {
+	obPartDescCommon
 	partSpace                 int
 	partNum                   int
-	orderedCompareColumns     []*ObColumn
+	orderedCompareColumns     []*obColumn
 	orderedCompareColumnTypes []protocol.ObObjType
-	// todo: List<ObComparableKV<ObPartitionKey, Long>> bounds
 }
 
-func newObRangePartDesc() *ObRangePartDesc {
-	return &ObRangePartDesc{}
+func newObRangePartDesc() *obRangePartDesc {
+	return &obRangePartDesc{}
 }
 
-func (d *ObRangePartDesc) partFuncType() ObPartFuncType {
+func (d *obRangePartDesc) partFuncType() obPartFuncType {
 	return d.PartFuncType
 }
 
-func (d *ObRangePartDesc) orderedPartColumnNames() []string {
+func (d *obRangePartDesc) orderedPartColumnNames() []string {
 	return d.OrderedPartColumnNames
 }
 
-func (d *ObRangePartDesc) setOrderedPartColumnNames(partExpr string) {
+func (d *obRangePartDesc) setOrderedPartColumnNames(partExpr string) {
 	// eg:"c1, c2", need to remove ' '
 	str := strings.ReplaceAll(partExpr, " ", "")
 	d.OrderedPartColumnNames = strings.Split(str, ",")
 }
 
-func (d *ObRangePartDesc) orderedPartRefColumnRowKeyRelations() []*ObColumnIndexesPair {
+func (d *obRangePartDesc) orderedPartRefColumnRowKeyRelations() []*obColumnIndexesPair {
 	return d.OrderedPartRefColumnRowKeyRelations
 }
-func (d *ObRangePartDesc) rowKeyElement() *table.ObRowKeyElement {
+func (d *obRangePartDesc) rowKeyElement() *table.ObRowKeyElement {
 	return d.RowKeyElement
 }
 
-func (d *ObRangePartDesc) setRowKeyElement(rowKeyElement *table.ObRowKeyElement) {
+func (d *obRangePartDesc) setRowKeyElement(rowKeyElement *table.ObRowKeyElement) {
 	d.setCommRowKeyElement(rowKeyElement)
 }
 
-func (d *ObRangePartDesc) setPartColumns(partColumns []*ObColumn) {
+func (d *obRangePartDesc) setPartColumns(partColumns []*obColumn) {
 	d.PartColumns = partColumns
 }
 
-func (d *ObRangePartDesc) GetPartId(rowKey []interface{}) (int64, error) {
+func (d *obRangePartDesc) GetPartId(rowKey []interface{}) (int64, error) {
 	// todo: impl
 	return ObInvalidPartId, errors.New("not implement")
 }
 
-// func (d *ObRangePartDesc) setOrderedCompareColumns(orderedPartColumn []protocol.ObColumn) {
-//	d.orderedCompareColumns = orderedPartColumn
-// }
-
-func (d *ObRangePartDesc) String() string {
+func (d *obRangePartDesc) String() string {
 	// orderedCompareColumns to string
 	var orderedCompareColumnsStr string
 	orderedCompareColumnsStr = orderedCompareColumnsStr + "["
@@ -84,7 +79,7 @@ func (d *ObRangePartDesc) String() string {
 	}
 	orderedCompareColumnTypesStr += "]"
 
-	return "ObRangePartDesc{" +
+	return "obRangePartDesc{" +
 		"comm:" + d.CommString() + ", " +
 		"partSpace:" + strconv.Itoa(d.partSpace) + ", " +
 		"partNum:" + strconv.Itoa(d.partNum) + ", " +

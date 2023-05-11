@@ -1,6 +1,7 @@
 package client
 
 import (
+	"context"
 	"strconv"
 	"sync"
 
@@ -179,7 +180,7 @@ func (b *obBatchExecutor) partitionExecute(
 	return nil
 }
 
-func (b *obBatchExecutor) Execute() (BatchOperationResult, error) {
+func (b *obBatchExecutor) Execute(ctx context.Context) (BatchOperationResult, error) {
 	if b.cli == nil {
 		log.Warn("client handle is nil")
 		return nil, errors.New("client handle is nil")

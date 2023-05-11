@@ -1,6 +1,9 @@
 package client
 
-import "github.com/oceanbase/obkv-table-client-go/table"
+import (
+	"context"
+	"github.com/oceanbase/obkv-table-client-go/table"
+)
 
 type BatchExecutor interface {
 	AddInsertOp(rowKey []*table.Column, mutateValues []*table.Column, opts ...ObkvOption) error
@@ -11,5 +14,5 @@ type BatchExecutor interface {
 	AddAppendOp(rowKey []*table.Column, mutateValues []*table.Column, opts ...ObkvOption) error
 	AddDeleteOp(rowKey []*table.Column, opts ...ObkvOption) error
 	AddGetOp(rowKey []*table.Column, getColumns []string, opts ...ObkvOption) error
-	Execute() (BatchOperationResult, error)
+	Execute(ctx context.Context) (BatchOperationResult, error)
 }

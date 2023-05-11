@@ -17,16 +17,16 @@ const (
 	ObSubPartIdMask = 0xffffffff & 0xfffffff
 )
 
-type ObColumnIndexesPair struct {
-	column  *ObColumn
+type obColumnIndexesPair struct {
+	column  *obColumn
 	indexes []int
 }
 
-func NewObColumnIndexesPair(column *ObColumn, indexes []int) *ObColumnIndexesPair {
-	return &ObColumnIndexesPair{column, indexes}
+func NewObColumnIndexesPair(column *obColumn, indexes []int) *obColumnIndexesPair {
+	return &obColumnIndexesPair{column, indexes}
 }
 
-func (p *ObColumnIndexesPair) String() string {
+func (p *obColumnIndexesPair) String() string {
 	columnStr := "nil"
 	if p.column != nil {
 		columnStr = p.column.String()
@@ -40,34 +40,34 @@ func (p *ObColumnIndexesPair) String() string {
 		indexesStr += strconv.Itoa(p.indexes[i])
 	}
 	indexesStr += "]"
-	return "ObColumnIndexesPair{" +
+	return "obColumnIndexesPair{" +
 		"column:" + columnStr + ", " +
 		"indexes:" + indexesStr +
 		"}"
 }
 
-type ObPartDescCommon struct {
-	PartFuncType ObPartFuncType
+type obPartDescCommon struct {
+	PartFuncType obPartFuncType
 	PartExpr     string
 	// orderedPartColumnNames Represents all partitioned column names
 	// eg:
 	//    partition by range(c1, c2)
 	//    orderedPartColumnNames = ["c1", "c2"]
 	OrderedPartColumnNames              []string
-	OrderedPartRefColumnRowKeyRelations []*ObColumnIndexesPair
-	PartColumns                         []*ObColumn
+	OrderedPartRefColumnRowKeyRelations []*obColumnIndexesPair
+	PartColumns                         []*obColumn
 	RowKeyElement                       *table.ObRowKeyElement
 }
 
-func (c *ObPartDescCommon) setCommRowKeyElement(rowKeyElement *table.ObRowKeyElement) {
+func (c *obPartDescCommon) setCommRowKeyElement(rowKeyElement *table.ObRowKeyElement) {
 	c.RowKeyElement = rowKeyElement
 	if len(c.OrderedPartColumnNames) != 0 && len(c.PartColumns) != 0 {
-		relations := make([]*ObColumnIndexesPair, 0, len(c.OrderedPartColumnNames))
+		relations := make([]*obColumnIndexesPair, 0, len(c.OrderedPartColumnNames))
 		for _, partOrderColumnName := range c.OrderedPartColumnNames {
 			for _, col := range c.PartColumns {
-				if strings.EqualFold(col.ColumnName(), partOrderColumnName) {
-					partRefColumnRowKeyIndexes := make([]int, 0, len(col.RefColumnNames()))
-					for _, refColumnName := range col.RefColumnNames() {
+				if strings.EqualFold(col.columnName, partOrderColumnName) {
+					partRefColumnRowKeyIndexes := make([]int, 0, len(col.refColumnNames))
+					for _, refColumnName := range col.refColumnNames {
 						for rowKeyElementName, index := range c.RowKeyElement.NameIdxMap() {
 							if strings.EqualFold(rowKeyElementName, refColumnName) {
 								partRefColumnRowKeyIndexes = append(partRefColumnRowKeyIndexes, index)
@@ -83,7 +83,7 @@ func (c *ObPartDescCommon) setCommRowKeyElement(rowKeyElement *table.ObRowKeyEle
 	}
 }
 
-func (c *ObPartDescCommon) CommString() string {
+func (c *obPartDescCommon) CommString() string {
 	// orderedPartRefColumnRowKeyRelations to string
 	var relationsStr string
 	relationsStr = relationsStr + "["
@@ -112,8 +112,8 @@ func (c *ObPartDescCommon) CommString() string {
 		rowKeyElementStr = c.RowKeyElement.String()
 	}
 
-	return "ObPartDescCommon{" +
-		"partFuncType:" + c.PartFuncType.String() + ", " +
+	return "obPartDescCommon{" +
+		"partFuncType:" + strconv.Itoa(int(c.PartFuncType)) + ", " +
 		"partExpr:" + c.PartExpr + ", " +
 		"orderedPartColumnNames:" + strings.Join(c.OrderedPartColumnNames, ",") + ", " +
 		"orderedPartRefColumnRowKeyRelations:" + relationsStr + ", " +
@@ -122,19 +122,19 @@ func (c *ObPartDescCommon) CommString() string {
 		"}"
 }
 
-type ObPartDesc interface {
+type obPartDesc interface {
 	String() string
-	partFuncType() ObPartFuncType
+	partFuncType() obPartFuncType
 	orderedPartColumnNames() []string
 	setOrderedPartColumnNames(partExpr string)
-	orderedPartRefColumnRowKeyRelations() []*ObColumnIndexesPair
+	orderedPartRefColumnRowKeyRelations() []*obColumnIndexesPair
 	rowKeyElement() *table.ObRowKeyElement
 	setRowKeyElement(rowKeyElement *table.ObRowKeyElement)
-	setPartColumns(partColumns []*ObColumn)
+	setPartColumns(partColumns []*obColumn)
 	GetPartId(rowKey []interface{}) (int64, error)
 }
 
-func evalPartKeyValues(desc ObPartDesc, rowKey []interface{}) ([]interface{}, error) {
+func evalPartKeyValues(desc obPartDesc, rowKey []interface{}) ([]interface{}, error) {
 	if desc == nil {
 		log.Warn("part desc is nil")
 		return nil, errors.New("part desc is nil")
