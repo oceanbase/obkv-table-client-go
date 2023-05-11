@@ -1,33 +1,26 @@
-package client
+package test
 
 import (
 	"context"
-	"testing"
-
-	"github.com/stretchr/testify/assert"
-
-	"github.com/oceanbase/obkv-table-client-go/config"
 	"github.com/oceanbase/obkv-table-client-go/table"
+	"github.com/stretchr/testify/assert"
+	"testing"
+)
+
+const (
+	batchOpTable = "CREATE TABLE IF NOT EXISTS batchOpTable(`c1` bigint(20) NOT NULL, c2 bigint(20) NOT NULL, PRIMARY KEY (`c1`)) PARTITION BY HASH(c1) PARTITIONS 2;"
 )
 
 func TestBatch(t *testing.T) {
-	// CREATE TABLE test(c1 INT, c2 int) PARTITION BY hash(c1) partitions 2;
-	const (
-		configUrl    = "xxx"
-		fullUserName = "xxx"
-		passWord     = ""
-		sysUserName  = "root"
-		sysPassWord  = ""
-		tableName    = "test"
-	)
+	tableName := "batchOpTable"
+	cli := newClient()
+	createTable(batchOpTable)
+	defer func() {
+		dropTable(tableName)
+	}()
 
-	cfg := config.NewDefaultClientConfig()
-	cli, err := NewClient(configUrl, fullUserName, passWord, sysUserName, sysPassWord, cfg)
+	err := cli.AddRowKey(tableName, []string{"c1"})
 	assert.Equal(t, nil, err)
-
-	err = cli.AddRowKey(tableName, []string{"c1"})
-	assert.Equal(t, nil, err)
-	batchExecutor := cli.NewBatchExecutor(tableName)
 
 	rowKey1 := []*table.Column{table.NewColumn("c1", int64(1))}
 	rowKey2 := []*table.Column{table.NewColumn("c1", int64(2))}
@@ -36,6 +29,7 @@ func TestBatch(t *testing.T) {
 	mutateColumns1 := []*table.Column{table.NewColumn("c2", int64(1))}
 	mutateColumns2 := []*table.Column{table.NewColumn("c2", int64(2))}
 
+	batchExecutor := cli.NewBatchExecutor(tableName)
 	err = batchExecutor.AddInsertOp(rowKey1, mutateColumns1)
 	assert.Equal(t, nil, err)
 	err = batchExecutor.AddInsertOp(rowKey2, mutateColumns2)
