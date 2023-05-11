@@ -315,7 +315,7 @@ func (c *ObClient) execute(
 	}
 
 	if oberror.ObErrorCode(result.Header().ErrorNo()) != oberror.ObSuccess {
-		return result, oberror.NewProtocolError(
+		return nil, oberror.NewProtocolError(
 			tableParam.table.ip,
 			tableParam.table.port,
 			oberror.ObErrorCode(result.Header().ErrorNo()),
