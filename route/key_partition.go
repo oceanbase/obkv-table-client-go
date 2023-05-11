@@ -188,8 +188,6 @@ func (d *obKeyPartDesc) varcharHash(
 		bytes = []byte(v)
 	} else if v, ok := value.([]byte); ok {
 		bytes = v
-	} else if v, ok := value.(protocol.ObBytesString); ok {
-		bytes = v.BytesVal()
 	} else {
 		log.Warn("invalid varchar", log.String("value", util.InterfaceToString(value)))
 		return -1, errors.New("invalid varchar value for calc hash value")

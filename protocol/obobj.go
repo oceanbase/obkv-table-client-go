@@ -3,11 +3,12 @@ package protocol
 import (
 	"bytes"
 	"errors"
-	"github.com/oceanbase/obkv-table-client-go/log"
-	"github.com/oceanbase/obkv-table-client-go/util"
 	"math"
 	"strconv"
 	"time"
+
+	"github.com/oceanbase/obkv-table-client-go/log"
+	"github.com/oceanbase/obkv-table-client-go/util"
 )
 
 type ObObjMeta struct {
@@ -55,13 +56,6 @@ func ParseToLong(obj interface{}) (interface{}, error) {
 			return nil, err
 		}
 		return int64(i), nil
-	} else if v, ok := obj.(ObVString); ok {
-		i, err := strconv.Atoi(v.stringVal)
-		if err != nil {
-			log.Warn("failed to convert ObVString to int", log.String("obj", v.String()))
-			return nil, err
-		}
-		return int64(i), nil
 	} else if v, ok := obj.(int64); ok {
 		return v, nil
 	} else if v, ok := obj.(int); ok {
@@ -91,14 +85,10 @@ func parseTimestamp(obj interface{}) (time.Time, error) {
 
 func parseTextToComparable(obj interface{}, csType ObCollationType) (interface{}, error) {
 	if csType.value == CsTypeBinary {
-		if v, ok := obj.(ObBytesString); ok {
-			return v, nil
-		} else if v, ok := obj.([]byte); ok {
-			return *newObBytesString(v), nil
+		if v, ok := obj.([]byte); ok {
+			return string(v), nil
 		} else if v, ok := obj.(string); ok {
-			return *newObBytesStringFromString(v), nil
-		} else if v, ok := obj.(ObVString); ok {
-			return *newObBytesString(v.bytesVal), nil
+			return v, nil
 		} else {
 			log.Warn("unexpected type")
 			return nil, errors.New("unexpected obj type")
@@ -106,16 +96,10 @@ func parseTextToComparable(obj interface{}, csType ObCollationType) (interface{}
 	} else {
 		if v, ok := obj.(string); ok {
 			return v, nil
-		} else if _, ok := obj.(ObBytesString); ok {
-			// todo:impl
-			//return Serialization.decodeVString(((ObBytesString) object).bytes);
-			return nil, errors.New("need impl Serialization.decodeVString")
 		} else if _, ok := obj.([]byte); ok {
 			// todo:impl
-			//return Serialization.decodeVString(((ObBytesString) object).bytes);
+			// return Serialization.decodeVString(((ObBytesString) object).bytes);
 			return nil, errors.New("need impl Serialization.decodeVString")
-		} else if v, ok := obj.(ObVString); ok {
-			return *newObBytesStringFromString(v.stringVal), nil
 		} else {
 			log.Warn("unexpected type")
 			return nil, errors.New("unexpected obj type")
@@ -838,13 +822,6 @@ func (t ObFloatType) ParseToComparable(obj interface{}, csType ObCollationType) 
 			return nil, err
 		}
 		return float32(f), nil
-	} else if v, ok := obj.(ObVString); ok {
-		f, err := strconv.ParseFloat(v.stringVal, 32)
-		if err != nil {
-			log.Warn("failed to convert string to float", log.String("obj", v.stringVal))
-			return nil, err
-		}
-		return float32(f), nil
 	} else {
 		log.Warn("unexpected type")
 		return nil, errors.New("unexpected type")
@@ -895,13 +872,6 @@ func (t ObDoubleType) ParseToComparable(obj interface{}, csType ObCollationType)
 		f, err := strconv.ParseFloat(v, 64)
 		if err != nil {
 			log.Warn("failed to convert string to float64", log.String("obj", v))
-			return nil, err
-		}
-		return f, nil
-	} else if v, ok := obj.(ObVString); ok {
-		f, err := strconv.ParseFloat(v.stringVal, 64)
-		if err != nil {
-			log.Warn("failed to convert string to float64", log.String("obj", v.stringVal))
 			return nil, err
 		}
 		return f, nil
