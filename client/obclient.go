@@ -174,6 +174,28 @@ func (c *ObClient) Insert(
 	return res.AffectedRows(), nil
 }
 
+func (c *ObClient) Update(
+	ctx context.Context,
+	tableName string,
+	rowKey []*table.Column,
+	mutateColumns []*table.Column,
+	opts ...ObkvOption) (int64, error) {
+	res, err := c.execute(
+		tableName,
+		protocol.Update,
+		rowKey,
+		mutateColumns,
+		opts...)
+	if err != nil {
+		log.Warn("failed to execute update",
+			log.String("tableName", tableName),
+			log.String("rowKey", table.ColumnsToString(rowKey)),
+			log.String("mutateColumns", table.ColumnsToString(mutateColumns)))
+		return -1, err
+	}
+	return res.AffectedRows(), nil
+}
+
 func (c *ObClient) InsertOrUpdate(
 	ctx context.Context,
 	tableName string,
