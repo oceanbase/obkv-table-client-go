@@ -4,7 +4,7 @@ import (
 	"strconv"
 )
 
-func CreateInStatement(values []int) string {
+func createInStatement(values []int) string {
 	// Create inStatement "(0,1,2...partNum);".
 	var inStatement string
 	inStatement += "("
@@ -18,7 +18,7 @@ func CreateInStatement(values []int) string {
 	return inStatement
 }
 
-func MurmurHash64A(data []byte, length int, seed int64) int64 {
+func murmurHash64A(data []byte, length int, seed int64) int64 {
 	const (
 		m = 0xc6a4a7935bd1e995
 		r = 47
@@ -26,18 +26,18 @@ func MurmurHash64A(data []byte, length int, seed int64) int64 {
 	var k int64
 	h := seed ^ int64(uint64(length)*m)
 
-	var ubigm uint64 = m
-	var ibigm = int64(ubigm)
+	var um uint64 = m
+	var im = int64(um)
 	for l := length; l >= 8; l -= 8 {
 		k = int64(int64(data[0]) | int64(data[1])<<8 | int64(data[2])<<16 | int64(data[3])<<24 |
 			int64(data[4])<<32 | int64(data[5])<<40 | int64(data[6])<<48 | int64(data[7])<<56)
 
-		k := k * ibigm
+		k := k * im
 		k ^= int64(uint64(k) >> r)
-		k = k * ibigm
+		k = k * im
 
 		h = h ^ k
-		h = h * ibigm
+		h = h * im
 		data = data[8:]
 	}
 
@@ -62,11 +62,11 @@ func MurmurHash64A(data []byte, length int, seed int64) int64 {
 		fallthrough
 	case 1:
 		h ^= int64(data[0])
-		h *= ibigm
+		h *= im
 	}
 
 	h ^= int64(uint64(h) >> r)
-	h *= ibigm
+	h *= im
 	h ^= int64(uint64(h) >> r)
 	return h
 }

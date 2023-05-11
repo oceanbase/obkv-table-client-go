@@ -1,16 +1,20 @@
 package route
 
 import (
+	"github.com/stretchr/testify/assert"
 	"strconv"
 	"testing"
 )
 
 func TestNewDB(t *testing.T) {
-	db, err := NewDB(testUserName, testPassword, testIp, strconv.Itoa(testSqlPort), testDatabase)
-	if err != nil {
-		panic(err)
-	}
-	defer func() {
-		_ = db.Close()
-	}()
+	const (
+		testUserName = "root"
+		testPassword = "::::"
+		testIp       = "127.0.0.1"
+		testSqlPort  = 41101
+		testDatabase = "test"
+	)
+
+	_, err := NewDB(testUserName, testPassword, testIp, strconv.Itoa(testSqlPort), testDatabase)
+	assert.NotEqual(t, nil, err)
 }

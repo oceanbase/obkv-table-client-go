@@ -1,7 +1,6 @@
 package protocol
 
 import (
-	"github.com/oceanbase/obkv-table-client-go/route"
 	"github.com/stretchr/testify/assert"
 	"testing"
 	"time"
@@ -43,33 +42,6 @@ func TestObCollationLevel_ToString(t *testing.T) {
 	assert.Equal(t, "ObCollationLevel{collationLevel:csLevelIgnorable}", level.String())
 	level = newObCollationLevel(csLevelInvalid)
 	assert.Equal(t, "ObCollationLevel{collationLevel:csLevelInvalid}", level.String())
-}
-
-func TestObColumn_ToString(t *testing.T) {
-	column := &route.ObColumn{}
-	assert.Equal(t, "ObColumn{"+
-		"columnName:, "+
-		"index:0, "+
-		"objType:nil, "+
-		"collationType:ObCollationType{collationType:CsTypeInvalid}, "+
-		"refColumnNames:[], "+
-		"isGenColumn:false, "+
-		"columnExpress:nil}",
-		column.String(),
-	)
-	objType, _ := NewObObjType(1)
-	collType := NewObCollationType(63)
-	column = route.NewObSimpleColumn("testColumnName", 0, objType, collType)
-	assert.Equal(t, "ObColumn{"+
-		"columnName:testColumnName, "+
-		"index:0, "+
-		"objType:ObObjType{type:ObTinyIntType}, "+
-		"collationType:ObCollationType{collationType:CsTypeBinary}, "+
-		"refColumnNames:[testColumnName], "+
-		"isGenColumn:false, "+
-		"columnExpress:nil}",
-		column.String(),
-	)
 }
 
 func TestObObjMeta_ToString(t *testing.T) {

@@ -8,29 +8,12 @@ import (
 	"strings"
 )
 
-func NewObGeneratedColumn(
+func newObSimpleColumn(
 	columnName string,
 	index int,
 	objType protocol.ObObjType,
-	collType protocol.ObCollationType,
-	columnExpress ObGeneratedColumnSimpleFunc) *ObColumn {
-	return &ObColumn{
-		columnName:     columnName,
-		index:          index,
-		objType:        objType,
-		collationType:  collType,
-		refColumnNames: columnExpress.getRefColumnNames(),
-		isGenColumn:    true,
-		columnExpress:  columnExpress,
-	}
-}
-
-func NewObSimpleColumn(
-	columnName string,
-	index int,
-	objType protocol.ObObjType,
-	collType protocol.ObCollationType) *ObColumn {
-	return &ObColumn{
+	collType protocol.ObCollationType) *obColumn {
+	return &obColumn{
 		columnName:     columnName,
 		index:          index,
 		objType:        objType,
@@ -41,7 +24,7 @@ func NewObSimpleColumn(
 	}
 }
 
-type ObColumn struct {
+type obColumn struct {
 	columnName    string
 	index         int
 	objType       protocol.ObObjType
@@ -53,26 +36,10 @@ type ObColumn struct {
 	//					   refColumnNames = ["col_normal"]
 	refColumnNames []string
 	isGenColumn    bool
-	columnExpress  ObGeneratedColumnSimpleFunc // only support 'SUBSTRING' expr now
+	columnExpress  obGeneratedColumnSimpleFunc // only support 'SUBSTRING' expr now
 }
 
-func (c *ObColumn) CollationType() protocol.ObCollationType {
-	return c.collationType
-}
-
-func (c *ObColumn) ObjType() protocol.ObObjType {
-	return c.objType
-}
-
-func (c *ObColumn) RefColumnNames() []string {
-	return c.refColumnNames
-}
-
-func (c *ObColumn) ColumnName() string {
-	return c.columnName
-}
-
-func (c *ObColumn) EvalValue(refs ...interface{}) (interface{}, error) {
+func (c *obColumn) EvalValue(refs ...interface{}) (interface{}, error) {
 	if !c.isGenColumn {
 		if len(refs) == 0 || len(refs) > 1 {
 			log.Warn("simple column is refer to itself so that the length of the refs must be 1",
@@ -91,7 +58,7 @@ func (c *ObColumn) EvalValue(refs ...interface{}) (interface{}, error) {
 	}
 }
 
-func (c *ObColumn) String() string {
+func (c *obColumn) String() string {
 	// isGenColumn to string
 	var isGenColumnStr string
 	if c.isGenColumn {
@@ -115,7 +82,7 @@ func (c *ObColumn) String() string {
 	} else {
 		columnExpressStr = "nil"
 	}
-	return "ObColumn{" +
+	return "obColumn{" +
 		"columnName:" + c.columnName + ", " +
 		"index:" + strconv.Itoa(c.index) + ", " +
 		"objType:" + objTypeStr + ", " +

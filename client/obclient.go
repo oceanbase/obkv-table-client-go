@@ -34,7 +34,7 @@ type ObClient struct {
 	tableMutexes       sync.Map // map[tableName]sync.RWMutex
 	tableLocations     sync.Map // map[tableName]*route.ObTableEntry
 	tableRoster        sync.Map
-	serverRoster       route.ObServerRoster
+	serverRoster       obServerRoster
 	tableRowKeyElement map[string]*table.ObRowKeyElement
 
 	lastRefreshMetadataTimestamp atomic.Int64
@@ -318,7 +318,7 @@ func (c *ObClient) getTableParam(
 			log.String("entry", entry.String()))
 		return nil, err
 	}
-	t, err := c.getTable(tableName, entry, partId)
+	t, err := c.getTable(entry, partId)
 	if err != nil {
 		log.Warn("failed to get table",
 			log.String("tableName", tableName),
@@ -600,11 +600,11 @@ func (c *ObClient) fetchMetadata() error {
 	replicaLocations := entry.TableLocation().ReplicaLocations()
 	servers := make([]*route.ObServerAddr, 0, len(replicaLocations))
 	for _, replicaLoc := range replicaLocations {
-		info := replicaLoc.Info()
+		svrStatus := replicaLoc.SvrStatus()
 		addr := replicaLoc.Addr()
-		if !info.IsActive() {
+		if !svrStatus.IsActive() {
 			log.Warn("server is not active",
-				log.String("server info", info.String()),
+				log.String("server info", svrStatus.String()),
 				log.String("server addr", addr.String()))
 			continue
 		}
@@ -656,13 +656,13 @@ func (c *ObClient) fetchMetadata() error {
 
 // get partition id by rowKey
 func (c *ObClient) getPartitionId(entry *route.ObTableEntry, rowKeyValue []interface{}) (int64, error) {
-	if !entry.IsPartitionTable() || entry.PartitionInfo().Level().Index() == route.PartLevelZeroIndex {
+	if !entry.IsPartitionTable() || entry.PartitionInfo().Level() == route.PartLevelZero {
 		return 0, nil
 	}
-	if entry.PartitionInfo().Level().Index() == route.PartLevelOneIndex {
+	if entry.PartitionInfo().Level() == route.PartLevelOne {
 		return entry.PartitionInfo().FirstPartDesc().GetPartId(rowKeyValue)
 	}
-	if entry.PartitionInfo().Level().Index() == route.PartLevelTwoIndex {
+	if entry.PartitionInfo().Level() == route.PartLevelTwo {
 		partId1, err := entry.PartitionInfo().FirstPartDesc().GetPartId(rowKeyValue)
 		if err != nil {
 			log.Warn("failed to get part id from first part desc",
@@ -675,18 +675,15 @@ func (c *ObClient) getPartitionId(entry *route.ObTableEntry, rowKeyValue []inter
 				log.String("sub part desc", entry.PartitionInfo().SubPartDesc().String()))
 			return -1, err
 		}
-		return (int64(partId1) << route.ObPartIdShift) | partId2 | route.ObMask, nil
+		return (partId1)<<route.ObPartIdShift | partId2 | route.ObMask, nil
 	}
 	log.Warn("unknown partition level", log.String("part info", entry.PartitionInfo().String()))
 	return -1, errors.New("unknown partition level")
 }
 
-func (c *ObClient) getTable(
-	tableName string,
-	entry *route.ObTableEntry,
-	partId int64) (*ObTable, error) {
+func (c *ObClient) getTable(entry *route.ObTableEntry, partId int64) (*ObTable, error) {
 	// 1. Get replica location by partition id
-	replicaLoc, err := entry.GetPartitionReplicaLocation(partId, route.NewObServerRoute(false))
+	replicaLoc, err := entry.GetPartitionReplicaLocation(partId, route.ConsistencyStrong)
 	if err != nil {
 		log.Warn("failed to get partition replica location", log.Int64("partId", partId))
 		return nil, err

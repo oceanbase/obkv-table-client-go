@@ -1,10 +1,10 @@
 package route
 
 type ObTableLocation struct {
-	replicaLocations []*ObReplicaLocation
+	replicaLocations []*obReplicaLocation
 }
 
-func (l *ObTableLocation) ReplicaLocations() []*ObReplicaLocation {
+func (l *ObTableLocation) ReplicaLocations() []*obReplicaLocation {
 	return l.replicaLocations
 }
 

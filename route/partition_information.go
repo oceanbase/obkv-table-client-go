@@ -9,24 +9,33 @@ import (
 	"github.com/oceanbase/obkv-table-client-go/table"
 )
 
-type ObPartitionInfo struct {
-	level           ObPartitionLevel
-	firstPartDesc   ObPartDesc
-	subPartDesc     ObPartDesc
-	partColumns     []*ObColumn
+type obPartLevel int
+
+const (
+	PartLevelUnknown obPartLevel = -1
+	PartLevelZero    obPartLevel = 0
+	PartLevelOne     obPartLevel = 1
+	PartLevelTwo     obPartLevel = 2
+)
+
+type obPartitionInfo struct {
+	level           obPartLevel
+	firstPartDesc   obPartDesc
+	subPartDesc     obPartDesc
+	partColumns     []*obColumn
 	partTabletIdMap map[int64]int64
 	partNameIdMap   map[string]int64
 }
 
-func (p *ObPartitionInfo) SubPartDesc() ObPartDesc {
+func (p *obPartitionInfo) SubPartDesc() obPartDesc {
 	return p.subPartDesc
 }
 
-func (p *ObPartitionInfo) FirstPartDesc() ObPartDesc {
+func (p *obPartitionInfo) FirstPartDesc() obPartDesc {
 	return p.firstPartDesc
 }
 
-func (p *ObPartitionInfo) GetTabletId(partId int64) (int64, error) {
+func (p *obPartitionInfo) GetTabletId(partId int64) (int64, error) {
 	if p.partTabletIdMap == nil {
 		log.Warn("partTabletIdMap is nil")
 		return 0, errors.New("partTabletIdMap is nil")
@@ -34,11 +43,11 @@ func (p *ObPartitionInfo) GetTabletId(partId int64) (int64, error) {
 	return p.partTabletIdMap[partId], nil
 }
 
-func (p *ObPartitionInfo) Level() ObPartitionLevel {
+func (p *obPartitionInfo) Level() obPartLevel {
 	return p.level
 }
 
-func (p *ObPartitionInfo) setRowKeyElement(rowKeyElement *table.ObRowKeyElement) {
+func (p *obPartitionInfo) setRowKeyElement(rowKeyElement *table.ObRowKeyElement) {
 	if p.firstPartDesc != nil {
 		p.firstPartDesc.setRowKeyElement(rowKeyElement)
 	}
@@ -47,7 +56,7 @@ func (p *ObPartitionInfo) setRowKeyElement(rowKeyElement *table.ObRowKeyElement)
 	}
 }
 
-func (p *ObPartitionInfo) String() string {
+func (p *obPartitionInfo) String() string {
 	// partColumns to string
 	var partColumnsStr string
 	partColumnsStr = partColumnsStr + "["
@@ -101,8 +110,8 @@ func (p *ObPartitionInfo) String() string {
 		subPartDescStr = "nil"
 	}
 
-	return "ObPartitionInfo{" +
-		"level:" + p.level.String() + ", " +
+	return "obPartitionInfo{" +
+		"level:" + strconv.Itoa(int(p.level)) + ", " +
 		"firstPartDesc:" + firstPartDescStr + ", " +
 		"subPartDesc:" + subPartDescStr + ", " +
 		"partColumns:" + partColumnsStr + ", " +
