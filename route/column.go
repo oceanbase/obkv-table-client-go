@@ -1,11 +1,12 @@
 package route
 
 import (
-	"errors"
-	"github.com/oceanbase/obkv-table-client-go/log"
-	"github.com/oceanbase/obkv-table-client-go/protocol"
 	"strconv"
 	"strings"
+
+	"github.com/pkg/errors"
+
+	"github.com/oceanbase/obkv-table-client-go/protocol"
 )
 
 func newObSimpleColumn(
@@ -42,18 +43,15 @@ type obColumn struct {
 func (c *obColumn) EvalValue(refs ...interface{}) (interface{}, error) {
 	if !c.isGenColumn {
 		if len(refs) == 0 || len(refs) > 1 {
-			log.Warn("simple column is refer to itself so that the length of the refs must be 1",
-				log.Int("refs len", len(refs)))
-			return nil, errors.New("simple column is refer to itself so that the length of the refs must be 1")
+			return nil, errors.Errorf("simple column is refer to itself "+
+				"so that the length of the refs must be 1, len:%d", len(refs))
 		}
 		return c.objType.ParseToComparable(refs[0], c.collationType)
 	} else {
 		if len(refs) != len(c.refColumnNames) {
-			log.Warn("input refs count is not equal to refColumnNames count when column is generate column",
-				log.Int("refs len", len(refs)), log.Int("refColumnNames len", len(c.refColumnNames)))
-			return nil, errors.New("input refs count is not equal to refColumnNames count when column is generate column")
+			return nil, errors.Errorf("input refs count is not equal to refColumnNames count "+
+				"when column is generate column, refs len:%d, refColumnNames len:%d", len(refs), len(c.refColumnNames))
 		}
-		// todo: impl generate column
 		return nil, errors.New("not support generate column now")
 	}
 }

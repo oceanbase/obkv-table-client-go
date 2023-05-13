@@ -6,7 +6,6 @@ import (
 
 	"github.com/pkg/errors"
 
-	"github.com/oceanbase/obkv-table-client-go/log"
 	"github.com/oceanbase/obkv-table-client-go/protocol"
 	"github.com/oceanbase/obkv-table-client-go/table"
 )
@@ -54,22 +53,18 @@ func (d *obHashPartDesc) setPartColumns(partColumns []*obColumn) {
 
 func (d *obHashPartDesc) GetPartId(rowKey []interface{}) (int64, error) {
 	if len(rowKey) == 0 {
-		log.Warn("rowKey size is 0")
 		return ObInvalidPartId, errors.New("rowKey size is 0")
 	}
 	evalValues, err := evalPartKeyValues(d, rowKey)
 	if err != nil {
-		log.Warn("failed to eval part key values", log.String("part desc", d.String()))
-		return ObInvalidPartId, err
+		return ObInvalidPartId, errors.WithMessagef(err, "eval partition key value, partDesc:%s", d.String())
 	}
 	longValue, err := protocol.ParseToLong(evalValues[0]) // hash part has one param at most
 	if err != nil {
-		log.Warn("failed to parse to long", log.String("part desc", d.String()))
-		return ObInvalidPartId, err
+		return ObInvalidPartId, errors.WithMessagef(err, "parse long, partDesc:%s", d.String())
 	}
 	if v, ok := longValue.(int64); !ok {
-		log.Warn("failed to convert to long")
-		return ObInvalidPartId, errors.New("failed to convert to long")
+		return ObInvalidPartId, errors.Errorf("failed to convert to long, value:%T", longValue)
 	} else {
 		return d.innerHash(v), nil
 	}

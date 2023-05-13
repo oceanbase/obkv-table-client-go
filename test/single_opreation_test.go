@@ -2,9 +2,11 @@ package test
 
 import (
 	"context"
-	"github.com/oceanbase/obkv-table-client-go/table"
-	"github.com/stretchr/testify/assert"
 	"testing"
+
+	"github.com/stretchr/testify/assert"
+
+	"github.com/oceanbase/obkv-table-client-go/table"
 )
 
 // create table statement
@@ -17,7 +19,7 @@ func TestInsert(t *testing.T) {
 	cli := newClient()
 	createTable(hashTable)
 	defer func() {
-		dropTable(tableName)
+		deleteTable(tableName)
 	}()
 
 	err := cli.AddRowKey(tableName, []string{"c1"})
@@ -51,7 +53,7 @@ func TestUpdate(t *testing.T) {
 	cli := newClient()
 	createTable(hashTable)
 	defer func() {
-		dropTable("hashTable")
+		deleteTable(tableName)
 	}()
 
 	err := cli.AddRowKey("hashTable", []string{"c1"})
@@ -95,7 +97,7 @@ func TestGet(t *testing.T) {
 	cli := newClient()
 	createTable(hashTable)
 	defer func() {
-		dropTable(tableName)
+		deleteTable(tableName)
 	}()
 
 	err := cli.AddRowKey(tableName, []string{"c1"})

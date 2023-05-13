@@ -1,10 +1,10 @@
 package route
 
 import (
-	"errors"
 	"strconv"
 
-	"github.com/oceanbase/obkv-table-client-go/log"
+	"github.com/pkg/errors"
+
 	"github.com/oceanbase/obkv-table-client-go/table"
 	"github.com/oceanbase/obkv-table-client-go/util"
 )
@@ -89,26 +89,19 @@ func (e *ObTableEntry) getPartitionLocation(partId int64, consistency ObConsiste
 	if util.ObVersion() >= 4 && e.IsPartitionTable() {
 		tabletId, ok := e.partitionInfo.partTabletIdMap[partId]
 		if !ok {
-			log.Warn("tablet id not found",
-				log.Int64("part id", partId),
-				log.String("part info", e.partitionInfo.String()))
-			return nil, errors.New("tablet id not found")
+			return nil, errors.Errorf("tablet id not found, partId:%d, partInfo:%s", partId, e.partitionInfo.String())
 		}
 		partLoc, ok := e.partLocationEntry.partLocations[tabletId]
 		if !ok {
-			log.Warn("part location not found",
-				log.Int64("tabletId", tabletId),
-				log.String("part entry", e.partLocationEntry.String()))
-			return nil, errors.New("part location not found")
+			return nil, errors.Errorf("part location not found, tabletId:%d, partLocationEntry:%s",
+				tabletId, e.partLocationEntry.String())
 		}
 		return partLoc.getReplica(consistency), nil
 	} else {
 		partLoc, ok := e.partLocationEntry.partLocations[partId]
 		if !ok {
-			log.Warn("part location not found",
-				log.Int64("partId", partId),
-				log.String("part entry", e.partLocationEntry.String()))
-			return nil, errors.New("part location not found")
+			return nil, errors.Errorf("part location not found, partId:%d, partLocationEntry:%s",
+				partId, e.partLocationEntry.String())
 		}
 		return partLoc.getReplica(consistency), nil
 	}
