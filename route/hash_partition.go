@@ -18,6 +18,10 @@ type obHashPartDesc struct {
 	partNameIdMap map[string]int64
 }
 
+func (d *obHashPartDesc) SetPartNum(partNum int) {
+	d.partNum = partNum
+}
+
 func newObHashPartDesc() *obHashPartDesc {
 	return &obHashPartDesc{}
 }

@@ -669,6 +669,9 @@ func fetchFirstPart(db *DB, partFuncType obPartFuncType, entry *ObTableEntry) er
 		} else if isListPart(partFuncType) {
 			return errors.New("not support list partition now")
 		} else if util.ObVersion() >= 4 && (isKeyPart(partFuncType) || isHashPart(partFuncType)) {
+			if entry.partitionInfo.subPartDesc != nil {
+				entry.partitionInfo.subPartDesc.SetPartNum(subPartNum)
+			}
 			entry.partitionInfo.partTabletIdMap[idx] = tabletId
 			idx++
 		}

@@ -19,6 +19,10 @@ type obKeyPartDesc struct {
 	partNameIdMap map[string]int64
 }
 
+func (d *obKeyPartDesc) SetPartNum(partNum int) {
+	d.partNum = partNum
+}
+
 func newObKeyPartDesc() *obKeyPartDesc {
 	return &obKeyPartDesc{}
 }

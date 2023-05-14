@@ -18,6 +18,10 @@ type obRangePartDesc struct {
 	orderedCompareColumnTypes []protocol.ObObjType
 }
 
+func (d *obRangePartDesc) SetPartNum(partNum int) {
+	d.partNum = partNum
+}
+
 func newObRangePartDesc() *obRangePartDesc {
 	return &obRangePartDesc{}
 }

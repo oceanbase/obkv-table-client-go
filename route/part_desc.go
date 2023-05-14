@@ -131,6 +131,7 @@ type obPartDesc interface {
 	rowKeyElement() *table.ObRowKeyElement
 	setRowKeyElement(rowKeyElement *table.ObRowKeyElement)
 	setPartColumns(partColumns []*obColumn)
+	SetPartNum(partNum int)
 	GetPartId(rowKey []interface{}) (int64, error)
 }
 

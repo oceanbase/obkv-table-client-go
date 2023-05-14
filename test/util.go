@@ -8,8 +8,8 @@ import (
 )
 
 const (
-	configUrl    = "http://ocp-cfg.alibaba.net:8080/services?User_ID=alibaba&UID=test&Action=ObRootServiceInfo&ObCluster=ob10.chenweixin.cwx.11.158.97.240&database=test"
-	fullUserName = "root@sys#ob10.chenweixin.cwx.11.158.97.240"
+	configUrl    = "..."
+	fullUserName = "..."
 	passWord     = ""
 	sysUserName  = "root"
 	sysPassWord  = ""
@@ -19,8 +19,8 @@ const (
 const (
 	sqlUser     = "root"
 	sqlPassWord = ""
-	sqlIp       = "11.158.97.240"
-	sqlPort     = "41101"
+	sqlIp       = "..."
+	sqlPort     = "..."
 	sqlDatabase = "test"
 )
 
@@ -68,4 +68,13 @@ func deleteTable(tableName string) {
 	if err != nil {
 		panic(err.Error())
 	}
+}
+
+func selectTable(selectStatement string) *sql.Rows {
+	db := newDB()
+	rows, err := db.Query(selectStatement)
+	if err != nil {
+		panic(err.Error())
+	}
+	return rows
 }
