@@ -69,16 +69,16 @@ func NewClient(
 type Client interface {
 	// AddRowKey add the primary key of the current table to the client.
 	AddRowKey(tableName string, rowKey []string) error
-	// Insert a record by rowkey.
+	// Insert a record by rowKey.
 	Insert(ctx context.Context, tableName string, rowKey []*table.Column, mutateColumns []*table.Column, opts ...ObkvOption) (int64, error)
-	// Update a record by rowkey.
+	// Update a record by rowKey.
 	Update(ctx context.Context, tableName string, rowKey []*table.Column, mutateColumns []*table.Column, opts ...ObkvOption) (int64, error)
-	// InsertOrUpdate insert or update a record by rowkey.
+	// InsertOrUpdate insert or update a record by rowKey.
 	// insert if the primary key does not exist, update if it does.
 	InsertOrUpdate(ctx context.Context, tableName string, rowKey []*table.Column, mutateColumns []*table.Column, opts ...ObkvOption) (int64, error)
-	// Delete a record by rowkey.
+	// Delete a record by rowKey.
 	Delete(ctx context.Context, tableName string, rowKey []*table.Column, opts ...ObkvOption) (int64, error)
-	// Get a record by rowkey.
+	// Get a record by rowKey.
 	Get(ctx context.Context, tableName string, rowKey []*table.Column, getColumns []string, opts ...ObkvOption) (map[string]interface{}, error)
 	// NewBatchExecutor create a batch executor
 	NewBatchExecutor(tableName string) BatchExecutor

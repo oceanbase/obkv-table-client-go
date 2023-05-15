@@ -166,8 +166,8 @@ func TestKeyPartitionVarcharL1(t *testing.T) {
 	// insert
 	rowCount := 10
 	for i := 0; i < rowCount; i++ {
-		rowkeyVal := fmt.Sprintf("oceanbase%d", i)
-		rowKey := []*table.Column{table.NewColumn("c1", rowkeyVal)}
+		rowKeyVal := fmt.Sprintf("oceanbase%d", i)
+		rowKey := []*table.Column{table.NewColumn("c1", rowKeyVal)}
 		mutateColumns := []*table.Column{table.NewColumn("c2", int64(i))}
 		affectRows, err := cli.Insert(
 			context.TODO(),
@@ -182,8 +182,8 @@ func TestKeyPartitionVarcharL1(t *testing.T) {
 	// get
 	selectColumns := []string{"c1", "c2"}
 	for i := 0; i < rowCount; i++ {
-		rowkeyVal := fmt.Sprintf("oceanbase%d", i)
-		rowKey := []*table.Column{table.NewColumn("c1", rowkeyVal)}
+		rowKeyVal := fmt.Sprintf("oceanbase%d", i)
+		rowKey := []*table.Column{table.NewColumn("c1", rowKeyVal)}
 		m, err := cli.Get(
 			context.TODO(),
 			tableName,
@@ -191,11 +191,11 @@ func TestKeyPartitionVarcharL1(t *testing.T) {
 			selectColumns,
 		)
 		assert.Equal(t, nil, err)
-		assert.EqualValues(t, rowkeyVal, m["c1"])
+		assert.EqualValues(t, rowKeyVal, m["c1"])
 		assert.EqualValues(t, i, m["c2"])
 
 		// select by sql
-		selectStatement := fmt.Sprintf("select c1, c2 from %s where c1 = '%s';", tableName, rowkeyVal)
+		selectStatement := fmt.Sprintf("select c1, c2 from %s where c1 = '%s';", tableName, rowKeyVal)
 		rows := selectTable(selectStatement)
 		var c1Val string
 		var c2Val int
@@ -336,8 +336,8 @@ func TestKeyPartitionVarcharL2(t *testing.T) {
 	// insert
 	rowCount := 10
 	for i := 0; i < rowCount; i++ {
-		rowkeyVal := fmt.Sprintf("oceanbase%d", i)
-		rowKey := []*table.Column{table.NewColumn("c1", rowkeyVal), table.NewColumn("c2", rowkeyVal)}
+		rowKeyVal := fmt.Sprintf("oceanbase%d", i)
+		rowKey := []*table.Column{table.NewColumn("c1", rowKeyVal), table.NewColumn("c2", rowKeyVal)}
 		mutateColumns := []*table.Column{table.NewColumn("c3", int64(i))}
 		affectRows, err := cli.Insert(
 			context.TODO(),
@@ -352,8 +352,8 @@ func TestKeyPartitionVarcharL2(t *testing.T) {
 	// get
 	selectColumns := []string{"c1", "c2", "c3"}
 	for i := 0; i < rowCount; i++ {
-		rowkeyVal := fmt.Sprintf("oceanbase%d", i)
-		rowKey := []*table.Column{table.NewColumn("c1", rowkeyVal), table.NewColumn("c2", rowkeyVal)}
+		rowKeyVal := fmt.Sprintf("oceanbase%d", i)
+		rowKey := []*table.Column{table.NewColumn("c1", rowKeyVal), table.NewColumn("c2", rowKeyVal)}
 		m, err := cli.Get(
 			context.TODO(),
 			tableName,
@@ -361,12 +361,12 @@ func TestKeyPartitionVarcharL2(t *testing.T) {
 			selectColumns,
 		)
 		assert.Equal(t, nil, err)
-		assert.EqualValues(t, rowkeyVal, m["c1"])
-		assert.EqualValues(t, rowkeyVal, m["c2"])
+		assert.EqualValues(t, rowKeyVal, m["c1"])
+		assert.EqualValues(t, rowKeyVal, m["c2"])
 		assert.EqualValues(t, i, m["c3"])
 
 		// select by sql
-		selectStatement := fmt.Sprintf("select c1, c2, c3 from %s where c1 = '%s' and c2 = '%s';", tableName, rowkeyVal, rowkeyVal)
+		selectStatement := fmt.Sprintf("select c1, c2, c3 from %s where c1 = '%s' and c2 = '%s';", tableName, rowKeyVal, rowKeyVal)
 		rows := selectTable(selectStatement)
 		var c1Val string
 		var c2Val string
