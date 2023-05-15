@@ -1,6 +1,7 @@
 package route
 
 import (
+	"errors"
 	"strconv"
 )
 
@@ -69,4 +70,26 @@ func murmurHash64A(data []byte, length int, seed int64) int64 {
 	h *= im
 	h ^= int64(uint64(h) >> r)
 	return h
+}
+
+func parseToNumber(value interface{}) (interface{}, error) {
+	if v, ok := value.(string); ok {
+		i, err := strconv.Atoi(v)
+		if err != nil {
+			return nil, err
+		}
+		return int64(i), nil
+	} else if v, ok := value.(int); ok { // todo  not support int
+		return int64(v), nil
+	} else if v, ok := value.(int64); ok {
+		return v, nil
+	} else if v, ok := value.(int32); ok {
+		return int64(v), nil
+	} else if v, ok := value.(int16); ok {
+		return int64(v), nil
+	} else if v, ok := value.(int8); ok {
+		return int64(v), nil
+	} else {
+		return nil, errors.New("invalid type to convert to number")
+	}
 }

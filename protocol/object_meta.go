@@ -282,6 +282,27 @@ const (
 	CollationLevelInvalid CollationLevel = 127
 )
 
+func (l CollationLevel) String() string {
+	switch l {
+	case CollationLevelExplicit:
+		return "CollationLevelExplicit"
+	case CollationLevelNone:
+		return "CollationLevelNone"
+	case CollationLevelImplicit:
+		return "CollationLevelImplicit"
+	case CollationLevelSysConst:
+		return "CollationLevelSysConst"
+	case CollationLevelCoercible:
+		return "CollationLevelCoercible"
+	case CollationLevelNumeric:
+		return "CollationLevelNumeric"
+	case CollationLevelIgnorable:
+		return "CollationLevelIgnorable"
+	default:
+		return "CollationLevelInvalid"
+	}
+}
+
 type CollationType uint8
 
 const (
@@ -292,6 +313,23 @@ const (
 	CollationTypeCollationFree    CollationType = 100
 	CollationTypeMax              CollationType = 101
 )
+
+func (t CollationType) String() string {
+	switch t {
+	case CollationTypeUtf8mb4GeneralCi:
+		return "CollationTypeUtf8mb4GeneralCi"
+	case CollationTypeUtf8mb4Bin:
+		return "CollationTypeUtf8mb4Bin"
+	case CollationTypeBinary:
+		return "CollationTypeBinary"
+	case CollationTypeCollationFree:
+		return "CollationTypeCollationFree"
+	case CollationTypeMax:
+		return "CollationTypeMax"
+	default:
+		return "CollationTypeInvalid"
+	}
+}
 
 type NullType struct {
 	value ObjTypeValue
