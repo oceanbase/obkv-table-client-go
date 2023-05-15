@@ -61,7 +61,7 @@ func getMockObClient() (*ObClient, error) {
 		obCli.password,
 		obCli.database,
 	)
-	err = tb.init(cfg.ConnPoolMaxConnSize, cfg.RpcConnectTimeOut)
+	err = tb.init(cfg.ConnPoolMaxConnSize, cfg.ConnConnectTimeOut, cfg.ConnLoginTimeout)
 	if err != nil {
 		return nil, err
 	}

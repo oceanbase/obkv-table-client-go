@@ -60,12 +60,13 @@ func NewObTable(
 	}
 }
 
-func (t *ObTable) init(connPoolSize int, connectTimeout time.Duration) error {
+func (t *ObTable) init(connPoolSize int, connectTimeout time.Duration, loginTimeout time.Duration) error {
 	opt := obkvrpc.NewRpcClientOption(
 		t.ip,
 		t.port,
 		connPoolSize,
 		connectTimeout,
+		loginTimeout,
 		t.tenantName,
 		t.database,
 		t.userName,
@@ -79,8 +80,8 @@ func (t *ObTable) init(connPoolSize int, connectTimeout time.Duration) error {
 	return nil
 }
 
-func (t *ObTable) execute(request protocol.ObPayload, result protocol.ObPayload) error {
-	return t.rpcClient.Execute(context.TODO(), request, result)
+func (t *ObTable) execute(ctx context.Context, request protocol.ObPayload, result protocol.ObPayload) error {
+	return t.rpcClient.Execute(ctx, request, result)
 }
 
 func (t *ObTable) close() {

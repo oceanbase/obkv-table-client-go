@@ -32,6 +32,7 @@ type RpcClientOption struct {
 	port                int
 	connPoolMaxConnSize int
 	connectTimeout      time.Duration
+	loginTimeout        time.Duration
 
 	tenantName   string
 	databaseName string
@@ -39,12 +40,14 @@ type RpcClientOption struct {
 	password     string
 }
 
-func NewRpcClientOption(ip string, port int, connPoolMaxConnSize int, connectTimeout time.Duration, tenantName string, databaseName string, userName string, password string) *RpcClientOption {
+func NewRpcClientOption(ip string, port int, connPoolMaxConnSize int, connectTimeout time.Duration, loginTimeout time.Duration,
+	tenantName string, databaseName string, userName string, password string) *RpcClientOption {
 	return &RpcClientOption{
 		ip:                  ip,
 		port:                port,
 		connPoolMaxConnSize: connPoolMaxConnSize,
 		connectTimeout:      connectTimeout,
+		loginTimeout:        loginTimeout,
 		tenantName:          tenantName,
 		databaseName:        databaseName,
 		userName:            userName,
@@ -58,6 +61,7 @@ func (o *RpcClientOption) String() string {
 		"port:" + strconv.Itoa(o.port) + ", " +
 		"connPoolMaxConnSize:" + strconv.Itoa(o.connPoolMaxConnSize) + ", " +
 		"connectTimeout:" + o.connectTimeout.String() + ", " +
+		"loginTimeout:" + o.loginTimeout.String() + ", " +
 		"tenantName:" + o.tenantName + ", " +
 		"databaseName:" + o.databaseName + ", " +
 		"userName:" + o.userName + ", " +
@@ -74,7 +78,8 @@ type RpcClient struct {
 func NewRpcClient(rpcClientOption *RpcClientOption) (*RpcClient, error) {
 	client := &RpcClient{option: rpcClientOption}
 
-	poolOption := NewPoolOption(client.option.ip, client.option.port, client.option.connPoolMaxConnSize, client.option.connectTimeout, client.option.tenantName, client.option.databaseName, client.option.userName, client.option.password)
+	poolOption := NewPoolOption(client.option.ip, client.option.port, client.option.connPoolMaxConnSize, client.option.connectTimeout, client.option.loginTimeout,
+		client.option.tenantName, client.option.databaseName, client.option.userName, client.option.password)
 	connectionPool, err := NewConnectionPool(poolOption)
 	if err != nil {
 		return nil, errors.WithMessage(err, "create connection pool")
@@ -85,7 +90,7 @@ func NewRpcClient(rpcClientOption *RpcClientOption) (*RpcClient, error) {
 }
 
 func (c *RpcClient) Execute(ctx context.Context, request protocol.ObPayload, response protocol.ObPayload) error {
-	connection, err := c.connectionPool.GetConnection()
+	connection, err := c.connectionPool.GetConnection(ctx)
 	if err != nil {
 		return errors.WithMessage(err, "connection pool get connection")
 	}

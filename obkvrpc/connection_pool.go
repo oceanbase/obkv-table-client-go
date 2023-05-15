@@ -18,6 +18,7 @@
 package obkvrpc
 
 import (
+	"context"
 	"math/rand"
 	"sync"
 	"time"
@@ -30,6 +31,7 @@ type PoolOption struct {
 	port                int
 	connPoolMaxConnSize int
 	connectTimeout      time.Duration
+	loginTimeout        time.Duration
 
 	tenantName   string
 	databaseName string
@@ -44,8 +46,19 @@ type ConnectionPool struct {
 	rwMutexes   []sync.RWMutex
 }
 
-func NewPoolOption(ip string, port int, connPoolMaxConnSize int, connectTimeout time.Duration, tenantName string, databaseName string, userName string, password string) *PoolOption {
-	return &PoolOption{ip: ip, port: port, connPoolMaxConnSize: connPoolMaxConnSize, connectTimeout: connectTimeout, tenantName: tenantName, databaseName: databaseName, userName: userName, password: password}
+func NewPoolOption(ip string, port int, connPoolMaxConnSize int, connectTimeout time.Duration, loginTimeout time.Duration,
+	tenantName string, databaseName string, userName string, password string) *PoolOption {
+	return &PoolOption{
+		ip:                  ip,
+		port:                port,
+		connPoolMaxConnSize: connPoolMaxConnSize,
+		connectTimeout:      connectTimeout,
+		loginTimeout:        loginTimeout,
+		tenantName:          tenantName,
+		databaseName:        databaseName,
+		userName:            userName,
+		password:            password,
+	}
 }
 
 func NewConnectionPool(option *PoolOption) (*ConnectionPool, error) {
@@ -55,17 +68,21 @@ func NewConnectionPool(option *PoolOption) (*ConnectionPool, error) {
 		rwMutexes:   make([]sync.RWMutex, 0, option.connPoolMaxConnSize),
 	}
 
-	connectionOption := NewConnectionOption(pool.option.ip, pool.option.port, pool.option.connectTimeout, pool.option.tenantName, pool.option.databaseName, pool.option.userName, pool.option.password)
+	connectionOption := NewConnectionOption(pool.option.ip, pool.option.port, pool.option.connectTimeout, pool.option.loginTimeout,
+		pool.option.tenantName, pool.option.databaseName, pool.option.userName, pool.option.password)
 
 	for i := 0; i < pool.option.connPoolMaxConnSize; i++ {
 
 		connection := NewConnection(connectionOption)
-		err := connection.Connect()
+
+		ctx, _ := context.WithTimeout(context.Background(), pool.option.connectTimeout)
+		err := connection.Connect(ctx)
 		if err != nil {
 			return nil, errors.WithMessage(err, "connection connect")
 		}
 
-		err = connection.Login()
+		ctx, _ = context.WithTimeout(context.Background(), pool.option.loginTimeout)
+		err = connection.Login(ctx)
 		if err != nil {
 			return nil, errors.WithMessage(err, "connection login")
 		}
@@ -78,7 +95,7 @@ func NewConnectionPool(option *PoolOption) (*ConnectionPool, error) {
 	return pool, nil
 }
 
-func (p *ConnectionPool) GetConnection() (*Connection, error) {
+func (p *ConnectionPool) GetConnection(ctx context.Context) (*Connection, error) {
 	randomIndex := rand.Intn(len(p.connections))
 
 	p.rwMutexes[randomIndex].RLock()
@@ -94,7 +111,7 @@ func (p *ConnectionPool) GetConnection() (*Connection, error) {
 		return p.connections[randomIndex], nil
 	}
 	// Recreate the connection and login
-	connection, err := p.CreateConnection()
+	connection, err := p.CreateConnection(ctx)
 	if err != nil {
 		p.rwMutexes[randomIndex].Unlock()
 		return nil, errors.WithMessage(err, "recreate connection")
@@ -106,14 +123,15 @@ func (p *ConnectionPool) GetConnection() (*Connection, error) {
 	return p.connections[randomIndex], nil
 }
 
-func (p *ConnectionPool) CreateConnection() (*Connection, error) {
-	connectionOption := NewConnectionOption(p.option.ip, p.option.port, p.option.connectTimeout, p.option.tenantName, p.option.databaseName, p.option.userName, p.option.password)
+func (p *ConnectionPool) CreateConnection(ctx context.Context) (*Connection, error) {
+	connectionOption := NewConnectionOption(p.option.ip, p.option.port, p.option.connectTimeout, p.option.loginTimeout,
+		p.option.tenantName, p.option.databaseName, p.option.userName, p.option.password)
 	connection := NewConnection(connectionOption)
-	err := connection.Connect()
+	err := connection.Connect(ctx)
 	if err != nil {
 		return nil, errors.WithMessage(err, "connection connect")
 	}
-	err = connection.Login()
+	err = connection.Login(ctx)
 	if err != nil {
 		return nil, errors.WithMessage(err, "connection login")
 	}
