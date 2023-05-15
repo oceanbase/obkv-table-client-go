@@ -322,7 +322,7 @@ func (h *ObRpcHeader) SetClusterNameHash(clusterNameHash int64) {
 
 func (h *ObRpcHeader) Encode() []byte {
 	var rpcHeaderBuf []byte
-	// TODO Maybe it would be better to use the version number to judge
+	// Maybe it would be better to use the version number to judge
 	if util.ObVersion() >= 4 {
 		rpcHeaderBuf = make([]byte, encodeSizeV4)
 		h.hLen = encodeSizeV4
@@ -334,7 +334,6 @@ func (h *ObRpcHeader) Encode() []byte {
 	rpcHeaderBuffer := bytes.NewBuffer(rpcHeaderBuf)
 
 	util.PutUint32(rpcHeaderBuffer, h.pCode)
-	// TODO hLen = encodeSizeV4
 	util.PutUint8(rpcHeaderBuffer, h.hLen)
 	util.PutUint8(rpcHeaderBuffer, h.priority)
 
@@ -382,7 +381,7 @@ func (h *ObRpcHeader) Decode(buffer *bytes.Buffer) {
 	h.timeout = time.Duration(util.Uint64(buffer))
 	h.timestamp = int64(util.Uint64(buffer))
 
-	// TODO Maybe it would be better to use the version number to judge
+	// Maybe it would be better to use the version number to judge
 	if h.hLen >= encodeSizeV4 {
 		h.obRpcCostTime.Decode(buffer)
 

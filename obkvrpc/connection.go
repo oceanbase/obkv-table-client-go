@@ -115,7 +115,6 @@ func (c *Connection) Login() error {
 	c.credential = loginResponse.Credential()
 	c.tenantId = loginResponse.TenantId()
 
-	// TODO active = true
 	c.active.Store(true)
 	return nil
 }
