@@ -35,7 +35,7 @@ const (
 
 func TestObTable_init(t *testing.T) {
 	tb := NewObTable(testIp, testPort, testTenantName, testUserName, testPassword, testDatabase)
-	err := tb.init(1, time.Duration(1000)*time.Millisecond)
+	err := tb.init(1, time.Duration(1000)*time.Millisecond, 0)
 	assert.NotEqual(t, nil, err)
 }
 

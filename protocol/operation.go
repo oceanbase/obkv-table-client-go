@@ -75,7 +75,6 @@ func NewObTableOperation(
 
 type ObTableOperationType uint8
 
-// todo add prefix
 const (
 	ObTableOperationGet ObTableOperationType = iota
 	ObTableOperationInsert
@@ -129,7 +128,5 @@ func (o *ObTableOperation) Decode(buffer *bytes.Buffer) {
 }
 
 func (o *ObTableOperation) String() string {
-	// todo:impl
-	return "ObTableOperation{" +
-		"}"
+	return ""
 }

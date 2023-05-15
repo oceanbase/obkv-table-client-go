@@ -39,6 +39,7 @@ type ConnectionOption struct {
 	ip             string
 	port           int
 	connectTimeout time.Duration
+	loginTimeout   time.Duration
 
 	tenantName   string
 	databaseName string
@@ -46,8 +47,18 @@ type ConnectionOption struct {
 	password     string
 }
 
-func NewConnectionOption(ip string, port int, connectTimeout time.Duration, tenantName string, databaseName string, userName string, password string) *ConnectionOption {
-	return &ConnectionOption{ip: ip, port: port, connectTimeout: connectTimeout, tenantName: tenantName, databaseName: databaseName, userName: userName, password: password}
+func NewConnectionOption(ip string, port int, connectTimeout time.Duration, loginTimeout time.Duration,
+	tenantName string, databaseName string, userName string, password string) *ConnectionOption {
+	return &ConnectionOption{
+		ip:             ip,
+		port:           port,
+		connectTimeout: connectTimeout,
+		loginTimeout:   loginTimeout,
+		tenantName:     tenantName,
+		databaseName:   databaseName,
+		userName:       userName,
+		password:       password,
+	}
 }
 
 type Connection struct {
@@ -77,9 +88,21 @@ func NewConnection(option *ConnectionOption) *Connection {
 	return &Connection{option: option, pending: make(map[uint32]*Call)}
 }
 
-func (c *Connection) Connect() error {
+func (c *Connection) Connect(ctx context.Context) error {
 	address := fmt.Sprintf("%s:%s", c.option.ip, strconv.Itoa(c.option.port))
-	conn, err := net.DialTimeout("tcp", address, c.option.connectTimeout)
+
+	deadline, _ := ctx.Deadline() // ok always true
+	nowTimeDifference := time.Until(deadline)
+	if nowTimeDifference < 0 {
+		return errors.WithMessagef(ctx.Err(), "time out, uniqueId: %d remote addr: %s", c.uniqueId, address)
+	}
+
+	if nowTimeDifference > c.option.connectTimeout {
+		ctx, _ = context.WithTimeout(ctx, c.option.connectTimeout) // use config connect timeout
+	}
+
+	dialer := &net.Dialer{}
+	conn, err := dialer.DialContext(ctx, "tcp", address)
 	if err != nil {
 		return errors.WithMessagef(err, "net dial, uniqueId: %d remote addr: %s", c.uniqueId, address)
 	}
@@ -102,10 +125,21 @@ func (c *Connection) Connect() error {
 	return nil
 }
 
-func (c *Connection) Login() error {
+func (c *Connection) Login(ctx context.Context) error {
+	deadline, _ := ctx.Deadline() // ok always true
+	nowTimeDifference := time.Until(deadline)
+	if nowTimeDifference < 0 {
+		return errors.WithMessagef(ctx.Err(), "time out, uniqueId: %d remote addr: %s tenantname: %s databasename: %s",
+			c.uniqueId, c.conn.RemoteAddr().String(), c.option.tenantName, c.option.databaseName)
+	}
+
+	if nowTimeDifference > c.option.loginTimeout {
+		ctx, _ = context.WithTimeout(ctx, c.option.loginTimeout) // use config connect timeout
+	}
+
 	loginRequest := protocol.NewObLoginRequest(c.option.tenantName, c.option.databaseName, c.option.userName, c.option.password)
 	loginResponse := protocol.NewObLoginResponse()
-	err := c.Execute(context.TODO(), loginRequest, loginResponse)
+	err := c.Execute(ctx, loginRequest, loginResponse)
 	if err != nil {
 		c.Close()
 		return errors.WithMessagef(err, "execute login, uniqueId: %d remote addr: %s tenantname: %s databasename: %s",
@@ -115,7 +149,6 @@ func (c *Connection) Login() error {
 	c.credential = loginResponse.Credential()
 	c.tenantId = loginResponse.TenantId()
 
-	// TODO active = true
 	c.active.Store(true)
 	return nil
 }
@@ -141,8 +174,6 @@ func (c *Connection) Execute(ctx context.Context, request protocol.ObPayload, re
 	if err != nil {
 		return errors.WithMessage(err, "send packet")
 	}
-
-	ctx, _ = context.WithTimeout(ctx, 10*time.Second) // todo temporary use
 
 	// wait call back
 	select {

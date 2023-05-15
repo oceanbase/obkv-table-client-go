@@ -74,7 +74,7 @@ func (c ObTablePacketCode) Value() uint32 {
 	return obTablePacketCodePCodes[c]
 }
 
-func (c ObTablePacketCode) ValueOf(pCode uint32) (ObTablePacketCode, error) { // TODO use map optimize
+func (c ObTablePacketCode) ValueOf(pCode uint32) (ObTablePacketCode, error) { // use map optimize
 	switch pCode {
 	case obTableApiPCodeLogin:
 		return ObTableApiLogin, nil

@@ -139,6 +139,7 @@ func (b *obBatchExecutor) constructPartOpMap(ctx context.Context) (map[int64]*ob
 
 // partitionExecute execute operation on a single partition.
 func (b *obBatchExecutor) partitionExecute(
+	ctx context.Context,
 	partOp *obPartOp,
 	res []*protocol.ObTableOperationResponse) error {
 	// 1. Construct batch operation request
@@ -161,7 +162,7 @@ func (b *obBatchExecutor) partitionExecute(
 
 	// 2. Execute
 	partRes := protocol.NewObTableBatchOperationResponse()
-	err := partOp.tableParam.table.execute(request, partRes)
+	err := partOp.tableParam.table.execute(ctx, request, partRes)
 	if err != nil {
 		return errors.WithMessagef(err, "table execute, request:%s", request.String())
 	}
@@ -201,6 +202,11 @@ func (b *obBatchExecutor) Execute(ctx context.Context) (BatchOperationResult, er
 	if len(b.batchOps.ObTableOperations()) == 0 {
 		return nil, errors.New("operation is empty")
 	}
+
+	if _, ok := ctx.Deadline(); !ok {
+		ctx, _ = context.WithTimeout(ctx, b.cli.config.OperationTimeOut) // default timeout operation timeout
+	}
+
 	res := make([]*protocol.ObTableOperationResponse, len(b.batchOps.ObTableOperations()))
 	// 1. construct partition operation map
 	partOpMap, err := b.constructPartOpMap(ctx)
@@ -215,16 +221,16 @@ func (b *obBatchExecutor) Execute(ctx context.Context) (BatchOperationResult, er
 		var wg sync.WaitGroup
 		for _, partOp := range partOpMap {
 			wg.Add(1)
-			go func(partOp *obPartOp) {
+			go func(ctx context.Context, partOp *obPartOp) {
 				defer wg.Done()
-				err := b.partitionExecute(partOp, res)
+				err := b.partitionExecute(ctx, partOp, res)
 				if err != nil {
 					log.Warn("failed to execute partition operations", log.String("partOp", partOp.String()))
 					errArrLock.Lock()
 					errArr = append(errArr, err)
 					errArrLock.Unlock()
 				}
-			}(partOp)
+			}(ctx, partOp)
 		}
 		wg.Wait()
 		if len(errArr) != 0 {
@@ -233,7 +239,7 @@ func (b *obBatchExecutor) Execute(ctx context.Context) (BatchOperationResult, er
 		}
 	} else {
 		for _, partOp := range partOpMap {
-			err := b.partitionExecute(partOp, res)
+			err := b.partitionExecute(ctx, partOp, res)
 			if err != nil {
 				return nil, errors.WithMessagef(err, "execute partition operations, partOp:%s", partOp.String())
 			}

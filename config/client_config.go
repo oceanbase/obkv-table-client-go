@@ -24,7 +24,8 @@ import (
 
 type ClientConfig struct {
 	ConnPoolMaxConnSize int
-	RpcConnectTimeOut   time.Duration
+	ConnConnectTimeOut  time.Duration
+	ConnLoginTimeout    time.Duration
 	OperationTimeOut    time.Duration
 	LogLevel            uint16
 
@@ -36,16 +37,17 @@ type ClientConfig struct {
 	MetadataRefreshInterval    time.Duration
 	MetadataRefreshLockTimeout time.Duration
 
-	RslistLocalFileLocation    string
-	RslistHttpGetTimeout       time.Duration
-	RslistHttpGetRetryTimes    int
-	RslistHttpGetRetryInterval time.Duration
+	RsListLocalFileLocation    string
+	RsListHttpGetTimeout       time.Duration
+	RsListHttpGetRetryTimes    int
+	RsListHttpGetRetryInterval time.Duration
 }
 
 func NewDefaultClientConfig() *ClientConfig {
 	return &ClientConfig{
 		ConnPoolMaxConnSize:              1,
-		RpcConnectTimeOut:                time.Duration(1000) * time.Millisecond,  // 1s
+		ConnConnectTimeOut:               time.Duration(1000) * time.Millisecond,  // 1s
+		ConnLoginTimeout:                 time.Duration(1000) * time.Millisecond,  // 1s
 		OperationTimeOut:                 time.Duration(10000) * time.Millisecond, // 10s
 		LogLevel:                         7,
 		TableEntryRefreshLockTimeout:     time.Duration(4000) * time.Millisecond, // 4s
@@ -54,11 +56,10 @@ func NewDefaultClientConfig() *ClientConfig {
 		TableEntryRefreshIntervalCeiling: time.Duration(1600) * time.Millisecond,  // 1.6s
 		MetadataRefreshInterval:          time.Duration(60000) * time.Millisecond, // 60s
 		MetadataRefreshLockTimeout:       time.Duration(8000) * time.Millisecond,  // 8s
-
-		RslistLocalFileLocation:    "",
-		RslistHttpGetTimeout:       time.Duration(1000) * time.Millisecond, // 1s
-		RslistHttpGetRetryTimes:    3,
-		RslistHttpGetRetryInterval: time.Duration(100) * time.Millisecond, // 100ms,
+		RsListLocalFileLocation:          "",
+		RsListHttpGetTimeout:             time.Duration(1000) * time.Millisecond, // 1s
+		RsListHttpGetRetryTimes:          3,
+		RsListHttpGetRetryInterval:       time.Duration(100) * time.Millisecond, // 100ms,
 	}
 }
 

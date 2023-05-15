@@ -272,6 +272,11 @@ func (c *ObClient) execute(
 	rowKey []*table.Column,
 	columns []*table.Column,
 	opts ...ObkvOption) (*protocol.ObTableOperationResponse, error) {
+
+	if _, ok := ctx.Deadline(); !ok {
+		ctx, _ = context.WithTimeout(ctx, c.config.OperationTimeOut) // default timeout operation timeout
+	}
+
 	var rowKeyValue []interface{}
 	for _, col := range rowKey {
 		rowKeyValue = append(rowKeyValue, col.Value())
@@ -300,7 +305,7 @@ func (c *ObClient) execute(
 
 	// 3. execute
 	result := protocol.NewObTableOperationResponse()
-	err = tableParam.table.execute(request, result)
+	err = tableParam.table.execute(ctx, request, result)
 	if err != nil {
 		return nil, errors.WithMessagef(err, "execute request, request:%s", request.String())
 	}
@@ -551,14 +556,14 @@ func (c *ObClient) fetchMetadata() error {
 	// 1. Load ocp mode to get RsList
 	ocpModel, err := route.LoadOcpModel(
 		c.configUrl,
-		c.config.RslistLocalFileLocation,
-		c.config.RslistHttpGetTimeout,
-		c.config.RslistHttpGetRetryTimes,
-		c.config.RslistHttpGetRetryInterval,
+		c.config.RsListLocalFileLocation,
+		c.config.RsListHttpGetTimeout,
+		c.config.RsListHttpGetRetryTimes,
+		c.config.RsListHttpGetRetryInterval,
 	)
 	if err != nil {
 		return errors.WithMessagef(err, "load ocp model, configUrl:%s, localFileName:%s",
-			c.configUrl, c.config.RslistLocalFileLocation)
+			c.configUrl, c.config.RsListLocalFileLocation)
 	}
 	c.ocpModel = ocpModel
 	addr := c.ocpModel.GetServerAddressRandomly()
@@ -608,7 +613,7 @@ func (c *ObClient) fetchMetadata() error {
 		}
 
 		t := NewObTable(addr.Ip(), addr.SvrPort(), c.tenantName, c.userName, c.password, c.database)
-		err = t.init(c.config.ConnPoolMaxConnSize, c.config.RpcConnectTimeOut)
+		err = t.init(c.config.ConnPoolMaxConnSize, c.config.ConnConnectTimeOut, c.config.ConnLoginTimeout)
 		if err != nil {
 			return errors.WithMessagef(err, "init ob table, obTable:%s", t.String())
 		}
