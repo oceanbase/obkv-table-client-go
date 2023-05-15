@@ -186,7 +186,7 @@ func (d *obKeyPartDesc) varcharHash(
 		return -1, errors.Errorf("invalid varchar value for calc hash value, value:%T", value)
 	}
 	switch collType {
-	case protocol.CsTypeUtf8mb4GeneralCi:
+	case protocol.CollationTypeUtf8mb4GeneralCi:
 		if partFuncType == partFuncTypeKeyV3 ||
 			partFuncType == partFuncTypeKeyImplV2 ||
 			util.ObVersion() >= 4 {
@@ -194,8 +194,8 @@ func (d *obKeyPartDesc) varcharHash(
 		} else {
 			hashCode = hashSortUtf8Mb4(bytes, hashCode, seed, false)
 		}
-	case protocol.CsTypeUtf8mb4Bin:
-	case protocol.CsTypeBinary:
+	case protocol.CollationTypeUtf8mb4Bin:
+	case protocol.CollationTypeBinary:
 		if partFuncType == partFuncTypeKeyV3 ||
 			partFuncType == partFuncTypeKeyImplV2 ||
 			util.ObVersion() >= 4 {
@@ -203,9 +203,9 @@ func (d *obKeyPartDesc) varcharHash(
 		} else {
 			hashCode = hashSortMbBin(bytes, hashCode, seed)
 		}
-	case protocol.CsTypeInvalid:
-	case protocol.CsTypeCollationFree:
-	case protocol.CsTypeMax:
+	case protocol.CollationTypeInvalid:
+	case protocol.CollationTypeCollationFree:
+	case protocol.CollationTypeMax:
 		return -1, errors.Errorf("not supported collation type, collType:%d", collType)
 	}
 	return hashCode, nil
