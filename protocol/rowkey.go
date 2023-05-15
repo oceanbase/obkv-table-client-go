@@ -24,7 +24,7 @@ import (
 )
 
 type RowKey struct {
-	keys []*Object
+	keys []*ObObject
 }
 
 func NewRowKey() *RowKey {
@@ -33,15 +33,15 @@ func NewRowKey() *RowKey {
 	}
 }
 
-func (k *RowKey) Keys() []*Object {
+func (k *RowKey) Keys() []*ObObject {
 	return k.keys
 }
 
-func (k *RowKey) SetKeys(keys []*Object) {
+func (k *RowKey) SetKeys(keys []*ObObject) {
 	k.keys = keys
 }
 
-func (k *RowKey) AppendKey(key *Object) {
+func (k *RowKey) AppendKey(key *ObObject) {
 	k.keys = append(k.keys, key)
 }
 
@@ -58,7 +58,7 @@ func (k *RowKey) Decode(buffer *bytes.Buffer) {
 
 	var i int64
 	for i = 0; i < keysLen; i++ {
-		key := NewObject()
+		key := NewObObject()
 		key.Decode(buffer)
 		k.keys = append(k.keys, key)
 	}

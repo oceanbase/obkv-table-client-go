@@ -26,233 +26,233 @@ import (
 	"github.com/oceanbase/obkv-table-client-go/util"
 )
 
-type ObjectMeta struct {
-	objType ObjType
-	csLevel CollationLevel
-	csType  CollationType
-	scale   byte
+type ObObjectMeta struct {
+	objType        ObObjType
+	collationLevel ObCollationLevel
+	collationType  ObCollationType
+	scale          byte
 }
 
-func NewObjectMeta() *ObjectMeta {
-	return &ObjectMeta{objType: nil, csLevel: 0, csType: 0, scale: 0}
+func NewObjectMeta() *ObObjectMeta {
+	return &ObObjectMeta{objType: nil, collationLevel: 0, collationType: 0, scale: 0}
 }
 
-func NewObjectMetaWithParams(objType ObjType, csLevel CollationLevel, csType CollationType, scale byte) *ObjectMeta {
-	return &ObjectMeta{objType: objType, csLevel: csLevel, csType: csType, scale: scale}
+func NewObjectMetaWithParams(objType ObObjType, obCollationLevel ObCollationLevel, obCollationType ObCollationType, scale byte) *ObObjectMeta {
+	return &ObObjectMeta{objType: objType, collationLevel: obCollationLevel, collationType: obCollationType, scale: scale}
 }
 
-func (m *ObjectMeta) ObjType() ObjType {
+func (m *ObObjectMeta) ObjType() ObObjType {
 	return m.objType
 }
 
-func (m *ObjectMeta) SetObjType(objType ObjType) {
+func (m *ObObjectMeta) SetObjType(objType ObObjType) {
 	m.objType = objType
 }
 
-func (m *ObjectMeta) CsLevel() CollationLevel {
-	return m.csLevel
+func (m *ObObjectMeta) CollationLevel() ObCollationLevel {
+	return m.collationLevel
 }
 
-func (m *ObjectMeta) SetCsLevel(csLevel CollationLevel) {
-	m.csLevel = csLevel
+func (m *ObObjectMeta) SetCollationLevel(collationLevel ObCollationLevel) {
+	m.collationLevel = collationLevel
 }
 
-func (m *ObjectMeta) CsType() CollationType {
-	return m.csType
+func (m *ObObjectMeta) CollationType() ObCollationType {
+	return m.collationType
 }
 
-func (m *ObjectMeta) SetCsType(csType CollationType) {
-	m.csType = csType
+func (m *ObObjectMeta) SetCollationType(collationType ObCollationType) {
+	m.collationType = collationType
 }
 
-func (m *ObjectMeta) Scale() byte {
+func (m *ObObjectMeta) Scale() byte {
 	return m.scale
 }
 
-func (m *ObjectMeta) SetScale(scale byte) {
+func (m *ObObjectMeta) SetScale(scale byte) {
 	m.scale = scale
 }
 
-func (m *ObjectMeta) Encode(buffer *bytes.Buffer) {
+func (m *ObObjectMeta) Encode(buffer *bytes.Buffer) {
 	util.PutUint8(buffer, uint8(m.objType.Value()))
-	util.PutUint8(buffer, uint8(m.csLevel))
-	util.PutUint8(buffer, uint8(m.csType))
+	util.PutUint8(buffer, uint8(m.collationLevel))
+	util.PutUint8(buffer, uint8(m.collationType))
 	util.PutUint8(buffer, m.scale)
 }
 
-func (m *ObjectMeta) Decode(buffer *bytes.Buffer) {
-	m.objType = ObjTypeValue(util.Uint8(buffer)).ValueOf()
-	m.csLevel = CollationLevel(util.Uint8(buffer))
-	m.csType = CollationType(util.Uint8(buffer))
+func (m *ObObjectMeta) Decode(buffer *bytes.Buffer) {
+	m.objType = ObObjTypeValue(util.Uint8(buffer)).ValueOf()
+	m.collationLevel = ObCollationLevel(util.Uint8(buffer))
+	m.collationType = ObCollationType(util.Uint8(buffer))
 	m.scale = util.Uint8(buffer)
 }
 
-func (m *ObjectMeta) EncodedLength() int {
-	return 4 // objType csLevel csType scale
+func (m *ObObjectMeta) EncodedLength() int {
+	return 4 // objType collationLevel collationType scale
 }
 
-type ObjType interface {
+type ObObjType interface {
 	Encode(buffer *bytes.Buffer, value interface{})
-	Decode(buffer *bytes.Buffer, csType CollationType) interface{}
+	Decode(buffer *bytes.Buffer, obCollationType ObCollationType) interface{}
 	EncodedLength(value interface{}) int
-	DefaultObjMeta() *ObjectMeta
-	CheckTypeForValue(value interface{}, csType CollationType) (interface{}, error)
-	Value() ObjTypeValue
+	DefaultObjMeta() *ObObjectMeta
+	CheckTypeForValue(value interface{}, obCollationType ObCollationType) (interface{}, error)
+	Value() ObObjTypeValue
 	String() string
 }
 
-func DefaultObjMeta(value interface{}) (*ObjectMeta, error) {
+func DefaultObjMeta(value interface{}) (*ObObjectMeta, error) {
 	if value == nil {
-		return ObjTypes[ObjTypeNullTypeValue].DefaultObjMeta(), nil
+		return ObObjTypes[ObjTypeNullTypeValue].DefaultObjMeta(), nil
 	}
 	switch value.(type) {
 	case bool:
-		return ObjTypes[ObjTypeTinyIntTypeValue].DefaultObjMeta(), nil
+		return ObObjTypes[ObjTypeTinyIntTypeValue].DefaultObjMeta(), nil
 	case int8:
-		return ObjTypes[ObjTypeTinyIntTypeValue].DefaultObjMeta(), nil
+		return ObObjTypes[ObjTypeTinyIntTypeValue].DefaultObjMeta(), nil
 	case uint8:
-		return ObjTypes[ObjTypeUTinyIntTypeValue].DefaultObjMeta(), nil
+		return ObObjTypes[ObjTypeUTinyIntTypeValue].DefaultObjMeta(), nil
 	case int16:
-		return ObjTypes[ObjTypeSmallIntTypeValue].DefaultObjMeta(), nil
+		return ObObjTypes[ObjTypeSmallIntTypeValue].DefaultObjMeta(), nil
 	case uint16:
-		return ObjTypes[ObjTypeUSmallIntTypeValue].DefaultObjMeta(), nil
+		return ObObjTypes[ObjTypeUSmallIntTypeValue].DefaultObjMeta(), nil
 	case int32:
-		return ObjTypes[ObjTypeInt32TypeValue].DefaultObjMeta(), nil
+		return ObObjTypes[ObjTypeInt32TypeValue].DefaultObjMeta(), nil
 	case uint32:
-		return ObjTypes[ObjTypeUInt32TypeValue].DefaultObjMeta(), nil
+		return ObObjTypes[ObjTypeUInt32TypeValue].DefaultObjMeta(), nil
 	case int64:
-		return ObjTypes[ObjTypeInt64TypeValue].DefaultObjMeta(), nil
+		return ObObjTypes[ObjTypeInt64TypeValue].DefaultObjMeta(), nil
 	case uint64:
-		return ObjTypes[ObjTypeUInt64TypeValue].DefaultObjMeta(), nil
+		return ObObjTypes[ObjTypeUInt64TypeValue].DefaultObjMeta(), nil
 	case float32:
-		return ObjTypes[ObjTypeFloatTypeValue].DefaultObjMeta(), nil
+		return ObObjTypes[ObjTypeFloatTypeValue].DefaultObjMeta(), nil
 	case float64:
-		return ObjTypes[ObjTypeDoubleTypeValue].DefaultObjMeta(), nil
+		return ObObjTypes[ObjTypeDoubleTypeValue].DefaultObjMeta(), nil
 	case string:
-		return ObjTypes[ObjTypeVarcharTypeValue].DefaultObjMeta(), nil
+		return ObObjTypes[ObjTypeVarcharTypeValue].DefaultObjMeta(), nil
 	case []byte:
-		return ObjTypes[ObjTypeVarcharTypeValue].DefaultObjMeta(), nil
+		return ObObjTypes[ObjTypeVarcharTypeValue].DefaultObjMeta(), nil
 	case time.Duration:
-		return ObjTypes[ObjTypeDateTimeTypeValue].DefaultObjMeta(), nil
+		return ObObjTypes[ObjTypeDateTimeTypeValue].DefaultObjMeta(), nil
 	default:
 		return nil, errors.Errorf("not match objmeta, value: %v", value)
 	}
 }
 
-func NewObjType(value ObjTypeValue) (ObjType, error) {
+func NewObjType(value ObObjTypeValue) (ObObjType, error) {
 	switch value {
 	case ObjTypeNullTypeValue:
-		return &NullType{value: value}, nil
+		return &ObNullType{value: value}, nil
 	case ObjTypeTinyIntTypeValue:
-		return &TinyIntType{value: value}, nil
+		return &ObTinyIntType{value: value}, nil
 	case ObjTypeSmallIntTypeValue:
-		return &SmallIntType{value: value}, nil
+		return &ObSmallIntType{value: value}, nil
 	case ObjTypeMediumIntTypeValue:
-		return &MediumIntType{value: value}, nil
+		return &ObMediumIntType{value: value}, nil
 	case ObjTypeInt32TypeValue:
-		return &Int32Type{value: value}, nil
+		return &ObInt32Type{value: value}, nil
 	case ObjTypeInt64TypeValue:
-		return &Int64Type{value: value}, nil
+		return &ObInt64Type{value: value}, nil
 	case ObjTypeUTinyIntTypeValue:
-		return &UTinyIntType{value: value}, nil
+		return &ObUTinyIntType{value: value}, nil
 	case ObjTypeUSmallIntTypeValue:
-		return &USmallIntType{value: value}, nil
+		return &ObUSmallIntType{value: value}, nil
 	case ObjTypeUMediumIntTypeValue:
-		return &UMediumIntType{value: value}, nil
+		return &ObUMediumIntType{value: value}, nil
 	case ObjTypeUInt32TypeValue:
-		return &UInt32Type{value: value}, nil
+		return &ObUInt32Type{value: value}, nil
 	case ObjTypeUInt64TypeValue:
-		return &UInt64Type{value: value}, nil
+		return &ObUInt64Type{value: value}, nil
 	case ObjTypeFloatTypeValue:
-		return &FloatType{value: value}, nil
+		return &ObFloatType{value: value}, nil
 	case ObjTypeDoubleTypeValue:
-		return &DoubleType{value: value}, nil
+		return &ObDoubleType{value: value}, nil
 	case ObjTypeUFloatTypeValue:
-		return &UFloatType{value: value}, nil
+		return &ObUFloatType{value: value}, nil
 	case ObjTypeUDoubleTypeValue:
-		return &UDoubleType{value: value}, nil
+		return &ObUDoubleType{value: value}, nil
 	case ObjTypeNumberTypeValue:
-		return &NumberType{value: value}, nil
+		return &ObNumberType{value: value}, nil
 	case ObjTypeUNumberTypeValue:
-		return &UNumberType{value: value}, nil
+		return &ObUNumberType{value: value}, nil
 	case ObjTypeDateTimeTypeValue:
-		return &DateTimeType{value: value}, nil
+		return &ObDateTimeType{value: value}, nil
 	case ObjTypeTimestampTypeValue:
-		return &TimestampType{value: value}, nil
+		return &ObTimestampType{value: value}, nil
 	case ObjTypeDateTypeValue:
-		return &DateType{value: value}, nil
+		return &ObDateType{value: value}, nil
 	case ObjTypeTimeTypeValue:
-		return &TimeType{value: value}, nil
+		return &ObTimeType{value: value}, nil
 	case ObjTypeYearTypeValue:
-		return &YearType{value: value}, nil
+		return &ObYearType{value: value}, nil
 	case ObjTypeVarcharTypeValue:
-		return &VarcharType{value: value}, nil
+		return &ObVarcharType{value: value}, nil
 	case ObjTypeCharTypeValue:
-		return &CharType{value: value}, nil
+		return &ObCharType{value: value}, nil
 	case ObjTypeHexStringTypeValue:
-		return &HexStringType{value: value}, nil
+		return &ObHexStringType{value: value}, nil
 	case ObjTypeExtendTypeValue:
-		return &ExtendType{value: value}, nil
+		return &ObExtendType{value: value}, nil
 	case ObjTypeUnknownTypeValue:
-		return &UnknownType{value: value}, nil
+		return &ObUnknownType{value: value}, nil
 	case ObjTypeTinyTextTypeValue:
-		return &TinyTextType{value: value}, nil
+		return &ObTinyTextType{value: value}, nil
 	case ObjTypeTextTypeValue:
-		return &TextType{value: value}, nil
+		return &ObTextType{value: value}, nil
 	case ObjTypeMediumTextTypeValue:
-		return &MediumTextType{value: value}, nil
+		return &ObMediumTextType{value: value}, nil
 	case ObjTypeLongTextTypeValue:
-		return &LongTextType{value: value}, nil
+		return &ObLongTextType{value: value}, nil
 	case ObjTypeBitTypeValue:
-		return &BitType{value: value}, nil
+		return &ObBitType{value: value}, nil
 	default:
 		return nil, errors.Errorf("not match objtype, value: %d", value)
 	}
 }
 
-type ObjTypeValue uint8
+type ObObjTypeValue uint8
 
-var ObjTypes = []ObjType{
-	ObjTypeNullTypeValue:       &NullType{value: ObjTypeNullTypeValue},
-	ObjTypeTinyIntTypeValue:    &TinyIntType{value: ObjTypeTinyIntTypeValue},
-	ObjTypeSmallIntTypeValue:   &SmallIntType{value: ObjTypeSmallIntTypeValue},
-	ObjTypeMediumIntTypeValue:  &MediumIntType{value: ObjTypeMediumIntTypeValue},
-	ObjTypeInt32TypeValue:      &Int32Type{value: ObjTypeInt32TypeValue},
-	ObjTypeInt64TypeValue:      &Int64Type{value: ObjTypeInt64TypeValue},
-	ObjTypeUTinyIntTypeValue:   &UTinyIntType{value: ObjTypeUTinyIntTypeValue},
-	ObjTypeUSmallIntTypeValue:  &USmallIntType{value: ObjTypeUSmallIntTypeValue},
-	ObjTypeUMediumIntTypeValue: &UMediumIntType{value: ObjTypeUMediumIntTypeValue},
-	ObjTypeUInt32TypeValue:     &UInt32Type{value: ObjTypeUInt32TypeValue},
-	ObjTypeUInt64TypeValue:     &UInt64Type{value: ObjTypeUInt64TypeValue},
-	ObjTypeFloatTypeValue:      &FloatType{value: ObjTypeFloatTypeValue},
-	ObjTypeDoubleTypeValue:     &DoubleType{value: ObjTypeDoubleTypeValue},
-	ObjTypeUFloatTypeValue:     &UFloatType{value: ObjTypeUFloatTypeValue},
-	ObjTypeUDoubleTypeValue:    &UDoubleType{value: ObjTypeUDoubleTypeValue},
-	ObjTypeNumberTypeValue:     &NumberType{value: ObjTypeNumberTypeValue},
-	ObjTypeUNumberTypeValue:    &UNumberType{value: ObjTypeUNumberTypeValue},
-	ObjTypeDateTimeTypeValue:   &DateTimeType{value: ObjTypeDateTimeTypeValue},
-	ObjTypeTimestampTypeValue:  &TimestampType{value: ObjTypeTimestampTypeValue},
-	ObjTypeDateTypeValue:       &DateType{value: ObjTypeDateTypeValue},
-	ObjTypeTimeTypeValue:       &TimeType{value: ObjTypeTimeTypeValue},
-	ObjTypeYearTypeValue:       &YearType{value: ObjTypeYearTypeValue},
-	ObjTypeVarcharTypeValue:    &VarcharType{value: ObjTypeVarcharTypeValue},
-	ObjTypeCharTypeValue:       &CharType{value: ObjTypeCharTypeValue},
-	ObjTypeHexStringTypeValue:  &HexStringType{value: ObjTypeHexStringTypeValue},
-	ObjTypeExtendTypeValue:     &ExtendType{value: ObjTypeExtendTypeValue},
-	ObjTypeUnknownTypeValue:    &UnknownType{value: ObjTypeUnknownTypeValue},
-	ObjTypeTinyTextTypeValue:   &TinyTextType{value: ObjTypeTinyTextTypeValue},
-	ObjTypeTextTypeValue:       &TextType{value: ObjTypeTextTypeValue},
-	ObjTypeMediumTextTypeValue: &MediumTextType{value: ObjTypeMediumTextTypeValue},
-	ObjTypeLongTextTypeValue:   &LongTextType{value: ObjTypeLongTextTypeValue},
-	ObjTypeBitTypeValue:        &BitType{value: ObjTypeBitTypeValue},
+var ObObjTypes = []ObObjType{
+	ObjTypeNullTypeValue:       &ObNullType{value: ObjTypeNullTypeValue},
+	ObjTypeTinyIntTypeValue:    &ObTinyIntType{value: ObjTypeTinyIntTypeValue},
+	ObjTypeSmallIntTypeValue:   &ObSmallIntType{value: ObjTypeSmallIntTypeValue},
+	ObjTypeMediumIntTypeValue:  &ObMediumIntType{value: ObjTypeMediumIntTypeValue},
+	ObjTypeInt32TypeValue:      &ObInt32Type{value: ObjTypeInt32TypeValue},
+	ObjTypeInt64TypeValue:      &ObInt64Type{value: ObjTypeInt64TypeValue},
+	ObjTypeUTinyIntTypeValue:   &ObUTinyIntType{value: ObjTypeUTinyIntTypeValue},
+	ObjTypeUSmallIntTypeValue:  &ObUSmallIntType{value: ObjTypeUSmallIntTypeValue},
+	ObjTypeUMediumIntTypeValue: &ObUMediumIntType{value: ObjTypeUMediumIntTypeValue},
+	ObjTypeUInt32TypeValue:     &ObUInt32Type{value: ObjTypeUInt32TypeValue},
+	ObjTypeUInt64TypeValue:     &ObUInt64Type{value: ObjTypeUInt64TypeValue},
+	ObjTypeFloatTypeValue:      &ObFloatType{value: ObjTypeFloatTypeValue},
+	ObjTypeDoubleTypeValue:     &ObDoubleType{value: ObjTypeDoubleTypeValue},
+	ObjTypeUFloatTypeValue:     &ObUFloatType{value: ObjTypeUFloatTypeValue},
+	ObjTypeUDoubleTypeValue:    &ObUDoubleType{value: ObjTypeUDoubleTypeValue},
+	ObjTypeNumberTypeValue:     &ObNumberType{value: ObjTypeNumberTypeValue},
+	ObjTypeUNumberTypeValue:    &ObUNumberType{value: ObjTypeUNumberTypeValue},
+	ObjTypeDateTimeTypeValue:   &ObDateTimeType{value: ObjTypeDateTimeTypeValue},
+	ObjTypeTimestampTypeValue:  &ObTimestampType{value: ObjTypeTimestampTypeValue},
+	ObjTypeDateTypeValue:       &ObDateType{value: ObjTypeDateTypeValue},
+	ObjTypeTimeTypeValue:       &ObTimeType{value: ObjTypeTimeTypeValue},
+	ObjTypeYearTypeValue:       &ObYearType{value: ObjTypeYearTypeValue},
+	ObjTypeVarcharTypeValue:    &ObVarcharType{value: ObjTypeVarcharTypeValue},
+	ObjTypeCharTypeValue:       &ObCharType{value: ObjTypeCharTypeValue},
+	ObjTypeHexStringTypeValue:  &ObHexStringType{value: ObjTypeHexStringTypeValue},
+	ObjTypeExtendTypeValue:     &ObExtendType{value: ObjTypeExtendTypeValue},
+	ObjTypeUnknownTypeValue:    &ObUnknownType{value: ObjTypeUnknownTypeValue},
+	ObjTypeTinyTextTypeValue:   &ObTinyTextType{value: ObjTypeTinyTextTypeValue},
+	ObjTypeTextTypeValue:       &ObTextType{value: ObjTypeTextTypeValue},
+	ObjTypeMediumTextTypeValue: &ObMediumTextType{value: ObjTypeMediumTextTypeValue},
+	ObjTypeLongTextTypeValue:   &ObLongTextType{value: ObjTypeLongTextTypeValue},
+	ObjTypeBitTypeValue:        &ObBitType{value: ObjTypeBitTypeValue},
 }
 
-func (v ObjTypeValue) ValueOf() ObjType {
-	return ObjTypes[v]
+func (v ObObjTypeValue) ValueOf() ObObjType {
+	return ObObjTypes[v]
 }
 
 const (
-	ObjTypeNullTypeValue ObjTypeValue = iota
+	ObjTypeNullTypeValue ObObjTypeValue = iota
 	ObjTypeTinyIntTypeValue
 	ObjTypeSmallIntTypeValue
 	ObjTypeMediumIntTypeValue
@@ -286,107 +286,107 @@ const (
 	ObjTypeBitTypeValue
 )
 
-type CollationLevel uint8
+type ObCollationLevel uint8
 
 const (
-	CollationLevelExplicit CollationLevel = iota
-	CollationLevelNone
-	CollationLevelImplicit
-	CollationLevelSysConst
-	CollationLevelCoercible
-	CollationLevelNumeric
-	CollationLevelIgnorable
-	CollationLevelInvalid CollationLevel = 127
+	ObCollationLevelExplicit ObCollationLevel = iota
+	ObCollationLevelNone
+	ObCollationLevelImplicit
+	ObCollationLevelSysConst
+	ObCollationLevelCoercible
+	ObCollationLevelNumeric
+	ObCollationLevelIgnorable
+	CollationLevelInvalid ObCollationLevel = 127
 )
 
-func (l CollationLevel) String() string {
+func (l ObCollationLevel) String() string {
 	switch l {
-	case CollationLevelExplicit:
-		return "CollationLevelExplicit"
-	case CollationLevelNone:
-		return "CollationLevelNone"
-	case CollationLevelImplicit:
-		return "CollationLevelImplicit"
-	case CollationLevelSysConst:
-		return "CollationLevelSysConst"
-	case CollationLevelCoercible:
-		return "CollationLevelCoercible"
-	case CollationLevelNumeric:
-		return "CollationLevelNumeric"
-	case CollationLevelIgnorable:
-		return "CollationLevelIgnorable"
+	case ObCollationLevelExplicit:
+		return "ObCollationLevelExplicit"
+	case ObCollationLevelNone:
+		return "ObCollationLevelNone"
+	case ObCollationLevelImplicit:
+		return "ObCollationLevelImplicit"
+	case ObCollationLevelSysConst:
+		return "ObCollationLevelSysConst"
+	case ObCollationLevelCoercible:
+		return "ObCollationLevelCoercible"
+	case ObCollationLevelNumeric:
+		return "ObCollationLevelNumeric"
+	case ObCollationLevelIgnorable:
+		return "ObCollationLevelIgnorable"
 	default:
-		return "CollationLevelInvalid"
+		return "ObCollationLevelInvalid"
 	}
 }
 
-type CollationType uint8
+type ObCollationType uint8
 
 const (
-	CollationTypeInvalid          CollationType = 0
-	CollationTypeUtf8mb4GeneralCi CollationType = 45
-	CollationTypeUtf8mb4Bin       CollationType = 46
-	CollationTypeBinary           CollationType = 63
-	CollationTypeCollationFree    CollationType = 100
-	CollationTypeMax              CollationType = 101
+	ObCollationTypeInvalid          ObCollationType = 0
+	ObCollationTypeUtf8mb4GeneralCi ObCollationType = 45
+	ObCollationTypeUtf8mb4Bin       ObCollationType = 46
+	ObCollationTypeBinary           ObCollationType = 63
+	ObCollationTypeCollationFree    ObCollationType = 100
+	ObCollationTypeMax              ObCollationType = 101
 )
 
-func (t CollationType) String() string {
+func (t ObCollationType) String() string {
 	switch t {
-	case CollationTypeUtf8mb4GeneralCi:
-		return "CollationTypeUtf8mb4GeneralCi"
-	case CollationTypeUtf8mb4Bin:
-		return "CollationTypeUtf8mb4Bin"
-	case CollationTypeBinary:
-		return "CollationTypeBinary"
-	case CollationTypeCollationFree:
-		return "CollationTypeCollationFree"
-	case CollationTypeMax:
-		return "CollationTypeMax"
+	case ObCollationTypeUtf8mb4GeneralCi:
+		return "ObCollationTypeUtf8mb4GeneralCi"
+	case ObCollationTypeUtf8mb4Bin:
+		return "ObCollationTypeUtf8mb4Bin"
+	case ObCollationTypeBinary:
+		return "ObCollationTypeBinary"
+	case ObCollationTypeCollationFree:
+		return "ObCollationTypeCollationFree"
+	case ObCollationTypeMax:
+		return "ObCollationTypeMax"
 	default:
-		return "CollationTypeInvalid"
+		return "ObCollationTypeInvalid"
 	}
 }
 
-type NullType struct {
-	value ObjTypeValue
+type ObNullType struct {
+	value ObObjTypeValue
 }
 
-func (t *NullType) Encode(buffer *bytes.Buffer, value interface{}) {
+func (t *ObNullType) Encode(buffer *bytes.Buffer, value interface{}) {
 	return
 }
 
-func (t *NullType) Decode(buffer *bytes.Buffer, csType CollationType) interface{} {
+func (t *ObNullType) Decode(buffer *bytes.Buffer, obCollationType ObCollationType) interface{} {
 	return nil
 }
 
-func (t *NullType) EncodedLength(value interface{}) int {
+func (t *ObNullType) EncodedLength(value interface{}) int {
 	return 0
 }
 
-func (t *NullType) DefaultObjMeta() *ObjectMeta {
-	return NewObjectMetaWithParams(t, CollationLevelIgnorable, CollationTypeBinary, 10)
+func (t *ObNullType) DefaultObjMeta() *ObObjectMeta {
+	return NewObjectMetaWithParams(t, ObCollationLevelIgnorable, ObCollationTypeBinary, 10)
 }
 
-func (t *NullType) CheckTypeForValue(value interface{}, csType CollationType) (interface{}, error) {
+func (t *ObNullType) CheckTypeForValue(value interface{}, obCollationType ObCollationType) (interface{}, error) {
 	return nil, errors.New("null type can not parse to comparable value")
 }
 
-func (t *NullType) Value() ObjTypeValue {
+func (t *ObNullType) Value() ObObjTypeValue {
 	return t.value
 }
 
-func (t *NullType) String() string {
-	return "ObjType{" +
-		"type:" + "NullType" +
+func (t *ObNullType) String() string {
+	return "ObObjType{" +
+		"type:" + "ObNullType" +
 		"}"
 }
 
-type TinyIntType struct {
-	value ObjTypeValue
+type ObTinyIntType struct {
+	value ObObjTypeValue
 }
 
-func (t *TinyIntType) Encode(buffer *bytes.Buffer, value interface{}) {
+func (t *ObTinyIntType) Encode(buffer *bytes.Buffer, value interface{}) {
 	switch v := value.(type) {
 	case bool:
 		if v {
@@ -399,19 +399,19 @@ func (t *TinyIntType) Encode(buffer *bytes.Buffer, value interface{}) {
 	}
 }
 
-func (t *TinyIntType) Decode(buffer *bytes.Buffer, csType CollationType) interface{} {
+func (t *ObTinyIntType) Decode(buffer *bytes.Buffer, obCollationType ObCollationType) interface{} {
 	return util.Uint8(buffer)
 }
 
-func (t *TinyIntType) EncodedLength(value interface{}) int {
+func (t *ObTinyIntType) EncodedLength(value interface{}) int {
 	return 1
 }
 
-func (t *TinyIntType) DefaultObjMeta() *ObjectMeta {
-	return NewObjectMetaWithParams(t, CollationLevelNumeric, CollationTypeBinary, 10)
+func (t *ObTinyIntType) DefaultObjMeta() *ObObjectMeta {
+	return NewObjectMetaWithParams(t, ObCollationLevelNumeric, ObCollationTypeBinary, 10)
 }
 
-func (t *TinyIntType) CheckTypeForValue(value interface{}, csType CollationType) (interface{}, error) {
+func (t *ObTinyIntType) CheckTypeForValue(value interface{}, obCollationType ObCollationType) (interface{}, error) {
 	switch v := value.(type) {
 	case bool:
 		return v, nil
@@ -422,37 +422,37 @@ func (t *TinyIntType) CheckTypeForValue(value interface{}, csType CollationType)
 	}
 }
 
-func (t *TinyIntType) Value() ObjTypeValue {
+func (t *ObTinyIntType) Value() ObObjTypeValue {
 	return t.value
 }
 
-func (t *TinyIntType) String() string {
-	return "ObjType{" +
-		"type:" + "TinyIntType" +
+func (t *ObTinyIntType) String() string {
+	return "ObObjType{" +
+		"type:" + "ObTinyIntType" +
 		"}"
 }
 
-type SmallIntType struct {
-	value ObjTypeValue
+type ObSmallIntType struct {
+	value ObObjTypeValue
 }
 
-func (t *SmallIntType) Encode(buffer *bytes.Buffer, value interface{}) {
+func (t *ObSmallIntType) Encode(buffer *bytes.Buffer, value interface{}) {
 	util.EncodeVi32(buffer, int32(value.(int16)))
 }
 
-func (t *SmallIntType) Decode(buffer *bytes.Buffer, csType CollationType) interface{} {
+func (t *ObSmallIntType) Decode(buffer *bytes.Buffer, obCollationType ObCollationType) interface{} {
 	return util.DecodeVi32(buffer)
 }
 
-func (t *SmallIntType) EncodedLength(value interface{}) int {
+func (t *ObSmallIntType) EncodedLength(value interface{}) int {
 	return util.EncodedLengthByVi32(int32(value.(int16)))
 }
 
-func (t *SmallIntType) DefaultObjMeta() *ObjectMeta {
-	return NewObjectMetaWithParams(t, CollationLevelNumeric, CollationTypeBinary, 10)
+func (t *ObSmallIntType) DefaultObjMeta() *ObObjectMeta {
+	return NewObjectMetaWithParams(t, ObCollationLevelNumeric, ObCollationTypeBinary, 10)
 }
 
-func (t *SmallIntType) CheckTypeForValue(value interface{}, csType CollationType) (interface{}, error) {
+func (t *ObSmallIntType) CheckTypeForValue(value interface{}, obCollationType ObCollationType) (interface{}, error) {
 	if v, ok := value.(int16); ok {
 		return v, nil
 	} else {
@@ -460,71 +460,71 @@ func (t *SmallIntType) CheckTypeForValue(value interface{}, csType CollationType
 	}
 }
 
-func (t *SmallIntType) Value() ObjTypeValue {
+func (t *ObSmallIntType) Value() ObObjTypeValue {
 	return t.value
 }
 
-func (t *SmallIntType) String() string {
-	return "ObjType{" +
-		"type:" + "SmallIntType" +
+func (t *ObSmallIntType) String() string {
+	return "ObObjType{" +
+		"type:" + "ObSmallIntType" +
 		"}"
 }
 
-type MediumIntType struct { // TODO not support
-	value ObjTypeValue
+type ObMediumIntType struct { // TODO not support
+	value ObObjTypeValue
 }
 
-func (t *MediumIntType) Encode(buffer *bytes.Buffer, value interface{}) {
+func (t *ObMediumIntType) Encode(buffer *bytes.Buffer, value interface{}) {
 	util.EncodeVi32(buffer, value.(int32))
 }
 
-func (t *MediumIntType) Decode(buffer *bytes.Buffer, csType CollationType) interface{} {
+func (t *ObMediumIntType) Decode(buffer *bytes.Buffer, obCollationType ObCollationType) interface{} {
 	return util.DecodeVi32(buffer)
 }
 
-func (t *MediumIntType) EncodedLength(value interface{}) int {
+func (t *ObMediumIntType) EncodedLength(value interface{}) int {
 	return util.EncodedLengthByVi32(value.(int32))
 }
 
-func (t *MediumIntType) DefaultObjMeta() *ObjectMeta {
-	return NewObjectMetaWithParams(t, CollationLevelNumeric, CollationTypeBinary, 10)
+func (t *ObMediumIntType) DefaultObjMeta() *ObObjectMeta {
+	return NewObjectMetaWithParams(t, ObCollationLevelNumeric, ObCollationTypeBinary, 10)
 }
 
-func (t *MediumIntType) CheckTypeForValue(value interface{}, csType CollationType) (interface{}, error) {
+func (t *ObMediumIntType) CheckTypeForValue(value interface{}, obCollationType ObCollationType) (interface{}, error) {
 	return nil, errors.New("medium int type is not support")
 }
 
-func (t *MediumIntType) Value() ObjTypeValue {
+func (t *ObMediumIntType) Value() ObObjTypeValue {
 	return t.value
 }
 
-func (t *MediumIntType) String() string {
-	return "ObjType{" +
-		"type:" + "MediumIntType" +
+func (t *ObMediumIntType) String() string {
+	return "ObObjType{" +
+		"type:" + "ObMediumIntType" +
 		"}"
 }
 
-type Int32Type struct {
-	value ObjTypeValue
+type ObInt32Type struct {
+	value ObObjTypeValue
 }
 
-func (t *Int32Type) Encode(buffer *bytes.Buffer, value interface{}) {
+func (t *ObInt32Type) Encode(buffer *bytes.Buffer, value interface{}) {
 	util.EncodeVi32(buffer, value.(int32))
 }
 
-func (t *Int32Type) Decode(buffer *bytes.Buffer, csType CollationType) interface{} {
+func (t *ObInt32Type) Decode(buffer *bytes.Buffer, obCollationType ObCollationType) interface{} {
 	return util.DecodeVi32(buffer)
 }
 
-func (t *Int32Type) EncodedLength(value interface{}) int {
+func (t *ObInt32Type) EncodedLength(value interface{}) int {
 	return util.EncodedLengthByVi32(value.(int32))
 }
 
-func (t *Int32Type) DefaultObjMeta() *ObjectMeta {
-	return NewObjectMetaWithParams(t, CollationLevelNumeric, CollationTypeBinary, 10)
+func (t *ObInt32Type) DefaultObjMeta() *ObObjectMeta {
+	return NewObjectMetaWithParams(t, ObCollationLevelNumeric, ObCollationTypeBinary, 10)
 }
 
-func (t *Int32Type) CheckTypeForValue(value interface{}, csType CollationType) (interface{}, error) {
+func (t *ObInt32Type) CheckTypeForValue(value interface{}, obCollationType ObCollationType) (interface{}, error) {
 	if v, ok := value.(int32); ok {
 		return v, nil
 	} else {
@@ -532,37 +532,37 @@ func (t *Int32Type) CheckTypeForValue(value interface{}, csType CollationType) (
 	}
 }
 
-func (t *Int32Type) Value() ObjTypeValue {
+func (t *ObInt32Type) Value() ObObjTypeValue {
 	return t.value
 }
 
-func (t *Int32Type) String() string {
-	return "ObjType{" +
-		"type:" + "Int32Type" +
+func (t *ObInt32Type) String() string {
+	return "ObObjType{" +
+		"type:" + "ObInt32Type" +
 		"}"
 }
 
-type Int64Type struct {
-	value ObjTypeValue
+type ObInt64Type struct {
+	value ObObjTypeValue
 }
 
-func (t *Int64Type) Encode(buffer *bytes.Buffer, value interface{}) {
+func (t *ObInt64Type) Encode(buffer *bytes.Buffer, value interface{}) {
 	util.EncodeVi64(buffer, value.(int64))
 }
 
-func (t *Int64Type) Decode(buffer *bytes.Buffer, csType CollationType) interface{} {
+func (t *ObInt64Type) Decode(buffer *bytes.Buffer, obCollationType ObCollationType) interface{} {
 	return util.DecodeVi64(buffer)
 }
 
-func (t *Int64Type) EncodedLength(value interface{}) int {
+func (t *ObInt64Type) EncodedLength(value interface{}) int {
 	return util.EncodedLengthByVi64(value.(int64))
 }
 
-func (t *Int64Type) DefaultObjMeta() *ObjectMeta {
-	return NewObjectMetaWithParams(t, CollationLevelNumeric, CollationTypeBinary, 10)
+func (t *ObInt64Type) DefaultObjMeta() *ObObjectMeta {
+	return NewObjectMetaWithParams(t, ObCollationLevelNumeric, ObCollationTypeBinary, 10)
 }
 
-func (t *Int64Type) CheckTypeForValue(value interface{}, csType CollationType) (interface{}, error) {
+func (t *ObInt64Type) CheckTypeForValue(value interface{}, obCollationType ObCollationType) (interface{}, error) {
 	if v, ok := value.(int64); ok {
 		return v, nil
 	} else {
@@ -570,37 +570,37 @@ func (t *Int64Type) CheckTypeForValue(value interface{}, csType CollationType) (
 	}
 }
 
-func (t *Int64Type) Value() ObjTypeValue {
+func (t *ObInt64Type) Value() ObObjTypeValue {
 	return t.value
 }
 
-func (t *Int64Type) String() string {
-	return "ObjType{" +
-		"type:" + "Int64Type" +
+func (t *ObInt64Type) String() string {
+	return "ObObjType{" +
+		"type:" + "ObInt64Type" +
 		"}"
 }
 
-type UTinyIntType struct {
-	value ObjTypeValue
+type ObUTinyIntType struct {
+	value ObObjTypeValue
 }
 
-func (t *UTinyIntType) Encode(buffer *bytes.Buffer, value interface{}) {
+func (t *ObUTinyIntType) Encode(buffer *bytes.Buffer, value interface{}) {
 	util.PutUint8(buffer, value.(uint8))
 }
 
-func (t *UTinyIntType) Decode(buffer *bytes.Buffer, csType CollationType) interface{} {
+func (t *ObUTinyIntType) Decode(buffer *bytes.Buffer, obCollationType ObCollationType) interface{} {
 	return util.Uint8(buffer)
 }
 
-func (t *UTinyIntType) EncodedLength(value interface{}) int {
+func (t *ObUTinyIntType) EncodedLength(value interface{}) int {
 	return 1
 }
 
-func (t *UTinyIntType) DefaultObjMeta() *ObjectMeta {
-	return NewObjectMetaWithParams(t, CollationLevelNumeric, CollationTypeBinary, 10)
+func (t *ObUTinyIntType) DefaultObjMeta() *ObObjectMeta {
+	return NewObjectMetaWithParams(t, ObCollationLevelNumeric, ObCollationTypeBinary, 10)
 }
 
-func (t *UTinyIntType) CheckTypeForValue(value interface{}, csType CollationType) (interface{}, error) {
+func (t *ObUTinyIntType) CheckTypeForValue(value interface{}, obCollationType ObCollationType) (interface{}, error) {
 	if v, ok := value.(uint8); ok {
 		return v, nil
 	} else {
@@ -608,37 +608,37 @@ func (t *UTinyIntType) CheckTypeForValue(value interface{}, csType CollationType
 	}
 }
 
-func (t *UTinyIntType) Value() ObjTypeValue {
+func (t *ObUTinyIntType) Value() ObObjTypeValue {
 	return t.value
 }
 
-func (t *UTinyIntType) String() string {
-	return "ObjType{" +
-		"type:" + "TinyIntType" +
+func (t *ObUTinyIntType) String() string {
+	return "ObObjType{" +
+		"type:" + "ObUTinyIntType" +
 		"}"
 }
 
-type USmallIntType struct {
-	value ObjTypeValue
+type ObUSmallIntType struct {
+	value ObObjTypeValue
 }
 
-func (t *USmallIntType) Encode(buffer *bytes.Buffer, value interface{}) {
+func (t *ObUSmallIntType) Encode(buffer *bytes.Buffer, value interface{}) {
 	util.EncodeVi32(buffer, int32(value.(uint16)))
 }
 
-func (t *USmallIntType) Decode(buffer *bytes.Buffer, csType CollationType) interface{} {
+func (t *ObUSmallIntType) Decode(buffer *bytes.Buffer, obCollationType ObCollationType) interface{} {
 	return util.DecodeVi32(buffer)
 }
 
-func (t *USmallIntType) EncodedLength(value interface{}) int {
+func (t *ObUSmallIntType) EncodedLength(value interface{}) int {
 	return util.EncodedLengthByVi32(int32(value.(uint16)))
 }
 
-func (t *USmallIntType) DefaultObjMeta() *ObjectMeta {
-	return NewObjectMetaWithParams(t, CollationLevelNumeric, CollationTypeBinary, 10)
+func (t *ObUSmallIntType) DefaultObjMeta() *ObObjectMeta {
+	return NewObjectMetaWithParams(t, ObCollationLevelNumeric, ObCollationTypeBinary, 10)
 }
 
-func (t *USmallIntType) CheckTypeForValue(value interface{}, csType CollationType) (interface{}, error) {
+func (t *ObUSmallIntType) CheckTypeForValue(value interface{}, obCollationType ObCollationType) (interface{}, error) {
 	if v, ok := value.(uint16); ok {
 		return v, nil
 	} else {
@@ -646,71 +646,71 @@ func (t *USmallIntType) CheckTypeForValue(value interface{}, csType CollationTyp
 	}
 }
 
-func (t *USmallIntType) Value() ObjTypeValue {
+func (t *ObUSmallIntType) Value() ObObjTypeValue {
 	return t.value
 }
 
-func (t *USmallIntType) String() string {
-	return "ObjType{" +
-		"type:" + "USmallIntType" +
+func (t *ObUSmallIntType) String() string {
+	return "ObObjType{" +
+		"type:" + "ObUSmallIntType" +
 		"}"
 }
 
-type UMediumIntType struct { // TODO not support
-	value ObjTypeValue
+type ObUMediumIntType struct { // TODO not support
+	value ObObjTypeValue
 }
 
-func (t *UMediumIntType) Encode(buffer *bytes.Buffer, value interface{}) {
+func (t *ObUMediumIntType) Encode(buffer *bytes.Buffer, value interface{}) {
 	util.EncodeVi32(buffer, int32(value.(uint32)))
 }
 
-func (t *UMediumIntType) Decode(buffer *bytes.Buffer, csType CollationType) interface{} {
+func (t *ObUMediumIntType) Decode(buffer *bytes.Buffer, obCollationType ObCollationType) interface{} {
 	return util.DecodeVi32(buffer)
 }
 
-func (t *UMediumIntType) EncodedLength(value interface{}) int {
+func (t *ObUMediumIntType) EncodedLength(value interface{}) int {
 	return util.EncodedLengthByVi32(int32(value.(uint32)))
 }
 
-func (t *UMediumIntType) DefaultObjMeta() *ObjectMeta {
-	return NewObjectMetaWithParams(t, CollationLevelNumeric, CollationTypeBinary, 10)
+func (t *ObUMediumIntType) DefaultObjMeta() *ObObjectMeta {
+	return NewObjectMetaWithParams(t, ObCollationLevelNumeric, ObCollationTypeBinary, 10)
 }
 
-func (t *UMediumIntType) CheckTypeForValue(value interface{}, csType CollationType) (interface{}, error) {
+func (t *ObUMediumIntType) CheckTypeForValue(value interface{}, obCollationType ObCollationType) (interface{}, error) {
 	return nil, errors.New("uMedium int type is not support")
 }
 
-func (t *UMediumIntType) Value() ObjTypeValue {
+func (t *ObUMediumIntType) Value() ObObjTypeValue {
 	return t.value
 }
 
-func (t *UMediumIntType) String() string {
-	return "ObjType{" +
-		"type:" + "UMediumIntType" +
+func (t *ObUMediumIntType) String() string {
+	return "ObObjType{" +
+		"type:" + "ObUMediumIntType" +
 		"}"
 }
 
-type UInt32Type struct {
-	value ObjTypeValue
+type ObUInt32Type struct {
+	value ObObjTypeValue
 }
 
-func (t *UInt32Type) Encode(buffer *bytes.Buffer, value interface{}) {
+func (t *ObUInt32Type) Encode(buffer *bytes.Buffer, value interface{}) {
 	util.EncodeVi32(buffer, int32(value.(uint32)))
 }
 
-func (t *UInt32Type) Decode(buffer *bytes.Buffer, csType CollationType) interface{} {
+func (t *ObUInt32Type) Decode(buffer *bytes.Buffer, obCollationType ObCollationType) interface{} {
 	return util.DecodeVi32(buffer)
 }
 
-func (t *UInt32Type) EncodedLength(value interface{}) int {
+func (t *ObUInt32Type) EncodedLength(value interface{}) int {
 	return util.EncodedLengthByVi32(int32(value.(uint32)))
 }
 
-func (t *UInt32Type) DefaultObjMeta() *ObjectMeta {
-	return NewObjectMetaWithParams(t, CollationLevelNumeric, CollationTypeBinary, 10)
+func (t *ObUInt32Type) DefaultObjMeta() *ObObjectMeta {
+	return NewObjectMetaWithParams(t, ObCollationLevelNumeric, ObCollationTypeBinary, 10)
 }
 
-func (t *UInt32Type) CheckTypeForValue(value interface{}, csType CollationType) (interface{}, error) {
+func (t *ObUInt32Type) CheckTypeForValue(value interface{}, obCollationType ObCollationType) (interface{}, error) {
 	if v, ok := value.(uint32); ok {
 		return v, nil
 	} else {
@@ -718,37 +718,37 @@ func (t *UInt32Type) CheckTypeForValue(value interface{}, csType CollationType) 
 	}
 }
 
-func (t *UInt32Type) Value() ObjTypeValue {
+func (t *ObUInt32Type) Value() ObObjTypeValue {
 	return t.value
 }
 
-func (t *UInt32Type) String() string {
-	return "ObjType{" +
-		"type:" + "UInt32Type" +
+func (t *ObUInt32Type) String() string {
+	return "ObObjType{" +
+		"type:" + "ObUInt32Type" +
 		"}"
 }
 
-type UInt64Type struct {
-	value ObjTypeValue
+type ObUInt64Type struct {
+	value ObObjTypeValue
 }
 
-func (t *UInt64Type) Encode(buffer *bytes.Buffer, value interface{}) {
+func (t *ObUInt64Type) Encode(buffer *bytes.Buffer, value interface{}) {
 	util.EncodeVi64(buffer, int64(value.(uint64)))
 }
 
-func (t *UInt64Type) Decode(buffer *bytes.Buffer, csType CollationType) interface{} {
+func (t *ObUInt64Type) Decode(buffer *bytes.Buffer, obCollationType ObCollationType) interface{} {
 	return util.DecodeVi64(buffer)
 }
 
-func (t *UInt64Type) EncodedLength(value interface{}) int {
+func (t *ObUInt64Type) EncodedLength(value interface{}) int {
 	return util.EncodedLengthByVi64(int64(value.(uint64)))
 }
 
-func (t *UInt64Type) DefaultObjMeta() *ObjectMeta {
-	return NewObjectMetaWithParams(t, CollationLevelNumeric, CollationTypeBinary, 10)
+func (t *ObUInt64Type) DefaultObjMeta() *ObObjectMeta {
+	return NewObjectMetaWithParams(t, ObCollationLevelNumeric, ObCollationTypeBinary, 10)
 }
 
-func (t *UInt64Type) CheckTypeForValue(value interface{}, csType CollationType) (interface{}, error) {
+func (t *ObUInt64Type) CheckTypeForValue(value interface{}, obCollationType ObCollationType) (interface{}, error) {
 	if v, ok := value.(uint64); ok {
 		return v, nil
 	} else {
@@ -756,37 +756,37 @@ func (t *UInt64Type) CheckTypeForValue(value interface{}, csType CollationType) 
 	}
 }
 
-func (t *UInt64Type) Value() ObjTypeValue {
+func (t *ObUInt64Type) Value() ObObjTypeValue {
 	return t.value
 }
 
-func (t *UInt64Type) String() string {
-	return "ObjType{" +
-		"type:" + "UInt64Type" +
+func (t *ObUInt64Type) String() string {
+	return "ObObjType{" +
+		"type:" + "ObUInt64Type" +
 		"}"
 }
 
-type FloatType struct {
-	value ObjTypeValue
+type ObFloatType struct {
+	value ObObjTypeValue
 }
 
-func (t *FloatType) Encode(buffer *bytes.Buffer, value interface{}) {
+func (t *ObFloatType) Encode(buffer *bytes.Buffer, value interface{}) {
 	util.EncodeVf32(buffer, value.(float32))
 }
 
-func (t *FloatType) Decode(buffer *bytes.Buffer, csType CollationType) interface{} {
+func (t *ObFloatType) Decode(buffer *bytes.Buffer, obCollationType ObCollationType) interface{} {
 	return util.DecodeVf32(buffer)
 }
 
-func (t *FloatType) EncodedLength(value interface{}) int {
+func (t *ObFloatType) EncodedLength(value interface{}) int {
 	return util.EncodedLengthByVf32(value.(float32))
 }
 
-func (t *FloatType) DefaultObjMeta() *ObjectMeta {
-	return NewObjectMetaWithParams(t, CollationLevelNumeric, CollationTypeBinary, 10)
+func (t *ObFloatType) DefaultObjMeta() *ObObjectMeta {
+	return NewObjectMetaWithParams(t, ObCollationLevelNumeric, ObCollationTypeBinary, 10)
 }
 
-func (t *FloatType) CheckTypeForValue(value interface{}, csType CollationType) (interface{}, error) {
+func (t *ObFloatType) CheckTypeForValue(value interface{}, obCollationType ObCollationType) (interface{}, error) {
 	if v, ok := value.(float32); ok {
 		return v, nil
 	} else {
@@ -794,37 +794,37 @@ func (t *FloatType) CheckTypeForValue(value interface{}, csType CollationType) (
 	}
 }
 
-func (t *FloatType) Value() ObjTypeValue {
+func (t *ObFloatType) Value() ObObjTypeValue {
 	return t.value
 }
 
-func (t *FloatType) String() string {
-	return "ObjType{" +
-		"type:" + "FloatType" +
+func (t *ObFloatType) String() string {
+	return "ObObjType{" +
+		"type:" + "ObFloatType" +
 		"}"
 }
 
-type DoubleType struct {
-	value ObjTypeValue
+type ObDoubleType struct {
+	value ObObjTypeValue
 }
 
-func (t *DoubleType) Encode(buffer *bytes.Buffer, value interface{}) {
+func (t *ObDoubleType) Encode(buffer *bytes.Buffer, value interface{}) {
 	util.EncodeVf64(buffer, value.(float64))
 }
 
-func (t *DoubleType) Decode(buffer *bytes.Buffer, csType CollationType) interface{} {
+func (t *ObDoubleType) Decode(buffer *bytes.Buffer, obCollationType ObCollationType) interface{} {
 	return util.DecodeVf64(buffer)
 }
 
-func (t *DoubleType) EncodedLength(value interface{}) int {
+func (t *ObDoubleType) EncodedLength(value interface{}) int {
 	return util.EncodedLengthByVf64(value.(float64))
 }
 
-func (t *DoubleType) DefaultObjMeta() *ObjectMeta {
-	return NewObjectMetaWithParams(t, CollationLevelNumeric, CollationTypeBinary, 10)
+func (t *ObDoubleType) DefaultObjMeta() *ObObjectMeta {
+	return NewObjectMetaWithParams(t, ObCollationLevelNumeric, ObCollationTypeBinary, 10)
 }
 
-func (t *DoubleType) CheckTypeForValue(value interface{}, csType CollationType) (interface{}, error) {
+func (t *ObDoubleType) CheckTypeForValue(value interface{}, obCollationType ObCollationType) (interface{}, error) {
 	if v, ok := value.(float64); ok {
 		return v, nil
 	} else {
@@ -832,173 +832,173 @@ func (t *DoubleType) CheckTypeForValue(value interface{}, csType CollationType) 
 	}
 }
 
-func (t *DoubleType) Value() ObjTypeValue {
+func (t *ObDoubleType) Value() ObObjTypeValue {
 	return t.value
 }
 
-func (t *DoubleType) String() string {
-	return "ObjType{" +
-		"type:" + "DoubleType" +
+func (t *ObDoubleType) String() string {
+	return "ObObjType{" +
+		"type:" + "ObDoubleType" +
 		"}"
 }
 
-type UFloatType struct { // TODO not support
-	value ObjTypeValue
+type ObUFloatType struct { // TODO not support
+	value ObObjTypeValue
 }
 
-func (t *UFloatType) Encode(buffer *bytes.Buffer, value interface{}) {
+func (t *ObUFloatType) Encode(buffer *bytes.Buffer, value interface{}) {
 	return
 }
 
-func (t *UFloatType) Decode(buffer *bytes.Buffer, csType CollationType) interface{} {
+func (t *ObUFloatType) Decode(buffer *bytes.Buffer, obCollationType ObCollationType) interface{} {
 	return nil
 }
 
-func (t *UFloatType) EncodedLength(value interface{}) int {
+func (t *ObUFloatType) EncodedLength(value interface{}) int {
 	return 0
 }
 
-func (t *UFloatType) DefaultObjMeta() *ObjectMeta {
-	return NewObjectMetaWithParams(t, CollationLevelNumeric, CollationTypeBinary, 10)
+func (t *ObUFloatType) DefaultObjMeta() *ObObjectMeta {
+	return NewObjectMetaWithParams(t, ObCollationLevelNumeric, ObCollationTypeBinary, 10)
 }
 
-func (t *UFloatType) CheckTypeForValue(value interface{}, csType CollationType) (interface{}, error) {
+func (t *ObUFloatType) CheckTypeForValue(value interface{}, obCollationType ObCollationType) (interface{}, error) {
 	return nil, errors.New("uFloat type is not support")
 }
 
-func (t *UFloatType) Value() ObjTypeValue {
+func (t *ObUFloatType) Value() ObObjTypeValue {
 	return t.value
 }
 
-func (t *UFloatType) String() string {
-	return "ObjType{" +
-		"type:" + "UFloatType" +
+func (t *ObUFloatType) String() string {
+	return "ObObjType{" +
+		"type:" + "ObUFloatType" +
 		"}"
 }
 
-type UDoubleType struct { // TODO not support
-	value ObjTypeValue
+type ObUDoubleType struct { // TODO not support
+	value ObObjTypeValue
 }
 
-func (t *UDoubleType) Encode(buffer *bytes.Buffer, value interface{}) {
+func (t *ObUDoubleType) Encode(buffer *bytes.Buffer, value interface{}) {
 	return
 }
 
-func (t *UDoubleType) Decode(buffer *bytes.Buffer, csType CollationType) interface{} {
+func (t *ObUDoubleType) Decode(buffer *bytes.Buffer, obCollationType ObCollationType) interface{} {
 	return nil
 }
 
-func (t *UDoubleType) EncodedLength(value interface{}) int {
+func (t *ObUDoubleType) EncodedLength(value interface{}) int {
 	return 0
 }
 
-func (t *UDoubleType) DefaultObjMeta() *ObjectMeta {
-	return NewObjectMetaWithParams(t, CollationLevelNumeric, CollationTypeBinary, 10)
+func (t *ObUDoubleType) DefaultObjMeta() *ObObjectMeta {
+	return NewObjectMetaWithParams(t, ObCollationLevelNumeric, ObCollationTypeBinary, 10)
 }
 
-func (t *UDoubleType) CheckTypeForValue(value interface{}, csType CollationType) (interface{}, error) {
+func (t *ObUDoubleType) CheckTypeForValue(value interface{}, obCollationType ObCollationType) (interface{}, error) {
 	return nil, errors.New("uDouble type is not support")
 }
 
-func (t *UDoubleType) Value() ObjTypeValue {
+func (t *ObUDoubleType) Value() ObObjTypeValue {
 	return t.value
 }
 
-func (t *UDoubleType) String() string {
-	return "ObjType{" +
-		"type:" + "UDoubleType" +
+func (t *ObUDoubleType) String() string {
+	return "ObObjType{" +
+		"type:" + "ObUDoubleType" +
 		"}"
 }
 
-type NumberType struct { // TODO not support
-	value ObjTypeValue
+type ObNumberType struct { // TODO not support
+	value ObObjTypeValue
 }
 
-func (t *NumberType) Encode(buffer *bytes.Buffer, value interface{}) {
+func (t *ObNumberType) Encode(buffer *bytes.Buffer, value interface{}) {
 	return
 }
 
-func (t *NumberType) Decode(buffer *bytes.Buffer, csType CollationType) interface{} {
+func (t *ObNumberType) Decode(buffer *bytes.Buffer, obCollationType ObCollationType) interface{} {
 	return nil
 }
 
-func (t *NumberType) EncodedLength(value interface{}) int {
+func (t *ObNumberType) EncodedLength(value interface{}) int {
 	return 0
 }
 
-func (t *NumberType) DefaultObjMeta() *ObjectMeta {
-	return NewObjectMetaWithParams(t, CollationLevelNumeric, CollationTypeBinary, 10)
+func (t *ObNumberType) DefaultObjMeta() *ObObjectMeta {
+	return NewObjectMetaWithParams(t, ObCollationLevelNumeric, ObCollationTypeBinary, 10)
 }
 
-func (t *NumberType) CheckTypeForValue(value interface{}, csType CollationType) (interface{}, error) {
+func (t *ObNumberType) CheckTypeForValue(value interface{}, obCollationType ObCollationType) (interface{}, error) {
 	return nil, errors.New("number type is not support")
 }
 
-func (t *NumberType) Value() ObjTypeValue {
+func (t *ObNumberType) Value() ObObjTypeValue {
 	return t.value
 }
 
-func (t *NumberType) String() string {
-	return "ObjType{" +
-		"type:" + "NumberType" +
+func (t *ObNumberType) String() string {
+	return "ObObjType{" +
+		"type:" + "ObNumberType" +
 		"}"
 }
 
-type UNumberType struct { // TODO not support
-	value ObjTypeValue
+type ObUNumberType struct { // TODO not support
+	value ObObjTypeValue
 }
 
-func (t *UNumberType) Encode(buffer *bytes.Buffer, value interface{}) {
+func (t *ObUNumberType) Encode(buffer *bytes.Buffer, value interface{}) {
 	return
 }
 
-func (t *UNumberType) Decode(buffer *bytes.Buffer, csType CollationType) interface{} {
+func (t *ObUNumberType) Decode(buffer *bytes.Buffer, obCollationType ObCollationType) interface{} {
 	return nil
 }
 
-func (t *UNumberType) EncodedLength(value interface{}) int {
+func (t *ObUNumberType) EncodedLength(value interface{}) int {
 	return 0
 }
 
-func (t *UNumberType) DefaultObjMeta() *ObjectMeta {
-	return NewObjectMetaWithParams(t, CollationLevelNumeric, CollationTypeBinary, 10)
+func (t *ObUNumberType) DefaultObjMeta() *ObObjectMeta {
+	return NewObjectMetaWithParams(t, ObCollationLevelNumeric, ObCollationTypeBinary, 10)
 }
 
-func (t *UNumberType) CheckTypeForValue(value interface{}, csType CollationType) (interface{}, error) {
+func (t *ObUNumberType) CheckTypeForValue(value interface{}, obCollationType ObCollationType) (interface{}, error) {
 	return nil, errors.New("uNumber type is not support")
 }
 
-func (t *UNumberType) Value() ObjTypeValue {
+func (t *ObUNumberType) Value() ObObjTypeValue {
 	return t.value
 }
 
-func (t *UNumberType) String() string {
-	return "ObjType{" +
-		"type:" + "UNumberType" +
+func (t *ObUNumberType) String() string {
+	return "ObObjType{" +
+		"type:" + "ObUNumberType" +
 		"}"
 }
 
-type DateTimeType struct {
-	value ObjTypeValue
+type ObDateTimeType struct {
+	value ObObjTypeValue
 }
 
-func (t *DateTimeType) Encode(buffer *bytes.Buffer, value interface{}) {
-	util.EncodeVi64(buffer, int64(value.(time.Duration))) // todo
+func (t *ObDateTimeType) Encode(buffer *bytes.Buffer, value interface{}) {
+	util.EncodeVi64(buffer, int64(value.(time.Duration)))
 }
 
-func (t *DateTimeType) Decode(buffer *bytes.Buffer, csType CollationType) interface{} {
+func (t *ObDateTimeType) Decode(buffer *bytes.Buffer, obCollationType ObCollationType) interface{} {
 	return util.DecodeVi64(buffer)
 }
 
-func (t *DateTimeType) EncodedLength(value interface{}) int {
+func (t *ObDateTimeType) EncodedLength(value interface{}) int {
 	return util.EncodedLengthByVi64(int64(value.(time.Duration)))
 }
 
-func (t *DateTimeType) DefaultObjMeta() *ObjectMeta {
-	return NewObjectMetaWithParams(t, CollationLevelNumeric, CollationTypeBinary, 10)
+func (t *ObDateTimeType) DefaultObjMeta() *ObObjectMeta {
+	return NewObjectMetaWithParams(t, ObCollationLevelNumeric, ObCollationTypeBinary, 10)
 }
 
-func (t *DateTimeType) CheckTypeForValue(value interface{}, csType CollationType) (interface{}, error) {
+func (t *ObDateTimeType) CheckTypeForValue(value interface{}, obCollationType ObCollationType) (interface{}, error) {
 	if v, ok := value.(time.Duration); ok {
 		return v, nil
 	} else {
@@ -1006,37 +1006,37 @@ func (t *DateTimeType) CheckTypeForValue(value interface{}, csType CollationType
 	}
 }
 
-func (t *DateTimeType) Value() ObjTypeValue {
+func (t *ObDateTimeType) Value() ObObjTypeValue {
 	return t.value
 }
 
-func (t *DateTimeType) String() string {
-	return "ObjType{" +
-		"type:" + "DateTimeType" +
+func (t *ObDateTimeType) String() string {
+	return "ObObjType{" +
+		"type:" + "ObDateTimeType" +
 		"}"
 }
 
-type TimestampType struct {
-	value ObjTypeValue
+type ObTimestampType struct {
+	value ObObjTypeValue
 }
 
-func (t *TimestampType) Encode(buffer *bytes.Buffer, value interface{}) {
-	util.EncodeVi64(buffer, int64(value.(time.Duration))) // todo
+func (t *ObTimestampType) Encode(buffer *bytes.Buffer, value interface{}) {
+	util.EncodeVi64(buffer, int64(value.(time.Duration)))
 }
 
-func (t *TimestampType) Decode(buffer *bytes.Buffer, csType CollationType) interface{} {
+func (t *ObTimestampType) Decode(buffer *bytes.Buffer, obCollationType ObCollationType) interface{} {
 	return util.DecodeVi64(buffer)
 }
 
-func (t *TimestampType) EncodedLength(value interface{}) int {
+func (t *ObTimestampType) EncodedLength(value interface{}) int {
 	return util.EncodedLengthByVi64(int64(value.(time.Duration)))
 }
 
-func (t *TimestampType) DefaultObjMeta() *ObjectMeta {
-	return NewObjectMetaWithParams(t, CollationLevelNumeric, CollationTypeBinary, 10)
+func (t *ObTimestampType) DefaultObjMeta() *ObObjectMeta {
+	return NewObjectMetaWithParams(t, ObCollationLevelNumeric, ObCollationTypeBinary, 10)
 }
 
-func (t *TimestampType) CheckTypeForValue(value interface{}, csType CollationType) (interface{}, error) {
+func (t *ObTimestampType) CheckTypeForValue(value interface{}, obCollationType ObCollationType) (interface{}, error) {
 	if v, ok := value.(time.Duration); ok {
 		return v, nil
 	} else {
@@ -1044,37 +1044,37 @@ func (t *TimestampType) CheckTypeForValue(value interface{}, csType CollationTyp
 	}
 }
 
-func (t *TimestampType) Value() ObjTypeValue {
+func (t *ObTimestampType) Value() ObObjTypeValue {
 	return t.value
 }
 
-func (t *TimestampType) String() string {
-	return "ObjType{" +
-		"type:" + "TimestampType" +
+func (t *ObTimestampType) String() string {
+	return "ObObjType{" +
+		"type:" + "ObTimestampType" +
 		"}"
 }
 
-type DateType struct {
-	value ObjTypeValue
+type ObDateType struct {
+	value ObObjTypeValue
 }
 
-func (t *DateType) Encode(buffer *bytes.Buffer, value interface{}) {
-	util.EncodeVi64(buffer, int64(value.(time.Duration))) // todo
+func (t *ObDateType) Encode(buffer *bytes.Buffer, value interface{}) {
+	util.EncodeVi64(buffer, int64(value.(time.Duration)))
 }
 
-func (t *DateType) Decode(buffer *bytes.Buffer, csType CollationType) interface{} {
+func (t *ObDateType) Decode(buffer *bytes.Buffer, obCollationType ObCollationType) interface{} {
 	return util.DecodeVi64(buffer)
 }
 
-func (t *DateType) EncodedLength(value interface{}) int {
+func (t *ObDateType) EncodedLength(value interface{}) int {
 	return util.EncodedLengthByVi64(int64(value.(time.Duration)))
 }
 
-func (t *DateType) DefaultObjMeta() *ObjectMeta {
-	return NewObjectMetaWithParams(t, CollationLevelNumeric, CollationTypeBinary, 10)
+func (t *ObDateType) DefaultObjMeta() *ObObjectMeta {
+	return NewObjectMetaWithParams(t, ObCollationLevelNumeric, ObCollationTypeBinary, 10)
 }
 
-func (t *DateType) CheckTypeForValue(value interface{}, csType CollationType) (interface{}, error) {
+func (t *ObDateType) CheckTypeForValue(value interface{}, obCollationType ObCollationType) (interface{}, error) {
 	if v, ok := value.(time.Duration); ok {
 		return v, nil
 	} else {
@@ -1082,37 +1082,37 @@ func (t *DateType) CheckTypeForValue(value interface{}, csType CollationType) (i
 	}
 }
 
-func (t *DateType) Value() ObjTypeValue {
+func (t *ObDateType) Value() ObObjTypeValue {
 	return t.value
 }
 
-func (t *DateType) String() string {
-	return "ObjType{" +
-		"type:" + "DateType" +
+func (t *ObDateType) String() string {
+	return "ObObjType{" +
+		"type:" + "ObDateType" +
 		"}"
 }
 
-type TimeType struct {
-	value ObjTypeValue
+type ObTimeType struct {
+	value ObObjTypeValue
 }
 
-func (t *TimeType) Encode(buffer *bytes.Buffer, value interface{}) {
-	util.EncodeVi64(buffer, int64(value.(time.Duration))) // todo
+func (t *ObTimeType) Encode(buffer *bytes.Buffer, value interface{}) {
+	util.EncodeVi64(buffer, int64(value.(time.Duration)))
 }
 
-func (t *TimeType) Decode(buffer *bytes.Buffer, csType CollationType) interface{} {
+func (t *ObTimeType) Decode(buffer *bytes.Buffer, obCollationType ObCollationType) interface{} {
 	return util.DecodeVi64(buffer)
 }
 
-func (t *TimeType) EncodedLength(value interface{}) int {
+func (t *ObTimeType) EncodedLength(value interface{}) int {
 	return util.EncodedLengthByVi64(int64(value.(time.Duration)))
 }
 
-func (t *TimeType) DefaultObjMeta() *ObjectMeta {
-	return NewObjectMetaWithParams(t, CollationLevelNumeric, CollationTypeBinary, 10)
+func (t *ObTimeType) DefaultObjMeta() *ObObjectMeta {
+	return NewObjectMetaWithParams(t, ObCollationLevelNumeric, ObCollationTypeBinary, 10)
 }
 
-func (t *TimeType) CheckTypeForValue(value interface{}, csType CollationType) (interface{}, error) {
+func (t *ObTimeType) CheckTypeForValue(value interface{}, obCollationType ObCollationType) (interface{}, error) {
 	if v, ok := value.(time.Duration); ok {
 		return v, nil
 	} else {
@@ -1120,72 +1120,72 @@ func (t *TimeType) CheckTypeForValue(value interface{}, csType CollationType) (i
 	}
 }
 
-func (t *TimeType) Value() ObjTypeValue {
+func (t *ObTimeType) Value() ObObjTypeValue {
 	return t.value
 }
 
-func (t *TimeType) String() string {
-	return "ObjType{" +
-		"type:" + "TimeType" +
+func (t *ObTimeType) String() string {
+	return "ObObjType{" +
+		"type:" + "ObTimeType" +
 		"}"
 }
 
-type YearType struct { // TODO not support
-	value ObjTypeValue
+type ObYearType struct { // TODO not support
+	value ObObjTypeValue
 }
 
-func (t *YearType) Encode(buffer *bytes.Buffer, value interface{}) {
+func (t *ObYearType) Encode(buffer *bytes.Buffer, value interface{}) {
 	util.PutUint8(buffer, value.(uint8))
 }
 
-func (t *YearType) Decode(buffer *bytes.Buffer, csType CollationType) interface{} {
+func (t *ObYearType) Decode(buffer *bytes.Buffer, obCollationType ObCollationType) interface{} {
 	return util.Uint8(buffer)
 }
 
-func (t *YearType) EncodedLength(value interface{}) int {
+func (t *ObYearType) EncodedLength(value interface{}) int {
 	return 1
 }
 
-func (t *YearType) DefaultObjMeta() *ObjectMeta {
-	return NewObjectMetaWithParams(t, CollationLevelNumeric, CollationTypeBinary, 10)
+func (t *ObYearType) DefaultObjMeta() *ObObjectMeta {
+	return NewObjectMetaWithParams(t, ObCollationLevelNumeric, ObCollationTypeBinary, 10)
 }
 
-func (t *YearType) CheckTypeForValue(value interface{}, csType CollationType) (interface{}, error) {
+func (t *ObYearType) CheckTypeForValue(value interface{}, obCollationType ObCollationType) (interface{}, error) {
 	return nil, errors.New("year type is not support")
 }
 
-func (t *YearType) Value() ObjTypeValue {
+func (t *ObYearType) Value() ObObjTypeValue {
 	return t.value
 }
 
-func (t *YearType) String() string {
-	return "ObjType{" +
-		"type:" + "YearType" +
+func (t *ObYearType) String() string {
+	return "ObObjType{" +
+		"type:" + "ObYearType" +
 		"}"
 }
 
-type VarcharType struct {
-	value ObjTypeValue
+type ObVarcharType struct {
+	value ObObjTypeValue
 }
 
-func (t *VarcharType) Encode(buffer *bytes.Buffer, value interface{}) {
+func (t *ObVarcharType) Encode(buffer *bytes.Buffer, value interface{}) {
 	EncodeText(buffer, value)
 }
 
-func (t *VarcharType) Decode(buffer *bytes.Buffer, csType CollationType) interface{} {
-	return DecodeText(buffer, csType)
+func (t *ObVarcharType) Decode(buffer *bytes.Buffer, obCollationType ObCollationType) interface{} {
+	return DecodeText(buffer, obCollationType)
 }
 
-func (t *VarcharType) EncodedLength(value interface{}) int {
+func (t *ObVarcharType) EncodedLength(value interface{}) int {
 	return EncodedLengthByText(value)
 }
 
-func (t *VarcharType) DefaultObjMeta() *ObjectMeta {
-	return NewObjectMetaWithParams(t, CollationLevelExplicit, CollationTypeUtf8mb4GeneralCi, 10)
+func (t *ObVarcharType) DefaultObjMeta() *ObObjectMeta {
+	return NewObjectMetaWithParams(t, ObCollationLevelExplicit, ObCollationTypeUtf8mb4GeneralCi, 10)
 }
 
-func (t *VarcharType) CheckTypeForValue(value interface{}, csType CollationType) (interface{}, error) {
-	if CollationTypeBinary == csType {
+func (t *ObVarcharType) CheckTypeForValue(value interface{}, obCollationType ObCollationType) (interface{}, error) {
+	if ObCollationTypeBinary == obCollationType {
 		if v, ok := value.([]byte); ok {
 			return v, nil
 		} else {
@@ -1200,38 +1200,38 @@ func (t *VarcharType) CheckTypeForValue(value interface{}, csType CollationType)
 	}
 }
 
-func (t *VarcharType) Value() ObjTypeValue {
+func (t *ObVarcharType) Value() ObObjTypeValue {
 	return t.value
 }
 
-func (t *VarcharType) String() string {
-	return "ObjType{" +
-		"type:" + "VarcharType" +
+func (t *ObVarcharType) String() string {
+	return "ObObjType{" +
+		"type:" + "ObVarcharType" +
 		"}"
 }
 
-type CharType struct {
-	value ObjTypeValue
+type ObCharType struct {
+	value ObObjTypeValue
 }
 
-func (t *CharType) Encode(buffer *bytes.Buffer, value interface{}) {
+func (t *ObCharType) Encode(buffer *bytes.Buffer, value interface{}) {
 	EncodeText(buffer, value)
 }
 
-func (t *CharType) Decode(buffer *bytes.Buffer, csType CollationType) interface{} {
-	return DecodeText(buffer, csType)
+func (t *ObCharType) Decode(buffer *bytes.Buffer, obCollationType ObCollationType) interface{} {
+	return DecodeText(buffer, obCollationType)
 }
 
-func (t *CharType) EncodedLength(value interface{}) int {
+func (t *ObCharType) EncodedLength(value interface{}) int {
 	return EncodedLengthByText(value)
 }
 
-func (t *CharType) DefaultObjMeta() *ObjectMeta {
-	return NewObjectMetaWithParams(t, CollationLevelExplicit, CollationTypeUtf8mb4GeneralCi, 10)
+func (t *ObCharType) DefaultObjMeta() *ObObjectMeta {
+	return NewObjectMetaWithParams(t, ObCollationLevelExplicit, ObCollationTypeUtf8mb4GeneralCi, 10)
 }
 
-func (t *CharType) CheckTypeForValue(value interface{}, csType CollationType) (interface{}, error) {
-	if CollationTypeBinary == csType {
+func (t *ObCharType) CheckTypeForValue(value interface{}, obCollationType ObCollationType) (interface{}, error) {
+	if ObCollationTypeBinary == obCollationType {
 		if v, ok := value.([]byte); ok {
 			return v, nil
 		} else {
@@ -1246,140 +1246,140 @@ func (t *CharType) CheckTypeForValue(value interface{}, csType CollationType) (i
 	}
 }
 
-func (t *CharType) Value() ObjTypeValue {
+func (t *ObCharType) Value() ObObjTypeValue {
 	return t.value
 }
 
-func (t *CharType) String() string {
-	return "ObjType{" +
-		"type:" + "CharType" +
+func (t *ObCharType) String() string {
+	return "ObObjType{" +
+		"type:" + "ObCharType" +
 		"}"
 }
 
-type HexStringType struct { // TODO not support
-	value ObjTypeValue
+type ObHexStringType struct { // TODO not support
+	value ObObjTypeValue
 }
 
-func (t *HexStringType) Encode(buffer *bytes.Buffer, value interface{}) {
+func (t *ObHexStringType) Encode(buffer *bytes.Buffer, value interface{}) {
 	return
 }
 
-func (t *HexStringType) Decode(buffer *bytes.Buffer, csType CollationType) interface{} {
+func (t *ObHexStringType) Decode(buffer *bytes.Buffer, obCollationType ObCollationType) interface{} {
 	return nil
 }
 
-func (t *HexStringType) EncodedLength(value interface{}) int {
+func (t *ObHexStringType) EncodedLength(value interface{}) int {
 	return 0
 }
 
-func (t *HexStringType) DefaultObjMeta() *ObjectMeta {
-	return NewObjectMetaWithParams(t, CollationLevelNumeric, CollationTypeBinary, 10)
+func (t *ObHexStringType) DefaultObjMeta() *ObObjectMeta {
+	return NewObjectMetaWithParams(t, ObCollationLevelNumeric, ObCollationTypeBinary, 10)
 }
 
-func (t *HexStringType) CheckTypeForValue(value interface{}, csType CollationType) (interface{}, error) {
+func (t *ObHexStringType) CheckTypeForValue(value interface{}, obCollationType ObCollationType) (interface{}, error) {
 	return nil, errors.New("hex string type is not support")
 }
 
-func (t *HexStringType) Value() ObjTypeValue {
+func (t *ObHexStringType) Value() ObObjTypeValue {
 	return t.value
 }
 
-func (t *HexStringType) String() string {
-	return "ObjType{" +
-		"type:" + "HexStringType" +
+func (t *ObHexStringType) String() string {
+	return "ObObjType{" +
+		"type:" + "ObHexStringType" +
 		"}"
 }
 
-type ExtendType struct { // TODO not support
-	value ObjTypeValue
+type ObExtendType struct { // TODO not support
+	value ObObjTypeValue
 }
 
-func (t *ExtendType) Encode(buffer *bytes.Buffer, value interface{}) {
+func (t *ObExtendType) Encode(buffer *bytes.Buffer, value interface{}) {
 	util.EncodeVi64(buffer, value.(int64))
 }
 
-func (t *ExtendType) Decode(buffer *bytes.Buffer, csType CollationType) interface{} {
+func (t *ObExtendType) Decode(buffer *bytes.Buffer, obCollationType ObCollationType) interface{} {
 	return util.DecodeVi64(buffer)
 }
 
-func (t *ExtendType) EncodedLength(value interface{}) int {
+func (t *ObExtendType) EncodedLength(value interface{}) int {
 	return util.EncodedLengthByVi64(value.(int64))
 }
 
-func (t *ExtendType) DefaultObjMeta() *ObjectMeta {
-	return NewObjectMetaWithParams(t, CollationLevelNumeric, CollationTypeBinary, 10)
+func (t *ObExtendType) DefaultObjMeta() *ObObjectMeta {
+	return NewObjectMetaWithParams(t, ObCollationLevelNumeric, ObCollationTypeBinary, 10)
 }
 
-func (t *ExtendType) CheckTypeForValue(value interface{}, csType CollationType) (interface{}, error) {
+func (t *ObExtendType) CheckTypeForValue(value interface{}, obCollationType ObCollationType) (interface{}, error) {
 	return nil, errors.New("extend type is not support")
 }
 
-func (t *ExtendType) Value() ObjTypeValue {
+func (t *ObExtendType) Value() ObObjTypeValue {
 	return t.value
 }
 
-func (t *ExtendType) String() string {
-	return "ObjType{" +
-		"type:" + "ExtendType" +
+func (t *ObExtendType) String() string {
+	return "ObObjType{" +
+		"type:" + "ObExtendType" +
 		"}"
 }
 
-type UnknownType struct { // TODO not support
-	value ObjTypeValue
+type ObUnknownType struct { // TODO not support
+	value ObObjTypeValue
 }
 
-func (t *UnknownType) Encode(buffer *bytes.Buffer, value interface{}) {
+func (t *ObUnknownType) Encode(buffer *bytes.Buffer, value interface{}) {
 	return
 }
 
-func (t *UnknownType) Decode(buffer *bytes.Buffer, csType CollationType) interface{} {
+func (t *ObUnknownType) Decode(buffer *bytes.Buffer, obCollationType ObCollationType) interface{} {
 	return nil
 }
 
-func (t *UnknownType) EncodedLength(value interface{}) int {
+func (t *ObUnknownType) EncodedLength(value interface{}) int {
 	return 0
 }
 
-func (t *UnknownType) DefaultObjMeta() *ObjectMeta {
-	return NewObjectMetaWithParams(t, CollationLevelNumeric, CollationTypeBinary, 10)
+func (t *ObUnknownType) DefaultObjMeta() *ObObjectMeta {
+	return NewObjectMetaWithParams(t, ObCollationLevelNumeric, ObCollationTypeBinary, 10)
 }
 
-func (t *UnknownType) CheckTypeForValue(value interface{}, csType CollationType) (interface{}, error) {
+func (t *ObUnknownType) CheckTypeForValue(value interface{}, obCollationType ObCollationType) (interface{}, error) {
 	return nil, errors.New("unknown type is not support")
 }
 
-func (t *UnknownType) Value() ObjTypeValue {
+func (t *ObUnknownType) Value() ObObjTypeValue {
 	return t.value
 }
 
-func (t *UnknownType) String() string {
-	return "ObjType{" +
-		"type:" + "UnknownType" +
+func (t *ObUnknownType) String() string {
+	return "ObObjType{" +
+		"type:" + "ObUnknownType" +
 		"}"
 }
 
-type TinyTextType struct {
-	value ObjTypeValue
+type ObTinyTextType struct {
+	value ObObjTypeValue
 }
 
-func (t *TinyTextType) Encode(buffer *bytes.Buffer, value interface{}) {
+func (t *ObTinyTextType) Encode(buffer *bytes.Buffer, value interface{}) {
 	EncodeText(buffer, value)
 }
 
-func (t *TinyTextType) Decode(buffer *bytes.Buffer, csType CollationType) interface{} {
-	return DecodeText(buffer, csType)
+func (t *ObTinyTextType) Decode(buffer *bytes.Buffer, obCollationType ObCollationType) interface{} {
+	return DecodeText(buffer, obCollationType)
 }
 
-func (t *TinyTextType) EncodedLength(value interface{}) int {
+func (t *ObTinyTextType) EncodedLength(value interface{}) int {
 	return EncodedLengthByText(value)
 }
 
-func (t *TinyTextType) DefaultObjMeta() *ObjectMeta {
-	return NewObjectMetaWithParams(t, CollationLevelNumeric, CollationTypeBinary, 10)
+func (t *ObTinyTextType) DefaultObjMeta() *ObObjectMeta {
+	return NewObjectMetaWithParams(t, ObCollationLevelNumeric, ObCollationTypeBinary, 10)
 }
 
-func (t *TinyTextType) CheckTypeForValue(value interface{}, csType CollationType) (interface{}, error) {
-	if CollationTypeBinary == csType {
+func (t *ObTinyTextType) CheckTypeForValue(value interface{}, obCollationType ObCollationType) (interface{}, error) {
+	if ObCollationTypeBinary == obCollationType {
 		if v, ok := value.([]byte); ok {
 			return v, nil
 		} else {
@@ -1394,38 +1394,38 @@ func (t *TinyTextType) CheckTypeForValue(value interface{}, csType CollationType
 	}
 }
 
-func (t *TinyTextType) Value() ObjTypeValue {
+func (t *ObTinyTextType) Value() ObObjTypeValue {
 	return t.value
 }
 
-func (t *TinyTextType) String() string {
-	return "ObjType{" +
-		"type:" + "TinyTextType" +
+func (t *ObTinyTextType) String() string {
+	return "ObObjType{" +
+		"type:" + "ObTinyTextType" +
 		"}"
 }
 
-type TextType struct {
-	value ObjTypeValue
+type ObTextType struct {
+	value ObObjTypeValue
 }
 
-func (t *TextType) Encode(buffer *bytes.Buffer, value interface{}) {
+func (t *ObTextType) Encode(buffer *bytes.Buffer, value interface{}) {
 	EncodeText(buffer, value)
 }
 
-func (t *TextType) Decode(buffer *bytes.Buffer, csType CollationType) interface{} {
-	return DecodeText(buffer, csType)
+func (t *ObTextType) Decode(buffer *bytes.Buffer, obCollationType ObCollationType) interface{} {
+	return DecodeText(buffer, obCollationType)
 }
 
-func (t *TextType) EncodedLength(value interface{}) int {
+func (t *ObTextType) EncodedLength(value interface{}) int {
 	return EncodedLengthByText(value)
 }
 
-func (t *TextType) DefaultObjMeta() *ObjectMeta {
-	return NewObjectMetaWithParams(t, CollationLevelNumeric, CollationTypeBinary, 10)
+func (t *ObTextType) DefaultObjMeta() *ObObjectMeta {
+	return NewObjectMetaWithParams(t, ObCollationLevelNumeric, ObCollationTypeBinary, 10)
 }
 
-func (t *TextType) CheckTypeForValue(value interface{}, csType CollationType) (interface{}, error) {
-	if CollationTypeBinary == csType {
+func (t *ObTextType) CheckTypeForValue(value interface{}, obCollationType ObCollationType) (interface{}, error) {
+	if ObCollationTypeBinary == obCollationType {
 		if v, ok := value.([]byte); ok {
 			return v, nil
 		} else {
@@ -1440,38 +1440,38 @@ func (t *TextType) CheckTypeForValue(value interface{}, csType CollationType) (i
 	}
 }
 
-func (t *TextType) Value() ObjTypeValue {
+func (t *ObTextType) Value() ObObjTypeValue {
 	return t.value
 }
 
-func (t *TextType) String() string {
-	return "ObjType{" +
-		"type:" + "TextType" +
+func (t *ObTextType) String() string {
+	return "ObObjType{" +
+		"type:" + "ObTextType" +
 		"}"
 }
 
-type MediumTextType struct {
-	value ObjTypeValue
+type ObMediumTextType struct {
+	value ObObjTypeValue
 }
 
-func (t *MediumTextType) Encode(buffer *bytes.Buffer, value interface{}) {
+func (t *ObMediumTextType) Encode(buffer *bytes.Buffer, value interface{}) {
 	EncodeText(buffer, value)
 }
 
-func (t *MediumTextType) Decode(buffer *bytes.Buffer, csType CollationType) interface{} {
-	return DecodeText(buffer, csType)
+func (t *ObMediumTextType) Decode(buffer *bytes.Buffer, obCollationType ObCollationType) interface{} {
+	return DecodeText(buffer, obCollationType)
 }
 
-func (t *MediumTextType) EncodedLength(value interface{}) int {
+func (t *ObMediumTextType) EncodedLength(value interface{}) int {
 	return EncodedLengthByText(value)
 }
 
-func (t *MediumTextType) DefaultObjMeta() *ObjectMeta {
-	return NewObjectMetaWithParams(t, CollationLevelNumeric, CollationTypeBinary, 10)
+func (t *ObMediumTextType) DefaultObjMeta() *ObObjectMeta {
+	return NewObjectMetaWithParams(t, ObCollationLevelNumeric, ObCollationTypeBinary, 10)
 }
 
-func (t *MediumTextType) CheckTypeForValue(value interface{}, csType CollationType) (interface{}, error) {
-	if CollationTypeBinary == csType {
+func (t *ObMediumTextType) CheckTypeForValue(value interface{}, obCollationType ObCollationType) (interface{}, error) {
+	if ObCollationTypeBinary == obCollationType {
 		if v, ok := value.([]byte); ok {
 			return v, nil
 		} else {
@@ -1486,38 +1486,38 @@ func (t *MediumTextType) CheckTypeForValue(value interface{}, csType CollationTy
 	}
 }
 
-func (t *MediumTextType) Value() ObjTypeValue {
+func (t *ObMediumTextType) Value() ObObjTypeValue {
 	return t.value
 }
 
-func (t *MediumTextType) String() string {
-	return "ObjType{" +
-		"type:" + "MediumTextType" +
+func (t *ObMediumTextType) String() string {
+	return "ObObjType{" +
+		"type:" + "ObMediumTextType" +
 		"}"
 }
 
-type LongTextType struct {
-	value ObjTypeValue
+type ObLongTextType struct {
+	value ObObjTypeValue
 }
 
-func (t *LongTextType) Encode(buffer *bytes.Buffer, value interface{}) {
+func (t *ObLongTextType) Encode(buffer *bytes.Buffer, value interface{}) {
 	EncodeText(buffer, value)
 }
 
-func (t *LongTextType) Decode(buffer *bytes.Buffer, csType CollationType) interface{} {
-	return DecodeText(buffer, csType)
+func (t *ObLongTextType) Decode(buffer *bytes.Buffer, obCollationType ObCollationType) interface{} {
+	return DecodeText(buffer, obCollationType)
 }
 
-func (t *LongTextType) EncodedLength(value interface{}) int {
+func (t *ObLongTextType) EncodedLength(value interface{}) int {
 	return EncodedLengthByText(value)
 }
 
-func (t *LongTextType) DefaultObjMeta() *ObjectMeta {
-	return NewObjectMetaWithParams(t, CollationLevelNumeric, CollationTypeBinary, 10)
+func (t *ObLongTextType) DefaultObjMeta() *ObObjectMeta {
+	return NewObjectMetaWithParams(t, ObCollationLevelNumeric, ObCollationTypeBinary, 10)
 }
 
-func (t *LongTextType) CheckTypeForValue(value interface{}, csType CollationType) (interface{}, error) {
-	if CollationTypeBinary == csType {
+func (t *ObLongTextType) CheckTypeForValue(value interface{}, obCollationType ObCollationType) (interface{}, error) {
+	if ObCollationTypeBinary == obCollationType {
 		if v, ok := value.([]byte); ok {
 			return v, nil
 		} else {
@@ -1532,47 +1532,47 @@ func (t *LongTextType) CheckTypeForValue(value interface{}, csType CollationType
 	}
 }
 
-func (t *LongTextType) Value() ObjTypeValue {
+func (t *ObLongTextType) Value() ObObjTypeValue {
 	return t.value
 }
 
-func (t *LongTextType) String() string {
-	return "ObjType{" +
-		"type:" + "LongTextType" +
+func (t *ObLongTextType) String() string {
+	return "ObObjType{" +
+		"type:" + "ObLongTextType" +
 		"}"
 }
 
-type BitType struct { // TODO not support
-	value ObjTypeValue
+type ObBitType struct { // TODO not support
+	value ObObjTypeValue
 }
 
-func (t *BitType) Encode(buffer *bytes.Buffer, value interface{}) {
+func (t *ObBitType) Encode(buffer *bytes.Buffer, value interface{}) {
 	util.EncodeVi64(buffer, value.(int64))
 }
 
-func (t *BitType) Decode(buffer *bytes.Buffer, csType CollationType) interface{} {
+func (t *ObBitType) Decode(buffer *bytes.Buffer, obCollationType ObCollationType) interface{} {
 	return util.DecodeVi64(buffer)
 }
 
-func (t *BitType) EncodedLength(value interface{}) int {
+func (t *ObBitType) EncodedLength(value interface{}) int {
 	return util.EncodedLengthByVi64(value.(int64))
 }
 
-func (t *BitType) DefaultObjMeta() *ObjectMeta {
-	return NewObjectMetaWithParams(t, CollationLevelNumeric, CollationTypeBinary, 10)
+func (t *ObBitType) DefaultObjMeta() *ObObjectMeta {
+	return NewObjectMetaWithParams(t, ObCollationLevelNumeric, ObCollationTypeBinary, 10)
 }
 
-func (t *BitType) CheckTypeForValue(value interface{}, csType CollationType) (interface{}, error) {
+func (t *ObBitType) CheckTypeForValue(value interface{}, obCollationType ObCollationType) (interface{}, error) {
 	return nil, errors.New("bit type is not support")
 }
 
-func (t *BitType) Value() ObjTypeValue {
+func (t *ObBitType) Value() ObObjTypeValue {
 	return t.value
 }
 
-func (t *BitType) String() string {
-	return "ObjType{" +
-		"type:" + "BitType" +
+func (t *ObBitType) String() string {
+	return "ObObjType{" +
+		"type:" + "ObBitType" +
 		"}"
 }
 
@@ -1583,13 +1583,13 @@ func EncodeText(buffer *bytes.Buffer, value interface{}) {
 	case []byte:
 		util.EncodeBytesString(buffer, v)
 	default:
-		// todo do nothing
+		// do nothing
 		return
 	}
 }
 
-func DecodeText(buffer *bytes.Buffer, csType CollationType) interface{} {
-	if CollationTypeBinary == csType {
+func DecodeText(buffer *bytes.Buffer, obCollationType ObCollationType) interface{} {
+	if ObCollationTypeBinary == obCollationType {
 		return util.DecodeBytesString(buffer)
 	} else {
 		return util.DecodeVString(buffer)
@@ -1603,7 +1603,7 @@ func EncodedLengthByText(value interface{}) int {
 	case []byte:
 		return util.EncodedLengthByBytesString(v)
 	default:
-		// todo do nothing
+		// do nothing
 		return 0
 	}
 }

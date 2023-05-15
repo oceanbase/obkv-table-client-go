@@ -84,7 +84,7 @@ func NewRpcClient(rpcClientOption *RpcClientOption) (*RpcClient, error) {
 	return client, nil
 }
 
-func (c *RpcClient) Execute(ctx context.Context, request protocol.Payload, response protocol.Payload) error {
+func (c *RpcClient) Execute(ctx context.Context, request protocol.ObPayload, response protocol.ObPayload) error {
 	connection, err := c.connectionPool.GetConnection()
 	if err != nil {
 		return errors.WithMessage(err, "connection pool get connection")

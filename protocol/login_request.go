@@ -23,8 +23,8 @@ import (
 	"github.com/oceanbase/obkv-table-client-go/util"
 )
 
-type LoginRequest struct {
-	*UniVersionHeader
+type ObLoginRequest struct {
+	*ObUniVersionHeader
 	authMethod    uint8
 	clientType    uint8
 	clientVersion uint8
@@ -45,12 +45,12 @@ type LoginRequest struct {
 
 const passScrambleLen = 20
 
-func NewLoginRequest(tenantName string, databaseName string, userName string, password string) *LoginRequest {
+func NewObLoginRequest(tenantName string, databaseName string, userName string, password string) *ObLoginRequest {
 	passScramble := util.GetPasswordScramble(passScrambleLen)
 	passSecret := util.ScramblePassword(password, passScramble)
 
-	return &LoginRequest{
-		UniVersionHeader:   NewUniVersionHeader(),
+	return &ObLoginRequest{
+		ObUniVersionHeader: NewObUniVersionHeader(),
 		authMethod:         0x01,
 		clientType:         0x02,
 		clientVersion:      0x01,
@@ -68,127 +68,127 @@ func NewLoginRequest(tenantName string, databaseName string, userName string, pa
 	}
 }
 
-func (r *LoginRequest) AuthMethod() uint8 {
+func (r *ObLoginRequest) AuthMethod() uint8 {
 	return r.authMethod
 }
 
-func (r *LoginRequest) SetAuthMethod(authMethod uint8) {
+func (r *ObLoginRequest) SetAuthMethod(authMethod uint8) {
 	r.authMethod = authMethod
 }
 
-func (r *LoginRequest) ClientType() uint8 {
+func (r *ObLoginRequest) ClientType() uint8 {
 	return r.clientType
 }
 
-func (r *LoginRequest) SetClientType(clientType uint8) {
+func (r *ObLoginRequest) SetClientType(clientType uint8) {
 	r.clientType = clientType
 }
 
-func (r *LoginRequest) ClientVersion() uint8 {
+func (r *ObLoginRequest) ClientVersion() uint8 {
 	return r.clientVersion
 }
 
-func (r *LoginRequest) SetClientVersion(clientVersion uint8) {
+func (r *ObLoginRequest) SetClientVersion(clientVersion uint8) {
 	r.clientVersion = clientVersion
 }
 
-func (r *LoginRequest) Reversed1() uint8 {
+func (r *ObLoginRequest) Reversed1() uint8 {
 	return r.reversed1
 }
 
-func (r *LoginRequest) SetReversed1(reversed1 uint8) {
+func (r *ObLoginRequest) SetReversed1(reversed1 uint8) {
 	r.reversed1 = reversed1
 }
 
-func (r *LoginRequest) ClientCapabilities() int32 {
+func (r *ObLoginRequest) ClientCapabilities() int32 {
 	return r.clientCapabilities
 }
 
-func (r *LoginRequest) SetClientCapabilities(clientCapabilities int32) {
+func (r *ObLoginRequest) SetClientCapabilities(clientCapabilities int32) {
 	r.clientCapabilities = clientCapabilities
 }
 
-func (r *LoginRequest) MaxPacketSize() int32 {
+func (r *ObLoginRequest) MaxPacketSize() int32 {
 	return r.maxPacketSize
 }
 
-func (r *LoginRequest) SetMaxPacketSize(maxPacketSize int32) {
+func (r *ObLoginRequest) SetMaxPacketSize(maxPacketSize int32) {
 	r.maxPacketSize = maxPacketSize
 }
 
-func (r *LoginRequest) Reversed2() int32 {
+func (r *ObLoginRequest) Reversed2() int32 {
 	return r.reversed2
 }
 
-func (r *LoginRequest) SetReversed2(reversed2 int32) {
+func (r *ObLoginRequest) SetReversed2(reversed2 int32) {
 	r.reversed2 = reversed2
 }
 
-func (r *LoginRequest) Reversed3() int64 {
+func (r *ObLoginRequest) Reversed3() int64 {
 	return r.reversed3
 }
 
-func (r *LoginRequest) SetReversed3(reversed3 int64) {
+func (r *ObLoginRequest) SetReversed3(reversed3 int64) {
 	r.reversed3 = reversed3
 }
 
-func (r *LoginRequest) TenantName() string {
+func (r *ObLoginRequest) TenantName() string {
 	return r.tenantName
 }
 
-func (r *LoginRequest) SetTenantName(tenantName string) {
+func (r *ObLoginRequest) SetTenantName(tenantName string) {
 	r.tenantName = tenantName
 }
 
-func (r *LoginRequest) UserName() string {
+func (r *ObLoginRequest) UserName() string {
 	return r.userName
 }
 
-func (r *LoginRequest) SetUserName(userName string) {
+func (r *ObLoginRequest) SetUserName(userName string) {
 	r.userName = userName
 }
 
-func (r *LoginRequest) PassSecret() string {
+func (r *ObLoginRequest) PassSecret() string {
 	return r.passSecret
 }
 
-func (r *LoginRequest) SetPassSecret(passSecret string) {
+func (r *ObLoginRequest) SetPassSecret(passSecret string) {
 	r.passSecret = passSecret
 }
 
-func (r *LoginRequest) PassScramble() string {
+func (r *ObLoginRequest) PassScramble() string {
 	return r.passScramble
 }
 
-func (r *LoginRequest) SetPassScramble(passScramble string) {
+func (r *ObLoginRequest) SetPassScramble(passScramble string) {
 	r.passScramble = passScramble
 }
 
-func (r *LoginRequest) DatabaseName() string {
+func (r *ObLoginRequest) DatabaseName() string {
 	return r.databaseName
 }
 
-func (r *LoginRequest) SetDatabaseName(databaseName string) {
+func (r *ObLoginRequest) SetDatabaseName(databaseName string) {
 	r.databaseName = databaseName
 }
 
-func (r *LoginRequest) TtlUs() int64 {
+func (r *ObLoginRequest) TtlUs() int64 {
 	return r.ttlUs
 }
 
-func (r *LoginRequest) SetTtlUs(ttlUs int64) {
+func (r *ObLoginRequest) SetTtlUs(ttlUs int64) {
 	r.ttlUs = ttlUs
 }
 
-func (r *LoginRequest) PCode() TablePacketCode {
-	return TableApiLogin
+func (r *ObLoginRequest) PCode() ObTablePacketCode {
+	return ObTableApiLogin
 }
 
-func (r *LoginRequest) PayloadLen() int {
-	return r.PayloadContentLen() + r.UniVersionHeader.UniVersionHeaderLen() // Do not change the order
+func (r *ObLoginRequest) PayloadLen() int {
+	return r.PayloadContentLen() + r.ObUniVersionHeader.UniVersionHeaderLen() // Do not change the order
 }
 
-func (r *LoginRequest) PayloadContentLen() int {
+func (r *ObLoginRequest) PayloadContentLen() int {
 	totalLen := 4 + // authMethod clientType clientVersion reversed1
 		util.EncodedLengthByVi32(r.clientCapabilities) +
 		util.EncodedLengthByVi32(r.maxPacketSize) +
@@ -201,12 +201,12 @@ func (r *LoginRequest) PayloadContentLen() int {
 		util.EncodedLengthByVString(r.databaseName) +
 		util.EncodedLengthByVi64(r.ttlUs)
 
-	r.UniVersionHeader.SetContentLength(totalLen) // Set on first acquisition
-	return r.UniVersionHeader.ContentLength()
+	r.ObUniVersionHeader.SetContentLength(totalLen) // Set on first acquisition
+	return r.ObUniVersionHeader.ContentLength()
 }
 
-func (r *LoginRequest) Encode(buffer *bytes.Buffer) {
-	r.UniVersionHeader.Encode(buffer)
+func (r *ObLoginRequest) Encode(buffer *bytes.Buffer) {
+	r.ObUniVersionHeader.Encode(buffer)
 
 	util.PutUint8(buffer, r.authMethod)
 	util.PutUint8(buffer, r.clientType)
@@ -229,7 +229,7 @@ func (r *LoginRequest) Encode(buffer *bytes.Buffer) {
 	util.EncodeVi64(buffer, r.ttlUs)
 }
 
-func (r *LoginRequest) Decode(buffer *bytes.Buffer) {
+func (r *ObLoginRequest) Decode(buffer *bytes.Buffer) {
 	// TODO implement me
 	panic("implement me")
 }

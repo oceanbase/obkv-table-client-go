@@ -21,77 +21,77 @@ import (
 	"github.com/pkg/errors"
 )
 
-type TablePacketCode int32
+type ObTablePacketCode int32
 
 const (
-	TableApiLogin TablePacketCode = iota
-	TableApiExecute
-	TableApiBatchExecute
-	TableApiExecuteQuery
-	TableApiQueryAndMute
-	TableApiErrorPacket
+	ObTableApiLogin ObTablePacketCode = iota
+	ObTableApiExecute
+	ObTableApiBatchExecute
+	ObTableApiExecuteQuery
+	ObTableApiQueryAndMute
+	ObTableApiErrorPacket
 
-	TableApiNoSuch = -1
+	ObTableApiNoSuch = -1
 )
 
 const (
-	tableApiLoginStr        string = "table login"
-	tableApiExecuteStr      string = "table execute"
-	tableApiBatchExecuteStr string = "table batch execute"
-	tableApiExecuteQueryStr string = "table execute query"
-	tableApiQueryAndMuteStr string = "table query and mute"
-	tableApiErrorPacketStr  string = "table error"
+	obTableApiLoginStr        string = "ob table login"
+	obTableApiExecuteStr      string = "ob table execute"
+	obTableApiBatchExecuteStr string = "ob table batch execute"
+	obTableApiExecuteQueryStr string = "ob table execute query"
+	obTableApiQueryAndMuteStr string = "ob table query and mute"
+	obTableApiErrorPacketStr  string = "ob table error"
 )
 
 const (
-	tableApiPCodeLogin        uint32 = 0x1101
-	tableApiPCodeExecute      uint32 = 0x1102
-	tableApiPCodeBatchExecute uint32 = 0x1103
-	tableApiPCodeExecuteQuery uint32 = 0x1104
-	tableApiPCodeQueryAndMute uint32 = 0x1105
-	tableApiPCodeErrorPacket  uint32 = 0x010
+	obTableApiPCodeLogin        uint32 = 0x1101
+	obTableApiPCodeExecute      uint32 = 0x1102
+	obTableApiPCodeBatchExecute uint32 = 0x1103
+	obTableApiPCodeExecuteQuery uint32 = 0x1104
+	obTableApiPCodeQueryAndMute uint32 = 0x1105
+	obTableApiPCodeErrorPacket  uint32 = 0x010
 )
 
-var tablePacketCodeStrings = []string{
-	TableApiLogin:        tableApiLoginStr,
-	TableApiExecute:      tableApiExecuteStr,
-	TableApiBatchExecute: tableApiBatchExecuteStr,
-	TableApiExecuteQuery: tableApiExecuteQueryStr,
-	TableApiQueryAndMute: tableApiQueryAndMuteStr,
-	TableApiErrorPacket:  tableApiErrorPacketStr,
+var obTablePacketCodeStrings = []string{
+	ObTableApiLogin:        obTableApiLoginStr,
+	ObTableApiExecute:      obTableApiExecuteStr,
+	ObTableApiBatchExecute: obTableApiBatchExecuteStr,
+	ObTableApiExecuteQuery: obTableApiExecuteQueryStr,
+	ObTableApiQueryAndMute: obTableApiQueryAndMuteStr,
+	ObTableApiErrorPacket:  obTableApiErrorPacketStr,
 }
 
-var tablePacketCodePCodes = []uint32{
-	TableApiLogin:        tableApiPCodeLogin,
-	TableApiExecute:      tableApiPCodeExecute,
-	TableApiBatchExecute: tableApiPCodeBatchExecute,
-	TableApiExecuteQuery: tableApiPCodeExecuteQuery,
-	TableApiQueryAndMute: tableApiPCodeQueryAndMute,
-	TableApiErrorPacket:  tableApiPCodeErrorPacket,
+var obTablePacketCodePCodes = []uint32{
+	ObTableApiLogin:        obTableApiPCodeLogin,
+	ObTableApiExecute:      obTableApiPCodeExecute,
+	ObTableApiBatchExecute: obTableApiPCodeBatchExecute,
+	ObTableApiExecuteQuery: obTableApiPCodeExecuteQuery,
+	ObTableApiQueryAndMute: obTableApiPCodeQueryAndMute,
+	ObTableApiErrorPacket:  obTableApiPCodeErrorPacket,
 }
 
-func (c TablePacketCode) Value() uint32 {
-	return tablePacketCodePCodes[c]
+func (c ObTablePacketCode) Value() uint32 {
+	return obTablePacketCodePCodes[c]
 }
 
-func (c TablePacketCode) ValueOf(pCode uint32) (TablePacketCode, error) { // TODO use map optimize
+func (c ObTablePacketCode) ValueOf(pCode uint32) (ObTablePacketCode, error) { // TODO use map optimize
 	switch pCode {
-	case tableApiPCodeLogin:
-		return TableApiLogin, nil
-	case tableApiPCodeExecute:
-		return TableApiExecute, nil
-	case tableApiPCodeBatchExecute:
-		return TableApiBatchExecute, nil
-	case tableApiPCodeExecuteQuery:
-		return TableApiExecuteQuery, nil
-	case tableApiPCodeQueryAndMute:
-		return TableApiQueryAndMute, nil
-	case tableApiPCodeErrorPacket:
-		return TableApiErrorPacket, nil
+	case obTableApiPCodeLogin:
+		return ObTableApiLogin, nil
+	case obTableApiPCodeExecute:
+		return ObTableApiExecute, nil
+	case obTableApiPCodeBatchExecute:
+		return ObTableApiBatchExecute, nil
+	case obTableApiPCodeExecuteQuery:
+		return ObTableApiExecuteQuery, nil
+	case obTableApiPCodeQueryAndMute:
+		return ObTableApiQueryAndMute, nil
+	case obTableApiPCodeErrorPacket:
+		return ObTableApiErrorPacket, nil
 	}
-	return TableApiNoSuch, errors.New("not match code")
+	return ObTableApiNoSuch, errors.New("not match code")
 }
 
-func (c TablePacketCode) String() string {
-	return tablePacketCodeStrings[c]
+func (c ObTablePacketCode) String() string {
+	return obTablePacketCodeStrings[c]
 }

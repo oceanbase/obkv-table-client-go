@@ -27,15 +27,15 @@ import (
 	"github.com/oceanbase/obkv-table-client-go/util"
 )
 
-type TableOperationRequest struct {
-	*UniVersionHeader
+type ObTableOperationRequest struct {
+	*ObUniVersionHeader
 	credential           []byte
 	tableName            string
 	tableId              uint64
 	partitionId          int64
-	entityType           TableEntityType
-	tableOperation       *TableOperation
-	consistencyLevel     TableConsistencyLevel
+	entityType           ObTableEntityType
+	tableOperation       *ObTableOperation
+	consistencyLevel     ObTableConsistencyLevel
 	returnRowKey         bool
 	returnAffectedEntity bool
 	returnAffectedRows   bool
@@ -45,21 +45,21 @@ func NewTableOperationRequest(
 	tableName string,
 	tableId uint64,
 	partitionId int64,
-	operationType TableOperationType,
+	tableOperationType ObTableOperationType,
 	rowKey []*table.Column,
 	columns []*table.Column,
 	timeout time.Duration,
-	flag uint16) (*TableOperationRequest, error) {
-	tableOperation, err := NewTableOperation(operationType, rowKey, columns)
+	flag uint16) (*ObTableOperationRequest, error) {
+	tableOperation, err := NewObTableOperation(tableOperationType, rowKey, columns)
 	if err != nil {
 		return nil, errors.WithMessage(err, "create table operation")
 	}
-	uniVersionHeader := NewUniVersionHeader()
+	uniVersionHeader := NewObUniVersionHeader()
 	uniVersionHeader.SetFlag(flag)
 	uniVersionHeader.SetTimeout(timeout)
 
-	return &TableOperationRequest{
-		UniVersionHeader:     uniVersionHeader,
+	return &ObTableOperationRequest{
+		ObUniVersionHeader:   uniVersionHeader,
 		credential:           nil, // when execute set
 		tableName:            tableName,
 		tableId:              tableId,
@@ -73,87 +73,87 @@ func NewTableOperationRequest(
 	}, nil
 }
 
-func (r *TableOperationRequest) TableName() string {
+func (r *ObTableOperationRequest) TableName() string {
 	return r.tableName
 }
 
-func (r *TableOperationRequest) SetTableName(tableName string) {
+func (r *ObTableOperationRequest) SetTableName(tableName string) {
 	r.tableName = tableName
 }
 
-func (r *TableOperationRequest) TableId() uint64 {
+func (r *ObTableOperationRequest) TableId() uint64 {
 	return r.tableId
 }
 
-func (r *TableOperationRequest) SetTableId(tableId uint64) {
+func (r *ObTableOperationRequest) SetTableId(tableId uint64) {
 	r.tableId = tableId
 }
 
-func (r *TableOperationRequest) PartitionId() int64 {
+func (r *ObTableOperationRequest) PartitionId() int64 {
 	return r.partitionId
 }
 
-func (r *TableOperationRequest) SetPartitionId(partitionId int64) {
+func (r *ObTableOperationRequest) SetPartitionId(partitionId int64) {
 	r.partitionId = partitionId
 }
 
-func (r *TableOperationRequest) EntityType() TableEntityType {
+func (r *ObTableOperationRequest) EntityType() ObTableEntityType {
 	return r.entityType
 }
 
-func (r *TableOperationRequest) SetEntityType(entityType TableEntityType) {
+func (r *ObTableOperationRequest) SetEntityType(entityType ObTableEntityType) {
 	r.entityType = entityType
 }
 
-func (r *TableOperationRequest) TableOperation() *TableOperation {
+func (r *ObTableOperationRequest) TableOperation() *ObTableOperation {
 	return r.tableOperation
 }
 
-func (r *TableOperationRequest) SetTableOperation(tableOperation *TableOperation) {
+func (r *ObTableOperationRequest) SetTableOperation(tableOperation *ObTableOperation) {
 	r.tableOperation = tableOperation
 }
 
-func (r *TableOperationRequest) ConsistencyLevel() TableConsistencyLevel {
+func (r *ObTableOperationRequest) ConsistencyLevel() ObTableConsistencyLevel {
 	return r.consistencyLevel
 }
 
-func (r *TableOperationRequest) SetConsistencyLevel(consistencyLevel TableConsistencyLevel) {
+func (r *ObTableOperationRequest) SetConsistencyLevel(consistencyLevel ObTableConsistencyLevel) {
 	r.consistencyLevel = consistencyLevel
 }
 
-func (r *TableOperationRequest) ReturnRowKey() bool {
+func (r *ObTableOperationRequest) ReturnRowKey() bool {
 	return r.returnRowKey
 }
 
-func (r *TableOperationRequest) SetReturnRowKey(returnRowKey bool) {
+func (r *ObTableOperationRequest) SetReturnRowKey(returnRowKey bool) {
 	r.returnRowKey = returnRowKey
 }
 
-func (r *TableOperationRequest) ReturnAffectedEntity() bool {
+func (r *ObTableOperationRequest) ReturnAffectedEntity() bool {
 	return r.returnAffectedEntity
 }
 
-func (r *TableOperationRequest) SetReturnAffectedEntity(returnAffectedEntity bool) {
+func (r *ObTableOperationRequest) SetReturnAffectedEntity(returnAffectedEntity bool) {
 	r.returnAffectedEntity = returnAffectedEntity
 }
 
-func (r *TableOperationRequest) ReturnAffectedRows() bool {
+func (r *ObTableOperationRequest) ReturnAffectedRows() bool {
 	return r.returnAffectedRows
 }
 
-func (r *TableOperationRequest) SetReturnAffectedRows(returnAffectedRows bool) {
+func (r *ObTableOperationRequest) SetReturnAffectedRows(returnAffectedRows bool) {
 	r.returnAffectedRows = returnAffectedRows
 }
 
-func (r *TableOperationRequest) PCode() TablePacketCode {
-	return TableApiExecute
+func (r *ObTableOperationRequest) PCode() ObTablePacketCode {
+	return ObTableApiExecute
 }
 
-func (r *TableOperationRequest) PayloadLen() int {
-	return r.PayloadContentLen() + r.UniVersionHeader.UniVersionHeaderLen() // Do not change the order
+func (r *ObTableOperationRequest) PayloadLen() int {
+	return r.PayloadContentLen() + r.ObUniVersionHeader.UniVersionHeaderLen() // Do not change the order
 }
 
-func (r *TableOperationRequest) PayloadContentLen() int {
+func (r *ObTableOperationRequest) PayloadContentLen() int {
 	totalLen := 0
 	if util.ObVersion() >= 4 {
 		totalLen =
@@ -161,7 +161,7 @@ func (r *TableOperationRequest) PayloadContentLen() int {
 				util.EncodedLengthByVString(r.tableName) +
 				util.EncodedLengthByVi64(int64(r.tableId)) +
 				8 + // todo partitionId
-				5 + // entityType consistencyLevel returnRowKey returnAffectedEntity returnAffectedRows
+				5 + // obTableEntityType obTableConsistencyLevel returnRowKey returnAffectedEntity returnAffectedRows
 				r.tableOperation.PayloadLen()
 	} else {
 		totalLen =
@@ -169,24 +169,24 @@ func (r *TableOperationRequest) PayloadContentLen() int {
 				util.EncodedLengthByVString(r.tableName) +
 				util.EncodedLengthByVi64(int64(r.tableId)) +
 				util.EncodedLengthByVi64(r.partitionId) + // todo partitionId
-				5 + // entityType consistencyLevel returnRowKey returnAffectedEntity returnAffectedRows
+				5 + // obTableEntityType obTableConsistencyLevel returnRowKey returnAffectedEntity returnAffectedRows
 				r.tableOperation.PayloadLen()
 	}
 
-	r.UniVersionHeader.SetContentLength(totalLen)
-	return r.UniVersionHeader.ContentLength()
+	r.ObUniVersionHeader.SetContentLength(totalLen)
+	return r.ObUniVersionHeader.ContentLength()
 }
 
-func (r *TableOperationRequest) Credential() []byte {
+func (r *ObTableOperationRequest) Credential() []byte {
 	return r.credential
 }
 
-func (r *TableOperationRequest) SetCredential(credential []byte) {
+func (r *ObTableOperationRequest) SetCredential(credential []byte) {
 	r.credential = credential
 }
 
-func (r *TableOperationRequest) Encode(buffer *bytes.Buffer) {
-	r.UniVersionHeader.Encode(buffer)
+func (r *ObTableOperationRequest) Encode(buffer *bytes.Buffer) {
+	r.ObUniVersionHeader.Encode(buffer)
 
 	util.EncodeBytesString(buffer, r.credential)
 
@@ -213,13 +213,13 @@ func (r *TableOperationRequest) Encode(buffer *bytes.Buffer) {
 	util.PutUint8(buffer, util.BoolToByte(r.returnAffectedRows))
 }
 
-func (r *TableOperationRequest) Decode(buffer *bytes.Buffer) {
+func (r *ObTableOperationRequest) Decode(buffer *bytes.Buffer) {
 	// TODO implement me
 	panic("implement me")
 }
 
-func (r *TableOperationRequest) String() string {
+func (r *ObTableOperationRequest) String() string {
 	// todo: impl
-	return "TableOperationRequest{" +
+	return "ObTableOperationRequest{" +
 		"}"
 }

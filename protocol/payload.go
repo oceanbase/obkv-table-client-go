@@ -21,12 +21,12 @@ import (
 	"time"
 )
 
-// Payload ...
-type Payload interface {
+// ObPayload ...
+type ObPayload interface {
 	ProtoEncoder
 	ProtoDecoder
 
-	PCode() TablePacketCode
+	PCode() ObTablePacketCode
 
 	PayloadLen() int
 

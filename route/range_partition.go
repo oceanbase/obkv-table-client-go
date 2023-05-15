@@ -32,7 +32,7 @@ type obRangePartDesc struct {
 	partSpace                 int
 	partNum                   int
 	orderedCompareColumns     []*obColumn
-	orderedCompareColumnTypes []protocol.ObjType
+	orderedCompareColumnTypes []protocol.ObObjType
 }
 
 func (d *obRangePartDesc) SetPartNum(partNum int) {

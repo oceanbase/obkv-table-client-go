@@ -59,18 +59,18 @@ const (
 		8 // clusterNameHash
 )
 
-type CompressType int32
+type ObCompressType int32
 
 const (
-	CompressTypeInvalid CompressType = iota
-	CompressTypeNone
-	CompressTypeLZ4
-	CompressTypeSnappy
-	CompressTypeZlib
-	CompressTypeZstd
+	ObCompressTypeInvalid ObCompressType = iota
+	ObCompressTypeNone
+	ObCompressTypeLZ4
+	ObCompressTypeSnappy
+	ObCompressTypeZlib
+	ObCompressTypeZstd
 )
 
-type RpcHeader struct {
+type ObRpcHeader struct {
 	pCode        uint32
 	hLen         uint8
 	priority     uint8
@@ -85,7 +85,7 @@ type RpcHeader struct {
 	timestamp    int64
 	rpcCostTime  *RpcCostTime
 	dstClusterId int64
-	compressType CompressType
+	compressType ObCompressType
 	// original length before compression.
 	originalLen int32
 	// v4
@@ -99,8 +99,8 @@ type RpcHeader struct {
 	clusterNameHash int64
 }
 
-func NewRpcHeader() *RpcHeader {
-	return &RpcHeader{
+func NewObRpcHeader() *ObRpcHeader {
+	return &ObRpcHeader{
 		pCode:           0,
 		hLen:            0,
 		priority:        5,
@@ -115,7 +115,7 @@ func NewRpcHeader() *RpcHeader {
 		timestamp:       time.Now().Unix(),
 		rpcCostTime:     NewRpcCostTime(),
 		dstClusterId:    -1,
-		compressType:    CompressTypeInvalid,
+		compressType:    ObCompressTypeInvalid,
 		originalLen:     0,
 		srcClusterId:    -1,
 		unisVersion:     0,
@@ -128,199 +128,199 @@ func NewRpcHeader() *RpcHeader {
 	}
 }
 
-func (h *RpcHeader) PCode() uint32 {
+func (h *ObRpcHeader) PCode() uint32 {
 	return h.pCode
 }
 
-func (h *RpcHeader) SetPCode(pCode uint32) {
+func (h *ObRpcHeader) SetPCode(pCode uint32) {
 	h.pCode = pCode
 }
 
-func (h *RpcHeader) HLen() uint8 {
+func (h *ObRpcHeader) HLen() uint8 {
 	return h.hLen
 }
 
-func (h *RpcHeader) SetHLen(hLen uint8) {
+func (h *ObRpcHeader) SetHLen(hLen uint8) {
 	h.hLen = hLen
 }
 
-func (h *RpcHeader) Priority() uint8 {
+func (h *ObRpcHeader) Priority() uint8 {
 	return h.priority
 }
 
-func (h *RpcHeader) SetPriority(priority uint8) {
+func (h *ObRpcHeader) SetPriority(priority uint8) {
 	h.priority = priority
 }
 
-func (h *RpcHeader) Flag() uint16 {
+func (h *ObRpcHeader) Flag() uint16 {
 	return h.flag
 }
 
-func (h *RpcHeader) SetFlag(flag uint16) {
+func (h *ObRpcHeader) SetFlag(flag uint16) {
 	h.flag = flag
 }
 
-func (h *RpcHeader) Checksum() int64 {
+func (h *ObRpcHeader) Checksum() int64 {
 	return h.checksum
 }
 
-func (h *RpcHeader) SetChecksum(checksum int64) {
+func (h *ObRpcHeader) SetChecksum(checksum int64) {
 	h.checksum = checksum
 }
 
-func (h *RpcHeader) TenantId() uint64 {
+func (h *ObRpcHeader) TenantId() uint64 {
 	return h.tenantId
 }
 
-func (h *RpcHeader) SetTenantId(tenantId uint64) {
+func (h *ObRpcHeader) SetTenantId(tenantId uint64) {
 	h.tenantId = tenantId
 }
 
-func (h *RpcHeader) PrevTenantId() uint64 {
+func (h *ObRpcHeader) PrevTenantId() uint64 {
 	return h.prevTenantId
 }
 
-func (h *RpcHeader) SetPrevTenantId(prevTenantId uint64) {
+func (h *ObRpcHeader) SetPrevTenantId(prevTenantId uint64) {
 	h.prevTenantId = prevTenantId
 }
 
-func (h *RpcHeader) SessionId() uint64 {
+func (h *ObRpcHeader) SessionId() uint64 {
 	return h.sessionId
 }
 
-func (h *RpcHeader) SetSessionId(sessionId uint64) {
+func (h *ObRpcHeader) SetSessionId(sessionId uint64) {
 	h.sessionId = sessionId
 }
 
-func (h *RpcHeader) TraceId0() uint64 {
+func (h *ObRpcHeader) TraceId0() uint64 {
 	return h.traceId0
 }
 
-func (h *RpcHeader) SetTraceId0(traceId0 uint64) {
+func (h *ObRpcHeader) SetTraceId0(traceId0 uint64) {
 	h.traceId0 = traceId0
 }
 
-func (h *RpcHeader) TraceId1() uint64 {
+func (h *ObRpcHeader) TraceId1() uint64 {
 	return h.traceId1
 }
 
-func (h *RpcHeader) SetTraceId1(traceId1 uint64) {
+func (h *ObRpcHeader) SetTraceId1(traceId1 uint64) {
 	h.traceId1 = traceId1
 }
 
-func (h *RpcHeader) Timeout() time.Duration {
+func (h *ObRpcHeader) Timeout() time.Duration {
 	return h.timeout
 }
 
-func (h *RpcHeader) SetTimeout(timeout time.Duration) {
+func (h *ObRpcHeader) SetTimeout(timeout time.Duration) {
 	h.timeout = timeout
 }
 
-func (h *RpcHeader) Timestamp() int64 {
+func (h *ObRpcHeader) Timestamp() int64 {
 	return h.timestamp
 }
 
-func (h *RpcHeader) SetTimestamp(timestamp int64) {
+func (h *ObRpcHeader) SetTimestamp(timestamp int64) {
 	h.timestamp = timestamp
 }
 
-func (h *RpcHeader) RpcCostTime() *RpcCostTime {
+func (h *ObRpcHeader) RpcCostTime() *RpcCostTime {
 	return h.rpcCostTime
 }
 
-func (h *RpcHeader) SetRpcCostTime(rpcCostTime *RpcCostTime) {
+func (h *ObRpcHeader) SetRpcCostTime(rpcCostTime *RpcCostTime) {
 	h.rpcCostTime = rpcCostTime
 }
 
-func (h *RpcHeader) DstClusterId() int64 {
+func (h *ObRpcHeader) DstClusterId() int64 {
 	return h.dstClusterId
 }
 
-func (h *RpcHeader) SetDstClusterId(dstClusterId int64) {
+func (h *ObRpcHeader) SetDstClusterId(dstClusterId int64) {
 	h.dstClusterId = dstClusterId
 }
 
-func (h *RpcHeader) CompressType() CompressType {
+func (h *ObRpcHeader) CompressType() ObCompressType {
 	return h.compressType
 }
 
-func (h *RpcHeader) SetCompressType(compressType CompressType) {
+func (h *ObRpcHeader) SetCompressType(compressType ObCompressType) {
 	h.compressType = compressType
 }
 
-func (h *RpcHeader) OriginalLen() int32 {
+func (h *ObRpcHeader) OriginalLen() int32 {
 	return h.originalLen
 }
 
-func (h *RpcHeader) SetOriginalLen(originalLen int32) {
+func (h *ObRpcHeader) SetOriginalLen(originalLen int32) {
 	h.originalLen = originalLen
 }
 
-func (h *RpcHeader) SrcClusterId() int64 {
+func (h *ObRpcHeader) SrcClusterId() int64 {
 	return h.srcClusterId
 }
 
-func (h *RpcHeader) SetSrcClusterId(srcClusterId int64) {
+func (h *ObRpcHeader) SetSrcClusterId(srcClusterId int64) {
 	h.srcClusterId = srcClusterId
 }
 
-func (h *RpcHeader) UnisVersion() int64 {
+func (h *ObRpcHeader) UnisVersion() int64 {
 	return h.unisVersion
 }
 
-func (h *RpcHeader) SetUnisVersion(unisVersion int64) {
+func (h *ObRpcHeader) SetUnisVersion(unisVersion int64) {
 	h.unisVersion = unisVersion
 }
 
-func (h *RpcHeader) RequestLevel() int32 {
+func (h *ObRpcHeader) RequestLevel() int32 {
 	return h.requestLevel
 }
 
-func (h *RpcHeader) SetRequestLevel(requestLevel int32) {
+func (h *ObRpcHeader) SetRequestLevel(requestLevel int32) {
 	h.requestLevel = requestLevel
 }
 
-func (h *RpcHeader) SeqNo() int64 {
+func (h *ObRpcHeader) SeqNo() int64 {
 	return h.seqNo
 }
 
-func (h *RpcHeader) SetSeqNo(seqNo int64) {
+func (h *ObRpcHeader) SetSeqNo(seqNo int64) {
 	h.seqNo = seqNo
 }
 
-func (h *RpcHeader) GroupId() int32 {
+func (h *ObRpcHeader) GroupId() int32 {
 	return h.groupId
 }
 
-func (h *RpcHeader) SetGroupId(groupId int32) {
+func (h *ObRpcHeader) SetGroupId(groupId int32) {
 	h.groupId = groupId
 }
 
-func (h *RpcHeader) TraceId2() int64 {
+func (h *ObRpcHeader) TraceId2() int64 {
 	return h.traceId2
 }
 
-func (h *RpcHeader) SetTraceId2(traceId2 int64) {
+func (h *ObRpcHeader) SetTraceId2(traceId2 int64) {
 	h.traceId2 = traceId2
 }
 
-func (h *RpcHeader) TraceId3() int64 {
+func (h *ObRpcHeader) TraceId3() int64 {
 	return h.traceId3
 }
 
-func (h *RpcHeader) SetTraceId3(traceId3 int64) {
+func (h *ObRpcHeader) SetTraceId3(traceId3 int64) {
 	h.traceId3 = traceId3
 }
 
-func (h *RpcHeader) ClusterNameHash() int64 {
+func (h *ObRpcHeader) ClusterNameHash() int64 {
 	return h.clusterNameHash
 }
 
-func (h *RpcHeader) SetClusterNameHash(clusterNameHash int64) {
+func (h *ObRpcHeader) SetClusterNameHash(clusterNameHash int64) {
 	h.clusterNameHash = clusterNameHash
 }
 
-func (h *RpcHeader) Encode() []byte {
+func (h *ObRpcHeader) Encode() []byte {
 	var rpcHeaderBuf []byte
 	// TODO Maybe it would be better to use the version number to judge
 	if util.ObVersion() >= 4 {
@@ -368,7 +368,7 @@ func (h *RpcHeader) Encode() []byte {
 	return rpcHeaderBuf
 }
 
-func (h *RpcHeader) Decode(buffer *bytes.Buffer) {
+func (h *ObRpcHeader) Decode(buffer *bytes.Buffer) {
 	h.pCode = util.Uint32(buffer)
 	h.hLen = util.Uint8(buffer)
 	h.priority = util.Uint8(buffer)
@@ -387,7 +387,7 @@ func (h *RpcHeader) Decode(buffer *bytes.Buffer) {
 		h.rpcCostTime.Decode(buffer)
 
 		h.dstClusterId = int64(util.Uint64(buffer))
-		h.compressType = CompressType(util.Uint32(buffer))
+		h.compressType = ObCompressType(util.Uint32(buffer))
 		h.originalLen = int32(util.Uint32(buffer))
 
 		h.srcClusterId = int64(util.Uint64(buffer))
@@ -404,7 +404,7 @@ func (h *RpcHeader) Decode(buffer *bytes.Buffer) {
 		h.rpcCostTime.Decode(buffer)
 
 		h.dstClusterId = int64(util.Uint64(buffer))
-		h.compressType = CompressType(util.Uint32(buffer))
+		h.compressType = ObCompressType(util.Uint32(buffer))
 		h.originalLen = int32(util.Uint32(buffer))
 
 		util.SkipBytes(buffer, int(h.hLen-encodeSize))

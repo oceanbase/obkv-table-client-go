@@ -188,7 +188,7 @@ func (d *obKeyPartDesc) dateHash(ts time.Time, hashCode int64) int64 {
 
 func (d *obKeyPartDesc) varcharHash(
 	value interface{},
-	collType protocol.CollationType,
+	collType protocol.ObCollationType,
 	hashCode int64,
 	partFuncType obPartFuncType) (int64, error) {
 	var seed uint64 = 0xc6a4a7935bd1e995
@@ -203,7 +203,7 @@ func (d *obKeyPartDesc) varcharHash(
 		return -1, errors.Errorf("invalid varchar value for calc hash value, value:%T", value)
 	}
 	switch collType {
-	case protocol.CollationTypeUtf8mb4GeneralCi:
+	case protocol.ObCollationTypeUtf8mb4GeneralCi:
 		if partFuncType == partFuncTypeKeyV3 ||
 			partFuncType == partFuncTypeKeyImplV2 ||
 			util.ObVersion() >= 4 {
@@ -211,8 +211,8 @@ func (d *obKeyPartDesc) varcharHash(
 		} else {
 			hashCode = hashSortUtf8Mb4(bytes, hashCode, seed, false)
 		}
-	case protocol.CollationTypeUtf8mb4Bin:
-	case protocol.CollationTypeBinary:
+	case protocol.ObCollationTypeUtf8mb4Bin:
+	case protocol.ObCollationTypeBinary:
 		if partFuncType == partFuncTypeKeyV3 ||
 			partFuncType == partFuncTypeKeyImplV2 ||
 			util.ObVersion() >= 4 {
@@ -220,9 +220,9 @@ func (d *obKeyPartDesc) varcharHash(
 		} else {
 			hashCode = hashSortMbBin(bytes, hashCode, seed)
 		}
-	case protocol.CollationTypeInvalid:
-	case protocol.CollationTypeCollationFree:
-	case protocol.CollationTypeMax:
+	case protocol.ObCollationTypeInvalid:
+	case protocol.ObCollationTypeCollationFree:
+	case protocol.ObCollationTypeMax:
 		return -1, errors.Errorf("not supported collation type, collType:%d", collType)
 	}
 	return hashCode, nil

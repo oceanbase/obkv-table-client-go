@@ -167,7 +167,7 @@ func (c *ObClient) Insert(
 	res, err := c.execute(
 		ctx,
 		tableName,
-		protocol.Insert,
+		protocol.ObTableOperationInsert,
 		rowKey,
 		mutateColumns,
 		opts...)
@@ -187,7 +187,7 @@ func (c *ObClient) Update(
 	res, err := c.execute(
 		ctx,
 		tableName,
-		protocol.Update,
+		protocol.ObTableOperationUpdate,
 		rowKey,
 		mutateColumns,
 		opts...)
@@ -207,7 +207,7 @@ func (c *ObClient) InsertOrUpdate(
 	res, err := c.execute(
 		ctx,
 		tableName,
-		protocol.InsertOrUpdate,
+		protocol.ObTableOperationInsertOrUpdate,
 		rowKey,
 		mutateColumns,
 		opts...)
@@ -226,7 +226,7 @@ func (c *ObClient) Delete(
 	res, err := c.execute(
 		ctx,
 		tableName,
-		protocol.Del,
+		protocol.ObTableOperationDel,
 		rowKey,
 		nil,
 		opts...)
@@ -250,7 +250,7 @@ func (c *ObClient) Get(
 	res, err := c.execute(
 		ctx,
 		tableName,
-		protocol.Get,
+		protocol.ObTableOperationGet,
 		rowKey,
 		columns,
 		opts...)
@@ -268,10 +268,10 @@ func (c *ObClient) NewBatchExecutor(tableName string) BatchExecutor {
 func (c *ObClient) execute(
 	ctx context.Context,
 	tableName string,
-	opType protocol.TableOperationType,
+	opType protocol.ObTableOperationType,
 	rowKey []*table.Column,
 	columns []*table.Column,
-	opts ...ObkvOption) (*protocol.TableOperationResponse, error) {
+	opts ...ObkvOption) (*protocol.ObTableOperationResponse, error) {
 	var rowKeyValue []interface{}
 	for _, col := range rowKey {
 		rowKeyValue = append(rowKeyValue, col.Value())

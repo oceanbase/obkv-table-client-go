@@ -103,7 +103,7 @@ func (c *Connection) Connect() error {
 }
 
 func (c *Connection) Login() error {
-	loginRequest := protocol.NewLoginRequest(c.option.tenantName, c.option.databaseName, c.option.userName, c.option.password)
+	loginRequest := protocol.NewObLoginRequest(c.option.tenantName, c.option.databaseName, c.option.userName, c.option.password)
 	loginResponse := protocol.NewLoginResponse()
 	err := c.Execute(context.TODO(), loginRequest, loginResponse)
 	if err != nil {
@@ -120,7 +120,7 @@ func (c *Connection) Login() error {
 	return nil
 }
 
-func (c *Connection) Execute(ctx context.Context, request protocol.Payload, response protocol.Payload) error {
+func (c *Connection) Execute(ctx context.Context, request protocol.ObPayload, response protocol.ObPayload) error {
 	seq := c.seq.Add(1)
 
 	request.SetUniqueId(c.uniqueId)
@@ -164,7 +164,7 @@ func (c *Connection) Execute(ctx context.Context, request protocol.Payload, resp
 
 	rpcHeader := c.decodeRpcHeader(contentBuffer)
 
-	rpcResponseCode := protocol.NewRpcResponseCode()
+	rpcResponseCode := protocol.NewObRpcResponseCode()
 
 	rpcResponseCode.Decode(contentBuffer)
 
@@ -283,7 +283,7 @@ func (c *Connection) Close() {
 	c.conn.Close()
 }
 
-func (c *Connection) encodePayload(payload protocol.Payload) []byte {
+func (c *Connection) encodePayload(payload protocol.ObPayload) []byte {
 	payloadLen := payload.PayloadLen()
 	payloadBuf := make([]byte, payloadLen)
 	payloadBuffer := bytes.NewBuffer(payloadBuf)
@@ -291,8 +291,8 @@ func (c *Connection) encodePayload(payload protocol.Payload) []byte {
 	return payloadBuf
 }
 
-func (c *Connection) encodeRpcHeader(payload protocol.Payload, payloadBuf []byte) []byte {
-	rpcHeader := protocol.NewRpcHeader()
+func (c *Connection) encodeRpcHeader(payload protocol.ObPayload, payloadBuf []byte) []byte {
+	rpcHeader := protocol.NewObRpcHeader()
 	rpcHeader.SetPCode(payload.PCode().Value())
 	rpcHeader.SetFlag(payload.Flag())
 	rpcHeader.SetTenantId(payload.TenantId())
@@ -308,13 +308,13 @@ func (c *Connection) encodeRpcHeader(payload protocol.Payload, payloadBuf []byte
 	return rpcHeaderBuf
 }
 
-func (c *Connection) decodeRpcHeader(contentBuffer *bytes.Buffer) *protocol.RpcHeader {
-	rpcHeader := protocol.NewRpcHeader()
+func (c *Connection) decodeRpcHeader(contentBuffer *bytes.Buffer) *protocol.ObRpcHeader {
+	rpcHeader := protocol.NewObRpcHeader()
 	rpcHeader.Decode(contentBuffer)
 	return rpcHeader
 }
 
-func (c *Connection) decodePayload(payload protocol.Payload, contentBuffer *bytes.Buffer) {
+func (c *Connection) decodePayload(payload protocol.ObPayload, contentBuffer *bytes.Buffer) {
 	payload.Decode(contentBuffer)
 }
 
