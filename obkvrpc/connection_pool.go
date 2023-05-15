@@ -45,12 +45,12 @@ func NewConnectionPool(option *PoolOption) (*ConnectionPool, error) {
 		connection := NewConnection(connectionOption)
 		err := connection.Connect()
 		if err != nil {
-			return nil, errors.Wrap(err, "create connection pool failed")
+			return nil, errors.WithMessage(err, "connection connect")
 		}
 
 		err = connection.Login()
 		if err != nil {
-			return nil, errors.Wrap(err, "create connection pool failed")
+			return nil, errors.WithMessage(err, "connection login")
 		}
 
 		pool.connections = append(pool.connections, connection)
@@ -80,7 +80,7 @@ func (p *ConnectionPool) GetConnection() (*Connection, error) {
 	connection, err := p.CreateConnection()
 	if err != nil {
 		p.rwMutexes[randomIndex].Unlock()
-		return nil, errors.Wrap(err, "get connection recreate failed")
+		return nil, errors.WithMessage(err, "recreate connection")
 	}
 
 	p.connections[randomIndex] = connection
@@ -94,11 +94,11 @@ func (p *ConnectionPool) CreateConnection() (*Connection, error) {
 	connection := NewConnection(connectionOption)
 	err := connection.Connect()
 	if err != nil {
-		return nil, errors.Wrap(err, "create connection failed")
+		return nil, errors.WithMessage(err, "connection connect")
 	}
 	err = connection.Login()
 	if err != nil {
-		return nil, errors.Wrap(err, "create connection failed")
+		return nil, errors.WithMessage(err, "connection login")
 	}
 	return connection, nil
 }
