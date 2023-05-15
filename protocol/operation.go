@@ -25,7 +25,7 @@ func NewTableOperation(
 	for _, column := range rowKey {
 		objMeta, err := DefaultObjMeta(column.Value())
 		if err != nil {
-			return nil, errors.Wrap(err, "create obj meta by row key")
+			return nil, errors.WithMessage(err, "create obj meta by row key")
 		}
 
 		object := NewObject()
@@ -39,7 +39,7 @@ func NewTableOperation(
 	for _, column := range columns {
 		objMeta, err := DefaultObjMeta(column.Value())
 		if err != nil {
-			return nil, errors.Wrap(err, "create obj meta by column")
+			return nil, errors.WithMessage(err, "create obj meta by column")
 		}
 
 		object := NewObject()

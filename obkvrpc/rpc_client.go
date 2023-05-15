@@ -60,7 +60,7 @@ func NewRpcClient(rpcClientOption *RpcClientOption) (*RpcClient, error) {
 	poolOption := NewPoolOption(client.option.ip, client.option.port, client.option.connPoolMaxConnSize, client.option.connectTimeout, client.option.tenantName, client.option.databaseName, client.option.userName, client.option.password)
 	connectionPool, err := NewConnectionPool(poolOption)
 	if err != nil {
-		return nil, errors.Wrap(err, "create rpc client")
+		return nil, errors.WithMessage(err, "create connection pool")
 	}
 
 	client.connectionPool = connectionPool
@@ -70,12 +70,12 @@ func NewRpcClient(rpcClientOption *RpcClientOption) (*RpcClient, error) {
 func (c *RpcClient) Execute(ctx context.Context, request protocol.Payload, response protocol.Payload) error {
 	connection, err := c.connectionPool.GetConnection()
 	if err != nil {
-		return errors.Wrap(err, "rpc client execute failed")
+		return errors.WithMessage(err, "connection pool get connection")
 	}
 
 	err = connection.Execute(ctx, request, response)
 	if err != nil {
-		return errors.Wrap(err, "rpc client execute failed")
+		return errors.WithMessage(err, "connection execute")
 	}
 
 	return nil

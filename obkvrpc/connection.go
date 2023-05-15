@@ -64,7 +64,7 @@ func (c *Connection) Connect() error {
 	address := fmt.Sprintf("%s:%s", c.option.ip, strconv.Itoa(c.option.port))
 	conn, err := net.DialTimeout("tcp", address, c.option.connectTimeout)
 	if err != nil {
-		return errors.Wrapf(err, "connection connect failed, uniqueId: %d remote addr: %s", c.uniqueId, address)
+		return errors.WithMessagef(err, "net dial, uniqueId: %d remote addr: %s", c.uniqueId, address)
 	}
 	c.conn = conn
 
@@ -91,7 +91,7 @@ func (c *Connection) Login() error {
 	err := c.Execute(context.TODO(), loginRequest, loginResponse)
 	if err != nil {
 		c.Close()
-		return errors.Wrapf(err, "connection login failed, uniqueId: %d remote addr: %s tenantname: %s databasename: %s",
+		return errors.WithMessagef(err, "execute login, uniqueId: %d remote addr: %s tenantname: %s databasename: %s",
 			c.uniqueId, c.conn.RemoteAddr().String(), c.option.tenantName, c.option.databaseName)
 	}
 
@@ -120,7 +120,10 @@ func (c *Connection) Execute(ctx context.Context, request protocol.Payload, resp
 	call := new(Call)
 	call.Done = done
 
-	c.sendPacket(call, seq, rpcHeaderBuf, payloadBuf)
+	err := c.sendPacket(call, seq, rpcHeaderBuf, payloadBuf)
+	if err != nil {
+		return errors.WithMessage(err, "send packet")
+	}
 
 	ctx, _ = context.WithTimeout(ctx, 10*time.Second) // todo temporary use
 
@@ -131,10 +134,10 @@ func (c *Connection) Execute(ctx context.Context, request protocol.Payload, resp
 		c.mutex.Lock()
 		delete(c.pending, seq)
 		c.mutex.Unlock()
-		return errors.Wrap(ctx.Err(), "send request and receive response")
+		return errors.WithMessage(ctx.Err(), "wait transport packet")
 	case call = <-call.Done:
 		if call.Error != nil { // transport failed
-			return errors.Wrap(call.Error, "send request and receive response")
+			return errors.WithMessage(call.Error, "receive packet")
 		}
 	}
 
@@ -222,7 +225,7 @@ func (c *Connection) receivePacket() {
 	}
 }
 
-func (c *Connection) sendPacket(call *Call, seq uint32, rpcHeaderBuf []byte, payloadBuf []byte) {
+func (c *Connection) sendPacket(call *Call, seq uint32, rpcHeaderBuf []byte, payloadBuf []byte) error {
 	rpcHeaderLen := len(rpcHeaderBuf)
 	payloadLen := len(payloadBuf)
 
@@ -251,11 +254,11 @@ func (c *Connection) sendPacket(call *Call, seq uint32, rpcHeaderBuf []byte, pay
 		c.mutex.Lock()
 		delete(c.pending, seq)
 		c.mutex.Unlock()
-		call.Error = err
-		call.done()
-		c.Close() // TODO
+		c.Close()
+		return errors.WithMessage(err, "conn write")
 	}
 	// write success
+	return nil
 }
 
 func (c *Connection) Close() {

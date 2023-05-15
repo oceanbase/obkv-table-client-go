@@ -72,7 +72,7 @@ func (c TablePacketCode) ValueOf(pCode uint32) (TablePacketCode, error) { // TOD
 	case tableApiPCodeErrorPacket:
 		return TableApiErrorPacket, nil
 	}
-	return TableApiNoSuch, errors.New("no such this code")
+	return TableApiNoSuch, errors.New("not match code")
 }
 
 func (c TablePacketCode) String() string {

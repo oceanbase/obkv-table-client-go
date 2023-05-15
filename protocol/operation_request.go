@@ -35,7 +35,7 @@ func NewTableOperationRequest(
 	flag uint16) (*TableOperationRequest, error) {
 	tableOperation, err := NewTableOperation(operationType, rowKey, columns)
 	if err != nil {
-		return nil, errors.Wrap(err, "create table operation")
+		return nil, errors.WithMessage(err, "create table operation")
 	}
 	uniVersionHeader := NewUniVersionHeader()
 	uniVersionHeader.SetFlag(flag)
