@@ -160,7 +160,7 @@ func (r *ObTableOperationRequest) PayloadContentLen() int {
 			util.EncodedLengthByBytesString(r.credential) +
 				util.EncodedLengthByVString(r.tableName) +
 				util.EncodedLengthByVi64(int64(r.tableId)) +
-				8 + // todo partitionId
+				8 + // partitionId
 				5 + // obTableEntityType obTableConsistencyLevel returnRowKey returnAffectedEntity returnAffectedRows
 				r.tableOperation.PayloadLen()
 	} else {
@@ -168,7 +168,7 @@ func (r *ObTableOperationRequest) PayloadContentLen() int {
 			util.EncodedLengthByBytesString(r.credential) +
 				util.EncodedLengthByVString(r.tableName) +
 				util.EncodedLengthByVi64(int64(r.tableId)) +
-				util.EncodedLengthByVi64(r.partitionId) + // todo partitionId
+				util.EncodedLengthByVi64(r.partitionId) + // partitionId
 				5 + // obTableEntityType obTableConsistencyLevel returnRowKey returnAffectedEntity returnAffectedRows
 				r.tableOperation.PayloadLen()
 	}
@@ -219,7 +219,5 @@ func (r *ObTableOperationRequest) Decode(buffer *bytes.Buffer) {
 }
 
 func (r *ObTableOperationRequest) String() string {
-	// todo: impl
-	return "ObTableOperationRequest{" +
-		"}"
+	return ""
 }

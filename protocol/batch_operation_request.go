@@ -35,7 +35,7 @@ type ObTableBatchOperationRequest struct {
 	returnRowKey            bool
 	returnAffectedEntity    bool
 	returnAffectedRows      bool
-	partitionId             int64 // todo batch request partitionId different
+	partitionId             int64
 	atomicOperation         bool
 }
 
@@ -171,7 +171,7 @@ func (r *ObTableBatchOperationRequest) PayloadContentLen() int {
 				util.EncodedLengthByVString(r.tableName) +
 				util.EncodedLengthByVi64(int64(r.tableId)) +
 				6 + // obTableEntityType obTableConsistencyLevel returnRowKey returnAffectedEntity returnAffectedRows atomicOperation
-				8 + // todo partitionId
+				8 + // partitionId
 				r.obTableBatchOperation.PayloadLen()
 	} else {
 		totalLen =
@@ -179,7 +179,7 @@ func (r *ObTableBatchOperationRequest) PayloadContentLen() int {
 				util.EncodedLengthByVString(r.tableName) +
 				util.EncodedLengthByVi64(int64(r.tableId)) +
 				6 + // obTableEntityType obTableConsistencyLevel returnRowKey returnAffectedEntity returnAffectedRows atomicOperation
-				util.EncodedLengthByVi64(r.partitionId) + // todo partitionId
+				util.EncodedLengthByVi64(r.partitionId) + // partitionId
 				r.obTableBatchOperation.PayloadLen()
 	}
 
@@ -223,6 +223,5 @@ func (r *ObTableBatchOperationRequest) Decode(buffer *bytes.Buffer) {
 }
 
 func (r *ObTableBatchOperationRequest) String() string {
-	// todo: impl
 	return ""
 }

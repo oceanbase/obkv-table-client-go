@@ -219,7 +219,7 @@ func (r *ObLoginRequest) Encode(buffer *bytes.Buffer) {
 
 	util.EncodeVi64(buffer, r.reversed3)
 
-	// todo some VString convert to bytesString
+	// some VString convert to bytesString
 	util.EncodeVString(buffer, r.tenantName)
 	util.EncodeVString(buffer, r.userName)
 	util.EncodeVString(buffer, r.passSecret)
