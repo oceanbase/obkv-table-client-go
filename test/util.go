@@ -2,13 +2,14 @@ package test
 
 import (
 	"database/sql"
+
 	"github.com/oceanbase/obkv-table-client-go/client"
 	"github.com/oceanbase/obkv-table-client-go/config"
 )
 
 const (
-	configUrl    = ""
-	fullUserName = ""
+	configUrl    = "..."
+	fullUserName = "..."
 	passWord     = ""
 	sysUserName  = "root"
 	sysPassWord  = ""
@@ -18,10 +19,12 @@ const (
 const (
 	sqlUser     = "root"
 	sqlPassWord = ""
-	sqlIp       = ""
-	sqlPort     = ""
+	sqlIp       = "..."
+	sqlPort     = "..."
 	sqlDatabase = "test"
 )
+
+var globalDb *sql.DB = nil
 
 func newClient() client.Client {
 	cli, err := client.NewClient(configUrl, fullUserName, passWord, sysUserName, sysPassWord, config.NewDefaultClientConfig())
@@ -31,44 +34,47 @@ func newClient() client.Client {
 	return cli
 }
 
-func createTable(createTableStatement string) {
-	dsn := sqlUser + ":" + sqlPassWord + "@tcp(" + sqlIp + ":" + sqlPort + ")/" + sqlDatabase
-	db, err := sql.Open("mysql", dsn)
-	if err != nil {
-		panic(err.Error())
+func newDB() *sql.DB {
+	if globalDb == nil {
+		dsn := sqlUser + ":" + sqlPassWord + "@tcp(" + sqlIp + ":" + sqlPort + ")/" + sqlDatabase
+		db, err := sql.Open("mysql", dsn)
+		if err != nil {
+			panic(err.Error())
+		}
+		globalDb = db
 	}
-	defer db.Close()
+	return globalDb
+}
 
-	_, err = db.Exec(createTableStatement)
+func createTable(createTableStatement string) {
+	db := newDB()
+	_, err := db.Exec(createTableStatement)
 	if err != nil {
 		panic(err.Error())
 	}
 }
 
 func dropTable(tableName string) {
-	dsn := sqlUser + ":" + sqlPassWord + "@tcp(" + sqlIp + ":" + sqlPort + ")/" + sqlDatabase
-	db, err := sql.Open("mysql", dsn)
-	if err != nil {
-		panic(err.Error())
-	}
-	defer db.Close()
-
-	_, err = db.Exec("DROP TABLE " + tableName + ";")
+	db := newDB()
+	_, err := db.Exec("DROP TABLE " + tableName + ";")
 	if err != nil {
 		panic(err.Error())
 	}
 }
 
 func deleteTable(tableName string) {
-	dsn := sqlUser + ":" + sqlPassWord + "@tcp(" + sqlIp + ":" + sqlPort + ")/" + sqlDatabase
-	db, err := sql.Open("mysql", dsn)
+	db := newDB()
+	_, err := db.Exec("DELETE FROM " + tableName + ";")
 	if err != nil {
 		panic(err.Error())
 	}
-	defer db.Close()
+}
 
-	_, err = db.Exec("DELETE FROM " + tableName + ";")
+func selectTable(selectStatement string) *sql.Rows {
+	db := newDB()
+	rows, err := db.Query(selectStatement)
 	if err != nil {
 		panic(err.Error())
 	}
+	return rows
 }

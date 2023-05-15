@@ -22,7 +22,8 @@ func isRangePart(partType obPartFuncType) bool {
 }
 
 func isKeyPart(partType obPartFuncType) bool {
-	return partType == partFuncTypeKeyImpl ||
+	return partType == partFuncTypeKey ||
+		partType == partFuncTypeKeyImpl ||
 		partType == partFuncTypeKeyV2 ||
 		partType == partFuncTypeKeyV3 ||
 		partType == partFuncTypeKeyImplV2

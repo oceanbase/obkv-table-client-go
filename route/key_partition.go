@@ -7,7 +7,6 @@ import (
 
 	"github.com/pkg/errors"
 
-	"github.com/oceanbase/obkv-table-client-go/log"
 	"github.com/oceanbase/obkv-table-client-go/protocol"
 	"github.com/oceanbase/obkv-table-client-go/table"
 	"github.com/oceanbase/obkv-table-client-go/util"
@@ -18,6 +17,10 @@ type obKeyPartDesc struct {
 	partSpace     int
 	partNum       int
 	partNameIdMap map[string]int64
+}
+
+func (d *obKeyPartDesc) SetPartNum(partNum int) {
+	d.partNum = partNum
 }
 
 func newObKeyPartDesc() *obKeyPartDesc {
@@ -56,18 +59,15 @@ func (d *obKeyPartDesc) setPartColumns(partColumns []*obColumn) {
 
 func (d *obKeyPartDesc) GetPartId(rowKey []interface{}) (int64, error) {
 	if len(rowKey) == 0 {
-		log.Warn("rowKey size is 0")
 		return ObInvalidPartId, errors.New("rowKey size is 0")
 	}
 	evalValues, err := evalPartKeyValues(d, rowKey)
 	if err != nil {
-		log.Warn("failed to eval part key values", log.String("part desc", d.String()))
-		return ObInvalidPartId, err
+		return ObInvalidPartId, errors.WithMessagef(err, "eval part key value, part desc:%s", d.String())
 	}
 	if len(evalValues) < len(d.OrderedPartRefColumnRowKeyRelations) {
-		log.Warn("invalid eval values length",
-			log.Int("evalValues length", len(evalValues)),
-			log.Int("OrderedPartRefColumnRowKeyRelations length", len(d.OrderedPartRefColumnRowKeyRelations)))
+		return ObInvalidPartId, errors.Errorf("invalid eval values length, "+
+			"evalValues length:%d, OrderedPartRefColumnRowKeyRelations length: %d", len(evalValues), len(d.OrderedPartRefColumnRowKeyRelations))
 	}
 	var hashValue int64
 	for i := 0; i < len(d.OrderedPartRefColumnRowKeyRelations); i++ {
@@ -78,8 +78,7 @@ func (d *obKeyPartDesc) GetPartId(rowKey []interface{}) (int64, error) {
 			d.PartFuncType,
 		)
 		if err != nil {
-			log.Warn("failed to convert to hash code", log.String("part desc", d.String()))
-			return ObInvalidPartId, err
+			return ObInvalidPartId, errors.WithMessagef(err, "convert to hash code, part desc:%s", d.String())
 		}
 	}
 	if hashValue < 0 {
@@ -115,8 +114,7 @@ func intToInt64(value interface{}) (int64, error) {
 	case int64:
 		return v, nil
 	default:
-		log.Warn("invalid type to convert to int64", log.String("value", util.InterfaceToString(value)))
-		return -1, errors.New("invalid type to convert to int64")
+		return -1, errors.Errorf("invalid type to convert to int64， value：%T", value)
 	}
 }
 
@@ -129,30 +127,26 @@ func (d *obKeyPartDesc) toHashCode(
 	if typeValue >= protocol.ObTinyIntTypeValue && typeValue <= protocol.ObUInt64TypeValue {
 		i64, err := intToInt64(value)
 		if err != nil {
-			log.Warn("failed to convert int to int64", log.Int("type", typeValue))
-			return -1, err
+			return -1, errors.WithMessagef(err, "convert int to int64, value:%T", typeValue)
 		}
 		arr := d.longToByteArray(i64)
 		return murmurHash64A(arr, len(arr), hashCode), nil
 	} else if typeValue == protocol.ObDateTimeTypeValue || typeValue == protocol.ObTimestampTypeValue {
 		t, ok := value.(time.Time)
 		if !ok {
-			log.Warn("invalid timestamp type", log.String("value", util.InterfaceToString(value)))
-			return -1, errors.New("invalid timestamp type")
+			return -1, errors.Errorf("invalid timestamp type, value:%T", value)
 		}
 		return d.timeStampHash(t, hashCode), nil
 	} else if typeValue == protocol.ObDateTypeValue {
 		date, ok := value.(time.Time)
 		if !ok {
-			log.Warn("invalid date type", log.String("value", util.InterfaceToString(value)))
-			return -1, errors.New("invalid date type")
+			return -1, errors.Errorf("invalid date type, value:%T", value)
 		}
 		return d.dateHash(date, hashCode), nil
 	} else if typeValue == protocol.ObVarcharTypeValue || typeValue == protocol.ObCharTypeValue {
 		return d.varcharHash(value, refColumn.collationType, hashCode, partFuncType)
 	} else {
-		log.Warn("unsupported type for key hash", log.String("objType", refColumn.objType.String()))
-		return -1, errors.New("unsupported type for key hash")
+		return -1, errors.Errorf("unsupported type for key hash, objType:%s", refColumn.objType.String())
 	}
 }
 
@@ -189,8 +183,7 @@ func (d *obKeyPartDesc) varcharHash(
 	} else if v, ok := value.([]byte); ok {
 		bytes = v
 	} else {
-		log.Warn("invalid varchar", log.String("value", util.InterfaceToString(value)))
-		return -1, errors.New("invalid varchar value for calc hash value")
+		return -1, errors.Errorf("invalid varchar value for calc hash value, value:%T", value)
 	}
 	switch collType.Value() {
 	case protocol.CsTypeUtf8mb4GeneralCi:
@@ -213,8 +206,7 @@ func (d *obKeyPartDesc) varcharHash(
 	case protocol.CsTypeInvalid:
 	case protocol.CsTypeCollationFree:
 	case protocol.CsTypeMax:
-		log.Warn("not supported collation type", log.Int("coll type", collType.Value()))
-		return -1, errors.New("not supported collation type")
+		return -1, errors.Errorf("not supported collation type, collType:%d", collType.Value())
 	}
 	return hashCode, nil
 }

@@ -1,8 +1,9 @@
 package route
 
 import (
-	"github.com/stretchr/testify/assert"
 	"testing"
+
+	"github.com/stretchr/testify/assert"
 )
 
 func TestPartFuncType_isRangePart(t *testing.T) {
@@ -21,13 +22,13 @@ func TestPartFuncType_isRangePart(t *testing.T) {
 }
 
 func TestPartFuncType_isKeyPart(t *testing.T) {
+	assert.True(t, isKeyPart(partFuncTypeKey))
 	assert.True(t, isKeyPart(partFuncTypeKeyImpl))
 	assert.True(t, isKeyPart(partFuncTypeKeyV2))
 	assert.True(t, isKeyPart(partFuncTypeKeyV3))
 	assert.True(t, isKeyPart(partFuncTypeKeyImplV2))
 	assert.False(t, isKeyPart(partFuncTypeUnknown))
 	assert.False(t, isKeyPart(partFuncTypeHash))
-	assert.False(t, isKeyPart(partFuncTypeKey))
 	assert.False(t, isKeyPart(partFuncTypeList))
 	assert.False(t, isKeyPart(partFuncTypeListCol))
 	assert.False(t, isKeyPart(partFuncTypeHashV2))

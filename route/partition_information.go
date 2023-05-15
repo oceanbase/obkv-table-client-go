@@ -5,7 +5,6 @@ import (
 
 	"github.com/pkg/errors"
 
-	"github.com/oceanbase/obkv-table-client-go/log"
 	"github.com/oceanbase/obkv-table-client-go/table"
 )
 
@@ -37,7 +36,6 @@ func (p *obPartitionInfo) FirstPartDesc() obPartDesc {
 
 func (p *obPartitionInfo) GetTabletId(partId int64) (int64, error) {
 	if p.partTabletIdMap == nil {
-		log.Warn("partTabletIdMap is nil")
 		return 0, errors.New("partTabletIdMap is nil")
 	}
 	return p.partTabletIdMap[partId], nil

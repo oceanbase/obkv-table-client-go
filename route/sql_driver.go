@@ -2,9 +2,10 @@ package route
 
 import (
 	"database/sql"
-	_ "github.com/go-sql-driver/mysql"
-	"github.com/oceanbase/obkv-table-client-go/log"
 	"strings"
+
+	_ "github.com/go-sql-driver/mysql"
+	"github.com/pkg/errors"
 )
 
 type DB = sql.DB
@@ -18,19 +19,15 @@ func NewDB(
 	port string,
 	database string) (*DB, error) {
 	// "userName:password@tcp(ip:port)/database?charset=utf8"
-	path := strings.Join([]string{userName, ":", password,
+	dsn := strings.Join([]string{userName, ":", password,
 		"@tcp(", ip, ":", port, ")/", database, "?charset=utf8"}, "")
-	db, err := sql.Open("mysql", path)
+	db, err := sql.Open("mysql", dsn)
 	if err != nil {
-		log.Warn("failed to open db", log.String("path", path))
-		return nil, err
+		return nil, errors.WithMessagef(err, "open db, dsn:%s", dsn)
 	}
 	err = db.Ping()
 	if err != nil {
-		log.Warn("failed to ping db",
-			log.String("ip", ip),
-			log.String("port", port))
-		return nil, err
+		return nil, errors.WithMessagef(err, "ping db, dsn:%s", dsn)
 	}
 	return db, nil
 }
