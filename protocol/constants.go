@@ -20,6 +20,6 @@ package protocol
 type ObTableConsistencyLevel uint8
 
 const (
-	Strong ObTableConsistencyLevel = iota
-	Eventual
+	ObTableConsistencyLevelStrong ObTableConsistencyLevel = iota
+	ObTableConsistencyLevelEventual
 )

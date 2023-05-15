@@ -31,7 +31,7 @@ type ObTableOperationResponse struct {
 	affectedRows  int64
 }
 
-func NewTableOperationResponse() *ObTableOperationResponse {
+func NewObTableOperationResponse() *ObTableOperationResponse {
 	return &ObTableOperationResponse{
 		ObUniVersionHeader: NewObUniVersionHeader(),
 		header:             NewObTableResponse(),

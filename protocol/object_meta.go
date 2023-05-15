@@ -33,11 +33,11 @@ type ObObjectMeta struct {
 	scale          byte
 }
 
-func NewObjectMeta() *ObObjectMeta {
+func NewObObjectMeta() *ObObjectMeta {
 	return &ObObjectMeta{objType: nil, collationLevel: 0, collationType: 0, scale: 0}
 }
 
-func NewObjectMetaWithParams(objType ObObjType, obCollationLevel ObCollationLevel, obCollationType ObCollationType, scale byte) *ObObjectMeta {
+func NewObObjectMetaWithParams(objType ObObjType, obCollationLevel ObCollationLevel, obCollationType ObCollationType, scale byte) *ObObjectMeta {
 	return &ObObjectMeta{objType: objType, collationLevel: obCollationLevel, collationType: obCollationType, scale: scale}
 }
 
@@ -103,37 +103,37 @@ type ObObjType interface {
 
 func DefaultObjMeta(value interface{}) (*ObObjectMeta, error) {
 	if value == nil {
-		return ObObjTypes[ObjTypeNullTypeValue].DefaultObjMeta(), nil
+		return ObObjTypes[ObObjTypeNullTypeValue].DefaultObjMeta(), nil
 	}
 	switch value.(type) {
 	case bool:
-		return ObObjTypes[ObjTypeTinyIntTypeValue].DefaultObjMeta(), nil
+		return ObObjTypes[ObObjTypeTinyIntTypeValue].DefaultObjMeta(), nil
 	case int8:
-		return ObObjTypes[ObjTypeTinyIntTypeValue].DefaultObjMeta(), nil
+		return ObObjTypes[ObObjTypeTinyIntTypeValue].DefaultObjMeta(), nil
 	case uint8:
-		return ObObjTypes[ObjTypeUTinyIntTypeValue].DefaultObjMeta(), nil
+		return ObObjTypes[ObObjTypeUTinyIntTypeValue].DefaultObjMeta(), nil
 	case int16:
-		return ObObjTypes[ObjTypeSmallIntTypeValue].DefaultObjMeta(), nil
+		return ObObjTypes[ObObjTypeSmallIntTypeValue].DefaultObjMeta(), nil
 	case uint16:
-		return ObObjTypes[ObjTypeUSmallIntTypeValue].DefaultObjMeta(), nil
+		return ObObjTypes[ObObjTypeUSmallIntTypeValue].DefaultObjMeta(), nil
 	case int32:
-		return ObObjTypes[ObjTypeInt32TypeValue].DefaultObjMeta(), nil
+		return ObObjTypes[ObObjTypeInt32TypeValue].DefaultObjMeta(), nil
 	case uint32:
-		return ObObjTypes[ObjTypeUInt32TypeValue].DefaultObjMeta(), nil
+		return ObObjTypes[ObObjTypeUInt32TypeValue].DefaultObjMeta(), nil
 	case int64:
-		return ObObjTypes[ObjTypeInt64TypeValue].DefaultObjMeta(), nil
+		return ObObjTypes[ObObjTypeInt64TypeValue].DefaultObjMeta(), nil
 	case uint64:
-		return ObObjTypes[ObjTypeUInt64TypeValue].DefaultObjMeta(), nil
+		return ObObjTypes[ObObjTypeUInt64TypeValue].DefaultObjMeta(), nil
 	case float32:
-		return ObObjTypes[ObjTypeFloatTypeValue].DefaultObjMeta(), nil
+		return ObObjTypes[ObObjTypeFloatTypeValue].DefaultObjMeta(), nil
 	case float64:
-		return ObObjTypes[ObjTypeDoubleTypeValue].DefaultObjMeta(), nil
+		return ObObjTypes[ObObjTypeDoubleTypeValue].DefaultObjMeta(), nil
 	case string:
-		return ObObjTypes[ObjTypeVarcharTypeValue].DefaultObjMeta(), nil
+		return ObObjTypes[ObObjTypeVarcharTypeValue].DefaultObjMeta(), nil
 	case []byte:
-		return ObObjTypes[ObjTypeVarcharTypeValue].DefaultObjMeta(), nil
+		return ObObjTypes[ObObjTypeVarcharTypeValue].DefaultObjMeta(), nil
 	case time.Duration:
-		return ObObjTypes[ObjTypeDateTimeTypeValue].DefaultObjMeta(), nil
+		return ObObjTypes[ObObjTypeDateTimeTypeValue].DefaultObjMeta(), nil
 	default:
 		return nil, errors.Errorf("not match objmeta, value: %v", value)
 	}
@@ -141,69 +141,69 @@ func DefaultObjMeta(value interface{}) (*ObObjectMeta, error) {
 
 func NewObjType(value ObObjTypeValue) (ObObjType, error) {
 	switch value {
-	case ObjTypeNullTypeValue:
+	case ObObjTypeNullTypeValue:
 		return &ObNullType{value: value}, nil
-	case ObjTypeTinyIntTypeValue:
+	case ObObjTypeTinyIntTypeValue:
 		return &ObTinyIntType{value: value}, nil
-	case ObjTypeSmallIntTypeValue:
+	case ObObjTypeSmallIntTypeValue:
 		return &ObSmallIntType{value: value}, nil
-	case ObjTypeMediumIntTypeValue:
+	case ObObjTypeMediumIntTypeValue:
 		return &ObMediumIntType{value: value}, nil
-	case ObjTypeInt32TypeValue:
+	case ObObjTypeInt32TypeValue:
 		return &ObInt32Type{value: value}, nil
-	case ObjTypeInt64TypeValue:
+	case ObObjTypeInt64TypeValue:
 		return &ObInt64Type{value: value}, nil
-	case ObjTypeUTinyIntTypeValue:
+	case ObObjTypeUTinyIntTypeValue:
 		return &ObUTinyIntType{value: value}, nil
-	case ObjTypeUSmallIntTypeValue:
+	case ObObjTypeUSmallIntTypeValue:
 		return &ObUSmallIntType{value: value}, nil
-	case ObjTypeUMediumIntTypeValue:
+	case ObObjTypeUMediumIntTypeValue:
 		return &ObUMediumIntType{value: value}, nil
-	case ObjTypeUInt32TypeValue:
+	case ObObjTypeUInt32TypeValue:
 		return &ObUInt32Type{value: value}, nil
-	case ObjTypeUInt64TypeValue:
+	case ObObjTypeUInt64TypeValue:
 		return &ObUInt64Type{value: value}, nil
-	case ObjTypeFloatTypeValue:
+	case ObObjTypeFloatTypeValue:
 		return &ObFloatType{value: value}, nil
-	case ObjTypeDoubleTypeValue:
+	case ObObjTypeDoubleTypeValue:
 		return &ObDoubleType{value: value}, nil
-	case ObjTypeUFloatTypeValue:
+	case ObObjTypeUFloatTypeValue:
 		return &ObUFloatType{value: value}, nil
-	case ObjTypeUDoubleTypeValue:
+	case ObObjTypeUDoubleTypeValue:
 		return &ObUDoubleType{value: value}, nil
-	case ObjTypeNumberTypeValue:
+	case ObObjTypeNumberTypeValue:
 		return &ObNumberType{value: value}, nil
-	case ObjTypeUNumberTypeValue:
+	case ObObjTypeUNumberTypeValue:
 		return &ObUNumberType{value: value}, nil
-	case ObjTypeDateTimeTypeValue:
+	case ObObjTypeDateTimeTypeValue:
 		return &ObDateTimeType{value: value}, nil
-	case ObjTypeTimestampTypeValue:
+	case ObObjTypeTimestampTypeValue:
 		return &ObTimestampType{value: value}, nil
-	case ObjTypeDateTypeValue:
+	case ObObjTypeDateTypeValue:
 		return &ObDateType{value: value}, nil
-	case ObjTypeTimeTypeValue:
+	case ObObjTypeTimeTypeValue:
 		return &ObTimeType{value: value}, nil
-	case ObjTypeYearTypeValue:
+	case ObObjTypeYearTypeValue:
 		return &ObYearType{value: value}, nil
-	case ObjTypeVarcharTypeValue:
+	case ObObjTypeVarcharTypeValue:
 		return &ObVarcharType{value: value}, nil
-	case ObjTypeCharTypeValue:
+	case ObObjTypeCharTypeValue:
 		return &ObCharType{value: value}, nil
-	case ObjTypeHexStringTypeValue:
+	case ObObjTypeHexStringTypeValue:
 		return &ObHexStringType{value: value}, nil
-	case ObjTypeExtendTypeValue:
+	case ObObjTypeExtendTypeValue:
 		return &ObExtendType{value: value}, nil
-	case ObjTypeUnknownTypeValue:
+	case ObObjTypeUnknownTypeValue:
 		return &ObUnknownType{value: value}, nil
-	case ObjTypeTinyTextTypeValue:
+	case ObObjTypeTinyTextTypeValue:
 		return &ObTinyTextType{value: value}, nil
-	case ObjTypeTextTypeValue:
+	case ObObjTypeTextTypeValue:
 		return &ObTextType{value: value}, nil
-	case ObjTypeMediumTextTypeValue:
+	case ObObjTypeMediumTextTypeValue:
 		return &ObMediumTextType{value: value}, nil
-	case ObjTypeLongTextTypeValue:
+	case ObObjTypeLongTextTypeValue:
 		return &ObLongTextType{value: value}, nil
-	case ObjTypeBitTypeValue:
+	case ObObjTypeBitTypeValue:
 		return &ObBitType{value: value}, nil
 	default:
 		return nil, errors.Errorf("not match objtype, value: %d", value)
@@ -213,38 +213,38 @@ func NewObjType(value ObObjTypeValue) (ObObjType, error) {
 type ObObjTypeValue uint8
 
 var ObObjTypes = []ObObjType{
-	ObjTypeNullTypeValue:       &ObNullType{value: ObjTypeNullTypeValue},
-	ObjTypeTinyIntTypeValue:    &ObTinyIntType{value: ObjTypeTinyIntTypeValue},
-	ObjTypeSmallIntTypeValue:   &ObSmallIntType{value: ObjTypeSmallIntTypeValue},
-	ObjTypeMediumIntTypeValue:  &ObMediumIntType{value: ObjTypeMediumIntTypeValue},
-	ObjTypeInt32TypeValue:      &ObInt32Type{value: ObjTypeInt32TypeValue},
-	ObjTypeInt64TypeValue:      &ObInt64Type{value: ObjTypeInt64TypeValue},
-	ObjTypeUTinyIntTypeValue:   &ObUTinyIntType{value: ObjTypeUTinyIntTypeValue},
-	ObjTypeUSmallIntTypeValue:  &ObUSmallIntType{value: ObjTypeUSmallIntTypeValue},
-	ObjTypeUMediumIntTypeValue: &ObUMediumIntType{value: ObjTypeUMediumIntTypeValue},
-	ObjTypeUInt32TypeValue:     &ObUInt32Type{value: ObjTypeUInt32TypeValue},
-	ObjTypeUInt64TypeValue:     &ObUInt64Type{value: ObjTypeUInt64TypeValue},
-	ObjTypeFloatTypeValue:      &ObFloatType{value: ObjTypeFloatTypeValue},
-	ObjTypeDoubleTypeValue:     &ObDoubleType{value: ObjTypeDoubleTypeValue},
-	ObjTypeUFloatTypeValue:     &ObUFloatType{value: ObjTypeUFloatTypeValue},
-	ObjTypeUDoubleTypeValue:    &ObUDoubleType{value: ObjTypeUDoubleTypeValue},
-	ObjTypeNumberTypeValue:     &ObNumberType{value: ObjTypeNumberTypeValue},
-	ObjTypeUNumberTypeValue:    &ObUNumberType{value: ObjTypeUNumberTypeValue},
-	ObjTypeDateTimeTypeValue:   &ObDateTimeType{value: ObjTypeDateTimeTypeValue},
-	ObjTypeTimestampTypeValue:  &ObTimestampType{value: ObjTypeTimestampTypeValue},
-	ObjTypeDateTypeValue:       &ObDateType{value: ObjTypeDateTypeValue},
-	ObjTypeTimeTypeValue:       &ObTimeType{value: ObjTypeTimeTypeValue},
-	ObjTypeYearTypeValue:       &ObYearType{value: ObjTypeYearTypeValue},
-	ObjTypeVarcharTypeValue:    &ObVarcharType{value: ObjTypeVarcharTypeValue},
-	ObjTypeCharTypeValue:       &ObCharType{value: ObjTypeCharTypeValue},
-	ObjTypeHexStringTypeValue:  &ObHexStringType{value: ObjTypeHexStringTypeValue},
-	ObjTypeExtendTypeValue:     &ObExtendType{value: ObjTypeExtendTypeValue},
-	ObjTypeUnknownTypeValue:    &ObUnknownType{value: ObjTypeUnknownTypeValue},
-	ObjTypeTinyTextTypeValue:   &ObTinyTextType{value: ObjTypeTinyTextTypeValue},
-	ObjTypeTextTypeValue:       &ObTextType{value: ObjTypeTextTypeValue},
-	ObjTypeMediumTextTypeValue: &ObMediumTextType{value: ObjTypeMediumTextTypeValue},
-	ObjTypeLongTextTypeValue:   &ObLongTextType{value: ObjTypeLongTextTypeValue},
-	ObjTypeBitTypeValue:        &ObBitType{value: ObjTypeBitTypeValue},
+	ObObjTypeNullTypeValue:       &ObNullType{value: ObObjTypeNullTypeValue},
+	ObObjTypeTinyIntTypeValue:    &ObTinyIntType{value: ObObjTypeTinyIntTypeValue},
+	ObObjTypeSmallIntTypeValue:   &ObSmallIntType{value: ObObjTypeSmallIntTypeValue},
+	ObObjTypeMediumIntTypeValue:  &ObMediumIntType{value: ObObjTypeMediumIntTypeValue},
+	ObObjTypeInt32TypeValue:      &ObInt32Type{value: ObObjTypeInt32TypeValue},
+	ObObjTypeInt64TypeValue:      &ObInt64Type{value: ObObjTypeInt64TypeValue},
+	ObObjTypeUTinyIntTypeValue:   &ObUTinyIntType{value: ObObjTypeUTinyIntTypeValue},
+	ObObjTypeUSmallIntTypeValue:  &ObUSmallIntType{value: ObObjTypeUSmallIntTypeValue},
+	ObObjTypeUMediumIntTypeValue: &ObUMediumIntType{value: ObObjTypeUMediumIntTypeValue},
+	ObObjTypeUInt32TypeValue:     &ObUInt32Type{value: ObObjTypeUInt32TypeValue},
+	ObObjTypeUInt64TypeValue:     &ObUInt64Type{value: ObObjTypeUInt64TypeValue},
+	ObObjTypeFloatTypeValue:      &ObFloatType{value: ObObjTypeFloatTypeValue},
+	ObObjTypeDoubleTypeValue:     &ObDoubleType{value: ObObjTypeDoubleTypeValue},
+	ObObjTypeUFloatTypeValue:     &ObUFloatType{value: ObObjTypeUFloatTypeValue},
+	ObObjTypeUDoubleTypeValue:    &ObUDoubleType{value: ObObjTypeUDoubleTypeValue},
+	ObObjTypeNumberTypeValue:     &ObNumberType{value: ObObjTypeNumberTypeValue},
+	ObObjTypeUNumberTypeValue:    &ObUNumberType{value: ObObjTypeUNumberTypeValue},
+	ObObjTypeDateTimeTypeValue:   &ObDateTimeType{value: ObObjTypeDateTimeTypeValue},
+	ObObjTypeTimestampTypeValue:  &ObTimestampType{value: ObObjTypeTimestampTypeValue},
+	ObObjTypeDateTypeValue:       &ObDateType{value: ObObjTypeDateTypeValue},
+	ObObjTypeTimeTypeValue:       &ObTimeType{value: ObObjTypeTimeTypeValue},
+	ObObjTypeYearTypeValue:       &ObYearType{value: ObObjTypeYearTypeValue},
+	ObObjTypeVarcharTypeValue:    &ObVarcharType{value: ObObjTypeVarcharTypeValue},
+	ObObjTypeCharTypeValue:       &ObCharType{value: ObObjTypeCharTypeValue},
+	ObObjTypeHexStringTypeValue:  &ObHexStringType{value: ObObjTypeHexStringTypeValue},
+	ObObjTypeExtendTypeValue:     &ObExtendType{value: ObObjTypeExtendTypeValue},
+	ObObjTypeUnknownTypeValue:    &ObUnknownType{value: ObObjTypeUnknownTypeValue},
+	ObObjTypeTinyTextTypeValue:   &ObTinyTextType{value: ObObjTypeTinyTextTypeValue},
+	ObObjTypeTextTypeValue:       &ObTextType{value: ObObjTypeTextTypeValue},
+	ObObjTypeMediumTextTypeValue: &ObMediumTextType{value: ObObjTypeMediumTextTypeValue},
+	ObObjTypeLongTextTypeValue:   &ObLongTextType{value: ObObjTypeLongTextTypeValue},
+	ObObjTypeBitTypeValue:        &ObBitType{value: ObObjTypeBitTypeValue},
 }
 
 func (v ObObjTypeValue) ValueOf() ObObjType {
@@ -252,38 +252,38 @@ func (v ObObjTypeValue) ValueOf() ObObjType {
 }
 
 const (
-	ObjTypeNullTypeValue ObObjTypeValue = iota
-	ObjTypeTinyIntTypeValue
-	ObjTypeSmallIntTypeValue
-	ObjTypeMediumIntTypeValue
-	ObjTypeInt32TypeValue
-	ObjTypeInt64TypeValue
-	ObjTypeUTinyIntTypeValue
-	ObjTypeUSmallIntTypeValue
-	ObjTypeUMediumIntTypeValue
-	ObjTypeUInt32TypeValue
-	ObjTypeUInt64TypeValue
-	ObjTypeFloatTypeValue
-	ObjTypeDoubleTypeValue
-	ObjTypeUFloatTypeValue
-	ObjTypeUDoubleTypeValue
-	ObjTypeNumberTypeValue
-	ObjTypeUNumberTypeValue
-	ObjTypeDateTimeTypeValue
-	ObjTypeTimestampTypeValue
-	ObjTypeDateTypeValue
-	ObjTypeTimeTypeValue
-	ObjTypeYearTypeValue
-	ObjTypeVarcharTypeValue
-	ObjTypeCharTypeValue
-	ObjTypeHexStringTypeValue
-	ObjTypeExtendTypeValue
-	ObjTypeUnknownTypeValue
-	ObjTypeTinyTextTypeValue
-	ObjTypeTextTypeValue
-	ObjTypeMediumTextTypeValue
-	ObjTypeLongTextTypeValue
-	ObjTypeBitTypeValue
+	ObObjTypeNullTypeValue ObObjTypeValue = iota
+	ObObjTypeTinyIntTypeValue
+	ObObjTypeSmallIntTypeValue
+	ObObjTypeMediumIntTypeValue
+	ObObjTypeInt32TypeValue
+	ObObjTypeInt64TypeValue
+	ObObjTypeUTinyIntTypeValue
+	ObObjTypeUSmallIntTypeValue
+	ObObjTypeUMediumIntTypeValue
+	ObObjTypeUInt32TypeValue
+	ObObjTypeUInt64TypeValue
+	ObObjTypeFloatTypeValue
+	ObObjTypeDoubleTypeValue
+	ObObjTypeUFloatTypeValue
+	ObObjTypeUDoubleTypeValue
+	ObObjTypeNumberTypeValue
+	ObObjTypeUNumberTypeValue
+	ObObjTypeDateTimeTypeValue
+	ObObjTypeTimestampTypeValue
+	ObObjTypeDateTypeValue
+	ObObjTypeTimeTypeValue
+	ObObjTypeYearTypeValue
+	ObObjTypeVarcharTypeValue
+	ObObjTypeCharTypeValue
+	ObObjTypeHexStringTypeValue
+	ObObjTypeExtendTypeValue
+	ObObjTypeUnknownTypeValue
+	ObObjTypeTinyTextTypeValue
+	ObObjTypeTextTypeValue
+	ObObjTypeMediumTextTypeValue
+	ObObjTypeLongTextTypeValue
+	ObObjTypeBitTypeValue
 )
 
 type ObCollationLevel uint8
@@ -365,7 +365,7 @@ func (t *ObNullType) EncodedLength(value interface{}) int {
 }
 
 func (t *ObNullType) DefaultObjMeta() *ObObjectMeta {
-	return NewObjectMetaWithParams(t, ObCollationLevelIgnorable, ObCollationTypeBinary, 10)
+	return NewObObjectMetaWithParams(t, ObCollationLevelIgnorable, ObCollationTypeBinary, 10)
 }
 
 func (t *ObNullType) CheckTypeForValue(value interface{}, obCollationType ObCollationType) (interface{}, error) {
@@ -408,7 +408,7 @@ func (t *ObTinyIntType) EncodedLength(value interface{}) int {
 }
 
 func (t *ObTinyIntType) DefaultObjMeta() *ObObjectMeta {
-	return NewObjectMetaWithParams(t, ObCollationLevelNumeric, ObCollationTypeBinary, 10)
+	return NewObObjectMetaWithParams(t, ObCollationLevelNumeric, ObCollationTypeBinary, 10)
 }
 
 func (t *ObTinyIntType) CheckTypeForValue(value interface{}, obCollationType ObCollationType) (interface{}, error) {
@@ -449,7 +449,7 @@ func (t *ObSmallIntType) EncodedLength(value interface{}) int {
 }
 
 func (t *ObSmallIntType) DefaultObjMeta() *ObObjectMeta {
-	return NewObjectMetaWithParams(t, ObCollationLevelNumeric, ObCollationTypeBinary, 10)
+	return NewObObjectMetaWithParams(t, ObCollationLevelNumeric, ObCollationTypeBinary, 10)
 }
 
 func (t *ObSmallIntType) CheckTypeForValue(value interface{}, obCollationType ObCollationType) (interface{}, error) {
@@ -487,7 +487,7 @@ func (t *ObMediumIntType) EncodedLength(value interface{}) int {
 }
 
 func (t *ObMediumIntType) DefaultObjMeta() *ObObjectMeta {
-	return NewObjectMetaWithParams(t, ObCollationLevelNumeric, ObCollationTypeBinary, 10)
+	return NewObObjectMetaWithParams(t, ObCollationLevelNumeric, ObCollationTypeBinary, 10)
 }
 
 func (t *ObMediumIntType) CheckTypeForValue(value interface{}, obCollationType ObCollationType) (interface{}, error) {
@@ -521,7 +521,7 @@ func (t *ObInt32Type) EncodedLength(value interface{}) int {
 }
 
 func (t *ObInt32Type) DefaultObjMeta() *ObObjectMeta {
-	return NewObjectMetaWithParams(t, ObCollationLevelNumeric, ObCollationTypeBinary, 10)
+	return NewObObjectMetaWithParams(t, ObCollationLevelNumeric, ObCollationTypeBinary, 10)
 }
 
 func (t *ObInt32Type) CheckTypeForValue(value interface{}, obCollationType ObCollationType) (interface{}, error) {
@@ -559,7 +559,7 @@ func (t *ObInt64Type) EncodedLength(value interface{}) int {
 }
 
 func (t *ObInt64Type) DefaultObjMeta() *ObObjectMeta {
-	return NewObjectMetaWithParams(t, ObCollationLevelNumeric, ObCollationTypeBinary, 10)
+	return NewObObjectMetaWithParams(t, ObCollationLevelNumeric, ObCollationTypeBinary, 10)
 }
 
 func (t *ObInt64Type) CheckTypeForValue(value interface{}, obCollationType ObCollationType) (interface{}, error) {
@@ -597,7 +597,7 @@ func (t *ObUTinyIntType) EncodedLength(value interface{}) int {
 }
 
 func (t *ObUTinyIntType) DefaultObjMeta() *ObObjectMeta {
-	return NewObjectMetaWithParams(t, ObCollationLevelNumeric, ObCollationTypeBinary, 10)
+	return NewObObjectMetaWithParams(t, ObCollationLevelNumeric, ObCollationTypeBinary, 10)
 }
 
 func (t *ObUTinyIntType) CheckTypeForValue(value interface{}, obCollationType ObCollationType) (interface{}, error) {
@@ -635,7 +635,7 @@ func (t *ObUSmallIntType) EncodedLength(value interface{}) int {
 }
 
 func (t *ObUSmallIntType) DefaultObjMeta() *ObObjectMeta {
-	return NewObjectMetaWithParams(t, ObCollationLevelNumeric, ObCollationTypeBinary, 10)
+	return NewObObjectMetaWithParams(t, ObCollationLevelNumeric, ObCollationTypeBinary, 10)
 }
 
 func (t *ObUSmallIntType) CheckTypeForValue(value interface{}, obCollationType ObCollationType) (interface{}, error) {
@@ -673,7 +673,7 @@ func (t *ObUMediumIntType) EncodedLength(value interface{}) int {
 }
 
 func (t *ObUMediumIntType) DefaultObjMeta() *ObObjectMeta {
-	return NewObjectMetaWithParams(t, ObCollationLevelNumeric, ObCollationTypeBinary, 10)
+	return NewObObjectMetaWithParams(t, ObCollationLevelNumeric, ObCollationTypeBinary, 10)
 }
 
 func (t *ObUMediumIntType) CheckTypeForValue(value interface{}, obCollationType ObCollationType) (interface{}, error) {
@@ -707,7 +707,7 @@ func (t *ObUInt32Type) EncodedLength(value interface{}) int {
 }
 
 func (t *ObUInt32Type) DefaultObjMeta() *ObObjectMeta {
-	return NewObjectMetaWithParams(t, ObCollationLevelNumeric, ObCollationTypeBinary, 10)
+	return NewObObjectMetaWithParams(t, ObCollationLevelNumeric, ObCollationTypeBinary, 10)
 }
 
 func (t *ObUInt32Type) CheckTypeForValue(value interface{}, obCollationType ObCollationType) (interface{}, error) {
@@ -745,7 +745,7 @@ func (t *ObUInt64Type) EncodedLength(value interface{}) int {
 }
 
 func (t *ObUInt64Type) DefaultObjMeta() *ObObjectMeta {
-	return NewObjectMetaWithParams(t, ObCollationLevelNumeric, ObCollationTypeBinary, 10)
+	return NewObObjectMetaWithParams(t, ObCollationLevelNumeric, ObCollationTypeBinary, 10)
 }
 
 func (t *ObUInt64Type) CheckTypeForValue(value interface{}, obCollationType ObCollationType) (interface{}, error) {
@@ -783,7 +783,7 @@ func (t *ObFloatType) EncodedLength(value interface{}) int {
 }
 
 func (t *ObFloatType) DefaultObjMeta() *ObObjectMeta {
-	return NewObjectMetaWithParams(t, ObCollationLevelNumeric, ObCollationTypeBinary, 10)
+	return NewObObjectMetaWithParams(t, ObCollationLevelNumeric, ObCollationTypeBinary, 10)
 }
 
 func (t *ObFloatType) CheckTypeForValue(value interface{}, obCollationType ObCollationType) (interface{}, error) {
@@ -821,7 +821,7 @@ func (t *ObDoubleType) EncodedLength(value interface{}) int {
 }
 
 func (t *ObDoubleType) DefaultObjMeta() *ObObjectMeta {
-	return NewObjectMetaWithParams(t, ObCollationLevelNumeric, ObCollationTypeBinary, 10)
+	return NewObObjectMetaWithParams(t, ObCollationLevelNumeric, ObCollationTypeBinary, 10)
 }
 
 func (t *ObDoubleType) CheckTypeForValue(value interface{}, obCollationType ObCollationType) (interface{}, error) {
@@ -859,7 +859,7 @@ func (t *ObUFloatType) EncodedLength(value interface{}) int {
 }
 
 func (t *ObUFloatType) DefaultObjMeta() *ObObjectMeta {
-	return NewObjectMetaWithParams(t, ObCollationLevelNumeric, ObCollationTypeBinary, 10)
+	return NewObObjectMetaWithParams(t, ObCollationLevelNumeric, ObCollationTypeBinary, 10)
 }
 
 func (t *ObUFloatType) CheckTypeForValue(value interface{}, obCollationType ObCollationType) (interface{}, error) {
@@ -893,7 +893,7 @@ func (t *ObUDoubleType) EncodedLength(value interface{}) int {
 }
 
 func (t *ObUDoubleType) DefaultObjMeta() *ObObjectMeta {
-	return NewObjectMetaWithParams(t, ObCollationLevelNumeric, ObCollationTypeBinary, 10)
+	return NewObObjectMetaWithParams(t, ObCollationLevelNumeric, ObCollationTypeBinary, 10)
 }
 
 func (t *ObUDoubleType) CheckTypeForValue(value interface{}, obCollationType ObCollationType) (interface{}, error) {
@@ -927,7 +927,7 @@ func (t *ObNumberType) EncodedLength(value interface{}) int {
 }
 
 func (t *ObNumberType) DefaultObjMeta() *ObObjectMeta {
-	return NewObjectMetaWithParams(t, ObCollationLevelNumeric, ObCollationTypeBinary, 10)
+	return NewObObjectMetaWithParams(t, ObCollationLevelNumeric, ObCollationTypeBinary, 10)
 }
 
 func (t *ObNumberType) CheckTypeForValue(value interface{}, obCollationType ObCollationType) (interface{}, error) {
@@ -961,7 +961,7 @@ func (t *ObUNumberType) EncodedLength(value interface{}) int {
 }
 
 func (t *ObUNumberType) DefaultObjMeta() *ObObjectMeta {
-	return NewObjectMetaWithParams(t, ObCollationLevelNumeric, ObCollationTypeBinary, 10)
+	return NewObObjectMetaWithParams(t, ObCollationLevelNumeric, ObCollationTypeBinary, 10)
 }
 
 func (t *ObUNumberType) CheckTypeForValue(value interface{}, obCollationType ObCollationType) (interface{}, error) {
@@ -995,7 +995,7 @@ func (t *ObDateTimeType) EncodedLength(value interface{}) int {
 }
 
 func (t *ObDateTimeType) DefaultObjMeta() *ObObjectMeta {
-	return NewObjectMetaWithParams(t, ObCollationLevelNumeric, ObCollationTypeBinary, 10)
+	return NewObObjectMetaWithParams(t, ObCollationLevelNumeric, ObCollationTypeBinary, 10)
 }
 
 func (t *ObDateTimeType) CheckTypeForValue(value interface{}, obCollationType ObCollationType) (interface{}, error) {
@@ -1033,7 +1033,7 @@ func (t *ObTimestampType) EncodedLength(value interface{}) int {
 }
 
 func (t *ObTimestampType) DefaultObjMeta() *ObObjectMeta {
-	return NewObjectMetaWithParams(t, ObCollationLevelNumeric, ObCollationTypeBinary, 10)
+	return NewObObjectMetaWithParams(t, ObCollationLevelNumeric, ObCollationTypeBinary, 10)
 }
 
 func (t *ObTimestampType) CheckTypeForValue(value interface{}, obCollationType ObCollationType) (interface{}, error) {
@@ -1071,7 +1071,7 @@ func (t *ObDateType) EncodedLength(value interface{}) int {
 }
 
 func (t *ObDateType) DefaultObjMeta() *ObObjectMeta {
-	return NewObjectMetaWithParams(t, ObCollationLevelNumeric, ObCollationTypeBinary, 10)
+	return NewObObjectMetaWithParams(t, ObCollationLevelNumeric, ObCollationTypeBinary, 10)
 }
 
 func (t *ObDateType) CheckTypeForValue(value interface{}, obCollationType ObCollationType) (interface{}, error) {
@@ -1109,7 +1109,7 @@ func (t *ObTimeType) EncodedLength(value interface{}) int {
 }
 
 func (t *ObTimeType) DefaultObjMeta() *ObObjectMeta {
-	return NewObjectMetaWithParams(t, ObCollationLevelNumeric, ObCollationTypeBinary, 10)
+	return NewObObjectMetaWithParams(t, ObCollationLevelNumeric, ObCollationTypeBinary, 10)
 }
 
 func (t *ObTimeType) CheckTypeForValue(value interface{}, obCollationType ObCollationType) (interface{}, error) {
@@ -1147,7 +1147,7 @@ func (t *ObYearType) EncodedLength(value interface{}) int {
 }
 
 func (t *ObYearType) DefaultObjMeta() *ObObjectMeta {
-	return NewObjectMetaWithParams(t, ObCollationLevelNumeric, ObCollationTypeBinary, 10)
+	return NewObObjectMetaWithParams(t, ObCollationLevelNumeric, ObCollationTypeBinary, 10)
 }
 
 func (t *ObYearType) CheckTypeForValue(value interface{}, obCollationType ObCollationType) (interface{}, error) {
@@ -1181,7 +1181,7 @@ func (t *ObVarcharType) EncodedLength(value interface{}) int {
 }
 
 func (t *ObVarcharType) DefaultObjMeta() *ObObjectMeta {
-	return NewObjectMetaWithParams(t, ObCollationLevelExplicit, ObCollationTypeUtf8mb4GeneralCi, 10)
+	return NewObObjectMetaWithParams(t, ObCollationLevelExplicit, ObCollationTypeUtf8mb4GeneralCi, 10)
 }
 
 func (t *ObVarcharType) CheckTypeForValue(value interface{}, obCollationType ObCollationType) (interface{}, error) {
@@ -1227,7 +1227,7 @@ func (t *ObCharType) EncodedLength(value interface{}) int {
 }
 
 func (t *ObCharType) DefaultObjMeta() *ObObjectMeta {
-	return NewObjectMetaWithParams(t, ObCollationLevelExplicit, ObCollationTypeUtf8mb4GeneralCi, 10)
+	return NewObObjectMetaWithParams(t, ObCollationLevelExplicit, ObCollationTypeUtf8mb4GeneralCi, 10)
 }
 
 func (t *ObCharType) CheckTypeForValue(value interface{}, obCollationType ObCollationType) (interface{}, error) {
@@ -1273,7 +1273,7 @@ func (t *ObHexStringType) EncodedLength(value interface{}) int {
 }
 
 func (t *ObHexStringType) DefaultObjMeta() *ObObjectMeta {
-	return NewObjectMetaWithParams(t, ObCollationLevelNumeric, ObCollationTypeBinary, 10)
+	return NewObObjectMetaWithParams(t, ObCollationLevelNumeric, ObCollationTypeBinary, 10)
 }
 
 func (t *ObHexStringType) CheckTypeForValue(value interface{}, obCollationType ObCollationType) (interface{}, error) {
@@ -1307,7 +1307,7 @@ func (t *ObExtendType) EncodedLength(value interface{}) int {
 }
 
 func (t *ObExtendType) DefaultObjMeta() *ObObjectMeta {
-	return NewObjectMetaWithParams(t, ObCollationLevelNumeric, ObCollationTypeBinary, 10)
+	return NewObObjectMetaWithParams(t, ObCollationLevelNumeric, ObCollationTypeBinary, 10)
 }
 
 func (t *ObExtendType) CheckTypeForValue(value interface{}, obCollationType ObCollationType) (interface{}, error) {
@@ -1341,7 +1341,7 @@ func (t *ObUnknownType) EncodedLength(value interface{}) int {
 }
 
 func (t *ObUnknownType) DefaultObjMeta() *ObObjectMeta {
-	return NewObjectMetaWithParams(t, ObCollationLevelNumeric, ObCollationTypeBinary, 10)
+	return NewObObjectMetaWithParams(t, ObCollationLevelNumeric, ObCollationTypeBinary, 10)
 }
 
 func (t *ObUnknownType) CheckTypeForValue(value interface{}, obCollationType ObCollationType) (interface{}, error) {
@@ -1375,7 +1375,7 @@ func (t *ObTinyTextType) EncodedLength(value interface{}) int {
 }
 
 func (t *ObTinyTextType) DefaultObjMeta() *ObObjectMeta {
-	return NewObjectMetaWithParams(t, ObCollationLevelNumeric, ObCollationTypeBinary, 10)
+	return NewObObjectMetaWithParams(t, ObCollationLevelNumeric, ObCollationTypeBinary, 10)
 }
 
 func (t *ObTinyTextType) CheckTypeForValue(value interface{}, obCollationType ObCollationType) (interface{}, error) {
@@ -1421,7 +1421,7 @@ func (t *ObTextType) EncodedLength(value interface{}) int {
 }
 
 func (t *ObTextType) DefaultObjMeta() *ObObjectMeta {
-	return NewObjectMetaWithParams(t, ObCollationLevelNumeric, ObCollationTypeBinary, 10)
+	return NewObObjectMetaWithParams(t, ObCollationLevelNumeric, ObCollationTypeBinary, 10)
 }
 
 func (t *ObTextType) CheckTypeForValue(value interface{}, obCollationType ObCollationType) (interface{}, error) {
@@ -1467,7 +1467,7 @@ func (t *ObMediumTextType) EncodedLength(value interface{}) int {
 }
 
 func (t *ObMediumTextType) DefaultObjMeta() *ObObjectMeta {
-	return NewObjectMetaWithParams(t, ObCollationLevelNumeric, ObCollationTypeBinary, 10)
+	return NewObObjectMetaWithParams(t, ObCollationLevelNumeric, ObCollationTypeBinary, 10)
 }
 
 func (t *ObMediumTextType) CheckTypeForValue(value interface{}, obCollationType ObCollationType) (interface{}, error) {
@@ -1513,7 +1513,7 @@ func (t *ObLongTextType) EncodedLength(value interface{}) int {
 }
 
 func (t *ObLongTextType) DefaultObjMeta() *ObObjectMeta {
-	return NewObjectMetaWithParams(t, ObCollationLevelNumeric, ObCollationTypeBinary, 10)
+	return NewObObjectMetaWithParams(t, ObCollationLevelNumeric, ObCollationTypeBinary, 10)
 }
 
 func (t *ObLongTextType) CheckTypeForValue(value interface{}, obCollationType ObCollationType) (interface{}, error) {
@@ -1559,7 +1559,7 @@ func (t *ObBitType) EncodedLength(value interface{}) int {
 }
 
 func (t *ObBitType) DefaultObjMeta() *ObObjectMeta {
-	return NewObjectMetaWithParams(t, ObCollationLevelNumeric, ObCollationTypeBinary, 10)
+	return NewObObjectMetaWithParams(t, ObCollationLevelNumeric, ObCollationTypeBinary, 10)
 }
 
 func (t *ObBitType) CheckTypeForValue(value interface{}, obCollationType ObCollationType) (interface{}, error) {

@@ -32,20 +32,20 @@ const (
 	headerEncodeSize = 72
 
 	encodeSizeWithCostTime = headerEncodeSize +
-		costTimeEncodeSize
+		obCostTimeEncodeSize
 
 	encodeSizeWithCostTimeAndDstClusterId = headerEncodeSize +
-		costTimeEncodeSize +
+		obCostTimeEncodeSize +
 		8 // dstClusterId
 
 	encodeSize = headerEncodeSize +
-		costTimeEncodeSize +
+		obCostTimeEncodeSize +
 		8 + // dstClusterId
 		4 + // compressType
 		4 // originalLen
 
 	encodeSizeV4 = headerEncodeSize +
-		costTimeEncodeSize +
+		obCostTimeEncodeSize +
 		8 + // dstClusterId
 		4 + // compressType
 		4 + // originalLen
@@ -71,21 +71,21 @@ const (
 )
 
 type ObRpcHeader struct {
-	pCode        uint32
-	hLen         uint8
-	priority     uint8
-	flag         uint16
-	checksum     int64
-	tenantId     uint64
-	prevTenantId uint64
-	sessionId    uint64
-	traceId0     uint64 // uniqueId
-	traceId1     uint64 // sequence
-	timeout      time.Duration
-	timestamp    int64
-	rpcCostTime  *RpcCostTime
-	dstClusterId int64
-	compressType ObCompressType
+	pCode         uint32
+	hLen          uint8
+	priority      uint8
+	flag          uint16
+	checksum      int64
+	tenantId      uint64
+	prevTenantId  uint64
+	sessionId     uint64
+	traceId0      uint64 // uniqueId
+	traceId1      uint64 // sequence
+	timeout       time.Duration
+	timestamp     int64
+	obRpcCostTime *ObRpcCostTime
+	dstClusterId  int64
+	compressType  ObCompressType
 	// original length before compression.
 	originalLen int32
 	// v4
@@ -113,7 +113,7 @@ func NewObRpcHeader() *ObRpcHeader {
 		traceId1:        0,
 		timeout:         defaultOperationTimeout,
 		timestamp:       time.Now().Unix(),
-		rpcCostTime:     NewRpcCostTime(),
+		obRpcCostTime:   NewObRpcCostTime(),
 		dstClusterId:    -1,
 		compressType:    ObCompressTypeInvalid,
 		originalLen:     0,
@@ -224,12 +224,12 @@ func (h *ObRpcHeader) SetTimestamp(timestamp int64) {
 	h.timestamp = timestamp
 }
 
-func (h *ObRpcHeader) RpcCostTime() *RpcCostTime {
-	return h.rpcCostTime
+func (h *ObRpcHeader) ObRpcCostTime() *ObRpcCostTime {
+	return h.obRpcCostTime
 }
 
-func (h *ObRpcHeader) SetRpcCostTime(rpcCostTime *RpcCostTime) {
-	h.rpcCostTime = rpcCostTime
+func (h *ObRpcHeader) SetObRpcCostTime(obRpcCostTime *ObRpcCostTime) {
+	h.obRpcCostTime = obRpcCostTime
 }
 
 func (h *ObRpcHeader) DstClusterId() int64 {
@@ -348,7 +348,7 @@ func (h *ObRpcHeader) Encode() []byte {
 	util.PutUint64(rpcHeaderBuffer, uint64(h.timeout))
 	util.PutUint64(rpcHeaderBuffer, uint64(h.timestamp))
 
-	h.rpcCostTime.Encode(rpcHeaderBuffer)
+	h.obRpcCostTime.Encode(rpcHeaderBuffer)
 
 	util.PutUint64(rpcHeaderBuffer, uint64(h.dstClusterId))
 	util.PutUint32(rpcHeaderBuffer, uint32(h.compressType))
@@ -384,7 +384,7 @@ func (h *ObRpcHeader) Decode(buffer *bytes.Buffer) {
 
 	// TODO Maybe it would be better to use the version number to judge
 	if h.hLen >= encodeSizeV4 {
-		h.rpcCostTime.Decode(buffer)
+		h.obRpcCostTime.Decode(buffer)
 
 		h.dstClusterId = int64(util.Uint64(buffer))
 		h.compressType = ObCompressType(util.Uint32(buffer))
@@ -401,7 +401,7 @@ func (h *ObRpcHeader) Decode(buffer *bytes.Buffer) {
 
 		util.SkipBytes(buffer, int(h.hLen-encodeSizeV4))
 	} else if h.hLen >= encodeSize {
-		h.rpcCostTime.Decode(buffer)
+		h.obRpcCostTime.Decode(buffer)
 
 		h.dstClusterId = int64(util.Uint64(buffer))
 		h.compressType = ObCompressType(util.Uint32(buffer))
@@ -409,13 +409,13 @@ func (h *ObRpcHeader) Decode(buffer *bytes.Buffer) {
 
 		util.SkipBytes(buffer, int(h.hLen-encodeSize))
 	} else if h.hLen >= encodeSizeWithCostTimeAndDstClusterId {
-		h.rpcCostTime.Decode(buffer)
+		h.obRpcCostTime.Decode(buffer)
 
 		h.dstClusterId = int64(util.Uint64(buffer))
 
 		util.SkipBytes(buffer, int(h.hLen-encodeSizeWithCostTimeAndDstClusterId))
 	} else if h.hLen >= encodeSizeWithCostTime {
-		h.rpcCostTime.Decode(buffer)
+		h.obRpcCostTime.Decode(buffer)
 
 		util.SkipBytes(buffer, int(h.hLen-encodeSizeWithCostTime))
 	} else {
@@ -423,7 +423,7 @@ func (h *ObRpcHeader) Decode(buffer *bytes.Buffer) {
 	}
 }
 
-type RpcCostTime struct {
+type ObRpcCostTime struct {
 	len                    int32
 	arrivalPushDiff        int32
 	pushPopDiff            int32
@@ -434,11 +434,11 @@ type RpcCostTime struct {
 	requestArriveTime      int64
 }
 
-const costTimeEncodeSize = 40
+const obCostTimeEncodeSize = 40
 
-func NewRpcCostTime() *RpcCostTime {
-	return &RpcCostTime{
-		len:                    costTimeEncodeSize,
+func NewObRpcCostTime() *ObRpcCostTime {
+	return &ObRpcCostTime{
+		len:                    obCostTimeEncodeSize,
 		arrivalPushDiff:        0,
 		pushPopDiff:            0,
 		popProcessStartDiff:    0,
@@ -449,71 +449,71 @@ func NewRpcCostTime() *RpcCostTime {
 	}
 }
 
-func (t *RpcCostTime) Len() int32 {
+func (t *ObRpcCostTime) Len() int32 {
 	return t.len
 }
 
-func (t *RpcCostTime) SetLen(len int32) {
+func (t *ObRpcCostTime) SetLen(len int32) {
 	t.len = len
 }
 
-func (t *RpcCostTime) ArrivalPushDiff() int32 {
+func (t *ObRpcCostTime) ArrivalPushDiff() int32 {
 	return t.arrivalPushDiff
 }
 
-func (t *RpcCostTime) SetArrivalPushDiff(arrivalPushDiff int32) {
+func (t *ObRpcCostTime) SetArrivalPushDiff(arrivalPushDiff int32) {
 	t.arrivalPushDiff = arrivalPushDiff
 }
 
-func (t *RpcCostTime) PushPopDiff() int32 {
+func (t *ObRpcCostTime) PushPopDiff() int32 {
 	return t.pushPopDiff
 }
 
-func (t *RpcCostTime) SetPushPopDiff(pushPopDiff int32) {
+func (t *ObRpcCostTime) SetPushPopDiff(pushPopDiff int32) {
 	t.pushPopDiff = pushPopDiff
 }
 
-func (t *RpcCostTime) PopProcessStartDiff() int32 {
+func (t *ObRpcCostTime) PopProcessStartDiff() int32 {
 	return t.popProcessStartDiff
 }
 
-func (t *RpcCostTime) SetPopProcessStartDiff(popProcessStartDiff int32) {
+func (t *ObRpcCostTime) SetPopProcessStartDiff(popProcessStartDiff int32) {
 	t.popProcessStartDiff = popProcessStartDiff
 }
 
-func (t *RpcCostTime) ProcessStartEndDiff() int32 {
+func (t *ObRpcCostTime) ProcessStartEndDiff() int32 {
 	return t.processStartEndDiff
 }
 
-func (t *RpcCostTime) SetProcessStartEndDiff(processStartEndDiff int32) {
+func (t *ObRpcCostTime) SetProcessStartEndDiff(processStartEndDiff int32) {
 	t.processStartEndDiff = processStartEndDiff
 }
 
-func (t *RpcCostTime) ProcessEndResponseDiff() int32 {
+func (t *ObRpcCostTime) ProcessEndResponseDiff() int32 {
 	return t.processEndResponseDiff
 }
 
-func (t *RpcCostTime) SetProcessEndResponseDiff(processEndResponseDiff int32) {
+func (t *ObRpcCostTime) SetProcessEndResponseDiff(processEndResponseDiff int32) {
 	t.processEndResponseDiff = processEndResponseDiff
 }
 
-func (t *RpcCostTime) PacketId() int64 {
+func (t *ObRpcCostTime) PacketId() int64 {
 	return t.packetId
 }
 
-func (t *RpcCostTime) SetPacketId(packetId int64) {
+func (t *ObRpcCostTime) SetPacketId(packetId int64) {
 	t.packetId = packetId
 }
 
-func (t *RpcCostTime) RequestArriveTime() int64 {
+func (t *ObRpcCostTime) RequestArriveTime() int64 {
 	return t.requestArriveTime
 }
 
-func (t *RpcCostTime) SetRequestArriveTime(requestArriveTime int64) {
+func (t *ObRpcCostTime) SetRequestArriveTime(requestArriveTime int64) {
 	t.requestArriveTime = requestArriveTime
 }
 
-func (t *RpcCostTime) Encode(buffer *bytes.Buffer) {
+func (t *ObRpcCostTime) Encode(buffer *bytes.Buffer) {
 	util.PutUint32(buffer, uint32(t.len))
 	util.PutUint32(buffer, uint32(t.arrivalPushDiff))
 	util.PutUint32(buffer, uint32(t.pushPopDiff))
@@ -524,7 +524,7 @@ func (t *RpcCostTime) Encode(buffer *bytes.Buffer) {
 	util.PutUint64(buffer, uint64(t.requestArriveTime))
 }
 
-func (t *RpcCostTime) Decode(buffer *bytes.Buffer) {
+func (t *ObRpcCostTime) Decode(buffer *bytes.Buffer) {
 	t.len = int32(util.Uint32(buffer))
 	t.arrivalPushDiff = int32(util.Uint32(buffer))
 	t.pushPopDiff = int32(util.Uint32(buffer))

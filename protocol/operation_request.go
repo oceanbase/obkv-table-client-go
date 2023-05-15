@@ -41,7 +41,7 @@ type ObTableOperationRequest struct {
 	returnAffectedRows   bool
 }
 
-func NewTableOperationRequest(
+func NewObTableOperationRequest(
 	tableName string,
 	tableId uint64,
 	partitionId int64,
@@ -64,9 +64,9 @@ func NewTableOperationRequest(
 		tableName:            tableName,
 		tableId:              tableId,
 		partitionId:          partitionId,
-		entityType:           Dynamic,
+		entityType:           ObTableEntityTypeDynamic,
 		tableOperation:       tableOperation,
-		consistencyLevel:     Strong,
+		consistencyLevel:     ObTableConsistencyLevelStrong,
 		returnRowKey:         false,
 		returnAffectedEntity: false,
 		returnAffectedRows:   true,

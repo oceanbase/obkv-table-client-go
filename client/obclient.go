@@ -283,7 +283,7 @@ func (c *ObClient) execute(
 	}
 
 	// 2. Construct request.
-	request, err := protocol.NewTableOperationRequest(
+	request, err := protocol.NewObTableOperationRequest(
 		tableName,
 		tableParam.tableId,
 		tableParam.partitionId,
@@ -299,7 +299,7 @@ func (c *ObClient) execute(
 	}
 
 	// 3. execute
-	result := protocol.NewTableOperationResponse()
+	result := protocol.NewObTableOperationResponse()
 	err = tableParam.table.execute(request, result)
 	if err != nil {
 		return nil, errors.WithMessagef(err, "execute request, request:%s", request.String())

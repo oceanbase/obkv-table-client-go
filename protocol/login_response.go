@@ -36,7 +36,7 @@ type ObLoginResponse struct {
 	databaseId    int64
 }
 
-func NewLoginResponse() *ObLoginResponse {
+func NewObLoginResponse() *ObLoginResponse {
 	return &ObLoginResponse{
 		ObUniVersionHeader: NewObUniVersionHeader(),
 		serverCapabilities: 0,

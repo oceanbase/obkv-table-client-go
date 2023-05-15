@@ -73,8 +73,8 @@ func (r *ObTableBatchOperationResponse) Decode(buffer *bytes.Buffer) {
 
 	var i int64
 	for i = 0; i < responsesLen; i++ {
-		tableOperationResponse := NewTableOperationResponse()
-		tableOperationResponse.Decode(buffer)
-		r.obTableOperationResponses = append(r.obTableOperationResponses, tableOperationResponse)
+		obTableOperationResponse := NewObTableOperationResponse()
+		obTableOperationResponse.Decode(buffer)
+		r.obTableOperationResponses = append(r.obTableOperationResponses, obTableOperationResponse)
 	}
 }

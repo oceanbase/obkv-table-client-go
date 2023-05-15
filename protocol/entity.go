@@ -26,9 +26,9 @@ import (
 type ObTableEntityType uint8
 
 const (
-	Dynamic ObTableEntityType = iota
-	KV
-	HKV
+	ObTableEntityTypeDynamic ObTableEntityType = iota
+	ObTableEntityTypeKV
+	ObTableEntityTypeHKV
 )
 
 type ObTableEntity struct {

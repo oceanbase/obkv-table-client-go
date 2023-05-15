@@ -104,7 +104,7 @@ func (c *Connection) Connect() error {
 
 func (c *Connection) Login() error {
 	loginRequest := protocol.NewObLoginRequest(c.option.tenantName, c.option.databaseName, c.option.userName, c.option.password)
-	loginResponse := protocol.NewLoginResponse()
+	loginResponse := protocol.NewObLoginResponse()
 	err := c.Execute(context.TODO(), loginRequest, loginResponse)
 	if err != nil {
 		c.Close()

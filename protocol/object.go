@@ -28,12 +28,12 @@ type ObObject struct {
 
 func NewObObject() *ObObject {
 	return &ObObject{
-		meta:  NewObjectMeta(),
+		meta:  NewObObjectMeta(),
 		value: nil,
 	}
 }
 
-func NewObjectWithParams(meta *ObObjectMeta, value interface{}) *ObObject {
+func NewObObjectWithParams(meta *ObObjectMeta, value interface{}) *ObObject {
 	return &ObObject{meta: meta, value: value}
 }
 

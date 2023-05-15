@@ -141,26 +141,26 @@ func (d *obKeyPartDesc) toHashCode(
 	hashCode int64,
 	partFuncType obPartFuncType) (int64, error) {
 	typeValue := refColumn.objType.Value()
-	if typeValue >= protocol.ObjTypeTinyIntTypeValue && typeValue <= protocol.ObjTypeUInt64TypeValue {
+	if typeValue >= protocol.ObObjTypeTinyIntTypeValue && typeValue <= protocol.ObObjTypeUInt64TypeValue {
 		i64, err := intToInt64(value)
 		if err != nil {
 			return -1, errors.WithMessagef(err, "convert int to int64, value:%T", typeValue)
 		}
 		arr := d.longToByteArray(i64)
 		return murmurHash64A(arr, len(arr), hashCode), nil
-	} else if typeValue == protocol.ObjTypeDateTimeTypeValue || typeValue == protocol.ObjTypeTimestampTypeValue {
+	} else if typeValue == protocol.ObObjTypeDateTimeTypeValue || typeValue == protocol.ObObjTypeTimestampTypeValue {
 		t, ok := value.(time.Time)
 		if !ok {
 			return -1, errors.Errorf("invalid timestamp type, value:%T", value)
 		}
 		return d.timeStampHash(t, hashCode), nil
-	} else if typeValue == protocol.ObjTypeDateTypeValue {
+	} else if typeValue == protocol.ObObjTypeDateTypeValue {
 		date, ok := value.(time.Time)
 		if !ok {
 			return -1, errors.Errorf("invalid date type, value:%T", value)
 		}
 		return d.dateHash(date, hashCode), nil
-	} else if typeValue == protocol.ObjTypeVarcharTypeValue || typeValue == protocol.ObjTypeCharTypeValue {
+	} else if typeValue == protocol.ObObjTypeVarcharTypeValue || typeValue == protocol.ObObjTypeCharTypeValue {
 		return d.varcharHash(value, refColumn.collationType, hashCode, partFuncType)
 	} else {
 		return -1, errors.Errorf("unsupported type for key hash, objType:%s", refColumn.objType.String())
