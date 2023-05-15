@@ -23,85 +23,85 @@ import (
 	"github.com/oceanbase/obkv-table-client-go/util"
 )
 
-type TableBatchOperation struct {
-	*UniVersionHeader
-	tableOperations     []*TableOperation
+type ObTableBatchOperation struct {
+	*ObUniVersionHeader
+	obTableOperations   []*ObTableOperation
 	readOnly            bool
 	sameType            bool
 	samePropertiesNames bool
 }
 
-func NewTableBatchOperation() *TableBatchOperation {
-	return &TableBatchOperation{
-		UniVersionHeader:    NewUniVersionHeader(),
-		tableOperations:     nil,
+func NewObTableBatchOperation() *ObTableBatchOperation {
+	return &ObTableBatchOperation{
+		ObUniVersionHeader:  NewObUniVersionHeader(),
+		obTableOperations:   nil,
 		readOnly:            false,
 		sameType:            false,
 		samePropertiesNames: false,
 	}
 }
 
-func (o *TableBatchOperation) TableOperations() []*TableOperation {
-	return o.tableOperations
+func (o *ObTableBatchOperation) ObTableOperations() []*ObTableOperation {
+	return o.obTableOperations
 }
 
-func (o *TableBatchOperation) SetTableOperations(tableOperations []*TableOperation) {
-	o.tableOperations = tableOperations
+func (o *ObTableBatchOperation) SetObTableOperations(obTableOperations []*ObTableOperation) {
+	o.obTableOperations = obTableOperations
 }
 
-func (o *TableBatchOperation) AppendTableOperation(tableOperation *TableOperation) {
-	o.tableOperations = append(o.tableOperations, tableOperation)
+func (o *ObTableBatchOperation) AppendObTableOperation(obTableOperation *ObTableOperation) {
+	o.obTableOperations = append(o.obTableOperations, obTableOperation)
 }
 
-func (o *TableBatchOperation) ReadOnly() bool {
+func (o *ObTableBatchOperation) ReadOnly() bool {
 	return o.readOnly
 }
 
-func (o *TableBatchOperation) SetReadOnly(readOnly bool) {
+func (o *ObTableBatchOperation) SetReadOnly(readOnly bool) {
 	o.readOnly = readOnly
 }
 
-func (o *TableBatchOperation) SameType() bool {
+func (o *ObTableBatchOperation) SameType() bool {
 	return o.sameType
 }
 
-func (o *TableBatchOperation) SetSameType(sameType bool) {
+func (o *ObTableBatchOperation) SetSameType(sameType bool) {
 	o.sameType = sameType
 }
 
-func (o *TableBatchOperation) SamePropertiesNames() bool {
+func (o *ObTableBatchOperation) SamePropertiesNames() bool {
 	return o.samePropertiesNames
 }
 
-func (o *TableBatchOperation) SetSamePropertiesNames(samePropertiesNames bool) {
+func (o *ObTableBatchOperation) SetSamePropertiesNames(samePropertiesNames bool) {
 	o.samePropertiesNames = samePropertiesNames
 }
 
-func (o *TableBatchOperation) PayloadLen() int {
-	return o.PayloadContentLen() + o.UniVersionHeader.UniVersionHeaderLen() // Do not change the order
+func (o *ObTableBatchOperation) PayloadLen() int {
+	return o.PayloadContentLen() + o.ObUniVersionHeader.UniVersionHeaderLen() // Do not change the order
 }
 
-func (o *TableBatchOperation) PayloadContentLen() int {
+func (o *ObTableBatchOperation) PayloadContentLen() int {
 	totalLen := 0
 
-	totalLen += util.EncodedLengthByVi64(int64(len(o.tableOperations)))
+	totalLen += util.EncodedLengthByVi64(int64(len(o.obTableOperations)))
 
-	for _, tableOperation := range o.tableOperations {
+	for _, tableOperation := range o.obTableOperations {
 		totalLen += tableOperation.PayloadLen()
 	}
 
 	totalLen += 3 // readOnly sameType samePropertiesNames
 
-	o.UniVersionHeader.SetContentLength(totalLen)
-	return o.UniVersionHeader.ContentLength()
+	o.ObUniVersionHeader.SetContentLength(totalLen)
+	return o.ObUniVersionHeader.ContentLength()
 }
 
-func (o *TableBatchOperation) Encode(buffer *bytes.Buffer) {
-	o.UniVersionHeader.Encode(buffer)
+func (o *ObTableBatchOperation) Encode(buffer *bytes.Buffer) {
+	o.ObUniVersionHeader.Encode(buffer)
 
-	util.EncodeVi64(buffer, int64(len(o.tableOperations)))
+	util.EncodeVi64(buffer, int64(len(o.obTableOperations)))
 
-	for _, tableOperation := range o.tableOperations {
+	for _, tableOperation := range o.obTableOperations {
 		tableOperation.Encode(buffer)
 	}
 
@@ -112,7 +112,7 @@ func (o *TableBatchOperation) Encode(buffer *bytes.Buffer) {
 	util.PutUint8(buffer, util.BoolToByte(o.samePropertiesNames))
 }
 
-func (o *TableBatchOperation) Decode(buffer *bytes.Buffer) {
+func (o *ObTableBatchOperation) Decode(buffer *bytes.Buffer) {
 	// TODO implement me
 	panic("implement me")
 }

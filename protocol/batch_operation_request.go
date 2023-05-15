@@ -24,171 +24,171 @@ import (
 	"github.com/oceanbase/obkv-table-client-go/util"
 )
 
-type TableBatchOperationRequest struct {
-	*UniVersionHeader
-	credential           []byte
-	tableName            string
-	tableId              uint64
-	entityType           TableEntityType
-	tableBatchOperation  *TableBatchOperation
-	consistencyLevel     TableConsistencyLevel
-	returnRowKey         bool
-	returnAffectedEntity bool
-	returnAffectedRows   bool
-	partitionId          int64 // todo batch request partitionId different
-	atomicOperation      bool
+type ObTableBatchOperationRequest struct {
+	*ObUniVersionHeader
+	credential              []byte
+	tableName               string
+	tableId                 uint64
+	obTableEntityType       ObTableEntityType
+	obTableBatchOperation   *ObTableBatchOperation
+	obTableConsistencyLevel ObTableConsistencyLevel
+	returnRowKey            bool
+	returnAffectedEntity    bool
+	returnAffectedRows      bool
+	partitionId             int64 // todo batch request partitionId different
+	atomicOperation         bool
 }
 
-func NewTableBatchOperationRequest(
+func NewObTableBatchOperationRequest(
 	tableName string,
 	tableId uint64,
 	partitionId int64,
-	tableBatchOperation *TableBatchOperation,
+	obTableBatchOperation *ObTableBatchOperation,
 	timeout time.Duration,
-	flag uint16) *TableBatchOperationRequest {
+	flag uint16) *ObTableBatchOperationRequest {
 
-	uniVersionHeader := NewUniVersionHeader()
+	uniVersionHeader := NewObUniVersionHeader()
 	uniVersionHeader.SetFlag(flag)
 	uniVersionHeader.SetTimeout(timeout)
 
-	return &TableBatchOperationRequest{
-		UniVersionHeader:     uniVersionHeader,
-		credential:           nil,
-		tableName:            tableName,
-		tableId:              tableId,
-		entityType:           Dynamic,
-		tableBatchOperation:  tableBatchOperation,
-		consistencyLevel:     Strong,
-		returnRowKey:         false,
-		returnAffectedEntity: false,
-		returnAffectedRows:   false,
-		partitionId:          partitionId,
-		atomicOperation:      false,
+	return &ObTableBatchOperationRequest{
+		ObUniVersionHeader:      uniVersionHeader,
+		credential:              nil,
+		tableName:               tableName,
+		tableId:                 tableId,
+		obTableEntityType:       ObTableEntityTypeDynamic,
+		obTableBatchOperation:   obTableBatchOperation,
+		obTableConsistencyLevel: ObTableConsistencyLevelStrong,
+		returnRowKey:            false,
+		returnAffectedEntity:    false,
+		returnAffectedRows:      false,
+		partitionId:             partitionId,
+		atomicOperation:         false,
 	}
 }
 
-func (r *TableBatchOperationRequest) Credential() []byte {
+func (r *ObTableBatchOperationRequest) Credential() []byte {
 	return r.credential
 }
 
-func (r *TableBatchOperationRequest) SetCredential(credential []byte) {
+func (r *ObTableBatchOperationRequest) SetCredential(credential []byte) {
 	r.credential = credential
 }
 
-func (r *TableBatchOperationRequest) TableName() string {
+func (r *ObTableBatchOperationRequest) TableName() string {
 	return r.tableName
 }
 
-func (r *TableBatchOperationRequest) SetTableName(tableName string) {
+func (r *ObTableBatchOperationRequest) SetTableName(tableName string) {
 	r.tableName = tableName
 }
 
-func (r *TableBatchOperationRequest) TableId() uint64 {
+func (r *ObTableBatchOperationRequest) TableId() uint64 {
 	return r.tableId
 }
 
-func (r *TableBatchOperationRequest) SetTableId(tableId uint64) {
+func (r *ObTableBatchOperationRequest) SetTableId(tableId uint64) {
 	r.tableId = tableId
 }
 
-func (r *TableBatchOperationRequest) EntityType() TableEntityType {
-	return r.entityType
+func (r *ObTableBatchOperationRequest) ObTableEntityType() ObTableEntityType {
+	return r.obTableEntityType
 }
 
-func (r *TableBatchOperationRequest) SetEntityType(entityType TableEntityType) {
-	r.entityType = entityType
+func (r *ObTableBatchOperationRequest) SetObTableEntityType(obTableEntityType ObTableEntityType) {
+	r.obTableEntityType = obTableEntityType
 }
 
-func (r *TableBatchOperationRequest) TableBatchOperation() *TableBatchOperation {
-	return r.tableBatchOperation
+func (r *ObTableBatchOperationRequest) ObTableBatchOperation() *ObTableBatchOperation {
+	return r.obTableBatchOperation
 }
 
-func (r *TableBatchOperationRequest) SetTableBatchOperation(tableBatchOperation *TableBatchOperation) {
-	r.tableBatchOperation = tableBatchOperation
+func (r *ObTableBatchOperationRequest) SetObTableBatchOperation(obTableBatchOperation *ObTableBatchOperation) {
+	r.obTableBatchOperation = obTableBatchOperation
 }
 
-func (r *TableBatchOperationRequest) ConsistencyLevel() TableConsistencyLevel {
-	return r.consistencyLevel
+func (r *ObTableBatchOperationRequest) ObTableConsistencyLevel() ObTableConsistencyLevel {
+	return r.obTableConsistencyLevel
 }
 
-func (r *TableBatchOperationRequest) SetConsistencyLevel(consistencyLevel TableConsistencyLevel) {
-	r.consistencyLevel = consistencyLevel
+func (r *ObTableBatchOperationRequest) SetObTableConsistencyLevel(obTableConsistencyLevel ObTableConsistencyLevel) {
+	r.obTableConsistencyLevel = obTableConsistencyLevel
 }
 
-func (r *TableBatchOperationRequest) ReturnRowKey() bool {
+func (r *ObTableBatchOperationRequest) ReturnRowKey() bool {
 	return r.returnRowKey
 }
 
-func (r *TableBatchOperationRequest) SetReturnRowKey(returnRowKey bool) {
+func (r *ObTableBatchOperationRequest) SetReturnRowKey(returnRowKey bool) {
 	r.returnRowKey = returnRowKey
 }
 
-func (r *TableBatchOperationRequest) ReturnAffectedEntity() bool {
+func (r *ObTableBatchOperationRequest) ReturnAffectedEntity() bool {
 	return r.returnAffectedEntity
 }
 
-func (r *TableBatchOperationRequest) SetReturnAffectedEntity(returnAffectedEntity bool) {
+func (r *ObTableBatchOperationRequest) SetReturnAffectedEntity(returnAffectedEntity bool) {
 	r.returnAffectedEntity = returnAffectedEntity
 }
 
-func (r *TableBatchOperationRequest) ReturnAffectedRows() bool {
+func (r *ObTableBatchOperationRequest) ReturnAffectedRows() bool {
 	return r.returnAffectedRows
 }
 
-func (r *TableBatchOperationRequest) SetReturnAffectedRows(returnAffectedRows bool) {
+func (r *ObTableBatchOperationRequest) SetReturnAffectedRows(returnAffectedRows bool) {
 	r.returnAffectedRows = returnAffectedRows
 }
 
-func (r *TableBatchOperationRequest) PartitionId() int64 {
+func (r *ObTableBatchOperationRequest) PartitionId() int64 {
 	return r.partitionId
 }
 
-func (r *TableBatchOperationRequest) SetPartitionId(partitionId int64) {
+func (r *ObTableBatchOperationRequest) SetPartitionId(partitionId int64) {
 	r.partitionId = partitionId
 }
 
-func (r *TableBatchOperationRequest) AtomicOperation() bool {
+func (r *ObTableBatchOperationRequest) AtomicOperation() bool {
 	return r.atomicOperation
 }
 
-func (r *TableBatchOperationRequest) SetAtomicOperation(atomicOperation bool) {
+func (r *ObTableBatchOperationRequest) SetAtomicOperation(atomicOperation bool) {
 	r.atomicOperation = atomicOperation
 }
 
-func (r *TableBatchOperationRequest) PCode() TablePacketCode {
-	return TableApiBatchExecute
+func (r *ObTableBatchOperationRequest) PCode() ObTablePacketCode {
+	return ObTableApiBatchExecute
 }
 
-func (r *TableBatchOperationRequest) PayloadLen() int {
-	return r.PayloadContentLen() + r.UniVersionHeader.UniVersionHeaderLen() // Do not change the order
+func (r *ObTableBatchOperationRequest) PayloadLen() int {
+	return r.PayloadContentLen() + r.ObUniVersionHeader.UniVersionHeaderLen() // Do not change the order
 }
 
-func (r *TableBatchOperationRequest) PayloadContentLen() int {
+func (r *ObTableBatchOperationRequest) PayloadContentLen() int {
 	totalLen := 0
 	if util.ObVersion() >= 4 {
 		totalLen =
 			util.EncodedLengthByBytesString(r.credential) +
 				util.EncodedLengthByVString(r.tableName) +
 				util.EncodedLengthByVi64(int64(r.tableId)) +
-				6 + // entityType consistencyLevel returnRowKey returnAffectedEntity returnAffectedRows atomicOperation
+				6 + // obTableEntityType obTableConsistencyLevel returnRowKey returnAffectedEntity returnAffectedRows atomicOperation
 				8 + // todo partitionId
-				r.tableBatchOperation.PayloadLen()
+				r.obTableBatchOperation.PayloadLen()
 	} else {
 		totalLen =
 			util.EncodedLengthByBytesString(r.credential) +
 				util.EncodedLengthByVString(r.tableName) +
 				util.EncodedLengthByVi64(int64(r.tableId)) +
-				6 + // entityType consistencyLevel returnRowKey returnAffectedEntity returnAffectedRows atomicOperation
-				util.EncodedLengthByVi64(r.partitionId) + // todo partitionId\
-				r.tableBatchOperation.PayloadLen()
+				6 + // obTableEntityType obTableConsistencyLevel returnRowKey returnAffectedEntity returnAffectedRows atomicOperation
+				util.EncodedLengthByVi64(r.partitionId) + // todo partitionId
+				r.obTableBatchOperation.PayloadLen()
 	}
 
-	r.UniVersionHeader.SetContentLength(totalLen)
-	return r.UniVersionHeader.ContentLength()
+	r.ObUniVersionHeader.SetContentLength(totalLen)
+	return r.ObUniVersionHeader.ContentLength()
 }
 
-func (r *TableBatchOperationRequest) Encode(buffer *bytes.Buffer) {
-	r.UniVersionHeader.Encode(buffer)
+func (r *ObTableBatchOperationRequest) Encode(buffer *bytes.Buffer) {
+	r.ObUniVersionHeader.Encode(buffer)
 
 	util.EncodeBytesString(buffer, r.credential)
 
@@ -196,11 +196,11 @@ func (r *TableBatchOperationRequest) Encode(buffer *bytes.Buffer) {
 
 	util.EncodeVi64(buffer, int64(r.tableId))
 
-	util.PutUint8(buffer, uint8(r.entityType))
+	util.PutUint8(buffer, uint8(r.obTableEntityType))
 
-	r.tableBatchOperation.Encode(buffer)
+	r.obTableBatchOperation.Encode(buffer)
 
-	util.PutUint8(buffer, uint8(r.consistencyLevel))
+	util.PutUint8(buffer, uint8(r.obTableConsistencyLevel))
 
 	util.PutUint8(buffer, util.BoolToByte(r.returnRowKey))
 
@@ -217,12 +217,12 @@ func (r *TableBatchOperationRequest) Encode(buffer *bytes.Buffer) {
 	util.PutUint8(buffer, util.BoolToByte(r.atomicOperation))
 }
 
-func (r *TableBatchOperationRequest) Decode(buffer *bytes.Buffer) {
+func (r *ObTableBatchOperationRequest) Decode(buffer *bytes.Buffer) {
 	// TODO implement me
 	panic("implement me")
 }
 
-func (r *TableBatchOperationRequest) String() string {
+func (r *ObTableBatchOperationRequest) String() string {
 	// todo: impl
 	return ""
 }

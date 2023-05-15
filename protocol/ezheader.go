@@ -37,7 +37,7 @@ var (
 
 // EzHeader ...
 type EzHeader struct {
-	contentLen uint32 // ContentLen = RpcHeader + Payload
+	contentLen uint32 // ContentLen = ObRpcHeader + ObPayload
 	channelId  uint32
 }
 

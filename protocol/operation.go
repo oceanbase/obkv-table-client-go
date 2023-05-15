@@ -26,17 +26,17 @@ import (
 	"github.com/oceanbase/obkv-table-client-go/util"
 )
 
-type TableOperation struct {
-	*UniVersionHeader
-	opType TableOperationType
-	entity *TableEntity
+type ObTableOperation struct {
+	*ObUniVersionHeader
+	opType ObTableOperationType
+	entity *ObTableEntity
 }
 
-func NewTableOperation(
-	operationType TableOperationType,
+func NewObTableOperation(
+	tableOperationType ObTableOperationType,
 	rowKey []*table.Column,
-	columns []*table.Column) (*TableOperation, error) {
-	tableEntity := NewTableEntity()
+	columns []*table.Column) (*ObTableOperation, error) {
+	tableEntity := NewObTableEntity()
 
 	// add rowKey
 	for _, column := range rowKey {
@@ -45,7 +45,7 @@ func NewTableOperation(
 			return nil, errors.WithMessage(err, "create obj meta by row key")
 		}
 
-		object := NewObject()
+		object := NewObObject()
 		object.SetMeta(objMeta)
 		object.SetValue(column.Value())
 
@@ -59,77 +59,77 @@ func NewTableOperation(
 			return nil, errors.WithMessage(err, "create obj meta by column")
 		}
 
-		object := NewObject()
+		object := NewObObject()
 		object.SetMeta(objMeta)
 		object.SetValue(column.Value())
 
 		tableEntity.SetProperty(column.Name(), object)
 	}
 
-	return &TableOperation{
-		UniVersionHeader: NewUniVersionHeader(),
-		opType:           operationType,
-		entity:           tableEntity,
+	return &ObTableOperation{
+		ObUniVersionHeader: NewObUniVersionHeader(),
+		opType:             tableOperationType,
+		entity:             tableEntity,
 	}, nil
 }
 
-type TableOperationType uint8
+type ObTableOperationType uint8
 
 // todo add prefix
 const (
-	Get TableOperationType = iota
-	Insert
-	Del
-	Update
-	InsertOrUpdate
-	Replace
-	Increment
-	Append
+	ObTableOperationGet ObTableOperationType = iota
+	ObTableOperationInsert
+	ObTableOperationDel
+	ObTableOperationUpdate
+	ObTableOperationInsertOrUpdate
+	ObTableOperationReplace
+	ObTableOperationIncrement
+	ObTableOperationAppend
 )
 
-func (o *TableOperation) OpType() TableOperationType {
+func (o *ObTableOperation) OpType() ObTableOperationType {
 	return o.opType
 }
 
-func (o *TableOperation) SetOpType(opType TableOperationType) {
+func (o *ObTableOperation) SetOpType(opType ObTableOperationType) {
 	o.opType = opType
 }
 
-func (o *TableOperation) Entity() *TableEntity {
+func (o *ObTableOperation) Entity() *ObTableEntity {
 	return o.entity
 }
 
-func (o *TableOperation) SetEntity(entity *TableEntity) {
+func (o *ObTableOperation) SetEntity(entity *ObTableEntity) {
 	o.entity = entity
 }
 
-func (o *TableOperation) PayloadLen() int {
-	return o.PayloadContentLen() + o.UniVersionHeader.UniVersionHeaderLen() // Do not change the order
+func (o *ObTableOperation) PayloadLen() int {
+	return o.PayloadContentLen() + o.ObUniVersionHeader.UniVersionHeaderLen() // Do not change the order
 }
 
-func (o *TableOperation) PayloadContentLen() int {
+func (o *ObTableOperation) PayloadContentLen() int {
 	totalLen := 1 + // opType
 		o.entity.PayloadLen()
 
-	o.UniVersionHeader.SetContentLength(totalLen)
-	return o.UniVersionHeader.ContentLength()
+	o.ObUniVersionHeader.SetContentLength(totalLen)
+	return o.ObUniVersionHeader.ContentLength()
 }
 
-func (o *TableOperation) Encode(buffer *bytes.Buffer) {
-	o.UniVersionHeader.Encode(buffer)
+func (o *ObTableOperation) Encode(buffer *bytes.Buffer) {
+	o.ObUniVersionHeader.Encode(buffer)
 
 	util.PutUint8(buffer, uint8(o.opType))
 
 	o.entity.Encode(buffer)
 }
 
-func (o *TableOperation) Decode(buffer *bytes.Buffer) {
+func (o *ObTableOperation) Decode(buffer *bytes.Buffer) {
 	// TODO implement me
 	panic("implement me")
 }
 
-func (o *TableOperation) String() string {
+func (o *ObTableOperation) String() string {
 	// todo:impl
-	return "TableOperation{" +
+	return "ObTableOperation{" +
 		"}"
 }

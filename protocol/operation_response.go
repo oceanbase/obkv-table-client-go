@@ -23,81 +23,81 @@ import (
 	"github.com/oceanbase/obkv-table-client-go/util"
 )
 
-type TableOperationResponse struct {
-	*UniVersionHeader
-	header        *TableResponse
-	operationType TableOperationType
-	entity        *TableEntity
+type ObTableOperationResponse struct {
+	*ObUniVersionHeader
+	header        *ObTableResponse
+	operationType ObTableOperationType
+	entity        *ObTableEntity
 	affectedRows  int64
 }
 
-func NewTableOperationResponse() *TableOperationResponse {
-	return &TableOperationResponse{
-		UniVersionHeader: NewUniVersionHeader(),
-		header:           NewTableResponse(),
-		operationType:    Get,
-		entity:           NewTableEntity(),
-		affectedRows:     0,
+func NewObTableOperationResponse() *ObTableOperationResponse {
+	return &ObTableOperationResponse{
+		ObUniVersionHeader: NewObUniVersionHeader(),
+		header:             NewObTableResponse(),
+		operationType:      ObTableOperationGet,
+		entity:             NewObTableEntity(),
+		affectedRows:       0,
 	}
 }
 
-func (r *TableOperationResponse) Header() *TableResponse {
+func (r *ObTableOperationResponse) Header() *ObTableResponse {
 	return r.header
 }
 
-func (r *TableOperationResponse) SetHeader(header *TableResponse) {
+func (r *ObTableOperationResponse) SetHeader(header *ObTableResponse) {
 	r.header = header
 }
 
-func (r *TableOperationResponse) OperationType() TableOperationType {
+func (r *ObTableOperationResponse) OperationType() ObTableOperationType {
 	return r.operationType
 }
 
-func (r *TableOperationResponse) SetOperationType(operationType TableOperationType) {
+func (r *ObTableOperationResponse) SetOperationType(operationType ObTableOperationType) {
 	r.operationType = operationType
 }
 
-func (r *TableOperationResponse) Entity() *TableEntity {
+func (r *ObTableOperationResponse) Entity() *ObTableEntity {
 	return r.entity
 }
 
-func (r *TableOperationResponse) SetEntity(entity *TableEntity) {
+func (r *ObTableOperationResponse) SetEntity(entity *ObTableEntity) {
 	r.entity = entity
 }
 
-func (r *TableOperationResponse) AffectedRows() int64 {
+func (r *ObTableOperationResponse) AffectedRows() int64 {
 	return r.affectedRows
 }
 
-func (r *TableOperationResponse) SetAffectedRows(affectedRows int64) {
+func (r *ObTableOperationResponse) SetAffectedRows(affectedRows int64) {
 	r.affectedRows = affectedRows
 }
 
-func (r *TableOperationResponse) PCode() TablePacketCode {
-	return TableApiExecute
+func (r *ObTableOperationResponse) PCode() ObTablePacketCode {
+	return ObTableApiExecute
 }
 
-func (r *TableOperationResponse) PayloadLen() int {
+func (r *ObTableOperationResponse) PayloadLen() int {
 	// TODO implement me
 	panic("implement me")
 }
 
-func (r *TableOperationResponse) PayloadContentLen() int {
+func (r *ObTableOperationResponse) PayloadContentLen() int {
 	// TODO implement me
 	panic("implement me")
 }
 
-func (r *TableOperationResponse) Encode(buffer *bytes.Buffer) {
+func (r *ObTableOperationResponse) Encode(buffer *bytes.Buffer) {
 	// TODO implement me
 	panic("implement me")
 }
 
-func (r *TableOperationResponse) Decode(buffer *bytes.Buffer) {
-	r.UniVersionHeader.Decode(buffer)
+func (r *ObTableOperationResponse) Decode(buffer *bytes.Buffer) {
+	r.ObUniVersionHeader.Decode(buffer)
 
 	r.header.Decode(buffer)
 
-	r.operationType = TableOperationType(util.Uint8(buffer))
+	r.operationType = ObTableOperationType(util.Uint8(buffer))
 
 	r.entity.Decode(buffer)
 

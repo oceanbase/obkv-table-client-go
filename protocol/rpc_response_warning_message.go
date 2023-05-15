@@ -23,8 +23,8 @@ import (
 	"github.com/oceanbase/obkv-table-client-go/util"
 )
 
-type RpcResponseWarningMsg struct {
-	*UniVersionHeader
+type ObRpcResponseWarningMsg struct {
+	*ObUniVersionHeader
 	msg       []byte
 	timestamp int64
 	logLevel  int32
@@ -32,64 +32,64 @@ type RpcResponseWarningMsg struct {
 	code      int32
 }
 
-func NewRpcResponseWarningMsg() *RpcResponseWarningMsg {
-	return &RpcResponseWarningMsg{
-		UniVersionHeader: NewUniVersionHeader(),
-		msg:              nil,
-		timestamp:        0,
-		logLevel:         0,
-		lineNo:           0,
-		code:             0,
+func NewObRpcResponseWarningMsg() *ObRpcResponseWarningMsg {
+	return &ObRpcResponseWarningMsg{
+		ObUniVersionHeader: NewObUniVersionHeader(),
+		msg:                nil,
+		timestamp:          0,
+		logLevel:           0,
+		lineNo:             0,
+		code:               0,
 	}
 }
 
-func (m *RpcResponseWarningMsg) Msg() []byte {
+func (m *ObRpcResponseWarningMsg) Msg() []byte {
 	return m.msg
 }
 
-func (m *RpcResponseWarningMsg) SetMsg(msg []byte) {
+func (m *ObRpcResponseWarningMsg) SetMsg(msg []byte) {
 	m.msg = msg
 }
 
-func (m *RpcResponseWarningMsg) Timestamp() int64 {
+func (m *ObRpcResponseWarningMsg) Timestamp() int64 {
 	return m.timestamp
 }
 
-func (m *RpcResponseWarningMsg) SetTimestamp(timestamp int64) {
+func (m *ObRpcResponseWarningMsg) SetTimestamp(timestamp int64) {
 	m.timestamp = timestamp
 }
 
-func (m *RpcResponseWarningMsg) LogLevel() int32 {
+func (m *ObRpcResponseWarningMsg) LogLevel() int32 {
 	return m.logLevel
 }
 
-func (m *RpcResponseWarningMsg) SetLogLevel(logLevel int32) {
+func (m *ObRpcResponseWarningMsg) SetLogLevel(logLevel int32) {
 	m.logLevel = logLevel
 }
 
-func (m *RpcResponseWarningMsg) LineNo() int32 {
+func (m *ObRpcResponseWarningMsg) LineNo() int32 {
 	return m.lineNo
 }
 
-func (m *RpcResponseWarningMsg) SetLineNo(lineNo int32) {
+func (m *ObRpcResponseWarningMsg) SetLineNo(lineNo int32) {
 	m.lineNo = lineNo
 }
 
-func (m *RpcResponseWarningMsg) Code() int32 {
+func (m *ObRpcResponseWarningMsg) Code() int32 {
 	return m.code
 }
 
-func (m *RpcResponseWarningMsg) SetCode(code int32) {
+func (m *ObRpcResponseWarningMsg) SetCode(code int32) {
 	m.code = code
 }
 
-func (m *RpcResponseWarningMsg) Encode(buffer *bytes.Buffer) {
+func (m *ObRpcResponseWarningMsg) Encode(buffer *bytes.Buffer) {
 	// TODO implement me
 	panic("implement me")
 }
 
-func (m *RpcResponseWarningMsg) Decode(buffer *bytes.Buffer) {
-	m.UniVersionHeader.Decode(buffer)
+func (m *ObRpcResponseWarningMsg) Decode(buffer *bytes.Buffer) {
+	m.ObUniVersionHeader.Decode(buffer)
 
 	m.msg = util.DecodeBytes(buffer)
 	m.timestamp = util.DecodeVi64(buffer)

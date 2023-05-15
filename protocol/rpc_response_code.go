@@ -25,53 +25,53 @@ import (
 	"github.com/oceanbase/obkv-table-client-go/util"
 )
 
-type RpcResponseCode struct {
-	*UniVersionHeader
+type ObRpcResponseCode struct {
+	*ObUniVersionHeader
 	code        oberror.ObErrorCode
 	msg         []byte
-	warningMsgs []*RpcResponseWarningMsg
+	warningMsgs []*ObRpcResponseWarningMsg
 }
 
-func NewRpcResponseCode() *RpcResponseCode {
-	return &RpcResponseCode{
-		UniVersionHeader: NewUniVersionHeader(),
-		code:             0,
-		msg:              nil,
-		warningMsgs:      nil,
+func NewObRpcResponseCode() *ObRpcResponseCode {
+	return &ObRpcResponseCode{
+		ObUniVersionHeader: NewObUniVersionHeader(),
+		code:               0,
+		msg:                nil,
+		warningMsgs:        nil,
 	}
 }
 
-func (c *RpcResponseCode) Code() oberror.ObErrorCode {
+func (c *ObRpcResponseCode) Code() oberror.ObErrorCode {
 	return c.code
 }
 
-func (c *RpcResponseCode) SetCode(code oberror.ObErrorCode) {
+func (c *ObRpcResponseCode) SetCode(code oberror.ObErrorCode) {
 	c.code = code
 }
 
-func (c *RpcResponseCode) Msg() []byte {
+func (c *ObRpcResponseCode) Msg() []byte {
 	return c.msg
 }
 
-func (c *RpcResponseCode) SetMsg(msg []byte) {
+func (c *ObRpcResponseCode) SetMsg(msg []byte) {
 	c.msg = msg
 }
 
-func (c *RpcResponseCode) WarningMsgs() []*RpcResponseWarningMsg {
+func (c *ObRpcResponseCode) WarningMsgs() []*ObRpcResponseWarningMsg {
 	return c.warningMsgs
 }
 
-func (c *RpcResponseCode) SetWarningMsgs(warningMsgs []*RpcResponseWarningMsg) {
+func (c *ObRpcResponseCode) SetWarningMsgs(warningMsgs []*ObRpcResponseWarningMsg) {
 	c.warningMsgs = warningMsgs
 }
 
-func (c *RpcResponseCode) Encode(buffer *bytes.Buffer) {
+func (c *ObRpcResponseCode) Encode(buffer *bytes.Buffer) {
 	// TODO implement me
 	panic("implement me")
 }
 
-func (c *RpcResponseCode) Decode(buffer *bytes.Buffer) {
-	c.UniVersionHeader.Decode(buffer)
+func (c *ObRpcResponseCode) Decode(buffer *bytes.Buffer) {
+	c.ObUniVersionHeader.Decode(buffer)
 
 	c.code = oberror.ObErrorCode(util.DecodeVi32(buffer))
 	c.msg = util.DecodeBytes(buffer)
@@ -79,7 +79,7 @@ func (c *RpcResponseCode) Decode(buffer *bytes.Buffer) {
 	waringMsgsLen := int(util.DecodeVi32(buffer))
 
 	for i := 0; i < waringMsgsLen; i++ {
-		rpcResponseWarningMsg := NewRpcResponseWarningMsg()
+		rpcResponseWarningMsg := NewObRpcResponseWarningMsg()
 		rpcResponseWarningMsg.Decode(buffer)
 		c.warningMsgs = append(c.warningMsgs, rpcResponseWarningMsg)
 	}

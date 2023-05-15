@@ -23,58 +23,58 @@ import (
 	"github.com/oceanbase/obkv-table-client-go/util"
 )
 
-type TableBatchOperationResponse struct {
-	*UniVersionHeader
-	tableOperationResponses []*TableOperationResponse
+type ObTableBatchOperationResponse struct {
+	*ObUniVersionHeader
+	obTableOperationResponses []*ObTableOperationResponse
 }
 
-func NewTableBatchOperationResponse() *TableBatchOperationResponse {
-	return &TableBatchOperationResponse{
-		UniVersionHeader:        NewUniVersionHeader(),
-		tableOperationResponses: nil,
+func NewObTableBatchOperationResponse() *ObTableBatchOperationResponse {
+	return &ObTableBatchOperationResponse{
+		ObUniVersionHeader:        NewObUniVersionHeader(),
+		obTableOperationResponses: nil,
 	}
 }
 
-func (r *TableBatchOperationResponse) TableOperationResponses() []*TableOperationResponse {
-	return r.tableOperationResponses
+func (r *ObTableBatchOperationResponse) ObTableOperationResponses() []*ObTableOperationResponse {
+	return r.obTableOperationResponses
 }
 
-func (r *TableBatchOperationResponse) SetTableOperationResponses(tableOperationResponses []*TableOperationResponse) {
-	r.tableOperationResponses = tableOperationResponses
+func (r *ObTableBatchOperationResponse) SetObTableOperationResponses(obTableOperationResponses []*ObTableOperationResponse) {
+	r.obTableOperationResponses = obTableOperationResponses
 }
 
-func (r *TableBatchOperationResponse) AppendTableOperationResponse(tableOperationResponse *TableOperationResponse) {
-	r.tableOperationResponses = append(r.tableOperationResponses, tableOperationResponse)
+func (r *ObTableBatchOperationResponse) AppendObTableOperationResponse(obTableOperationResponse *ObTableOperationResponse) {
+	r.obTableOperationResponses = append(r.obTableOperationResponses, obTableOperationResponse)
 }
 
-func (r *TableBatchOperationResponse) PCode() TablePacketCode {
-	return TableApiBatchExecute
+func (r *ObTableBatchOperationResponse) PCode() ObTablePacketCode {
+	return ObTableApiBatchExecute
 }
 
-func (r *TableBatchOperationResponse) PayloadLen() int {
+func (r *ObTableBatchOperationResponse) PayloadLen() int {
 	// TODO implement me
 	panic("implement me")
 }
 
-func (r *TableBatchOperationResponse) PayloadContentLen() int {
+func (r *ObTableBatchOperationResponse) PayloadContentLen() int {
 	// TODO implement me
 	panic("implement me")
 }
 
-func (r *TableBatchOperationResponse) Encode(buffer *bytes.Buffer) {
+func (r *ObTableBatchOperationResponse) Encode(buffer *bytes.Buffer) {
 	// TODO implement me
 	panic("implement me")
 }
 
-func (r *TableBatchOperationResponse) Decode(buffer *bytes.Buffer) {
-	r.UniVersionHeader.Decode(buffer)
+func (r *ObTableBatchOperationResponse) Decode(buffer *bytes.Buffer) {
+	r.ObUniVersionHeader.Decode(buffer)
 
 	responsesLen := util.DecodeVi64(buffer)
 
 	var i int64
 	for i = 0; i < responsesLen; i++ {
-		tableOperationResponse := NewTableOperationResponse()
-		tableOperationResponse.Decode(buffer)
-		r.tableOperationResponses = append(r.tableOperationResponses, tableOperationResponse)
+		obTableOperationResponse := NewObTableOperationResponse()
+		obTableOperationResponse.Decode(buffer)
+		r.obTableOperationResponses = append(r.obTableOperationResponses, obTableOperationResponse)
 	}
 }

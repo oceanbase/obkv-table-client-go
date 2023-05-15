@@ -79,7 +79,7 @@ func (t *ObTable) init(connPoolSize int, connectTimeout time.Duration) error {
 	return nil
 }
 
-func (t *ObTable) execute(request protocol.Payload, result protocol.Payload) error {
+func (t *ObTable) execute(request protocol.ObPayload, result protocol.ObPayload) error {
 	return t.rpcClient.Execute(context.TODO(), request, result)
 }
 

@@ -32,14 +32,14 @@ import (
 
 type obBatchExecutor struct {
 	tableName string
-	batchOps  *protocol.TableBatchOperation
+	batchOps  *protocol.ObTableBatchOperation
 	cli       *ObClient
 }
 
 func newObBatchExecutor(tableName string, cli *ObClient) *obBatchExecutor {
 	return &obBatchExecutor{
 		tableName: tableName,
-		batchOps:  protocol.NewTableBatchOperation(),
+		batchOps:  protocol.NewObTableBatchOperation(),
 		cli:       cli,
 	}
 }
@@ -47,57 +47,57 @@ func newObBatchExecutor(tableName string, cli *ObClient) *obBatchExecutor {
 // addDmlOp add dml operation witch include insert/update/insertOrUpdate/replace/increment/append
 // operation to batch executor
 func (b *obBatchExecutor) addDmlOp(
-	opType protocol.TableOperationType,
+	opType protocol.ObTableOperationType,
 	rowKey []*table.Column,
 	mutateValues []*table.Column,
 	opts ...ObkvOption) error {
-	op, err := protocol.NewTableOperation(opType, rowKey, mutateValues)
+	op, err := protocol.NewObTableOperation(opType, rowKey, mutateValues)
 	if err != nil {
 		return errors.WithMessagef(err, "new table operation, opType:%d, tableName:%s, rowKey:%s, mutateValues:%s",
 			opType, b.tableName, table.ColumnsToString(rowKey), table.ColumnsToString(mutateValues))
 	}
-	b.batchOps.AppendTableOperation(op)
+	b.batchOps.AppendObTableOperation(op)
 	return nil
 }
 
 // AddInsertOp add an insert operation to the batch executor.
 func (b *obBatchExecutor) AddInsertOp(rowKey []*table.Column, mutateValues []*table.Column, opts ...ObkvOption) error {
-	return b.addDmlOp(protocol.Insert, rowKey, mutateValues, opts...)
+	return b.addDmlOp(protocol.ObTableOperationInsert, rowKey, mutateValues, opts...)
 }
 
 // AddUpdateOp add an update operation to the batch executor.
 func (b *obBatchExecutor) AddUpdateOp(rowKey []*table.Column, mutateValues []*table.Column, opts ...ObkvOption) error {
-	return b.addDmlOp(protocol.Update, rowKey, mutateValues, opts...)
+	return b.addDmlOp(protocol.ObTableOperationUpdate, rowKey, mutateValues, opts...)
 }
 
 // AddInsertOrUpdateOp add an insertOrUpdate operation to the batch executor
 func (b *obBatchExecutor) AddInsertOrUpdateOp(rowKey []*table.Column, mutateValues []*table.Column, opts ...ObkvOption) error {
-	return b.addDmlOp(protocol.InsertOrUpdate, rowKey, mutateValues, opts...)
+	return b.addDmlOp(protocol.ObTableOperationInsertOrUpdate, rowKey, mutateValues, opts...)
 }
 
 // AddReplaceOp add a replace operation to the batch executor
 func (b *obBatchExecutor) AddReplaceOp(rowKey []*table.Column, mutateValues []*table.Column, opts ...ObkvOption) error {
-	return b.addDmlOp(protocol.Replace, rowKey, mutateValues, opts...)
+	return b.addDmlOp(protocol.ObTableOperationReplace, rowKey, mutateValues, opts...)
 }
 
 // AddIncrementOp add an increment operation to the batch executor
 func (b *obBatchExecutor) AddIncrementOp(rowKey []*table.Column, mutateValues []*table.Column, opts ...ObkvOption) error {
-	return b.addDmlOp(protocol.Increment, rowKey, mutateValues, opts...)
+	return b.addDmlOp(protocol.ObTableOperationIncrement, rowKey, mutateValues, opts...)
 }
 
 // AddAppendOp add an append operation to the batch executor
 func (b *obBatchExecutor) AddAppendOp(rowKey []*table.Column, mutateValues []*table.Column, opts ...ObkvOption) error {
-	return b.addDmlOp(protocol.Append, rowKey, mutateValues, opts...)
+	return b.addDmlOp(protocol.ObTableOperationAppend, rowKey, mutateValues, opts...)
 }
 
 // AddDeleteOp add a delete operation to the batch executor
 func (b *obBatchExecutor) AddDeleteOp(rowKey []*table.Column, opts ...ObkvOption) error {
-	op, err := protocol.NewTableOperation(protocol.Del, rowKey, nil)
+	op, err := protocol.NewObTableOperation(protocol.ObTableOperationDel, rowKey, nil)
 	if err != nil {
 		return errors.WithMessagef(err, "new delete table operation, tableName:%s, rowKey:%s",
 			b.tableName, table.ColumnsToString(rowKey))
 	}
-	b.batchOps.AppendTableOperation(op)
+	b.batchOps.AppendObTableOperation(op)
 	return nil
 }
 
@@ -107,19 +107,19 @@ func (b *obBatchExecutor) AddGetOp(rowKey []*table.Column, getColumns []string, 
 	for _, columnName := range getColumns {
 		columns = append(columns, table.NewColumn(columnName, nil))
 	}
-	op, err := protocol.NewTableOperation(protocol.Get, rowKey, columns)
+	op, err := protocol.NewObTableOperation(protocol.ObTableOperationGet, rowKey, columns)
 	if err != nil {
 		return errors.WithMessagef(err, "new get table operation, tableName:%s, rowKey:%s",
 			b.tableName, table.ColumnsToString(rowKey))
 	}
-	b.batchOps.AppendTableOperation(op)
+	b.batchOps.AppendObTableOperation(op)
 	return nil
 }
 
 // constructPartOpMap classify all operations by the dimension of the partition.
 func (b *obBatchExecutor) constructPartOpMap(ctx context.Context) (map[int64]*obPartOp, error) {
 	partOpMap := make(map[int64]*obPartOp)
-	for i, op := range b.batchOps.TableOperations() {
+	for i, op := range b.batchOps.ObTableOperations() {
 		rowKey := op.Entity().RowKey().GetRowKeyValue()
 		tableParam, err := b.cli.getTableParam(ctx, b.tableName, rowKey, false)
 		if err != nil {
@@ -140,17 +140,17 @@ func (b *obBatchExecutor) constructPartOpMap(ctx context.Context) (map[int64]*ob
 // partitionExecute execute operation on a single partition.
 func (b *obBatchExecutor) partitionExecute(
 	partOp *obPartOp,
-	res []*protocol.TableOperationResponse) error {
+	res []*protocol.ObTableOperationResponse) error {
 	// 1. Construct batch operation request
 	// 1.1 Construct batch operation
-	batchOp := protocol.NewTableBatchOperation()
-	ops := make([]*protocol.TableOperation, 0, len(partOp.ops))
+	batchOp := protocol.NewObTableBatchOperation()
+	ops := make([]*protocol.ObTableOperation, 0, len(partOp.ops))
 	for _, op := range partOp.ops {
 		ops = append(ops, op.op)
 	}
-	batchOp.SetTableOperations(ops)
+	batchOp.SetObTableOperations(ops)
 	// 1.2 Construct batch operation request
-	request := protocol.NewTableBatchOperationRequest(
+	request := protocol.NewObTableBatchOperationRequest(
 		b.tableName,
 		partOp.tableParam.tableId,
 		partOp.tableParam.partitionId,
@@ -160,21 +160,21 @@ func (b *obBatchExecutor) partitionExecute(
 	)
 
 	// 2. Execute
-	partRes := protocol.NewTableBatchOperationResponse()
+	partRes := protocol.NewObTableBatchOperationResponse()
 	err := partOp.tableParam.table.execute(request, partRes)
 	if err != nil {
 		return errors.WithMessagef(err, "table execute, request:%s", request.String())
 	}
 
 	// 3. Handle result
-	subResSize := len(partRes.TableOperationResponses())
+	subResSize := len(partRes.ObTableOperationResponses())
 	subOpSize := len(partOp.ops)
 	if subResSize < subOpSize {
 		// only one result when it across failed
 		// only one result when hkv puts
-		if len(partRes.TableOperationResponses()) == 1 {
+		if len(partRes.ObTableOperationResponses()) == 1 {
 			for _, op := range partOp.ops {
-				res[op.indexOfBatch] = partRes.TableOperationResponses()[0]
+				res[op.indexOfBatch] = partRes.ObTableOperationResponses()[0]
 			}
 		} else {
 			return errors.Errorf("unexpected batch result size, subResSize:%d", subResSize)
@@ -184,7 +184,7 @@ func (b *obBatchExecutor) partitionExecute(
 			return errors.Errorf("unexpected batch result size, subResSize:%d, subOpSize:%d", subResSize, subOpSize)
 		}
 		for i, op := range partOp.ops {
-			res[op.indexOfBatch] = partRes.TableOperationResponses()[i]
+			res[op.indexOfBatch] = partRes.ObTableOperationResponses()[i]
 		}
 	}
 
@@ -198,10 +198,10 @@ func (b *obBatchExecutor) Execute(ctx context.Context) (BatchOperationResult, er
 	if b.cli == nil {
 		return nil, errors.New("client handle is nil")
 	}
-	if len(b.batchOps.TableOperations()) == 0 {
+	if len(b.batchOps.ObTableOperations()) == 0 {
 		return nil, errors.New("operation is empty")
 	}
-	res := make([]*protocol.TableOperationResponse, len(b.batchOps.TableOperations()))
+	res := make([]*protocol.ObTableOperationResponse, len(b.batchOps.ObTableOperations()))
 	// 1. construct partition operation map
 	partOpMap, err := b.constructPartOpMap(ctx)
 	if err != nil {
@@ -275,10 +275,10 @@ func (p *obPartOp) String() string {
 
 type obSingleOp struct {
 	indexOfBatch int
-	op           *protocol.TableOperation
+	op           *protocol.ObTableOperation
 }
 
-func newSingleOp(index int, op *protocol.TableOperation) *obSingleOp {
+func newSingleOp(index int, op *protocol.ObTableOperation) *obSingleOp {
 	return &obSingleOp{index, op}
 }
 
@@ -290,17 +290,17 @@ func (s *obSingleOp) String() string {
 }
 
 type BatchOperationResult interface {
-	GetResults() []*protocol.TableOperationResponse
+	GetResults() []*protocol.ObTableOperationResponse
 }
 
 type obBatchOperationResult struct {
-	results []*protocol.TableOperationResponse
+	results []*protocol.ObTableOperationResponse
 }
 
-func newBatchOperationResult(results []*protocol.TableOperationResponse) *obBatchOperationResult {
+func newBatchOperationResult(results []*protocol.ObTableOperationResponse) *obBatchOperationResult {
 	return &obBatchOperationResult{results}
 }
 
-func (r *obBatchOperationResult) GetResults() []*protocol.TableOperationResponse {
+func (r *obBatchOperationResult) GetResults() []*protocol.ObTableOperationResponse {
 	return r.results
 }
