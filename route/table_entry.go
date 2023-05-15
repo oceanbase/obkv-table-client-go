@@ -17,10 +17,10 @@ type ObTableEntry struct {
 	tableEntryKey     ObTableEntryKey
 	partitionInfo     *obPartitionInfo
 	tableLocation     *ObTableLocation
-	partLocationEntry *obPartLocationEntry
+	partLocationEntry *ObPartLocationEntry
 }
 
-func (e *ObTableEntry) SetPartLocationEntry(partLocationEntry *obPartLocationEntry) {
+func (e *ObTableEntry) SetPartLocationEntry(partLocationEntry *ObPartLocationEntry) {
 	e.partLocationEntry = partLocationEntry
 }
 

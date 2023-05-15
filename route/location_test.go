@@ -1,6 +1,7 @@
 package route
 
 import (
+	"context"
 	sql2 "database/sql"
 	"math"
 	"regexp"
@@ -133,7 +134,7 @@ func TestGetTableEntryFromRemoteV3(t *testing.T) {
 		testDatabase,
 		testTableName,
 	}
-	entry, err := GetTableEntryFromRemote(&testServerAddr, &testUserAuth, &key)
+	entry, err := GetTableEntryFromRemote(context.TODO(), &testServerAddr, &testUserAuth, &key)
 	if err != nil {
 		panic(err)
 	}
@@ -313,7 +314,7 @@ func TestGetTableEntryFromRemoteV4(t *testing.T) {
 		testDatabase,
 		testTableName,
 	}
-	entry, err := GetTableEntryFromRemote(&testServerAddr, &testUserAuth, &key)
+	entry, err := GetTableEntryFromRemote(context.TODO(), &testServerAddr, &testUserAuth, &key)
 	if err != nil {
 		panic(err)
 	}

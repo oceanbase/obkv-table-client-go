@@ -27,6 +27,8 @@ func newObBatchExecutor(tableName string, cli *ObClient) *obBatchExecutor {
 	}
 }
 
+// addDmlOp add dml operation witch include insert/update/insertOrUpdate/replace/increment/append
+// operation to batch executor
 func (b *obBatchExecutor) addDmlOp(
 	opType protocol.TableOperationType,
 	rowKey []*table.Column,
@@ -35,36 +37,43 @@ func (b *obBatchExecutor) addDmlOp(
 	op, err := protocol.NewTableOperation(opType, rowKey, mutateValues)
 	if err != nil {
 		return errors.WithMessagef(err, "new table operation, opType:%d, tableName:%s, rowKey:%s, mutateValues:%s",
-			opType, b.tableName, table.ColumnsToString(rowKey))
+			opType, b.tableName, table.ColumnsToString(rowKey), table.ColumnsToString(mutateValues))
 	}
 	b.batchOps.AppendTableOperation(op)
 	return nil
 }
 
+// AddInsertOp add an insert operation to the batch executor.
 func (b *obBatchExecutor) AddInsertOp(rowKey []*table.Column, mutateValues []*table.Column, opts ...ObkvOption) error {
 	return b.addDmlOp(protocol.Insert, rowKey, mutateValues, opts...)
 }
 
+// AddUpdateOp add an update operation to the batch executor.
 func (b *obBatchExecutor) AddUpdateOp(rowKey []*table.Column, mutateValues []*table.Column, opts ...ObkvOption) error {
 	return b.addDmlOp(protocol.Update, rowKey, mutateValues, opts...)
 }
 
+// AddInsertOrUpdateOp add an insertOrUpdate operation to the batch executor
 func (b *obBatchExecutor) AddInsertOrUpdateOp(rowKey []*table.Column, mutateValues []*table.Column, opts ...ObkvOption) error {
 	return b.addDmlOp(protocol.InsertOrUpdate, rowKey, mutateValues, opts...)
 }
 
+// AddReplaceOp add a replace operation to the batch executor
 func (b *obBatchExecutor) AddReplaceOp(rowKey []*table.Column, mutateValues []*table.Column, opts ...ObkvOption) error {
 	return b.addDmlOp(protocol.Replace, rowKey, mutateValues, opts...)
 }
 
+// AddIncrementOp add an increment operation to the batch executor
 func (b *obBatchExecutor) AddIncrementOp(rowKey []*table.Column, mutateValues []*table.Column, opts ...ObkvOption) error {
 	return b.addDmlOp(protocol.Increment, rowKey, mutateValues, opts...)
 }
 
+// AddAppendOp add an append operation to the batch executor
 func (b *obBatchExecutor) AddAppendOp(rowKey []*table.Column, mutateValues []*table.Column, opts ...ObkvOption) error {
-	return b.addDmlOp(protocol.Increment, rowKey, mutateValues, opts...)
+	return b.addDmlOp(protocol.Append, rowKey, mutateValues, opts...)
 }
 
+// AddDeleteOp add a delete operation to the batch executor
 func (b *obBatchExecutor) AddDeleteOp(rowKey []*table.Column, opts ...ObkvOption) error {
 	op, err := protocol.NewTableOperation(protocol.Del, rowKey, nil)
 	if err != nil {
@@ -75,6 +84,7 @@ func (b *obBatchExecutor) AddDeleteOp(rowKey []*table.Column, opts ...ObkvOption
 	return nil
 }
 
+// AddGetOp add a get operation to the batch executor
 func (b *obBatchExecutor) AddGetOp(rowKey []*table.Column, getColumns []string, opts ...ObkvOption) error {
 	var columns []*table.Column
 	for _, columnName := range getColumns {
@@ -89,11 +99,12 @@ func (b *obBatchExecutor) AddGetOp(rowKey []*table.Column, getColumns []string, 
 	return nil
 }
 
-func (b *obBatchExecutor) constructPartOpMap() (map[int64]*obPartOp, error) {
+// constructPartOpMap classify all operations by the dimension of the partition.
+func (b *obBatchExecutor) constructPartOpMap(ctx context.Context) (map[int64]*obPartOp, error) {
 	partOpMap := make(map[int64]*obPartOp)
 	for i, op := range b.batchOps.TableOperations() {
 		rowKey := op.Entity().RowKey().GetRowKeyValue()
-		tableParam, err := b.cli.getTableParam(b.tableName, rowKey, false)
+		tableParam, err := b.cli.getTableParam(ctx, b.tableName, rowKey, false)
 		if err != nil {
 			return nil, errors.WithMessagef(err, "get table param, tableName:%s, rowKey:%s",
 				b.tableName, util.InterfacesToString(rowKey))
@@ -109,6 +120,7 @@ func (b *obBatchExecutor) constructPartOpMap() (map[int64]*obPartOp, error) {
 	return partOpMap, nil
 }
 
+// partitionExecute execute operation on a single partition.
 func (b *obBatchExecutor) partitionExecute(
 	partOp *obPartOp,
 	res []*protocol.TableOperationResponse) error {
@@ -162,6 +174,9 @@ func (b *obBatchExecutor) partitionExecute(
 	return nil
 }
 
+// Execute a batch operation.
+// batch operation only ensures atomicity of a single partition.
+// BatchOperationResult contains the results of all operations.
 func (b *obBatchExecutor) Execute(ctx context.Context) (BatchOperationResult, error) {
 	if b.cli == nil {
 		return nil, errors.New("client handle is nil")
@@ -171,7 +186,7 @@ func (b *obBatchExecutor) Execute(ctx context.Context) (BatchOperationResult, er
 	}
 	res := make([]*protocol.TableOperationResponse, len(b.batchOps.TableOperations()))
 	// 1. construct partition operation map
-	partOpMap, err := b.constructPartOpMap()
+	partOpMap, err := b.constructPartOpMap(ctx)
 	if err != nil {
 		return nil, errors.WithMessagef(err, "construct partition operation map")
 	}

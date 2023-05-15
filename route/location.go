@@ -1,6 +1,7 @@
 package route
 
 import (
+	"context"
 	"math"
 	"sort"
 	"strconv"
@@ -150,6 +151,7 @@ func GetObVersionFromRemote(addr *ObServerAddr, sysUA *ObUserAuth) (float32, err
 }
 
 func GetTableEntryFromRemote(
+	ctx context.Context,
 	addr *ObServerAddr,
 	sysUA *ObUserAuth,
 	key *ObTableEntryKey) (*ObTableEntry, error) {
@@ -177,7 +179,7 @@ func GetTableEntryFromRemote(
 	} else {
 		sql = proxyLocationSql
 	}
-	rows, err := db.Query(sql, key.tenantName, key.databaseName, key.tableName)
+	rows, err := db.QueryContext(ctx, sql, key.tenantName, key.databaseName, key.tableName)
 	if err != nil {
 		return nil, errors.WithMessagef(err, "query partition location, sql:%s, tenantName:%s, "+
 			"databaseName:%s, tableName:%s", sql, key.tenantName, key.databaseName, key.tableName)
@@ -187,7 +189,7 @@ func GetTableEntryFromRemote(
 	}()
 
 	// 3. Create table entry by parsing query result set.
-	entry, err := getTableEntryFromResultSet(rows)
+	entry, err := getTableEntryFromResultSet(rows, key.tableName)
 	if err != nil {
 		return nil, errors.WithMessagef(err, "get table entry from result set, key:%s", key.String())
 	}
@@ -195,7 +197,7 @@ func GetTableEntryFromRemote(
 
 	// 4. Fetch partition info
 	if entry.IsPartitionTable() {
-		info, err := getPartitionInfoFromRemote(db, key.tenantName, entry.tableId)
+		info, err := getPartitionInfoFromRemote(ctx, db, key.tenantName, entry.tableId)
 		if err != nil {
 			return nil, errors.WithMessagef(err, "get partition info, key:%s", key.String())
 		}
@@ -203,7 +205,7 @@ func GetTableEntryFromRemote(
 
 		// 4.1. Fetch first partition info
 		if info.level >= 1 {
-			err = fetchFirstPart(db, info.firstPartDesc.partFuncType(), entry)
+			err = fetchFirstPart(ctx, db, info.firstPartDesc.partFuncType(), entry)
 			if err != nil {
 				return nil, errors.WithMessagef(err, "fetch first partition info, table entry:%s", entry.String())
 			}
@@ -211,7 +213,7 @@ func GetTableEntryFromRemote(
 
 		// 4.2. Fetch sub partition info
 		if info.level == 2 {
-			err = fetchSubPart(db, info.subPartDesc.partFuncType(), entry)
+			err = fetchSubPart(ctx, db, info.subPartDesc.partFuncType(), entry)
 			if err != nil {
 				return nil, errors.WithMessagef(err, "fetch sub partition info, table entry:%s", entry.String())
 			}
@@ -221,7 +223,7 @@ func GetTableEntryFromRemote(
 	}
 
 	// 5. Get partition location entry
-	partLocationEntry, err := GetPartLocationEntryFromRemote(db, entry)
+	partLocationEntry, err := GetPartLocationEntryFromRemote(ctx, db, entry)
 	if err != nil {
 		return nil, errors.WithMessagef(err, "get table entry location, table entry:%s", entry.String())
 	}
@@ -230,7 +232,7 @@ func GetTableEntryFromRemote(
 	return entry, nil
 }
 
-func getTableEntryFromResultSet(rows *Rows) (*ObTableEntry, error) {
+func getTableEntryFromResultSet(rows *Rows, tableName string) (*ObTableEntry, error) {
 	tableLocation := new(ObTableLocation)
 	entry := new(ObTableEntry)
 	var (
@@ -248,7 +250,11 @@ func getTableEntryFromResultSet(rows *Rows) (*ObTableEntry, error) {
 	)
 
 	// 1. get replica location info from query rows
+	isEmpty := true
 	for rows.Next() {
+		if isEmpty {
+			isEmpty = false
+		}
 		err := rows.Scan(
 			&partitionId,
 			&svrIp,
@@ -276,6 +282,9 @@ func getTableEntryFromResultSet(rows *Rows) (*ObTableEntry, error) {
 		}
 		tableLocation.replicaLocations = append(tableLocation.replicaLocations, replica)
 	}
+	if isEmpty {
+		return nil, errors.Errorf("Table not exist, tableName:%s", tableName)
+	}
 
 	// 2. fill table entry
 	entry.tableId = tableId
@@ -286,7 +295,7 @@ func getTableEntryFromResultSet(rows *Rows) (*ObTableEntry, error) {
 	return entry, nil
 }
 
-func GetPartLocationEntryFromRemote(db *DB, entry *ObTableEntry) (*obPartLocationEntry, error) {
+func GetPartLocationEntryFromRemote(ctx context.Context, db *DB, entry *ObTableEntry) (*ObPartLocationEntry, error) {
 	// 1. Create inStatement "(0,1,2...partNum);".
 	partIds := make([]int, 0, entry.partNum)
 	if util.ObVersion() >= 4 && entry.IsPartitionTable() {
@@ -304,7 +313,7 @@ func GetPartLocationEntryFromRemote(db *DB, entry *ObTableEntry) (*obPartLocatio
 	// 2. Do query with specific tenant name，database name and table name.
 	sql := proxyPartitionLocationSql + inStatement
 	key := entry.tableEntryKey
-	rows, err := db.Query(sql, key.tenantName, key.databaseName, key.tableName)
+	rows, err := db.QueryContext(ctx, sql, key.tenantName, key.databaseName, key.tableName)
 	if err != nil {
 		return nil, errors.WithMessagef(err, "sql query, sql:%s", sql)
 	}
@@ -313,7 +322,7 @@ func GetPartLocationEntryFromRemote(db *DB, entry *ObTableEntry) (*obPartLocatio
 	}()
 
 	// 3. create ObPartitionEntry by parsing query result set
-	partLocationEntry, err := getPartLocationEntryFromResultSet(rows)
+	partLocationEntry, err := getPartLocationEntryFromResultSet(rows, key.tableName)
 	if err != nil {
 		return nil, errors.WithMessagef(err, "get partition location from result set, sql:%s", sql)
 	}
@@ -321,8 +330,8 @@ func GetPartLocationEntryFromRemote(db *DB, entry *ObTableEntry) (*obPartLocatio
 	return partLocationEntry, nil
 }
 
-func getPartLocationEntryFromResultSet(rows *Rows) (*obPartLocationEntry, error) {
-	var partitionEntry *obPartLocationEntry = nil
+func getPartLocationEntryFromResultSet(rows *Rows, tableName string) (*ObPartLocationEntry, error) {
+	var partitionEntry *ObPartLocationEntry = nil
 	isFirstRow := true
 	var (
 		partitionId int
@@ -337,7 +346,12 @@ func getPartLocationEntryFromResultSet(rows *Rows) (*obPartLocationEntry, error)
 		stopTime    int64
 		replicaType int
 	)
+
+	isEmpty := true
 	for rows.Next() {
+		if isEmpty {
+			isEmpty = false
+		}
 		err := rows.Scan(
 			&partitionId,
 			&svrIp,
@@ -355,7 +369,7 @@ func getPartLocationEntryFromResultSet(rows *Rows) (*obPartLocationEntry, error)
 			return nil, errors.WithMessagef(err, "scan row")
 		}
 
-		// create obPartLocationEntry
+		// create ObPartLocationEntry
 		if isFirstRow {
 			isFirstRow = false
 			partitionEntry = newObPartLocationEntry(partNum)
@@ -377,17 +391,21 @@ func getPartLocationEntryFromResultSet(rows *Rows) (*obPartLocationEntry, error)
 		}
 		location.addReplicaLocation(replica)
 	}
+	if isEmpty {
+		return nil, errors.Errorf("Table not exist, tableName:%s", tableName)
+	}
+
 	return partitionEntry, nil
 }
 
-func getPartitionInfoFromRemote(db *DB, tenantName string, tableId uint64) (*obPartitionInfo, error) {
+func getPartitionInfoFromRemote(ctx context.Context, db *DB, tenantName string, tableId uint64) (*obPartitionInfo, error) {
 	// 1. Do query with specific tenant name(ob version > 4), table id and limit.
 	var rows *Rows
 	var err error
 	if util.ObVersion() >= 4 {
-		rows, err = db.Query(proxyPartitionInfoSql, tenantName, tableId, math.MaxInt64)
+		rows, err = db.QueryContext(ctx, proxyPartitionInfoSql, tenantName, tableId, math.MaxInt64)
 	} else {
-		rows, err = db.Query(proxyPartitionInfoSql, tableId, math.MaxInt64)
+		rows, err = db.QueryContext(ctx, proxyPartitionInfoSql, tableId, math.MaxInt64)
 	}
 	if err != nil {
 		return nil, errors.WithMessagef(err, "query partition info, "+
@@ -629,14 +647,14 @@ func buildDefaultPartNameIdMap(partNum int) map[string]int64 {
 	return partNameIdMap
 }
 
-func fetchFirstPart(db *DB, partFuncType obPartFuncType, entry *ObTableEntry) error {
+func fetchFirstPart(ctx context.Context, db *DB, partFuncType obPartFuncType, entry *ObTableEntry) error {
 	key := entry.tableEntryKey
 	var rows *Rows
 	var err error
 	if util.ObVersion() >= 4 {
-		rows, err = db.Query(proxyFirstPartitionSql, key.tenantName, entry.tableId, math.MaxInt64)
+		rows, err = db.QueryContext(ctx, proxyFirstPartitionSql, key.tenantName, entry.tableId, math.MaxInt64)
 	} else {
-		rows, err = db.Query(proxyFirstPartitionSql, entry.tableId, math.MaxInt64)
+		rows, err = db.QueryContext(ctx, proxyFirstPartitionSql, entry.tableId, math.MaxInt64)
 	}
 	if err != nil {
 		return errors.WithMessagef(err, "query first partition, "+
@@ -679,14 +697,14 @@ func fetchFirstPart(db *DB, partFuncType obPartFuncType, entry *ObTableEntry) er
 	return nil
 }
 
-func fetchSubPart(db *DB, partFuncType obPartFuncType, entry *ObTableEntry) error {
+func fetchSubPart(ctx context.Context, db *DB, partFuncType obPartFuncType, entry *ObTableEntry) error {
 	key := entry.tableEntryKey
 	var rows *Rows
 	var err error
 	if util.ObVersion() >= 4 {
-		rows, err = db.Query(proxySubPartitionSql, key.tenantName, entry.tableId, math.MaxInt64)
+		rows, err = db.QueryContext(ctx, proxySubPartitionSql, key.tenantName, entry.tableId, math.MaxInt64)
 	} else {
-		rows, err = db.Query(proxySubPartitionSql, entry.tableId, math.MaxInt64)
+		rows, err = db.QueryContext(ctx, proxySubPartitionSql, entry.tableId, math.MaxInt64)
 	}
 	if err != nil {
 		return errors.WithMessagef(err, "query sub partition, "+

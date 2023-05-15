@@ -2,6 +2,7 @@
 package mock_route
 
 import (
+	"context"
 	sql2 "database/sql"
 	"math"
 	"regexp"
@@ -114,7 +115,7 @@ func GetMockHashTableEntryV3() *route.ObTableEntry {
 		MockTestDatabase,
 		MockTestTableName,
 	)
-	entry, err := route.GetTableEntryFromRemote(MockTestServerAddr, MockTestUserAuth, key)
+	entry, err := route.GetTableEntryFromRemote(context.TODO(), MockTestServerAddr, MockTestUserAuth, key)
 	if err != nil {
 		panic(err)
 	}
@@ -206,7 +207,7 @@ func GetMockHashTableEntryV4() *route.ObTableEntry {
 		MockTestDatabase,
 		MockTestTableName,
 	)
-	entry, err := route.GetTableEntryFromRemote(MockTestServerAddr, MockTestUserAuth, key)
+	entry, err := route.GetTableEntryFromRemote(context.TODO(), MockTestServerAddr, MockTestUserAuth, key)
 	if err != nil {
 		panic(err)
 	}

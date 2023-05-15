@@ -148,6 +148,7 @@ func (c *ObClient) Insert(
 	mutateColumns []*table.Column,
 	opts ...ObkvOption) (int64, error) {
 	res, err := c.execute(
+		ctx,
 		tableName,
 		protocol.Insert,
 		rowKey,
@@ -167,6 +168,7 @@ func (c *ObClient) Update(
 	mutateColumns []*table.Column,
 	opts ...ObkvOption) (int64, error) {
 	res, err := c.execute(
+		ctx,
 		tableName,
 		protocol.Update,
 		rowKey,
@@ -186,6 +188,7 @@ func (c *ObClient) InsertOrUpdate(
 	mutateColumns []*table.Column,
 	opts ...ObkvOption) (int64, error) {
 	res, err := c.execute(
+		ctx,
 		tableName,
 		protocol.InsertOrUpdate,
 		rowKey,
@@ -204,6 +207,7 @@ func (c *ObClient) Delete(
 	rowKey []*table.Column,
 	opts ...ObkvOption) (int64, error) {
 	res, err := c.execute(
+		ctx,
 		tableName,
 		protocol.Del,
 		rowKey,
@@ -227,6 +231,7 @@ func (c *ObClient) Get(
 		columns = append(columns, table.NewColumn(columnName, nil))
 	}
 	res, err := c.execute(
+		ctx,
 		tableName,
 		protocol.Get,
 		rowKey,
@@ -244,6 +249,7 @@ func (c *ObClient) NewBatchExecutor(tableName string) BatchExecutor {
 }
 
 func (c *ObClient) execute(
+	ctx context.Context,
 	tableName string,
 	opType protocol.TableOperationType,
 	rowKey []*table.Column,
@@ -254,7 +260,7 @@ func (c *ObClient) execute(
 		rowKeyValue = append(rowKeyValue, col.Value())
 	}
 	// 1. Get table route
-	tableParam, err := c.getTableParam(tableName, rowKeyValue, false /* refresh */)
+	tableParam, err := c.getTableParam(ctx, tableName, rowKeyValue, false /* refresh */)
 	if err != nil {
 		return nil, errors.WithMessagef(err, "get table param, tableName:%s, opType:%d", tableName, opType)
 	}
@@ -297,10 +303,11 @@ func (c *ObClient) execute(
 }
 
 func (c *ObClient) getTableParam(
+	ctx context.Context,
 	tableName string,
 	rowKeyValue []interface{},
 	refresh bool) (*ObTableParam, error) {
-	entry, err := c.getOrRefreshTableEntry(tableName, refresh, false)
+	entry, err := c.getOrRefreshTableEntry(ctx, tableName, refresh, false)
 	if err != nil {
 		return nil, errors.WithMessagef(err, "get or refresh table entry, tableName:%s", tableName)
 	}
@@ -310,14 +317,14 @@ func (c *ObClient) getTableParam(
 	}
 	t, err := c.getTable(entry, partId)
 	if err != nil {
-		return nil, errors.WithMessagef(err, "get table, tableName:%s, tableEntry:%s, partId:%s",
+		return nil, errors.WithMessagef(err, "get table, tableName:%s, tableEntry:%s, partId:%d",
 			tableName, entry.String(), partId)
 	}
 
 	if util.ObVersion() >= 4 {
 		partId, err = entry.PartitionInfo().GetTabletId(partId)
 		if err != nil {
-			return nil, errors.WithMessagef(err, "get tablet id, tableName:%s, tableEntry:%s, partId:%s",
+			return nil, errors.WithMessagef(err, "get tablet id, tableName:%s, tableEntry:%s, partId:%d",
 				tableName, entry.String(), partId)
 		}
 	}
@@ -334,7 +341,11 @@ func (c *ObClient) needRefreshTableEntry(entry *route.ObTableEntry) (int64, bool
 		float64(time.Now().UnixMilli()-entry.RefreshTimeMills()) >= intervalMs
 }
 
-func (c *ObClient) getOrRefreshTableEntry(tableName string, refresh bool, waitForRefresh bool) (*route.ObTableEntry, error) {
+func (c *ObClient) getOrRefreshTableEntry(
+	ctx context.Context,
+	tableName string,
+	refresh bool,
+	waitForRefresh bool) (*route.ObTableEntry, error) {
 	// 1. Get entry from cache
 	entry := c.getTableEntryFromCache(tableName)
 	if entry != nil {
@@ -384,7 +395,7 @@ func (c *ObClient) getOrRefreshTableEntry(tableName string, refresh bool, waitFo
 	if entry == nil || refresh {
 		refreshTryTimes := int(math.Min(float64(c.serverRoster.Size()), float64(c.config.TableEntryRefreshTryTimes)))
 		for i := 0; i < refreshTryTimes; i++ {
-			err := c.refreshTableEntry(&entry, tableName)
+			err := c.refreshTableEntry(ctx, &entry, tableName)
 			if err != nil {
 				log.Warn("failed to refresh table entry",
 					log.Int("times", i),
@@ -400,7 +411,7 @@ func (c *ObClient) getOrRefreshTableEntry(tableName string, refresh bool, waitFo
 		if err != nil {
 			return nil, errors.WithMessagef(err, "sync refresh meta data, tableName:%s", tableName)
 		}
-		err = c.refreshTableEntry(&entry, tableName)
+		err = c.refreshTableEntry(ctx, &entry, tableName)
 		if err != nil {
 			return nil, errors.WithMessagef(err, "refresh table entry, tableName:%s", tableName)
 		}
@@ -420,17 +431,17 @@ func (c *ObClient) getTableEntryFromCache(tableName string) *route.ObTableEntry 
 	return nil
 }
 
-func (c *ObClient) refreshTableEntry(entry **route.ObTableEntry, tableName string) error {
+func (c *ObClient) refreshTableEntry(ctx context.Context, entry **route.ObTableEntry, tableName string) error {
 	var err error
 	// 1. Load table entry location or table entry.
 	if *entry != nil { // If table entry exist we just need to refresh table locations
-		err = c.loadTableEntryLocation(*entry)
+		err = c.loadTableEntryLocation(ctx, *entry)
 		if err != nil {
 			return errors.WithMessagef(err, "load table entry location, tableName:%s", tableName)
 		}
 	} else {
 		key := route.NewObTableEntryKey(c.clusterName, c.tenantName, c.database, tableName)
-		*entry, err = route.GetTableEntryFromRemote(c.serverRoster.GetServer(), &c.sysUA, key)
+		*entry, err = route.GetTableEntryFromRemote(ctx, c.serverRoster.GetServer(), &c.sysUA, key)
 		if err != nil {
 			return errors.WithMessagef(err, "get table entry from remote, key:%s", key.String())
 		}
@@ -453,7 +464,7 @@ func (c *ObClient) refreshTableEntry(entry **route.ObTableEntry, tableName strin
 	return nil
 }
 
-func (c *ObClient) loadTableEntryLocation(entry *route.ObTableEntry) error {
+func (c *ObClient) loadTableEntryLocation(ctx context.Context, entry *route.ObTableEntry) error {
 	addr := c.serverRoster.GetServer()
 	// 1. Get db handle
 	db, err := route.NewDB(
@@ -470,7 +481,7 @@ func (c *ObClient) loadTableEntryLocation(entry *route.ObTableEntry) error {
 		_ = db.Close()
 	}()
 
-	locEntry, err := route.GetPartLocationEntryFromRemote(db, entry)
+	locEntry, err := route.GetPartLocationEntryFromRemote(ctx, db, entry)
 	if err != nil {
 		return errors.WithMessagef(err, "get part location entry from remote, tableEntry:%s", entry.String())
 	}
@@ -556,7 +567,7 @@ func (c *ObClient) fetchMetadata() error {
 		route.OceanbaseDatabase,
 		route.AllDummyTable,
 	)
-	entry, err := route.GetTableEntryFromRemote(addr, &c.sysUA, rootServerKey)
+	entry, err := route.GetTableEntryFromRemote(context.TODO(), addr, &c.sysUA, rootServerKey)
 	if err != nil {
 		return errors.WithMessagef(err, "dummy tenant server from remote, addr:%s, sysUA:%s, key:%s",
 			addr.String(), c.sysUA.String(), rootServerKey.String())
