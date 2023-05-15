@@ -79,7 +79,9 @@ type ObjType interface {
 	Decode(buffer *bytes.Buffer, csType CollationType) interface{}
 	EncodedLength(value interface{}) int
 	DefaultObjMeta() *ObjectMeta
+	CheckTypeForValue(value interface{}, csType CollationType) (interface{}, error)
 	Value() ObjTypeValue
+	String() string
 }
 
 func DefaultObjMeta(value interface{}) (*ObjectMeta, error) {
@@ -280,6 +282,27 @@ const (
 	CollationLevelInvalid CollationLevel = 127
 )
 
+func (l CollationLevel) String() string {
+	switch l {
+	case CollationLevelExplicit:
+		return "CollationLevelExplicit"
+	case CollationLevelNone:
+		return "CollationLevelNone"
+	case CollationLevelImplicit:
+		return "CollationLevelImplicit"
+	case CollationLevelSysConst:
+		return "CollationLevelSysConst"
+	case CollationLevelCoercible:
+		return "CollationLevelCoercible"
+	case CollationLevelNumeric:
+		return "CollationLevelNumeric"
+	case CollationLevelIgnorable:
+		return "CollationLevelIgnorable"
+	default:
+		return "CollationLevelInvalid"
+	}
+}
+
 type CollationType uint8
 
 const (
@@ -290,6 +313,23 @@ const (
 	CollationTypeCollationFree    CollationType = 100
 	CollationTypeMax              CollationType = 101
 )
+
+func (t CollationType) String() string {
+	switch t {
+	case CollationTypeUtf8mb4GeneralCi:
+		return "CollationTypeUtf8mb4GeneralCi"
+	case CollationTypeUtf8mb4Bin:
+		return "CollationTypeUtf8mb4Bin"
+	case CollationTypeBinary:
+		return "CollationTypeBinary"
+	case CollationTypeCollationFree:
+		return "CollationTypeCollationFree"
+	case CollationTypeMax:
+		return "CollationTypeMax"
+	default:
+		return "CollationTypeInvalid"
+	}
+}
 
 type NullType struct {
 	value ObjTypeValue
@@ -311,8 +351,18 @@ func (t *NullType) DefaultObjMeta() *ObjectMeta {
 	return NewObjectMetaWithParams(t, CollationLevelIgnorable, CollationTypeBinary, 10)
 }
 
+func (t *NullType) CheckTypeForValue(value interface{}, csType CollationType) (interface{}, error) {
+	return nil, errors.New("null type can not parse to comparable value")
+}
+
 func (t *NullType) Value() ObjTypeValue {
 	return t.value
+}
+
+func (t *NullType) String() string {
+	return "ObjType{" +
+		"type:" + "NullType" +
+		"}"
 }
 
 type TinyIntType struct {
@@ -344,8 +394,25 @@ func (t *TinyIntType) DefaultObjMeta() *ObjectMeta {
 	return NewObjectMetaWithParams(t, CollationLevelNumeric, CollationTypeBinary, 10)
 }
 
+func (t *TinyIntType) CheckTypeForValue(value interface{}, csType CollationType) (interface{}, error) {
+	switch v := value.(type) {
+	case bool:
+		return v, nil
+	case int8:
+		return v, nil
+	default:
+		return nil, errors.Errorf("tiny int type parse to comparable failed, not match value, value: %v", v)
+	}
+}
+
 func (t *TinyIntType) Value() ObjTypeValue {
 	return t.value
+}
+
+func (t *TinyIntType) String() string {
+	return "ObjType{" +
+		"type:" + "TinyIntType" +
+		"}"
 }
 
 type SmallIntType struct {
@@ -368,11 +435,25 @@ func (t *SmallIntType) DefaultObjMeta() *ObjectMeta {
 	return NewObjectMetaWithParams(t, CollationLevelNumeric, CollationTypeBinary, 10)
 }
 
+func (t *SmallIntType) CheckTypeForValue(value interface{}, csType CollationType) (interface{}, error) {
+	if v, ok := value.(int16); ok {
+		return v, nil
+	} else {
+		return nil, errors.Errorf("small int type parse to comparable failed, not match value, value: %v", v)
+	}
+}
+
 func (t *SmallIntType) Value() ObjTypeValue {
 	return t.value
 }
 
-type MediumIntType struct {
+func (t *SmallIntType) String() string {
+	return "ObjType{" +
+		"type:" + "SmallIntType" +
+		"}"
+}
+
+type MediumIntType struct { // TODO not support
 	value ObjTypeValue
 }
 
@@ -392,8 +473,18 @@ func (t *MediumIntType) DefaultObjMeta() *ObjectMeta {
 	return NewObjectMetaWithParams(t, CollationLevelNumeric, CollationTypeBinary, 10)
 }
 
+func (t *MediumIntType) CheckTypeForValue(value interface{}, csType CollationType) (interface{}, error) {
+	return nil, errors.New("medium int type is not support")
+}
+
 func (t *MediumIntType) Value() ObjTypeValue {
 	return t.value
+}
+
+func (t *MediumIntType) String() string {
+	return "ObjType{" +
+		"type:" + "MediumIntType" +
+		"}"
 }
 
 type Int32Type struct {
@@ -416,8 +507,22 @@ func (t *Int32Type) DefaultObjMeta() *ObjectMeta {
 	return NewObjectMetaWithParams(t, CollationLevelNumeric, CollationTypeBinary, 10)
 }
 
+func (t *Int32Type) CheckTypeForValue(value interface{}, csType CollationType) (interface{}, error) {
+	if v, ok := value.(int32); ok {
+		return v, nil
+	} else {
+		return nil, errors.Errorf("int32 type parse to comparable failed, not match value, value: %v", v)
+	}
+}
+
 func (t *Int32Type) Value() ObjTypeValue {
 	return t.value
+}
+
+func (t *Int32Type) String() string {
+	return "ObjType{" +
+		"type:" + "Int32Type" +
+		"}"
 }
 
 type Int64Type struct {
@@ -440,8 +545,22 @@ func (t *Int64Type) DefaultObjMeta() *ObjectMeta {
 	return NewObjectMetaWithParams(t, CollationLevelNumeric, CollationTypeBinary, 10)
 }
 
+func (t *Int64Type) CheckTypeForValue(value interface{}, csType CollationType) (interface{}, error) {
+	if v, ok := value.(int64); ok {
+		return v, nil
+	} else {
+		return nil, errors.Errorf("int64 type parse to comparable failed, not match value, value: %v", v)
+	}
+}
+
 func (t *Int64Type) Value() ObjTypeValue {
 	return t.value
+}
+
+func (t *Int64Type) String() string {
+	return "ObjType{" +
+		"type:" + "Int64Type" +
+		"}"
 }
 
 type UTinyIntType struct {
@@ -464,11 +583,25 @@ func (t *UTinyIntType) DefaultObjMeta() *ObjectMeta {
 	return NewObjectMetaWithParams(t, CollationLevelNumeric, CollationTypeBinary, 10)
 }
 
+func (t *UTinyIntType) CheckTypeForValue(value interface{}, csType CollationType) (interface{}, error) {
+	if v, ok := value.(uint8); ok {
+		return v, nil
+	} else {
+		return nil, errors.Errorf("uTiny int type parse to comparable failed, not match value, value: %v", v)
+	}
+}
+
 func (t *UTinyIntType) Value() ObjTypeValue {
 	return t.value
 }
 
-type USmallIntType struct { // TODO not support
+func (t *UTinyIntType) String() string {
+	return "ObjType{" +
+		"type:" + "TinyIntType" +
+		"}"
+}
+
+type USmallIntType struct {
 	value ObjTypeValue
 }
 
@@ -488,8 +621,22 @@ func (t *USmallIntType) DefaultObjMeta() *ObjectMeta {
 	return NewObjectMetaWithParams(t, CollationLevelNumeric, CollationTypeBinary, 10)
 }
 
+func (t *USmallIntType) CheckTypeForValue(value interface{}, csType CollationType) (interface{}, error) {
+	if v, ok := value.(uint16); ok {
+		return v, nil
+	} else {
+		return nil, errors.Errorf("uSmall int type parse to comparable failed, not match value, value: %v", v)
+	}
+}
+
 func (t *USmallIntType) Value() ObjTypeValue {
 	return t.value
+}
+
+func (t *USmallIntType) String() string {
+	return "ObjType{" +
+		"type:" + "USmallIntType" +
+		"}"
 }
 
 type UMediumIntType struct { // TODO not support
@@ -512,11 +659,21 @@ func (t *UMediumIntType) DefaultObjMeta() *ObjectMeta {
 	return NewObjectMetaWithParams(t, CollationLevelNumeric, CollationTypeBinary, 10)
 }
 
+func (t *UMediumIntType) CheckTypeForValue(value interface{}, csType CollationType) (interface{}, error) {
+	return nil, errors.New("uMedium int type is not support")
+}
+
 func (t *UMediumIntType) Value() ObjTypeValue {
 	return t.value
 }
 
-type UInt32Type struct { // TODO not support
+func (t *UMediumIntType) String() string {
+	return "ObjType{" +
+		"type:" + "UMediumIntType" +
+		"}"
+}
+
+type UInt32Type struct {
 	value ObjTypeValue
 }
 
@@ -536,11 +693,25 @@ func (t *UInt32Type) DefaultObjMeta() *ObjectMeta {
 	return NewObjectMetaWithParams(t, CollationLevelNumeric, CollationTypeBinary, 10)
 }
 
+func (t *UInt32Type) CheckTypeForValue(value interface{}, csType CollationType) (interface{}, error) {
+	if v, ok := value.(uint32); ok {
+		return v, nil
+	} else {
+		return nil, errors.Errorf("uInt int type parse to comparable failed, not match value, value: %v", v)
+	}
+}
+
 func (t *UInt32Type) Value() ObjTypeValue {
 	return t.value
 }
 
-type UInt64Type struct { // TODO not support
+func (t *UInt32Type) String() string {
+	return "ObjType{" +
+		"type:" + "UInt32Type" +
+		"}"
+}
+
+type UInt64Type struct {
 	value ObjTypeValue
 }
 
@@ -560,8 +731,22 @@ func (t *UInt64Type) DefaultObjMeta() *ObjectMeta {
 	return NewObjectMetaWithParams(t, CollationLevelNumeric, CollationTypeBinary, 10)
 }
 
+func (t *UInt64Type) CheckTypeForValue(value interface{}, csType CollationType) (interface{}, error) {
+	if v, ok := value.(uint64); ok {
+		return v, nil
+	} else {
+		return nil, errors.Errorf("uInt64 type parse to comparable failed, not match value, value: %v", v)
+	}
+}
+
 func (t *UInt64Type) Value() ObjTypeValue {
 	return t.value
+}
+
+func (t *UInt64Type) String() string {
+	return "ObjType{" +
+		"type:" + "UInt64Type" +
+		"}"
 }
 
 type FloatType struct {
@@ -584,8 +769,22 @@ func (t *FloatType) DefaultObjMeta() *ObjectMeta {
 	return NewObjectMetaWithParams(t, CollationLevelNumeric, CollationTypeBinary, 10)
 }
 
+func (t *FloatType) CheckTypeForValue(value interface{}, csType CollationType) (interface{}, error) {
+	if v, ok := value.(float32); ok {
+		return v, nil
+	} else {
+		return nil, errors.Errorf("float type parse to comparable failed, not match value, value: %v", v)
+	}
+}
+
 func (t *FloatType) Value() ObjTypeValue {
 	return t.value
+}
+
+func (t *FloatType) String() string {
+	return "ObjType{" +
+		"type:" + "FloatType" +
+		"}"
 }
 
 type DoubleType struct {
@@ -608,8 +807,22 @@ func (t *DoubleType) DefaultObjMeta() *ObjectMeta {
 	return NewObjectMetaWithParams(t, CollationLevelNumeric, CollationTypeBinary, 10)
 }
 
+func (t *DoubleType) CheckTypeForValue(value interface{}, csType CollationType) (interface{}, error) {
+	if v, ok := value.(float64); ok {
+		return v, nil
+	} else {
+		return nil, errors.Errorf("double type parse to comparable failed, not match value, value: %v", v)
+	}
+}
+
 func (t *DoubleType) Value() ObjTypeValue {
 	return t.value
+}
+
+func (t *DoubleType) String() string {
+	return "ObjType{" +
+		"type:" + "DoubleType" +
+		"}"
 }
 
 type UFloatType struct { // TODO not support
@@ -632,8 +845,18 @@ func (t *UFloatType) DefaultObjMeta() *ObjectMeta {
 	return NewObjectMetaWithParams(t, CollationLevelNumeric, CollationTypeBinary, 10)
 }
 
+func (t *UFloatType) CheckTypeForValue(value interface{}, csType CollationType) (interface{}, error) {
+	return nil, errors.New("uFloat type is not support")
+}
+
 func (t *UFloatType) Value() ObjTypeValue {
 	return t.value
+}
+
+func (t *UFloatType) String() string {
+	return "ObjType{" +
+		"type:" + "UFloatType" +
+		"}"
 }
 
 type UDoubleType struct { // TODO not support
@@ -656,8 +879,18 @@ func (t *UDoubleType) DefaultObjMeta() *ObjectMeta {
 	return NewObjectMetaWithParams(t, CollationLevelNumeric, CollationTypeBinary, 10)
 }
 
+func (t *UDoubleType) CheckTypeForValue(value interface{}, csType CollationType) (interface{}, error) {
+	return nil, errors.New("uDouble type is not support")
+}
+
 func (t *UDoubleType) Value() ObjTypeValue {
 	return t.value
+}
+
+func (t *UDoubleType) String() string {
+	return "ObjType{" +
+		"type:" + "UDoubleType" +
+		"}"
 }
 
 type NumberType struct { // TODO not support
@@ -680,8 +913,18 @@ func (t *NumberType) DefaultObjMeta() *ObjectMeta {
 	return NewObjectMetaWithParams(t, CollationLevelNumeric, CollationTypeBinary, 10)
 }
 
+func (t *NumberType) CheckTypeForValue(value interface{}, csType CollationType) (interface{}, error) {
+	return nil, errors.New("number type is not support")
+}
+
 func (t *NumberType) Value() ObjTypeValue {
 	return t.value
+}
+
+func (t *NumberType) String() string {
+	return "ObjType{" +
+		"type:" + "NumberType" +
+		"}"
 }
 
 type UNumberType struct { // TODO not support
@@ -704,8 +947,18 @@ func (t *UNumberType) DefaultObjMeta() *ObjectMeta {
 	return NewObjectMetaWithParams(t, CollationLevelNumeric, CollationTypeBinary, 10)
 }
 
+func (t *UNumberType) CheckTypeForValue(value interface{}, csType CollationType) (interface{}, error) {
+	return nil, errors.New("uNumber type is not support")
+}
+
 func (t *UNumberType) Value() ObjTypeValue {
 	return t.value
+}
+
+func (t *UNumberType) String() string {
+	return "ObjType{" +
+		"type:" + "UNumberType" +
+		"}"
 }
 
 type DateTimeType struct {
@@ -728,8 +981,22 @@ func (t *DateTimeType) DefaultObjMeta() *ObjectMeta {
 	return NewObjectMetaWithParams(t, CollationLevelNumeric, CollationTypeBinary, 10)
 }
 
+func (t *DateTimeType) CheckTypeForValue(value interface{}, csType CollationType) (interface{}, error) {
+	if v, ok := value.(time.Duration); ok {
+		return v, nil
+	} else {
+		return nil, errors.Errorf("date time type parse to comparable failed, not match value, value: %v", v)
+	}
+}
+
 func (t *DateTimeType) Value() ObjTypeValue {
 	return t.value
+}
+
+func (t *DateTimeType) String() string {
+	return "ObjType{" +
+		"type:" + "DateTimeType" +
+		"}"
 }
 
 type TimestampType struct {
@@ -752,8 +1019,22 @@ func (t *TimestampType) DefaultObjMeta() *ObjectMeta {
 	return NewObjectMetaWithParams(t, CollationLevelNumeric, CollationTypeBinary, 10)
 }
 
+func (t *TimestampType) CheckTypeForValue(value interface{}, csType CollationType) (interface{}, error) {
+	if v, ok := value.(time.Duration); ok {
+		return v, nil
+	} else {
+		return nil, errors.Errorf("time stamp type parse to comparable failed, not match value, value: %v", v)
+	}
+}
+
 func (t *TimestampType) Value() ObjTypeValue {
 	return t.value
+}
+
+func (t *TimestampType) String() string {
+	return "ObjType{" +
+		"type:" + "TimestampType" +
+		"}"
 }
 
 type DateType struct {
@@ -776,11 +1057,25 @@ func (t *DateType) DefaultObjMeta() *ObjectMeta {
 	return NewObjectMetaWithParams(t, CollationLevelNumeric, CollationTypeBinary, 10)
 }
 
+func (t *DateType) CheckTypeForValue(value interface{}, csType CollationType) (interface{}, error) {
+	if v, ok := value.(time.Duration); ok {
+		return v, nil
+	} else {
+		return nil, errors.Errorf("data type parse to comparable failed, not match value, value: %v", v)
+	}
+}
+
 func (t *DateType) Value() ObjTypeValue {
 	return t.value
 }
 
-type TimeType struct { // TODO not support
+func (t *DateType) String() string {
+	return "ObjType{" +
+		"type:" + "DateType" +
+		"}"
+}
+
+type TimeType struct {
 	value ObjTypeValue
 }
 
@@ -800,8 +1095,22 @@ func (t *TimeType) DefaultObjMeta() *ObjectMeta {
 	return NewObjectMetaWithParams(t, CollationLevelNumeric, CollationTypeBinary, 10)
 }
 
+func (t *TimeType) CheckTypeForValue(value interface{}, csType CollationType) (interface{}, error) {
+	if v, ok := value.(time.Duration); ok {
+		return v, nil
+	} else {
+		return nil, errors.Errorf("time type parse to comparable failed, not match value, value: %v", v)
+	}
+}
+
 func (t *TimeType) Value() ObjTypeValue {
 	return t.value
+}
+
+func (t *TimeType) String() string {
+	return "ObjType{" +
+		"type:" + "TimeType" +
+		"}"
 }
 
 type YearType struct { // TODO not support
@@ -824,8 +1133,18 @@ func (t *YearType) DefaultObjMeta() *ObjectMeta {
 	return NewObjectMetaWithParams(t, CollationLevelNumeric, CollationTypeBinary, 10)
 }
 
+func (t *YearType) CheckTypeForValue(value interface{}, csType CollationType) (interface{}, error) {
+	return nil, errors.New("year type is not support")
+}
+
 func (t *YearType) Value() ObjTypeValue {
 	return t.value
+}
+
+func (t *YearType) String() string {
+	return "ObjType{" +
+		"type:" + "YearType" +
+		"}"
 }
 
 type VarcharType struct {
@@ -848,11 +1167,33 @@ func (t *VarcharType) DefaultObjMeta() *ObjectMeta {
 	return NewObjectMetaWithParams(t, CollationLevelExplicit, CollationTypeUtf8mb4GeneralCi, 10)
 }
 
+func (t *VarcharType) CheckTypeForValue(value interface{}, csType CollationType) (interface{}, error) {
+	if CollationTypeBinary == csType {
+		if v, ok := value.([]byte); ok {
+			return v, nil
+		} else {
+			return nil, errors.Errorf("varchar type parse to comparable failed, not match value, value: %v", v)
+		}
+	} else {
+		if v, ok := value.(string); ok {
+			return v, nil
+		} else {
+			return nil, errors.Errorf("varchar type parse to comparable failed, not match value, value: %v", v)
+		}
+	}
+}
+
 func (t *VarcharType) Value() ObjTypeValue {
 	return t.value
 }
 
-type CharType struct { // TODO not support
+func (t *VarcharType) String() string {
+	return "ObjType{" +
+		"type:" + "VarcharType" +
+		"}"
+}
+
+type CharType struct {
 	value ObjTypeValue
 }
 
@@ -872,11 +1213,33 @@ func (t *CharType) DefaultObjMeta() *ObjectMeta {
 	return NewObjectMetaWithParams(t, CollationLevelExplicit, CollationTypeUtf8mb4GeneralCi, 10)
 }
 
+func (t *CharType) CheckTypeForValue(value interface{}, csType CollationType) (interface{}, error) {
+	if CollationTypeBinary == csType {
+		if v, ok := value.([]byte); ok {
+			return v, nil
+		} else {
+			return nil, errors.Errorf("char type parse to comparable failed, not match value, value: %v", v)
+		}
+	} else {
+		if v, ok := value.(string); ok {
+			return v, nil
+		} else {
+			return nil, errors.Errorf("char type parse to comparable failed, not match value, value: %v", v)
+		}
+	}
+}
+
 func (t *CharType) Value() ObjTypeValue {
 	return t.value
 }
 
-type HexStringType struct {
+func (t *CharType) String() string {
+	return "ObjType{" +
+		"type:" + "CharType" +
+		"}"
+}
+
+type HexStringType struct { // TODO not support
 	value ObjTypeValue
 }
 
@@ -896,11 +1259,21 @@ func (t *HexStringType) DefaultObjMeta() *ObjectMeta {
 	return NewObjectMetaWithParams(t, CollationLevelNumeric, CollationTypeBinary, 10)
 }
 
+func (t *HexStringType) CheckTypeForValue(value interface{}, csType CollationType) (interface{}, error) {
+	return nil, errors.New("hex string type is not support")
+}
+
 func (t *HexStringType) Value() ObjTypeValue {
 	return t.value
 }
 
-type ExtendType struct {
+func (t *HexStringType) String() string {
+	return "ObjType{" +
+		"type:" + "HexStringType" +
+		"}"
+}
+
+type ExtendType struct { // TODO not support
 	value ObjTypeValue
 }
 
@@ -920,11 +1293,21 @@ func (t *ExtendType) DefaultObjMeta() *ObjectMeta {
 	return NewObjectMetaWithParams(t, CollationLevelNumeric, CollationTypeBinary, 10)
 }
 
+func (t *ExtendType) CheckTypeForValue(value interface{}, csType CollationType) (interface{}, error) {
+	return nil, errors.New("extend type is not support")
+}
+
 func (t *ExtendType) Value() ObjTypeValue {
 	return t.value
 }
 
-type UnknownType struct {
+func (t *ExtendType) String() string {
+	return "ObjType{" +
+		"type:" + "ExtendType" +
+		"}"
+}
+
+type UnknownType struct { // TODO not support
 	value ObjTypeValue
 }
 
@@ -944,8 +1327,18 @@ func (t *UnknownType) DefaultObjMeta() *ObjectMeta {
 	return NewObjectMetaWithParams(t, CollationLevelNumeric, CollationTypeBinary, 10)
 }
 
+func (t *UnknownType) CheckTypeForValue(value interface{}, csType CollationType) (interface{}, error) {
+	return nil, errors.New("unknown type is not support")
+}
+
 func (t *UnknownType) Value() ObjTypeValue {
 	return t.value
+}
+
+func (t *UnknownType) String() string {
+	return "ObjType{" +
+		"type:" + "UnknownType" +
+		"}"
 }
 
 type TinyTextType struct {
@@ -968,8 +1361,30 @@ func (t *TinyTextType) DefaultObjMeta() *ObjectMeta {
 	return NewObjectMetaWithParams(t, CollationLevelNumeric, CollationTypeBinary, 10)
 }
 
+func (t *TinyTextType) CheckTypeForValue(value interface{}, csType CollationType) (interface{}, error) {
+	if CollationTypeBinary == csType {
+		if v, ok := value.([]byte); ok {
+			return v, nil
+		} else {
+			return nil, errors.Errorf("tiny text type parse to comparable failed, not match value, value: %v", v)
+		}
+	} else {
+		if v, ok := value.(string); ok {
+			return v, nil
+		} else {
+			return nil, errors.Errorf("tiny text type parse to comparable failed, not match value, value: %v", v)
+		}
+	}
+}
+
 func (t *TinyTextType) Value() ObjTypeValue {
 	return t.value
+}
+
+func (t *TinyTextType) String() string {
+	return "ObjType{" +
+		"type:" + "TinyTextType" +
+		"}"
 }
 
 type TextType struct {
@@ -992,8 +1407,30 @@ func (t *TextType) DefaultObjMeta() *ObjectMeta {
 	return NewObjectMetaWithParams(t, CollationLevelNumeric, CollationTypeBinary, 10)
 }
 
+func (t *TextType) CheckTypeForValue(value interface{}, csType CollationType) (interface{}, error) {
+	if CollationTypeBinary == csType {
+		if v, ok := value.([]byte); ok {
+			return v, nil
+		} else {
+			return nil, errors.Errorf("text type parse to comparable failed, not match value, value: %v", v)
+		}
+	} else {
+		if v, ok := value.(string); ok {
+			return v, nil
+		} else {
+			return nil, errors.Errorf("text type parse to comparable failed, not match value, value: %v", v)
+		}
+	}
+}
+
 func (t *TextType) Value() ObjTypeValue {
 	return t.value
+}
+
+func (t *TextType) String() string {
+	return "ObjType{" +
+		"type:" + "TextType" +
+		"}"
 }
 
 type MediumTextType struct {
@@ -1016,8 +1453,30 @@ func (t *MediumTextType) DefaultObjMeta() *ObjectMeta {
 	return NewObjectMetaWithParams(t, CollationLevelNumeric, CollationTypeBinary, 10)
 }
 
+func (t *MediumTextType) CheckTypeForValue(value interface{}, csType CollationType) (interface{}, error) {
+	if CollationTypeBinary == csType {
+		if v, ok := value.([]byte); ok {
+			return v, nil
+		} else {
+			return nil, errors.Errorf("medium text type parse to comparable failed, not match value, value: %v", v)
+		}
+	} else {
+		if v, ok := value.(string); ok {
+			return v, nil
+		} else {
+			return nil, errors.Errorf("medium text type parse to comparable failed, not match value, value: %v", v)
+		}
+	}
+}
+
 func (t *MediumTextType) Value() ObjTypeValue {
 	return t.value
+}
+
+func (t *MediumTextType) String() string {
+	return "ObjType{" +
+		"type:" + "MediumTextType" +
+		"}"
 }
 
 type LongTextType struct {
@@ -1040,8 +1499,30 @@ func (t *LongTextType) DefaultObjMeta() *ObjectMeta {
 	return NewObjectMetaWithParams(t, CollationLevelNumeric, CollationTypeBinary, 10)
 }
 
+func (t *LongTextType) CheckTypeForValue(value interface{}, csType CollationType) (interface{}, error) {
+	if CollationTypeBinary == csType {
+		if v, ok := value.([]byte); ok {
+			return v, nil
+		} else {
+			return nil, errors.Errorf("long text type parse to comparable failed, not match value, value: %v", v)
+		}
+	} else {
+		if v, ok := value.(string); ok {
+			return v, nil
+		} else {
+			return nil, errors.Errorf("long text type parse to comparable failed, not match value, value: %v", v)
+		}
+	}
+}
+
 func (t *LongTextType) Value() ObjTypeValue {
 	return t.value
+}
+
+func (t *LongTextType) String() string {
+	return "ObjType{" +
+		"type:" + "LongTextType" +
+		"}"
 }
 
 type BitType struct { // TODO not support
@@ -1064,8 +1545,18 @@ func (t *BitType) DefaultObjMeta() *ObjectMeta {
 	return NewObjectMetaWithParams(t, CollationLevelNumeric, CollationTypeBinary, 10)
 }
 
+func (t *BitType) CheckTypeForValue(value interface{}, csType CollationType) (interface{}, error) {
+	return nil, errors.New("bit type is not support")
+}
+
 func (t *BitType) Value() ObjTypeValue {
 	return t.value
+}
+
+func (t *BitType) String() string {
+	return "ObjType{" +
+		"type:" + "BitType" +
+		"}"
 }
 
 func EncodeText(buffer *bytes.Buffer, value interface{}) {

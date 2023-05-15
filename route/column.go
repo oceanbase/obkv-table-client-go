@@ -12,8 +12,8 @@ import (
 func newObSimpleColumn(
 	columnName string,
 	index int,
-	objType protocol.ObObjType,
-	collType protocol.ObCollationType) *obColumn {
+	objType protocol.ObjType,
+	collType protocol.CollationType) *obColumn {
 	return &obColumn{
 		columnName:     columnName,
 		index:          index,
@@ -28,8 +28,8 @@ func newObSimpleColumn(
 type obColumn struct {
 	columnName    string
 	index         int
-	objType       protocol.ObObjType
-	collationType protocol.ObCollationType
+	objType       protocol.ObjType
+	collationType protocol.CollationType
 	// refColumnNames: Represents which columns are referenced by the current column
 	// 1. generate column: key_prefix VARCHAR(1024) GENERATED ALWAYS AS (SUBSTRING(`col1`, 1, 4)
 	// 					   refColumnNames = ["col1"]
@@ -46,7 +46,7 @@ func (c *obColumn) EvalValue(refs ...interface{}) (interface{}, error) {
 			return nil, errors.Errorf("simple column is refer to itself "+
 				"so that the length of the refs must be 1, len:%d", len(refs))
 		}
-		return c.objType.ParseToComparable(refs[0], c.collationType)
+		return c.objType.CheckTypeForValue(refs[0], c.collationType)
 	} else {
 		if len(refs) != len(c.refColumnNames) {
 			return nil, errors.Errorf("input refs count is not equal to refColumnNames count "+

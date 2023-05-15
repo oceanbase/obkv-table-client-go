@@ -6,7 +6,6 @@ import (
 
 	"github.com/pkg/errors"
 
-	"github.com/oceanbase/obkv-table-client-go/protocol"
 	"github.com/oceanbase/obkv-table-client-go/table"
 )
 
@@ -63,7 +62,7 @@ func (d *obHashPartDesc) GetPartId(rowKey []interface{}) (int64, error) {
 	if err != nil {
 		return ObInvalidPartId, errors.WithMessagef(err, "eval partition key value, partDesc:%s", d.String())
 	}
-	longValue, err := protocol.ParseToLong(evalValues[0]) // hash part has one param at most
+	longValue, err := parseToNumber(evalValues[0]) // hash part has one param at most
 	if err != nil {
 		return ObInvalidPartId, errors.WithMessagef(err, "parse long, partDesc:%s", d.String())
 	}

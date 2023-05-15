@@ -489,7 +489,7 @@ func getPartitionInfoFromResultSet(rows *Rows) (*obPartitionInfo, error) {
 		if partKeyExtra != "" {
 			return nil, errors.New("not support generate column now")
 		} else {
-			objType, err := protocol.NewObObjType(partKeyType)
+			objType, err := protocol.NewObjType(protocol.ObjTypeValue(partKeyType))
 			if err != nil {
 				return nil, errors.WithMessagef(err, "generate object type, partKeyType:%d", partKeyType)
 			}
@@ -497,7 +497,7 @@ func getPartitionInfoFromResultSet(rows *Rows) (*obPartitionInfo, error) {
 				partKeyName,
 				partKeyIdx,
 				objType,
-				protocol.NewObCollationType(spare1),
+				protocol.CollationType(spare1),
 			)
 		}
 		info.partColumns = append(info.partColumns, column)
@@ -587,7 +587,7 @@ func buildPartDesc(partNum int,
 			if err != nil {
 				return nil, errors.WithMessagef(err, "convert string to int, typeStr:%s", typeStr)
 			}
-			objType, err := protocol.NewObObjType(typeValue)
+			objType, err := protocol.NewObjType(protocol.ObjTypeValue(typeValue))
 			if err != nil {
 				return nil, errors.WithMessagef(err, "new object typ, typeStr:%s", typeStr)
 			}

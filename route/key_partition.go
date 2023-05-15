@@ -123,27 +123,27 @@ func (d *obKeyPartDesc) toHashCode(
 	refColumn *obColumn,
 	hashCode int64,
 	partFuncType obPartFuncType) (int64, error) {
-	typeValue := refColumn.objType.GetValue()
-	if typeValue >= protocol.ObTinyIntTypeValue && typeValue <= protocol.ObUInt64TypeValue {
+	typeValue := refColumn.objType.Value()
+	if typeValue >= protocol.ObjTypeTinyIntTypeValue && typeValue <= protocol.ObjTypeUInt64TypeValue {
 		i64, err := intToInt64(value)
 		if err != nil {
 			return -1, errors.WithMessagef(err, "convert int to int64, value:%T", typeValue)
 		}
 		arr := d.longToByteArray(i64)
 		return murmurHash64A(arr, len(arr), hashCode), nil
-	} else if typeValue == protocol.ObDateTimeTypeValue || typeValue == protocol.ObTimestampTypeValue {
+	} else if typeValue == protocol.ObjTypeDateTimeTypeValue || typeValue == protocol.ObjTypeTimestampTypeValue {
 		t, ok := value.(time.Time)
 		if !ok {
 			return -1, errors.Errorf("invalid timestamp type, value:%T", value)
 		}
 		return d.timeStampHash(t, hashCode), nil
-	} else if typeValue == protocol.ObDateTypeValue {
+	} else if typeValue == protocol.ObjTypeDateTypeValue {
 		date, ok := value.(time.Time)
 		if !ok {
 			return -1, errors.Errorf("invalid date type, value:%T", value)
 		}
 		return d.dateHash(date, hashCode), nil
-	} else if typeValue == protocol.ObVarcharTypeValue || typeValue == protocol.ObCharTypeValue {
+	} else if typeValue == protocol.ObjTypeVarcharTypeValue || typeValue == protocol.ObjTypeCharTypeValue {
 		return d.varcharHash(value, refColumn.collationType, hashCode, partFuncType)
 	} else {
 		return -1, errors.Errorf("unsupported type for key hash, objType:%s", refColumn.objType.String())
@@ -171,7 +171,7 @@ func (d *obKeyPartDesc) dateHash(ts time.Time, hashCode int64) int64 {
 
 func (d *obKeyPartDesc) varcharHash(
 	value interface{},
-	collType protocol.ObCollationType,
+	collType protocol.CollationType,
 	hashCode int64,
 	partFuncType obPartFuncType) (int64, error) {
 	var seed uint64 = 0xc6a4a7935bd1e995
@@ -182,13 +182,11 @@ func (d *obKeyPartDesc) varcharHash(
 		bytes = []byte(v)
 	} else if v, ok := value.([]byte); ok {
 		bytes = v
-	} else if v, ok := value.(protocol.ObBytesString); ok {
-		bytes = v.BytesVal()
 	} else {
 		return -1, errors.Errorf("invalid varchar value for calc hash value, value:%T", value)
 	}
-	switch collType.Value() {
-	case protocol.CsTypeUtf8mb4GeneralCi:
+	switch collType {
+	case protocol.CollationTypeUtf8mb4GeneralCi:
 		if partFuncType == partFuncTypeKeyV3 ||
 			partFuncType == partFuncTypeKeyImplV2 ||
 			util.ObVersion() >= 4 {
@@ -196,8 +194,8 @@ func (d *obKeyPartDesc) varcharHash(
 		} else {
 			hashCode = hashSortUtf8Mb4(bytes, hashCode, seed, false)
 		}
-	case protocol.CsTypeUtf8mb4Bin:
-	case protocol.CsTypeBinary:
+	case protocol.CollationTypeUtf8mb4Bin:
+	case protocol.CollationTypeBinary:
 		if partFuncType == partFuncTypeKeyV3 ||
 			partFuncType == partFuncTypeKeyImplV2 ||
 			util.ObVersion() >= 4 {
@@ -205,10 +203,10 @@ func (d *obKeyPartDesc) varcharHash(
 		} else {
 			hashCode = hashSortMbBin(bytes, hashCode, seed)
 		}
-	case protocol.CsTypeInvalid:
-	case protocol.CsTypeCollationFree:
-	case protocol.CsTypeMax:
-		return -1, errors.Errorf("not supported collation type, collType:%d", collType.Value())
+	case protocol.CollationTypeInvalid:
+	case protocol.CollationTypeCollationFree:
+	case protocol.CollationTypeMax:
+		return -1, errors.Errorf("not supported collation type, collType:%d", collType)
 	}
 	return hashCode, nil
 }
