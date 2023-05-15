@@ -9,6 +9,12 @@ import (
 	"github.com/oceanbase/obkv-table-client-go/table"
 )
 
+// NewClient create a client.
+// configUrl is used to obtain rslist by using the http service.
+// fullUserName format id "userName@tenantName#clusterName".
+// passWord is the password of the fullUserName user.
+// sysUserName and sysPassWord is used to access the routing table. Therefore, user a must belong to the system tenant.
+// cliConfig is the configuration of the client, you can configure based on your business.
 func NewClient(
 	configUrl string,
 	fullUserName string,
@@ -44,11 +50,19 @@ func NewClient(
 }
 
 type Client interface {
+	// AddRowKey add the primary key of the current table to the client.
 	AddRowKey(tableName string, rowKey []string) error
+	// Insert a record by rowkey.
 	Insert(ctx context.Context, tableName string, rowKey []*table.Column, mutateColumns []*table.Column, opts ...ObkvOption) (int64, error)
+	// Update a record by rowkey.
 	Update(ctx context.Context, tableName string, rowKey []*table.Column, mutateColumns []*table.Column, opts ...ObkvOption) (int64, error)
+	// InsertOrUpdate insert or update a record by rowkey.
+	// insert if the primary key does not exist, update if it does.
 	InsertOrUpdate(ctx context.Context, tableName string, rowKey []*table.Column, mutateColumns []*table.Column, opts ...ObkvOption) (int64, error)
+	// Delete a record by rowkey.
 	Delete(ctx context.Context, tableName string, rowKey []*table.Column, opts ...ObkvOption) (int64, error)
+	// Get a record by rowkey.
 	Get(ctx context.Context, tableName string, rowKey []*table.Column, getColumns []string, opts ...ObkvOption) (map[string]interface{}, error)
+	// NewBatchExecutor create a batch executor
 	NewBatchExecutor(tableName string) BatchExecutor
 }

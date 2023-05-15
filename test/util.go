@@ -56,18 +56,12 @@ func createTable(createTableStatement string) {
 
 func dropTable(tableName string) {
 	db := newDB()
-	_, err := db.Exec("DROP TABLE " + tableName + ";")
-	if err != nil {
-		panic(err.Error())
-	}
+	_, _ = db.Exec("DROP TABLE " + tableName + ";")
 }
 
 func deleteTable(tableName string) {
 	db := newDB()
-	_, err := db.Exec("DELETE FROM " + tableName + ";")
-	if err != nil {
-		panic(err.Error())
-	}
+	_, _ = db.Exec("DELETE FROM " + tableName + ";")
 }
 
 func selectTable(selectStatement string) *sql.Rows {

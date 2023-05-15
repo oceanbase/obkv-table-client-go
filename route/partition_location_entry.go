@@ -2,17 +2,17 @@ package route
 
 import "strconv"
 
-type obPartLocationEntry struct {
+type ObPartLocationEntry struct {
 	partLocations map[int64]*obPartitionLocation
 }
 
-func newObPartLocationEntry(partNum int) *obPartLocationEntry {
-	entry := new(obPartLocationEntry)
+func newObPartLocationEntry(partNum int) *ObPartLocationEntry {
+	entry := new(ObPartLocationEntry)
 	entry.partLocations = make(map[int64]*obPartitionLocation, partNum)
 	return entry
 }
 
-func (e *obPartLocationEntry) String() string {
+func (e *ObPartLocationEntry) String() string {
 	var partitionLocationStr string
 	var i = 0
 	partitionLocationStr = partitionLocationStr + "{"
@@ -29,7 +29,7 @@ func (e *obPartLocationEntry) String() string {
 		}
 	}
 	partitionLocationStr += "}"
-	return "obPartLocationEntry{" +
+	return "ObPartLocationEntry{" +
 		"partLocations:" + partitionLocationStr +
 		"}"
 }
