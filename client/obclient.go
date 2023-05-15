@@ -54,14 +54,12 @@ func newObClient(
 	// 1. Parse full username to get userName/tenantName/clusterName
 	err := cli.parseFullUserName(fullUserName)
 	if err != nil {
-		log.Warn("failed to parse full user name", log.String("fullUserName", fullUserName))
-		return nil, err
+		return nil, errors.WithMessagef(err, "parse full user name, fullUserName:%s", fullUserName)
 	}
 	// 2. Parse config url to get database
 	err = cli.parseConfigUrl(configUrl)
 	if err != nil {
-		log.Warn("failed to parse config url", log.String("configUrl", configUrl))
-		return nil, err
+		return nil, errors.WithMessagef(err, "parse config url, configUrl:%s", configUrl)
 	}
 
 	// 3. init other members
@@ -92,18 +90,14 @@ func (c *ObClient) parseFullUserName(fullUserName string) error {
 	utIndex := strings.Index(fullUserName, "@")
 	tcIndex := strings.Index(fullUserName, "#")
 	if utIndex == -1 || tcIndex == -1 || tcIndex <= utIndex {
-		log.Warn("invalid full user name", log.String("fullUserName", fullUserName))
-		return errors.New("invalid full user name")
+		return errors.Errorf("invalid full user name, fullUserName:%s", fullUserName)
 	}
 	userName := fullUserName[:utIndex]
 	tenantName := fullUserName[utIndex+1 : tcIndex]
 	clusterName := fullUserName[tcIndex+1:]
 	if userName == "" || tenantName == "" || clusterName == "" {
-		log.Warn("invalid element in full user name",
-			log.String("userName", userName),
-			log.String("tenantName", tenantName),
-			log.String("clusterName", clusterName))
-		return errors.New("invalid element in full user name")
+		return errors.Errorf("invalid element in full user name, userName:%s, tenantName:%s, clusterName:%s",
+			userName, tenantName, clusterName)
 	}
 	c.userName = userName
 	c.tenantName = tenantName
@@ -118,14 +112,12 @@ func (c *ObClient) parseConfigUrl(configUrl string) error {
 	if index == -1 {
 		index = strings.Index(configUrl, "DATABASE=")
 		if index == -1 {
-			log.Warn("config url not contain database", log.String("config url", configUrl))
-			return errors.New("config url not contain database")
+			return errors.Errorf("config url not contain database, configUrl:%s", configUrl)
 		}
 	}
 	db := configUrl[index+len("database="):]
 	if db == "" {
-		log.Warn("database is empty", log.String("config url", configUrl))
-		return errors.New("database is empty")
+		return errors.Errorf("database is empty, configUrl:%s", configUrl)
 	}
 	c.configUrl = configUrl
 	c.database = db
@@ -138,10 +130,7 @@ func (c *ObClient) init() error {
 
 func (c *ObClient) AddRowKey(tableName string, rowKey []string) error {
 	if tableName == "" || len(rowKey) == 0 {
-		log.Warn("nil table name or empty rowKey",
-			log.String("tableName", tableName),
-			log.Int("rowKey size", len(rowKey)))
-		return errors.New("nil table name or empty rowKey")
+		return errors.Errorf("nil table name or empty rowKey, tableName:%s, rowKey size:%d", tableName, len(rowKey))
 	}
 	m := make(map[string]int, 1)
 	for i := 0; i < len(rowKey); i++ {
@@ -165,11 +154,8 @@ func (c *ObClient) Insert(
 		mutateColumns,
 		opts...)
 	if err != nil {
-		log.Warn("failed to execute insert",
-			log.String("tableName", tableName),
-			log.String("rowKey", table.ColumnsToString(rowKey)),
-			log.String("mutateColumns", table.ColumnsToString(mutateColumns)))
-		return -1, err
+		return -1, errors.WithMessagef(err, "execute insert, tableName:%s, rowKey:%s, mutateColumns:%s",
+			tableName, table.ColumnsToString(rowKey), table.ColumnsToString(mutateColumns))
 	}
 	return res.AffectedRows(), nil
 }
@@ -187,11 +173,8 @@ func (c *ObClient) Update(
 		mutateColumns,
 		opts...)
 	if err != nil {
-		log.Warn("failed to execute update",
-			log.String("tableName", tableName),
-			log.String("rowKey", table.ColumnsToString(rowKey)),
-			log.String("mutateColumns", table.ColumnsToString(mutateColumns)))
-		return -1, err
+		return -1, errors.WithMessagef(err, "execute update, tableName:%s, rowKey:%s, mutateColumns:%s",
+			tableName, table.ColumnsToString(rowKey), table.ColumnsToString(mutateColumns))
 	}
 	return res.AffectedRows(), nil
 }
@@ -209,11 +192,8 @@ func (c *ObClient) InsertOrUpdate(
 		mutateColumns,
 		opts...)
 	if err != nil {
-		log.Warn("failed to execute insertOrUpdate",
-			log.String("tableName", tableName),
-			log.String("rowKey", table.ColumnsToString(rowKey)),
-			log.String("mutateColumns", table.ColumnsToString(mutateColumns)))
-		return -1, err
+		return -1, errors.WithMessagef(err, "execute insert or update, tableName:%s, rowKey:%s, mutateColumns:%s",
+			tableName, table.ColumnsToString(rowKey), table.ColumnsToString(mutateColumns))
 	}
 	return res.AffectedRows(), nil
 }
@@ -230,10 +210,8 @@ func (c *ObClient) Delete(
 		nil,
 		opts...)
 	if err != nil {
-		log.Warn("failed to execute del",
-			log.String("tableName", tableName),
-			log.String("rowKey", table.ColumnsToString(rowKey)))
-		return -1, err
+		return -1, errors.WithMessagef(err, "execute delete, tableName:%s, rowKey:%s",
+			tableName, table.ColumnsToString(rowKey))
 	}
 	return res.AffectedRows(), nil
 }
@@ -255,11 +233,8 @@ func (c *ObClient) Get(
 		columns,
 		opts...)
 	if err != nil {
-		log.Warn("failed to execute get",
-			log.String("tableName", tableName),
-			log.String("rowKey", table.ColumnsToString(rowKey)),
-			log.String("getColumns", util.StringArrayToString(getColumns)))
-		return nil, err
+		return nil, errors.WithMessagef(err, "execute get, tableName:%s, rowKey:%s, getColumns:%s",
+			tableName, table.ColumnsToString(rowKey), util.StringArrayToString(getColumns))
 	}
 	return res.Entity().GetSimpleProperties(), nil
 }
@@ -281,10 +256,7 @@ func (c *ObClient) execute(
 	// 1. Get table route
 	tableParam, err := c.getTableParam(tableName, rowKeyValue, false /* refresh */)
 	if err != nil {
-		log.Warn("failed to get table param",
-			log.String("tableName", tableName),
-			log.Int8("opType", int8(opType)))
-		return nil, err
+		return nil, errors.WithMessagef(err, "get table param, tableName:%s, opType:%d", tableName, opType)
 	}
 
 	// 2. Construct request.
@@ -299,19 +271,15 @@ func (c *ObClient) execute(
 		c.config.LogLevel,
 	)
 	if err != nil {
-		log.Warn("failed to new operation request",
-			log.String("tableName", tableName),
-			log.String("tableParam", tableParam.String()),
-			log.Int8("opType", int8(opType)))
-		return nil, err
+		return nil, errors.WithMessagef(err, "new operation request, tableName:%s, tableParam:%s, opType:%d",
+			tableName, tableParam.String(), opType)
 	}
 
 	// 3. execute
 	result := protocol.NewTableOperationResponse()
 	err = tableParam.table.execute(request, result)
 	if err != nil {
-		log.Warn("failed to execute request", log.String("request", request.String()))
-		return nil, errors.WithMessagef(err, "[%s]", request.String())
+		return nil, errors.WithMessagef(err, "execute request, request:%s", request.String())
 	}
 
 	if oberror.ObErrorCode(result.Header().ErrorNo()) != oberror.ObSuccess {
@@ -321,6 +289,7 @@ func (c *ObClient) execute(
 			oberror.ObErrorCode(result.Header().ErrorNo()),
 			result.UniqueId(),
 			result.Sequence(),
+			tableName,
 		)
 	}
 
@@ -333,33 +302,23 @@ func (c *ObClient) getTableParam(
 	refresh bool) (*ObTableParam, error) {
 	entry, err := c.getOrRefreshTableEntry(tableName, refresh, false)
 	if err != nil {
-		log.Warn("failed to get or refresh table entry", log.String("tableName", tableName))
-		return nil, err
+		return nil, errors.WithMessagef(err, "get or refresh table entry, tableName:%s", tableName)
 	}
 	partId, err := c.getPartitionId(entry, rowKeyValue)
 	if err != nil {
-		log.Warn("failed to get partition id",
-			log.String("tableName", tableName),
-			log.String("entry", entry.String()))
-		return nil, err
+		return nil, errors.WithMessagef(err, "get partition id, tableName:%s, tableEntry:%s", tableName, entry.String())
 	}
 	t, err := c.getTable(entry, partId)
 	if err != nil {
-		log.Warn("failed to get table",
-			log.String("tableName", tableName),
-			log.String("entry", entry.String()),
-			log.Int64("partId", partId))
-		return nil, err
+		return nil, errors.WithMessagef(err, "get table, tableName:%s, tableEntry:%s, partId:%s",
+			tableName, entry.String(), partId)
 	}
 
 	if util.ObVersion() >= 4 {
 		partId, err = entry.PartitionInfo().GetTabletId(partId)
 		if err != nil {
-			log.Warn("failed to get tablet id",
-				log.String("tableName", tableName),
-				log.String("entry", entry.String()),
-				log.Int64("partId", partId))
-			return nil, err
+			return nil, errors.WithMessagef(err, "get tablet id, tableName:%s, tableEntry:%s, partId:%s",
+				tableName, entry.String(), partId)
 		}
 	}
 
@@ -408,8 +367,7 @@ func (c *ObClient) getOrRefreshTableEntry(tableName string, refresh bool, waitFo
 		time.Sleep(time.Millisecond)
 	}
 	if timeout == c.config.TableEntryRefreshLockTimeout.Milliseconds() {
-		log.Warn("failed to try lock table to refresh", log.Int64("timeout", timeout))
-		return nil, errors.New("failed to try lock table to refresh")
+		return nil, errors.Errorf("failed to try lock table to refresh, timeout:%d", timeout)
 	}
 	defer func() {
 		lock.Unlock()
@@ -440,13 +398,11 @@ func (c *ObClient) getOrRefreshTableEntry(tableName string, refresh bool, waitFo
 			log.String("tableName", tableName))
 		err := c.syncRefreshMetadata()
 		if err != nil {
-			log.Warn("failed to sync refresh meta data", log.String("tableName", tableName))
-			return nil, err
+			return nil, errors.WithMessagef(err, "sync refresh meta data, tableName:%s", tableName)
 		}
 		err = c.refreshTableEntry(&entry, tableName)
 		if err != nil {
-			log.Warn("failed to refresh table entry", log.String("tableName", tableName))
-			return nil, err
+			return nil, errors.WithMessagef(err, "refresh table entry, tableName:%s", tableName)
 		}
 		return entry, nil
 	}
@@ -470,15 +426,13 @@ func (c *ObClient) refreshTableEntry(entry **route.ObTableEntry, tableName strin
 	if *entry != nil { // If table entry exist we just need to refresh table locations
 		err = c.loadTableEntryLocation(*entry)
 		if err != nil {
-			log.Warn("failed to load table entry location", log.String("tableName", tableName))
-			return err
+			return errors.WithMessagef(err, "load table entry location, tableName:%s", tableName)
 		}
 	} else {
 		key := route.NewObTableEntryKey(c.clusterName, c.tenantName, c.database, tableName)
 		*entry, err = route.GetTableEntryFromRemote(c.serverRoster.GetServer(), &c.sysUA, key)
 		if err != nil {
-			log.Warn("failed to get table entry from remote", log.String("key", key.String()))
-			return err
+			return errors.WithMessagef(err, "get table entry from remote, key:%s", key.String())
 		}
 	}
 
@@ -486,8 +440,7 @@ func (c *ObClient) refreshTableEntry(entry **route.ObTableEntry, tableName strin
 	if (*entry).IsPartitionTable() {
 		rowKeyElement, ok := c.tableRowKeyElement[tableName]
 		if !ok {
-			log.Warn("failed to get rowKey element by table name", log.String("tableName", tableName))
-			return errors.New("failed to get rowKey element by table name")
+			return errors.Errorf("failed to get rowKey element by table name, tableName:%s", tableName)
 		}
 		(*entry).SetRowKeyElement(rowKeyElement)
 	}
@@ -511,10 +464,7 @@ func (c *ObClient) loadTableEntryLocation(entry *route.ObTableEntry) error {
 		route.OceanbaseDatabase,
 	)
 	if err != nil {
-		log.Warn("failed to new db",
-			log.String("sysUA", c.sysUA.String()),
-			log.String("addr", addr.String()))
-		return err
+		return errors.WithMessagef(err, "new db, sysUA:%s, addr:%s", c.sysUA.String(), addr.String())
 	}
 	defer func() {
 		_ = db.Close()
@@ -522,8 +472,7 @@ func (c *ObClient) loadTableEntryLocation(entry *route.ObTableEntry) error {
 
 	locEntry, err := route.GetPartLocationEntryFromRemote(db, entry)
 	if err != nil {
-		log.Warn("failed to get part location entry from remote", log.String("entry", entry.String()))
-		return err
+		return errors.WithMessagef(err, "get part location entry from remote, tableEntry:%s", entry.String())
 	}
 	entry.SetPartLocationEntry(locEntry)
 	return nil
@@ -548,8 +497,7 @@ func (c *ObClient) syncRefreshMetadata() error {
 		time.Sleep(time.Millisecond)
 	}
 	if timeout == c.config.MetadataRefreshLockTimeout.Milliseconds() {
-		log.Warn("failed to lock metadata refreshing timeout", log.Int64("timeout", timeout))
-		return errors.New("failed to lock metadata refreshing timeout")
+		return errors.Errorf("failed to lock metadata refreshing timeout, timeout:%d", timeout)
 	}
 	defer func() {
 		c.refreshMetadataLock.Unlock()
@@ -566,8 +514,7 @@ func (c *ObClient) syncRefreshMetadata() error {
 	// 4. fetch meta data
 	err := c.fetchMetadata()
 	if err != nil {
-		log.Warn("failed fetch meta data")
-		return err
+		return errors.WithMessagef(err, "fetch meta data")
 	}
 	return nil
 }
@@ -582,10 +529,8 @@ func (c *ObClient) fetchMetadata() error {
 		c.config.RslistHttpGetRetryInterval,
 	)
 	if err != nil {
-		log.Warn("failed to load ocp model",
-			log.String("configUrl", c.configUrl),
-			log.String("localFileName", c.config.RslistLocalFileLocation))
-		return err
+		return errors.WithMessagef(err, "load ocp model, configUrl:%s, localFileName:%s",
+			c.configUrl, c.config.RslistLocalFileLocation)
 	}
 	c.ocpModel = ocpModel
 	addr := c.ocpModel.GetServerAddressRandomly()
@@ -593,10 +538,8 @@ func (c *ObClient) fetchMetadata() error {
 	// 2. Get ob cluster version and init route sql
 	ver, err := route.GetObVersionFromRemote(addr, &c.sysUA)
 	if err != nil {
-		log.Warn("failed to get ob version from remote",
-			log.String("addr", addr.String()),
-			log.String("sysUA", c.sysUA.String()))
-		return err
+		return errors.WithMessagef(err, "get ob version from remote, addr:%s, sysUA:%s",
+			addr.String(), c.sysUA.String())
 	}
 	// 2.1 Set ob version and init route sql by ob version.
 	if util.ObVersion() == 0.0 {
@@ -615,11 +558,8 @@ func (c *ObClient) fetchMetadata() error {
 	)
 	entry, err := route.GetTableEntryFromRemote(addr, &c.sysUA, rootServerKey)
 	if err != nil {
-		log.Warn("failed to dummy tenant server from remote",
-			log.String("addr", addr.String()),
-			log.String("sysUA", c.sysUA.String()),
-			log.String("key", rootServerKey.String()))
-		return err
+		return errors.WithMessagef(err, "dummy tenant server from remote, addr:%s, sysUA:%s, key:%s",
+			addr.String(), c.sysUA.String(), rootServerKey.String())
 	}
 	// 3.2 Save all tenant server address
 	replicaLocations := entry.TableLocation().ReplicaLocations()
@@ -642,8 +582,7 @@ func (c *ObClient) fetchMetadata() error {
 		t := NewObTable(addr.Ip(), addr.SvrPort(), c.tenantName, c.userName, c.password, c.database)
 		err = t.init(c.config.ConnPoolMaxConnSize, c.config.RpcConnectTimeOut)
 		if err != nil {
-			log.Warn("fail to init ob table", log.String("obTable", addr.String()))
-			return err
+			return errors.WithMessagef(err, "init ob table, obTable:%s", t.String())
 		}
 		_, loaded := c.tableRoster.LoadOrStore(*addr, t)
 		if loaded { // Already stored by other goroutine, close table
@@ -690,36 +629,30 @@ func (c *ObClient) getPartitionId(entry *route.ObTableEntry, rowKeyValue []inter
 	if entry.PartitionInfo().Level() == route.PartLevelTwo {
 		partId1, err := entry.PartitionInfo().FirstPartDesc().GetPartId(rowKeyValue)
 		if err != nil {
-			log.Warn("failed to get part id from first part desc",
-				log.String("first part desc", entry.PartitionInfo().FirstPartDesc().String()))
-			return -1, err
+			return -1, errors.WithMessagef(err, "get part id from first part desc, firstDesc:%s",
+				entry.PartitionInfo().FirstPartDesc().String())
 		}
 		partId2, err := entry.PartitionInfo().SubPartDesc().GetPartId(rowKeyValue)
 		if err != nil {
-			log.Warn("failed to get part id from sub part desc",
-				log.String("sub part desc", entry.PartitionInfo().SubPartDesc().String()))
-			return -1, err
+			return -1, errors.WithMessagef(err, "get part id from sub part desc, firstDesc:%s",
+				entry.PartitionInfo().SubPartDesc().String())
 		}
 		return (partId1)<<route.ObPartIdShift | partId2 | route.ObMask, nil
 	}
-	log.Warn("unknown partition level", log.String("part info", entry.PartitionInfo().String()))
-	return -1, errors.New("unknown partition level")
+	return -1, errors.Errorf("unknown partition level, partInfo:%s", entry.PartitionInfo().String())
 }
 
 func (c *ObClient) getTable(entry *route.ObTableEntry, partId int64) (*ObTable, error) {
 	// 1. Get replica location by partition id
 	replicaLoc, err := entry.GetPartitionReplicaLocation(partId, route.ConsistencyStrong)
 	if err != nil {
-		log.Warn("failed to get partition replica location", log.Int64("partId", partId))
-		return nil, err
+		return nil, errors.WithMessagef(err, "get partition replica location, partId:%d", partId)
 	}
 
 	// 2. Get table from table Roster by server addr
 	t, ok := c.tableRoster.Load(*replicaLoc.Addr())
 	if !ok {
-		log.Warn("failed to get table by server addr",
-			log.String("addr", replicaLoc.Addr().String()))
-		return nil, errors.New("failed to get table by server addr")
+		return nil, errors.Errorf("failed to get table by server addr, addr:%s", replicaLoc.Addr().String())
 	}
 	// todo: check server addr is expired or not
 	tb, _ := t.(*ObTable)

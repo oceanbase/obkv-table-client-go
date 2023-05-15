@@ -6,7 +6,6 @@ import (
 	"github.com/pkg/errors"
 
 	"github.com/oceanbase/obkv-table-client-go/config"
-	"github.com/oceanbase/obkv-table-client-go/log"
 	"github.com/oceanbase/obkv-table-client-go/table"
 )
 
@@ -19,32 +18,26 @@ func NewClient(
 	cliConfig *config.ClientConfig) (Client, error) {
 	// 1. Check args
 	if configUrl == "" {
-		log.Warn("config url is empty")
 		return nil, errors.New("config url is empty")
 	}
 	if fullUserName == "" || sysUserName == "" {
-		log.Warn("user name is empty",
-			log.String("fullUserName", fullUserName),
-			log.String("sysUserName", sysUserName))
-		return nil, errors.New("user name is null")
+		return nil, errors.New("full user name is null")
+	}
+	if sysUserName == "" {
+		return nil, errors.New("system user name is null")
 	}
 	if cliConfig == nil {
-		log.Warn("client config is nil")
 		return nil, errors.New("client config is nil")
 	}
 
 	// 2. New client and init
 	cli, err := newObClient(configUrl, fullUserName, passWord, sysUserName, sysPassWord, cliConfig)
 	if err != nil {
-		log.Warn("failed to new obClient",
-			log.String("configUrl", configUrl),
-			log.String("fullUserName", fullUserName))
-		return nil, err
+		return nil, errors.WithMessagef(err, "new ob client, configUrl:%s, fullUserName:%s", configUrl, fullUserName)
 	}
 	err = cli.init()
 	if err != nil {
-		log.Warn("failed to init client", log.String("client", cli.String()))
-		return nil, err
+		return nil, errors.WithMessagef(err, "init client, client:%s", cli.String())
 	}
 
 	return cli, nil

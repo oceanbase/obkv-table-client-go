@@ -1,11 +1,11 @@
 package route
 
 import (
-	"errors"
 	"strconv"
 	"strings"
 
-	"github.com/oceanbase/obkv-table-client-go/log"
+	"github.com/pkg/errors"
+
 	"github.com/oceanbase/obkv-table-client-go/table"
 )
 
@@ -131,23 +131,20 @@ type obPartDesc interface {
 	rowKeyElement() *table.ObRowKeyElement
 	setRowKeyElement(rowKeyElement *table.ObRowKeyElement)
 	setPartColumns(partColumns []*obColumn)
+	SetPartNum(partNum int)
 	GetPartId(rowKey []interface{}) (int64, error)
 }
 
 func evalPartKeyValues(desc obPartDesc, rowKey []interface{}) ([]interface{}, error) {
 	if desc == nil {
-		log.Warn("part desc is nil")
 		return nil, errors.New("part desc is nil")
 	}
 	if desc.rowKeyElement() == nil {
-		log.Warn("rowKey element is nil")
 		return nil, errors.New("rowKey element is nil")
 	}
 	if len(rowKey) < len(desc.rowKeyElement().NameIdxMap()) {
-		log.Warn("rowKey count not match",
-			log.Int("rowKey len", len(rowKey)),
-			log.Int("rowKeyElement len", len(desc.rowKeyElement().NameIdxMap())))
-		return nil, errors.New("rowKey count not match")
+		return nil, errors.Errorf("rowKey count not match, "+
+			"rowKey len:%d, rowKeyElement len:%d", len(rowKey), len(desc.rowKeyElement().NameIdxMap()))
 	}
 	partRefColumnSize := len(desc.orderedPartRefColumnRowKeyRelations())
 	evalValues := make([]interface{}, 0, partRefColumnSize)
@@ -159,8 +156,7 @@ func evalPartKeyValues(desc obPartDesc, rowKey []interface{}) ([]interface{}, er
 		}
 		val, err := relation.column.EvalValue(evalParams...)
 		if err != nil {
-			log.Warn("fail to eval column value", log.String("relations", relation.String()))
-			return nil, err
+			return nil, errors.WithMessagef(err, "eval column value, relations:%s", relation.String())
 		}
 		evalValues = append(evalValues, val)
 	}

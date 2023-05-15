@@ -155,6 +155,7 @@ func (c *Connection) Execute(ctx context.Context, request protocol.Payload, resp
 			rpcResponseCode.Code(),
 			rpcHeader.TraceId1(),
 			rpcHeader.TraceId0(),
+			"",
 		)
 	}
 

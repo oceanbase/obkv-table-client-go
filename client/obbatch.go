@@ -34,12 +34,8 @@ func (b *obBatchExecutor) addDmlOp(
 	opts ...ObkvOption) error {
 	op, err := protocol.NewTableOperation(opType, rowKey, mutateValues)
 	if err != nil {
-		log.Warn("failed to new table operation",
-			log.Int("type", int(opType)),
-			log.String("tableName", b.tableName),
-			log.String("rowKey", table.ColumnsToString(rowKey)),
-			log.String("mutateValues", table.ColumnsToString(mutateValues)))
-		return err
+		return errors.WithMessagef(err, "new table operation, opType:%d, tableName:%s, rowKey:%s, mutateValues:%s",
+			opType, b.tableName, table.ColumnsToString(rowKey))
 	}
 	b.batchOps.AppendTableOperation(op)
 	return nil
@@ -72,11 +68,8 @@ func (b *obBatchExecutor) AddAppendOp(rowKey []*table.Column, mutateValues []*ta
 func (b *obBatchExecutor) AddDeleteOp(rowKey []*table.Column, opts ...ObkvOption) error {
 	op, err := protocol.NewTableOperation(protocol.Del, rowKey, nil)
 	if err != nil {
-		log.Warn("failed to new table operation",
-			log.Int("type", int(protocol.Del)),
-			log.String("tableName", b.tableName),
-			log.String("rowKey", table.ColumnsToString(rowKey)))
-		return err
+		return errors.WithMessagef(err, "new delete table operation, tableName:%s, rowKey:%s",
+			b.tableName, table.ColumnsToString(rowKey))
 	}
 	b.batchOps.AppendTableOperation(op)
 	return nil
@@ -89,12 +82,8 @@ func (b *obBatchExecutor) AddGetOp(rowKey []*table.Column, getColumns []string, 
 	}
 	op, err := protocol.NewTableOperation(protocol.Get, rowKey, columns)
 	if err != nil {
-		log.Warn("failed to new table operation",
-			log.Int("type", int(protocol.Get)),
-			log.String("tableName", b.tableName),
-			log.String("rowKey", table.ColumnsToString(rowKey)),
-			log.String("getColumns", util.StringArrayToString(getColumns)))
-		return err
+		return errors.WithMessagef(err, "new get table operation, tableName:%s, rowKey:%s",
+			b.tableName, table.ColumnsToString(rowKey))
 	}
 	b.batchOps.AppendTableOperation(op)
 	return nil
@@ -106,10 +95,8 @@ func (b *obBatchExecutor) constructPartOpMap() (map[int64]*obPartOp, error) {
 		rowKey := op.Entity().RowKey().GetRowKeyValue()
 		tableParam, err := b.cli.getTableParam(b.tableName, rowKey, false)
 		if err != nil {
-			log.Warn("failed to get table param",
-				log.String("tableName", b.tableName),
-				log.String("rowKey", util.InterfacesToString(rowKey)))
-			return nil, err
+			return nil, errors.WithMessagef(err, "get table param, tableName:%s, rowKey:%s",
+				b.tableName, util.InterfacesToString(rowKey))
 		}
 		singleOp := newSingleOp(i, op)
 		partOp, exist := partOpMap[tableParam.partitionId]
@@ -147,8 +134,7 @@ func (b *obBatchExecutor) partitionExecute(
 	partRes := protocol.NewTableBatchOperationResponse()
 	err := partOp.tableParam.table.execute(request, partRes)
 	if err != nil {
-		log.Warn("failed to execute batch request", log.String("request", request.String()))
-		return errors.WithMessagef(err, "[%s]", request.String())
+		return errors.WithMessagef(err, "table execute, request:%s", request.String())
 	}
 
 	// 3. Handle result
@@ -162,15 +148,11 @@ func (b *obBatchExecutor) partitionExecute(
 				res[op.indexOfBatch] = partRes.TableOperationResponses()[0]
 			}
 		} else {
-			log.Warn("unexpected batch result size", log.Int("subResSize", subResSize))
-			return errors.New("unexpected batch result size")
+			return errors.Errorf("unexpected batch result size, subResSize:%d", subResSize)
 		}
 	} else {
 		if subResSize != subOpSize {
-			log.Warn("unexpected batch result size",
-				log.Int("subResSize", subResSize),
-				log.Int("subOpSize", subOpSize))
-			return errors.New("unexpected batch result size")
+			return errors.Errorf("unexpected batch result size, subResSize:%d, subOpSize:%d", subResSize, subOpSize)
 		}
 		for i, op := range partOp.ops {
 			res[op.indexOfBatch] = partRes.TableOperationResponses()[i]
@@ -182,19 +164,16 @@ func (b *obBatchExecutor) partitionExecute(
 
 func (b *obBatchExecutor) Execute(ctx context.Context) (BatchOperationResult, error) {
 	if b.cli == nil {
-		log.Warn("client handle is nil")
 		return nil, errors.New("client handle is nil")
 	}
 	if len(b.batchOps.TableOperations()) == 0 {
-		log.Warn("operation is empty")
 		return nil, errors.New("operation is empty")
 	}
 	res := make([]*protocol.TableOperationResponse, len(b.batchOps.TableOperations()))
 	// 1. construct partition operation map
 	partOpMap, err := b.constructPartOpMap()
 	if err != nil {
-		log.Warn("failed to construct partition operation map")
-		return nil, err
+		return nil, errors.WithMessagef(err, "construct partition operation map")
 	}
 
 	// 2. Loop map, execute per partition operations in goroutine
@@ -224,8 +203,7 @@ func (b *obBatchExecutor) Execute(ctx context.Context) (BatchOperationResult, er
 		for _, partOp := range partOpMap {
 			err := b.partitionExecute(partOp, res)
 			if err != nil {
-				log.Warn("failed to execute partition operations", log.String("partOp", partOp.String()))
-				return nil, err
+				return nil, errors.WithMessagef(err, "execute partition operations, partOp:%s", partOp.String())
 			}
 		}
 	}

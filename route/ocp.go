@@ -2,13 +2,15 @@ package route
 
 import (
 	"encoding/json"
-	"errors"
-	"github.com/oceanbase/obkv-table-client-go/log"
 	"math/rand"
 	"net/http"
 	"strconv"
 	"strings"
 	"time"
+
+	"github.com/pkg/errors"
+
+	"github.com/oceanbase/obkv-table-client-go/log"
 )
 
 type ObOcpModel struct {
@@ -35,13 +37,10 @@ func LoadOcpModel(
 	var resp obHttpRslistResponse
 	err := getRemoteOcpResponseOrNull(configUrl, fileName, timeout, retryTimes, retryInternal, &resp)
 	if err != nil {
-		log.Warn("failed to get remote ocp response", log.String("url", configUrl))
-		// todo: remove return after support read from local file
-		return nil, err
+		return nil, errors.WithMessagef(err, "get remote ocp response, url:%s", configUrl)
 	}
 
 	if err != nil && len(strings.TrimSpace(fileName)) != 0 {
-		// todo: get config from local file
 		return nil, errors.New("not support get config from local file now")
 	}
 
@@ -49,22 +48,19 @@ func LoadOcpModel(
 		// split ip and port, server.Address(xx.xx.xx.xx:xx)
 		res := strings.Split(server.Address, ":")
 		if len(res) != 2 {
-			log.Warn("failed to split ip and port", log.String("ip:port", server.Address))
-			return nil, errors.New("failed to split ip and por")
+			return nil, errors.Errorf("fail to split ip and port, server:%s", server.Address)
 		}
 		ip := res[0]
 		svrPort, err := strconv.Atoi(res[1])
 		if err != nil {
-			log.Warn("fail eo strconv string", log.String("port", res[1]))
-			return nil, err
+			return nil, errors.Errorf("fail to convert server port to int, port:%s", res[1])
 		}
 		addr := &ObServerAddr{ip: ip, sqlPort: server.SqlPort, svrPort: svrPort}
 		servers = append(servers, addr)
 	}
 
 	if len(servers) == 0 {
-		log.Warn("failed to load Rs list", log.String("url", configUrl), log.String("file", fileName))
-		return nil, errors.New("failed to load Rs lis")
+		return nil, errors.Errorf("failed to load Rslist, url:%s", configUrl)
 	}
 
 	return newOcpModel(servers, resp.Data.ObClusterId), nil
@@ -104,16 +100,17 @@ func getRemoteOcpResponseOrNull(
 	var err error
 	var times int
 	cli := http.Client{Timeout: timeout}
-	for times := 0; times < retryTimes; times++ {
+	for times = 0; times < retryTimes; times++ {
 		httpResp, err = cli.Get(url)
 		if err != nil {
 			log.Warn("failed to http get", log.String("url", url), log.Int("times", times))
 			time.Sleep(retryInternal)
+		} else {
+			break
 		}
 	}
 	if times == retryTimes {
-		log.Warn("failed to http get after some retry", log.String("url", url), log.Int("times", times))
-		return errors.New("failed to http get after some retry")
+		return errors.Errorf("failed to http get after some retry, url:%s, times:%d", url, times)
 	}
 	defer func() {
 		_ = httpResp.Body.Close()
@@ -123,8 +120,7 @@ func getRemoteOcpResponseOrNull(
 	for decoder.More() {
 		err := decoder.Decode(resp)
 		if err != nil {
-			log.Warn("failed to decode http response", log.String("url", url))
-			return err
+			return errors.WithMessagef(err, "decode http response, url:%s", url)
 		}
 	}
 
