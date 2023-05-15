@@ -26,6 +26,7 @@ import (
 	"github.com/oceanbase/obkv-table-client-go/protocol"
 )
 
+// newObSimpleColumn create a simple column, index represents the index of this column in the partitioning key.
 func newObSimpleColumn(
 	columnName string,
 	index int,
@@ -42,9 +43,10 @@ func newObSimpleColumn(
 	}
 }
 
+// obColumn represents a column in the table and contains the column meta-information.
 type obColumn struct {
 	columnName    string
-	index         int
+	index         int // the index of this column in the partitioning key.
 	objType       protocol.ObObjType
 	collationType protocol.ObCollationType
 	// refColumnNames: Represents which columns are referenced by the current column
@@ -57,6 +59,9 @@ type obColumn struct {
 	columnExpress  obGeneratedColumnSimpleFunc // only support 'SUBSTRING' expr now
 }
 
+// EvalValue calculate the value of the partition column.
+// When the current column is a generated column,
+// the parameter is the column on which the build column depends.
 func (c *obColumn) EvalValue(refs ...interface{}) (interface{}, error) {
 	if !c.isGenColumn {
 		if len(refs) == 0 || len(refs) > 1 {

@@ -30,6 +30,7 @@ import (
 	"github.com/oceanbase/obkv-table-client-go/log"
 )
 
+// ObOcpModel contains information about rslist and IDC.
 type ObOcpModel struct {
 	servers   []*ObServerAddr
 	clusterId int
@@ -39,11 +40,13 @@ func newOcpModel(servers []*ObServerAddr, clusterId int) *ObOcpModel {
 	return &ObOcpModel{servers, clusterId}
 }
 
+// GetServerAddressRandomly get one randomly server from all the servers
 func (o *ObOcpModel) GetServerAddressRandomly() *ObServerAddr {
 	idx := rand.Intn(len(o.servers))
 	return o.servers[idx]
 }
 
+// LoadOcpModel obtain the rslist information from the configUrl using the http get service.
 func LoadOcpModel(
 	configUrl string,
 	fileName string,
@@ -106,6 +109,7 @@ type obHttpRslistResponse struct {
 	Trace   string `json:"Trace"`
 }
 
+// getRemoteOcpResponseOrNull parse the response returned by http get and parse the json.
 func getRemoteOcpResponseOrNull(
 	url string,
 	fileName string,

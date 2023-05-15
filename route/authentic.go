@@ -17,6 +17,7 @@
 
 package route
 
+// ObUserAuth user authentication information
 type ObUserAuth struct {
 	userName string
 	password string
@@ -30,6 +31,7 @@ func (a *ObUserAuth) UserName() string {
 	return a.userName
 }
 
+// NewObUserAuth create a ObUserAuth by userName and password.
 func NewObUserAuth(userName string, password string) *ObUserAuth {
 	return &ObUserAuth{userName, password}
 }

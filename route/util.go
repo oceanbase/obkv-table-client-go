@@ -22,6 +22,7 @@ import (
 	"strconv"
 )
 
+// createInStatement create "(0,1,2...partNum);" string, is used by route model.
 func createInStatement(values []int) string {
 	// Create inStatement "(0,1,2...partNum);".
 	var inStatement string
@@ -36,6 +37,7 @@ func createInStatement(values []int) string {
 	return inStatement
 }
 
+// murmurHash64A is same as function hash64a() in java jdk.
 func murmurHash64A(data []byte, length int, seed int64) int64 {
 	const (
 		m = 0xc6a4a7935bd1e995
@@ -47,8 +49,8 @@ func murmurHash64A(data []byte, length int, seed int64) int64 {
 	var um uint64 = m
 	var im = int64(um)
 	for l := length; l >= 8; l -= 8 {
-		k = int64(int64(data[0]) | int64(data[1])<<8 | int64(data[2])<<16 | int64(data[3])<<24 |
-			int64(data[4])<<32 | int64(data[5])<<40 | int64(data[6])<<48 | int64(data[7])<<56)
+		k = int64(data[0]) | int64(data[1])<<8 | int64(data[2])<<16 | int64(data[3])<<24 |
+			int64(data[4])<<32 | int64(data[5])<<40 | int64(data[6])<<48 | int64(data[7])<<56
 
 		k := k * im
 		k ^= int64(uint64(k) >> r)
@@ -96,8 +98,6 @@ func parseToNumber(value interface{}) (interface{}, error) {
 			return nil, err
 		}
 		return int64(i), nil
-	} else if v, ok := value.(int); ok { // todo  not support int
-		return int64(v), nil
 	} else if v, ok := value.(int64); ok {
 		return v, nil
 	} else if v, ok := value.(int32); ok {

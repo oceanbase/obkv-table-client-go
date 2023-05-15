@@ -33,7 +33,6 @@ func TestObColumn_String(t *testing.T) {
 	assert.Equal(t, "obColumn{columnName:c1, index:1, objType:ObObjType{type:ObTinyIntType}, collationType:ObCollationType{collationType:CsTypeUtf8mb4GeneralCi}, refColumnNames:[c1], isGenColumn:false, columnExpress:nil}", col.String())
 }
 
-// todo: test after obobj type refactoring
 func TestObColumn_EvalValue(t *testing.T) {
 	objType, _ := protocol.NewObjType(protocol.ObObjTypeVarcharTypeValue)
 	col := newObSimpleColumn("c1", 1, objType, protocol.ObCollationTypeUtf8mb4GeneralCi)

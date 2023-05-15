@@ -33,8 +33,8 @@ import (
 )
 
 const (
-	OceanbaseDatabase = "OCEANBASE"
-	AllDummyTable     = "__all_dummy"
+	OceanbaseDatabase = "OCEANBASE"   // OceanbaseDatabase is used to obtain route.
+	AllDummyTable     = "__all_dummy" // AllDummyTable is used to obtain all tenant server distributions.
 )
 
 const (
@@ -102,6 +102,7 @@ var (
 	proxySubPartitionSql      string
 )
 
+// InitSql will be called after getting oceanbase cluster version.
 func InitSql(obVersion float32) {
 	proxySqlGuard.Lock()
 	if obVersion >= 4 {
@@ -167,6 +168,8 @@ func GetObVersionFromRemote(addr *ObServerAddr, sysUA *ObUserAuth) (float32, err
 	return res, nil
 }
 
+// GetTableEntryFromRemote obtain the route of a table in the ob cluster by querying the routing system table.
+// ObTableEntry indicates the routing information of a table.
 func GetTableEntryFromRemote(
 	ctx context.Context,
 	addr *ObServerAddr,
@@ -249,6 +252,7 @@ func GetTableEntryFromRemote(
 	return entry, nil
 }
 
+// getTableEntryFromResultSet get the queried routing information from sql rows, including ip, port, sqlPort and so on.
 func getTableEntryFromResultSet(rows *Rows, tableName string) (*ObTableEntry, error) {
 	tableLocation := new(ObTableLocation)
 	entry := new(ObTableEntry)
@@ -312,6 +316,8 @@ func getTableEntryFromResultSet(rows *Rows, tableName string) (*ObTableEntry, er
 	return entry, nil
 }
 
+// GetPartLocationEntryFromRemote get the location information for a table.
+// Location information represents the distribution of all replica of the table.
 func GetPartLocationEntryFromRemote(ctx context.Context, db *DB, entry *ObTableEntry) (*ObPartLocationEntry, error) {
 	// 1. Create inStatement "(0,1,2...partNum);".
 	partIds := make([]int, 0, entry.partNum)
@@ -347,6 +353,8 @@ func GetPartLocationEntryFromRemote(ctx context.Context, db *DB, entry *ObTableE
 	return partLocationEntry, nil
 }
 
+// getPartLocationEntryFromResultSet get replica location information from sql rows,
+// including partitionId, ip, port, sqlPort and so on.
 func getPartLocationEntryFromResultSet(rows *Rows, tableName string) (*ObPartLocationEntry, error) {
 	var partitionEntry *ObPartLocationEntry = nil
 	isFirstRow := true
@@ -415,6 +423,7 @@ func getPartLocationEntryFromResultSet(rows *Rows, tableName string) (*ObPartLoc
 	return partitionEntry, nil
 }
 
+// getPartitionInfoFromRemote get the meta information for the partition key.
 func getPartitionInfoFromRemote(ctx context.Context, db *DB, tenantName string, tableId uint64) (*obPartitionInfo, error) {
 	// 1. Do query with specific tenant name(ob version > 4), table id and limit.
 	var rows *Rows
@@ -441,8 +450,9 @@ func getPartitionInfoFromRemote(ctx context.Context, db *DB, tenantName string, 
 	return info, nil
 }
 
+// getPartitionInfoFromResultSet get the meta information for the partition key from sql rows.
 func getPartitionInfoFromResultSet(rows *Rows) (*obPartitionInfo, error) {
-	info := new(obPartitionInfo)
+	var info *obPartitionInfo = nil
 	var (
 		partLevel        int
 		partNum          int
@@ -486,7 +496,7 @@ func getPartitionInfoFromResultSet(rows *Rows) (*obPartitionInfo, error) {
 		}
 		if isFirstRow {
 			isFirstRow = false
-			info.level = obPartLevel(partLevel)
+			info = newObPartitionInfo(obPartLevel(partLevel))
 			// build first part
 			if info.level >= PartLevelOne {
 				firstPartDesc, err := buildPartDesc(
@@ -538,7 +548,6 @@ func getPartitionInfoFromResultSet(rows *Rows) (*obPartitionInfo, error) {
 		info.partColumns = append(info.partColumns, column)
 	}
 	info.partTabletIdMap = make(map[int64]int64, partNum)
-	info.partNameIdMap = make(map[string]int64, partNum)
 
 	var orderedPartedColumns1 []*obColumn
 	if info.level >= PartLevelOne {
@@ -604,6 +613,7 @@ func setPartDescProperty(
 	return nil
 }
 
+// buildPartDesc generate partition key description information.
 func buildPartDesc(partNum int,
 	partFuncType obPartFuncType,
 	partSpace int,
@@ -611,13 +621,8 @@ func buildPartDesc(partNum int,
 	partRangeType string) (obPartDesc, error) {
 	partExpr = strings.ReplaceAll(partExpr, "`", "") // '`' is not supported by druid
 	if isRangePart(partFuncType) {
-		rangeDesc := newObRangePartDesc()
-		rangeDesc.partNum = partNum
-		rangeDesc.PartFuncType = partFuncType
-		rangeDesc.PartExpr = partExpr
-		rangeDesc.partSpace = partSpace
-		rangeDesc.setOrderedPartColumnNames(partExpr)
-		for _, typeStr := range strings.Split(partRangeType, ",") { // todo: make sure space
+		rangeDesc := newObRangePartDesc(partSpace, partNum, partFuncType, partExpr)
+		for _, typeStr := range strings.Split(partRangeType, ",") {
 			typeValue, err := strconv.Atoi(typeStr)
 			if err != nil {
 				return nil, errors.WithMessagef(err, "convert string to int, typeStr:%s", typeStr)
@@ -630,40 +635,15 @@ func buildPartDesc(partNum int,
 		}
 		return rangeDesc, nil
 	} else if isHashPart(partFuncType) {
-		hashDesc := newObHashPartDesc()
-		hashDesc.partNum = partNum
-		hashDesc.PartFuncType = partFuncType
-		hashDesc.PartExpr = partExpr
-		hashDesc.setOrderedPartColumnNames(partExpr)
-		hashDesc.partSpace = partSpace
-		if util.ObVersion() < 4 {
-			hashDesc.partNameIdMap = buildDefaultPartNameIdMap(partNum)
-		}
-		return hashDesc, nil
+		return newObHashPartDesc(partSpace, partNum, partFuncType, partExpr), nil
 	} else if isKeyPart(partFuncType) {
-		keyDesc := newObKeyPartDesc()
-		keyDesc.partNum = partNum
-		keyDesc.PartFuncType = partFuncType
-		keyDesc.PartExpr = partExpr
-		keyDesc.setOrderedPartColumnNames(partExpr)
-		keyDesc.partSpace = partSpace
-		if util.ObVersion() < 4 {
-			keyDesc.partNameIdMap = buildDefaultPartNameIdMap(partNum)
-		}
-		return keyDesc, nil
+		return newObKeyPartDesc(partSpace, partNum, partFuncType, partExpr), nil
 	} else {
 		return nil, errors.Errorf("invalid part type, partFuncType:%d", partFuncType)
 	}
 }
 
-func buildDefaultPartNameIdMap(partNum int) map[string]int64 {
-	partNameIdMap := make(map[string]int64)
-	for i := 0; i < partNum; i++ {
-		partNameIdMap["p"+strconv.Itoa(i)] = int64(i)
-	}
-	return partNameIdMap
-}
-
+// fetchFirstPart get level 1 partition information.
 func fetchFirstPart(ctx context.Context, db *DB, partFuncType obPartFuncType, entry *ObTableEntry) error {
 	key := entry.tableEntryKey
 	var rows *Rows
@@ -704,6 +684,7 @@ func fetchFirstPart(ctx context.Context, db *DB, partFuncType obPartFuncType, en
 		} else if isListPart(partFuncType) {
 			return errors.New("not support list partition now")
 		} else if util.ObVersion() >= 4 && (isKeyPart(partFuncType) || isHashPart(partFuncType)) {
+			// in version 4, subPartNum exists only in level 1 partitions, so you need to set subPartNum in advance.
 			if entry.partitionInfo.subPartDesc != nil {
 				entry.partitionInfo.subPartDesc.SetPartNum(subPartNum)
 			}
@@ -714,6 +695,7 @@ func fetchFirstPart(ctx context.Context, db *DB, partFuncType obPartFuncType, en
 	return nil
 }
 
+// fetchSubPart get level 2 partition information.
 func fetchSubPart(ctx context.Context, db *DB, partFuncType obPartFuncType, entry *ObTableEntry) error {
 	key := entry.tableEntryKey
 	var rows *Rows

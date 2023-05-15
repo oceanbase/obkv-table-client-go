@@ -28,7 +28,8 @@ import (
 type DB = sql.DB
 type Rows = sql.Rows
 
-// NewDB create a DB, remember call DB.close when exit
+// NewDB create a DB, remember call DB.close when exit.
+// Use the dsn connection mode.
 func NewDB(
 	userName string,
 	password string,

@@ -22,6 +22,7 @@ import (
 	"strings"
 )
 
+// obServerStatus is obtained by accessing the system routing table on the server.
 type obServerStatus struct {
 	stopTime int64
 	status   string // Active/InActive/Deleting

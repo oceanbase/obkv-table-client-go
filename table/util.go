@@ -17,6 +17,7 @@
 
 package table
 
+// ColumnsToString converts a column to a string
 func ColumnsToString(columns []*Column) string {
 	var str string
 	str = str + "["

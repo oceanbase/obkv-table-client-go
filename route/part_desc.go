@@ -35,7 +35,14 @@ const (
 )
 
 type obColumnIndexesPair struct {
-	column  *obColumn
+	column *obColumn
+	// indexes indicates the column index in rowkey
+	// eg1: create table t(c1 int, c2 int, c3 int, primary key (c1,c2,c3)) partition by hash(c2) partitions 10;
+	// ##### column -> c2
+	// ##### indexes -> [1], c2 is in the first position of the primary key
+	// eg2: create table t(c1 varchar(20), c2 varchar(20), gen varchar(20) generated always as (concat(c1, c2), primary key (c1,c2)) partition by key(gen) partitions 10;
+	// ##### column -> gen
+	// ##### indexes -> [0, 1], gen depends on c1 and c2, which are in the first and second positions of the primary key.
 	indexes []int
 }
 
@@ -76,6 +83,15 @@ type obPartDescCommon struct {
 	RowKeyElement                       *table.ObRowKeyElement
 }
 
+func newObPartDescCommon(partFuncType obPartFuncType, partExpr string, orderedPartColumnNames []string) *obPartDescCommon {
+	return &obPartDescCommon{
+		PartFuncType:           partFuncType,
+		PartExpr:               partExpr,
+		OrderedPartColumnNames: orderedPartColumnNames,
+	}
+}
+
+// setCommRowKeyElement set the primary key name and constructs the relationship between the partition key and primary key.
 func (c *obPartDescCommon) setCommRowKeyElement(rowKeyElement *table.ObRowKeyElement) {
 	c.RowKeyElement = rowKeyElement
 	if len(c.OrderedPartColumnNames) != 0 && len(c.PartColumns) != 0 {
@@ -143,7 +159,6 @@ type obPartDesc interface {
 	String() string
 	partFuncType() obPartFuncType
 	orderedPartColumnNames() []string
-	setOrderedPartColumnNames(partExpr string)
 	orderedPartRefColumnRowKeyRelations() []*obColumnIndexesPair
 	rowKeyElement() *table.ObRowKeyElement
 	setRowKeyElement(rowKeyElement *table.ObRowKeyElement)
@@ -152,6 +167,7 @@ type obPartDesc interface {
 	GetPartId(rowKey []interface{}) (int64, error)
 }
 
+// evalPartKeyValues calculate the value of the partition key
 func evalPartKeyValues(desc obPartDesc, rowKey []interface{}) ([]interface{}, error) {
 	if desc == nil {
 		return nil, errors.New("part desc is nil")
