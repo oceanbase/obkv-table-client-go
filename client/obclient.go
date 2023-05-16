@@ -419,12 +419,13 @@ func (c *ObClient) getOrRefreshTableEntry(
 	if entry == nil || refresh {
 		refreshTryTimes := int(math.Min(float64(c.serverRoster.Size()), float64(c.config.TableEntryRefreshTryTimes)))
 		for i := 0; i < refreshTryTimes; i++ {
-			err := c.refreshTableEntry(ctx, &entry, tableName)
+			newEntry, err := c.refreshTableEntry(ctx, entry, tableName)
 			if err != nil {
 				log.Warn("failed to refresh table entry",
 					log.Int("times", i),
 					log.String("tableName", tableName))
 			} else {
+				entry = newEntry
 				return entry, nil
 			}
 		}
@@ -435,10 +436,11 @@ func (c *ObClient) getOrRefreshTableEntry(
 		if err != nil {
 			return nil, errors.WithMessagef(err, "sync refresh meta data, tableName:%s", tableName)
 		}
-		err = c.refreshTableEntry(ctx, &entry, tableName)
+		newEntry, err := c.refreshTableEntry(ctx, entry, tableName)
 		if err != nil {
 			return nil, errors.WithMessagef(err, "refresh table entry, tableName:%s", tableName)
 		}
+		entry = newEntry
 		return entry, nil
 	}
 
@@ -455,29 +457,29 @@ func (c *ObClient) getTableEntryFromCache(tableName string) *route.ObTableEntry 
 	return nil
 }
 
-func (c *ObClient) refreshTableEntry(ctx context.Context, entry **route.ObTableEntry, tableName string) error {
+func (c *ObClient) refreshTableEntry(ctx context.Context, entry *route.ObTableEntry, tableName string) (*route.ObTableEntry, error) {
 	var err error
 	// 1. Load table entry location or table entry.
-	if *entry != nil { // If table entry exist we just need to refresh table locations
-		err = c.loadTableEntryLocation(ctx, *entry)
+	if entry != nil { // If table entry exist we just need to refresh table locations
+		err = c.loadTableEntryLocation(ctx, entry)
 		if err != nil {
-			return errors.WithMessagef(err, "load table entry location, tableName:%s", tableName)
+			return nil, errors.WithMessagef(err, "load table entry location, tableName:%s", tableName)
 		}
 	} else {
 		key := route.NewObTableEntryKey(c.clusterName, c.tenantName, c.database, tableName)
-		*entry, err = route.GetTableEntryFromRemote(ctx, c.serverRoster.GetServer(), &c.sysUA, key)
+		entry, err = route.GetTableEntryFromRemote(ctx, c.serverRoster.GetServer(), &c.sysUA, key)
 		if err != nil {
-			return errors.WithMessagef(err, "get table entry from remote, key:%s", key.String())
+			return nil, errors.WithMessagef(err, "get table entry from remote, key:%s", key.String())
 		}
 	}
 
 	// 2. Set rowKey element to entry.
-	if (*entry).IsPartitionTable() {
+	if entry.IsPartitionTable() {
 		rowKeyElement, ok := c.tableRowKeyElement[tableName]
 		if !ok {
-			return errors.Errorf("failed to get rowKey element by table name, tableName:%s", tableName)
+			return nil, errors.Errorf("failed to get rowKey element by table name, tableName:%s", tableName)
 		}
-		(*entry).SetRowKeyElement(rowKeyElement)
+		entry.SetRowKeyElement(rowKeyElement)
 	}
 
 	// 3. todo:prepare the table entry for weak read.
@@ -485,7 +487,7 @@ func (c *ObClient) refreshTableEntry(ctx context.Context, entry **route.ObTableE
 	// 4. Put entry to cache.
 	c.tableLocations.Store(tableName, entry)
 
-	return nil
+	return entry, nil
 }
 
 func (c *ObClient) loadTableEntryLocation(ctx context.Context, entry *route.ObTableEntry) error {

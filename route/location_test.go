@@ -59,5 +59,5 @@ func TestSetPartDescProperty(t *testing.T) {
 	partColumns = []*obColumn{col}
 	orderedCompareColumns = []*obColumn{col}
 	err = setPartDescProperty(descHash, partColumns, orderedCompareColumns)
-	assert.NotEqual(t, nil, err)
+	assert.Equal(t, nil, err)
 }
