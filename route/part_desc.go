@@ -120,11 +120,11 @@ func (c *obPartDescCommon) CommString() string {
 	// orderedPartRefColumnRowKeyRelations to string
 	var relationsStr string
 	relationsStr = relationsStr + "["
-	for i := 0; i < len(c.OrderedPartRefColumnRowKeyRelations); i++ {
+	for i, relation := range c.OrderedPartRefColumnRowKeyRelations {
 		if i > 0 {
 			relationsStr += ", "
 		}
-		relationsStr += c.OrderedPartRefColumnRowKeyRelations[i].String()
+		relationsStr += relation.String()
 	}
 	relationsStr += "]"
 

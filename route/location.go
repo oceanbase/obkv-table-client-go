@@ -601,16 +601,19 @@ func setPartDescProperty(
 		if len(partColumns) == 0 {
 			return errors.Errorf("part column is empty, partDesc:%s", partDesc.String())
 		}
+		return nil
 	} else if isListPart(partDesc.partFuncType()) {
 		return errors.New("list part is not support now")
 	} else if isRangePart(partDesc.partFuncType()) {
 		if rangeDesc, ok := partDesc.(*obRangePartDesc); ok {
 			rangeDesc.orderedCompareColumns = orderedCompareColumns
+			return nil
 		} else {
 			return errors.Errorf("failed to convert to obRangePartDesc, partDesc:%s", partDesc.String())
 		}
 	}
-	return nil
+	return errors.Errorf("unsupported partition type to set part desc property, partFuncType:%d",
+		partDesc.partFuncType())
 }
 
 // buildPartDesc generate partition key description information.
