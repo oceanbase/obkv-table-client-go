@@ -46,13 +46,13 @@ type ObClient struct {
 	clusterName  string
 	password     string
 	database     string
-	sysUA        *route.ObUserAuth
+	sysUA        route.ObUserAuth
 
 	ocpModel *route.ObOcpModel
 
-	tableMutexes       sync.Map // map[tableName]*sync.RWMutex
+	tableMutexes       sync.Map // map[tableName]sync.RWMutex
 	tableLocations     sync.Map // map[tableName]*route.ObTableEntry
-	tableRoster        sync.Map // map[route.ObServerAddr{}]*ObTable
+	tableRoster        sync.Map
 	serverRoster       obServerRoster
 	tableRowKeyElement map[string]*table.ObRowKeyElement
 
@@ -81,7 +81,7 @@ func newObClient(
 
 	// 3. init other members
 	cli.password = passWord
-	cli.sysUA = route.NewObUserAuth(sysUserName, sysPassWord)
+	cli.sysUA = *route.NewObUserAuth(sysUserName, sysPassWord)
 	cli.config = cliConfig
 	cli.tableRowKeyElement = make(map[string]*table.ObRowKeyElement)
 
@@ -89,6 +89,10 @@ func newObClient(
 }
 
 func (c *ObClient) String() string {
+	var configStr = "nil"
+	if c.config != nil {
+		configStr = c.config.String()
+	}
 	return "ObClient{" +
 		"configUrl:" + c.configUrl + ", " +
 		"fullUserName:" + c.fullUserName + ", " +
@@ -96,9 +100,7 @@ func (c *ObClient) String() string {
 		"tenantName:" + c.tenantName + ", " +
 		"clusterName:" + c.clusterName + ", " +
 		"sysUA:" + c.sysUA.String() + ", " +
-		"configUrl:" + c.configUrl + ", " +
-		"configUrl:" + c.configUrl + ", " +
-		"config:" + c.config.String() +
+		"config:" + configStr +
 		"}"
 }
 
@@ -261,15 +263,6 @@ func (c *ObClient) Get(
 	return res.Entity().GetSimpleProperties(), nil
 }
 
-func (c *ObClient) Close() {
-	c.tableRoster.Range(func(key, value interface{}) bool {
-		c.tableRoster.Delete(key)
-		obTable := value.(*ObTable)
-		obTable.close()
-		return true
-	})
-}
-
 func (c *ObClient) NewBatchExecutor(tableName string) BatchExecutor {
 	return newObBatchExecutor(tableName, c)
 }
@@ -426,12 +419,13 @@ func (c *ObClient) getOrRefreshTableEntry(
 	if entry == nil || refresh {
 		refreshTryTimes := int(math.Min(float64(c.serverRoster.Size()), float64(c.config.TableEntryRefreshTryTimes)))
 		for i := 0; i < refreshTryTimes; i++ {
-			err := c.refreshTableEntry(ctx, &entry, tableName)
+			newEntry, err := c.refreshTableEntry(ctx, entry, tableName)
 			if err != nil {
 				log.Warn("failed to refresh table entry",
 					log.Int("times", i),
 					log.String("tableName", tableName))
 			} else {
+				entry = newEntry
 				return entry, nil
 			}
 		}
@@ -442,10 +436,11 @@ func (c *ObClient) getOrRefreshTableEntry(
 		if err != nil {
 			return nil, errors.WithMessagef(err, "sync refresh meta data, tableName:%s", tableName)
 		}
-		err = c.refreshTableEntry(ctx, &entry, tableName)
+		newEntry, err := c.refreshTableEntry(ctx, entry, tableName)
 		if err != nil {
 			return nil, errors.WithMessagef(err, "refresh table entry, tableName:%s", tableName)
 		}
+		entry = newEntry
 		return entry, nil
 	}
 
@@ -462,29 +457,29 @@ func (c *ObClient) getTableEntryFromCache(tableName string) *route.ObTableEntry 
 	return nil
 }
 
-func (c *ObClient) refreshTableEntry(ctx context.Context, entry **route.ObTableEntry, tableName string) error {
+func (c *ObClient) refreshTableEntry(ctx context.Context, entry *route.ObTableEntry, tableName string) (*route.ObTableEntry, error) {
 	var err error
 	// 1. Load table entry location or table entry.
-	if *entry != nil { // If table entry exist we just need to refresh table locations
-		err = c.loadTableEntryLocation(ctx, *entry)
+	if entry != nil { // If table entry exist we just need to refresh table locations
+		err = c.loadTableEntryLocation(ctx, entry)
 		if err != nil {
-			return errors.WithMessagef(err, "load table entry location, tableName:%s", tableName)
+			return nil, errors.WithMessagef(err, "load table entry location, tableName:%s", tableName)
 		}
 	} else {
 		key := route.NewObTableEntryKey(c.clusterName, c.tenantName, c.database, tableName)
-		*entry, err = route.GetTableEntryFromRemote(ctx, c.serverRoster.GetServer(), c.sysUA, key)
+		entry, err = route.GetTableEntryFromRemote(ctx, c.serverRoster.GetServer(), &c.sysUA, key)
 		if err != nil {
-			return errors.WithMessagef(err, "get table entry from remote, key:%s", key.String())
+			return nil, errors.WithMessagef(err, "get table entry from remote, key:%s", key.String())
 		}
 	}
 
 	// 2. Set rowKey element to entry.
-	if (*entry).IsPartitionTable() {
+	if entry.IsPartitionTable() {
 		rowKeyElement, ok := c.tableRowKeyElement[tableName]
 		if !ok {
-			return errors.Errorf("failed to get rowKey element by table name, tableName:%s", tableName)
+			return nil, errors.Errorf("failed to get rowKey element by table name, tableName:%s", tableName)
 		}
-		(*entry).SetRowKeyElement(rowKeyElement)
+		entry.SetRowKeyElement(rowKeyElement)
 	}
 
 	// 3. todo:prepare the table entry for weak read.
@@ -492,7 +487,7 @@ func (c *ObClient) refreshTableEntry(ctx context.Context, entry **route.ObTableE
 	// 4. Put entry to cache.
 	c.tableLocations.Store(tableName, entry)
 
-	return nil
+	return entry, nil
 }
 
 func (c *ObClient) loadTableEntryLocation(ctx context.Context, entry *route.ObTableEntry) error {
@@ -503,7 +498,7 @@ func (c *ObClient) loadTableEntryLocation(ctx context.Context, entry *route.ObTa
 		c.sysUA.Password(),
 		addr.Ip(),
 		strconv.Itoa(addr.SvrPort()),
-		route.OceanBaseDatabase,
+		route.OceanbaseDatabase,
 	)
 	if err != nil {
 		return errors.WithMessagef(err, "new db, sysUA:%s, addr:%s", c.sysUA.String(), addr.String())
@@ -578,7 +573,7 @@ func (c *ObClient) fetchMetadata() error {
 	addr := c.ocpModel.GetServerAddressRandomly()
 
 	// 2. Get ob cluster version and init route sql
-	ver, err := route.GetObVersionFromRemote(addr, c.sysUA)
+	ver, err := route.GetObVersionFromRemote(addr, &c.sysUA)
 	if err != nil {
 		return errors.WithMessagef(err, "get ob version from remote, addr:%s, sysUA:%s",
 			addr.String(), c.sysUA.String())
@@ -595,10 +590,10 @@ func (c *ObClient) fetchMetadata() error {
 	rootServerKey := route.NewObTableEntryKey(
 		c.clusterName,
 		c.tenantName,
-		route.OceanBaseDatabase,
+		route.OceanbaseDatabase,
 		route.AllDummyTable,
 	)
-	entry, err := route.GetTableEntryFromRemote(context.TODO(), addr, c.sysUA, rootServerKey)
+	entry, err := route.GetTableEntryFromRemote(context.TODO(), addr, &c.sysUA, rootServerKey)
 	if err != nil {
 		return errors.WithMessagef(err, "dummy tenant server from remote, addr:%s, sysUA:%s, key:%s",
 			addr.String(), c.sysUA.String(), rootServerKey.String())

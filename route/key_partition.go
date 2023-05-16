@@ -218,6 +218,7 @@ func (d *obKeyPartDesc) varcharHash(
 			hashCode = hashSortUtf8Mb4(bytes, hashCode, seed, false)
 		}
 	case protocol.ObCollationTypeUtf8mb4Bin:
+		fallthrough
 	case protocol.ObCollationTypeBinary:
 		if partFuncType == partFuncTypeKeyV3 ||
 			partFuncType == partFuncTypeKeyImplV2 ||
@@ -227,16 +228,26 @@ func (d *obKeyPartDesc) varcharHash(
 			hashCode = hashSortMbBin(bytes, hashCode, seed)
 		}
 	case protocol.ObCollationTypeInvalid:
+		fallthrough
 	case protocol.ObCollationTypeCollationFree:
+		fallthrough
 	case protocol.ObCollationTypeMax:
+		fallthrough
+	default:
 		return -1, errors.Errorf("not supported collation type, collType:%d", collType)
 	}
 	return hashCode, nil
 }
 
 func (d *obKeyPartDesc) String() string {
+	var commStr string
+	if d.obPartDescCommon == nil {
+		commStr = "nil"
+	} else {
+		commStr = d.CommString()
+	}
 	return "obKeyPartDesc{" +
-		"comm:" + d.CommString() + ", " +
+		"comm:" + commStr + ", " +
 		"partSpace:" + strconv.Itoa(d.partSpace) + ", " +
 		"partNum:" + strconv.Itoa(d.partNum) +
 		"}"
