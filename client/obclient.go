@@ -52,7 +52,7 @@ type ObClient struct {
 
 	tableMutexes       sync.Map // map[tableName]sync.RWMutex
 	tableLocations     sync.Map // map[tableName]*route.ObTableEntry
-	tableRoster        sync.Map
+	tableRoster        sync.Map // map[route.ObServerAddr{}]*ObTable
 	serverRoster       obServerRoster
 	tableRowKeyElement map[string]*table.ObRowKeyElement
 
