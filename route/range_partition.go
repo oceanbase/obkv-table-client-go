@@ -83,6 +83,14 @@ func (d *obRangePartDesc) GetPartId(rowKey []interface{}) (int64, error) {
 }
 
 func (d *obRangePartDesc) String() string {
+	// obPartDescCommon to string
+	var commStr string
+	if d.obPartDescCommon == nil {
+		commStr = "nil"
+	} else {
+		commStr = d.CommString()
+	}
+
 	// orderedCompareColumns to string
 	var orderedCompareColumnsStr string
 	orderedCompareColumnsStr = orderedCompareColumnsStr + "["
@@ -106,7 +114,7 @@ func (d *obRangePartDesc) String() string {
 	orderedCompareColumnTypesStr += "]"
 
 	return "obRangePartDesc{" +
-		"comm:" + d.CommString() + ", " +
+		"comm:" + commStr + ", " +
 		"partSpace:" + strconv.Itoa(d.partSpace) + ", " +
 		"partNum:" + strconv.Itoa(d.partNum) + ", " +
 		"orderedCompareColumns:" + orderedCompareColumnsStr + ", " +

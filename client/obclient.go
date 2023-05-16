@@ -89,6 +89,10 @@ func newObClient(
 }
 
 func (c *ObClient) String() string {
+	var configStr = "nil"
+	if c.config != nil {
+		configStr = c.config.String()
+	}
 	return "ObClient{" +
 		"configUrl:" + c.configUrl + ", " +
 		"fullUserName:" + c.fullUserName + ", " +
@@ -96,9 +100,7 @@ func (c *ObClient) String() string {
 		"tenantName:" + c.tenantName + ", " +
 		"clusterName:" + c.clusterName + ", " +
 		"sysUA:" + c.sysUA.String() + ", " +
-		"configUrl:" + c.configUrl + ", " +
-		"configUrl:" + c.configUrl + ", " +
-		"config:" + c.config.String() +
+		"config:" + configStr +
 		"}"
 }
 

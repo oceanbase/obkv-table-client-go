@@ -39,7 +39,7 @@ func TestInterfaceToString(t *testing.T) {
 	type myTestStruct struct {
 	}
 	v := myTestStruct{}
-	assert.Equal(t, InterfaceToString(v), "{0}")
+	assert.Equal(t, InterfaceToString(v), "{}")
 }
 
 func TestStringArrayToString(t *testing.T) {

@@ -86,6 +86,9 @@ func (d *obHashPartDesc) GetPartId(rowKey []interface{}) (int64, error) {
 	if err != nil {
 		return ObInvalidPartId, errors.WithMessagef(err, "eval partition key value, partDesc:%s", d.String())
 	}
+	if len(evalValues) == 0 {
+		return ObInvalidPartId, errors.New("invalid eval values length")
+	}
 	longValue, err := parseToNumber(evalValues[0]) // hash part has one param at most
 	if err != nil {
 		return ObInvalidPartId, errors.WithMessagef(err, "parse long, partDesc:%s", d.String())
@@ -106,6 +109,14 @@ func (d *obHashPartDesc) innerHash(hashVal int64) int64 {
 }
 
 func (d *obHashPartDesc) String() string {
+	// comm to string
+	var commStr string
+	if d.obPartDescCommon == nil {
+		commStr = "nil"
+	} else {
+		commStr = d.CommString()
+	}
+
 	// completeWorks to string
 	var completeWorksStr string
 	completeWorksStr = completeWorksStr + "["
@@ -118,7 +129,7 @@ func (d *obHashPartDesc) String() string {
 	completeWorksStr += "]"
 
 	return "obHashPartDesc{" +
-		"comm:" + d.CommString() + ", " +
+		"comm:" + commStr + ", " +
 		"completeWorks:" + completeWorksStr + ", " +
 		"partSpace:" + strconv.Itoa(d.partSpace) + ", " +
 		"partNum:" + strconv.Itoa(d.partNum) +
