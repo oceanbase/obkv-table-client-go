@@ -3,8 +3,6 @@ module github.com/oceanbase/obkv-table-client-go
 go 1.20
 
 require (
-	github.com/DATA-DOG/go-sqlmock v1.5.0
-	github.com/agiledragon/gomonkey/v2 v2.9.0
 	github.com/go-sql-driver/mysql v1.7.0
 	github.com/pkg/errors v0.9.1
 	github.com/stretchr/testify v1.8.0
