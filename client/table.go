@@ -88,9 +88,9 @@ func (t *ObTable) close() {
 	if !t.isClosed {
 		t.mutex.Lock()
 		if !t.isClosed { // double check after lock
-			// if t.rpcClient != nil {
-			// todo: t.rpcClient.Close()
-			// }
+			if t.rpcClient != nil {
+				t.rpcClient.Close()
+			}
 			t.isClosed = true
 		}
 		t.mutex.Unlock()

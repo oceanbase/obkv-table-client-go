@@ -80,6 +80,9 @@ type Client interface {
 	Delete(ctx context.Context, tableName string, rowKey []*table.Column, opts ...ObkvOption) (int64, error)
 	// Get a record by rowKey.
 	Get(ctx context.Context, tableName string, rowKey []*table.Column, getColumns []string, opts ...ObkvOption) (map[string]interface{}, error)
-	// NewBatchExecutor create a batch executor
+	// NewBatchExecutor create a batch executor.
 	NewBatchExecutor(tableName string) BatchExecutor
+	// Close closes the client.
+	// close will disconnect all connections and exit all goroutines.
+	Close()
 }

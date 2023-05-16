@@ -46,13 +46,13 @@ type ObClient struct {
 	clusterName  string
 	password     string
 	database     string
-	sysUA        route.ObUserAuth
+	sysUA        *route.ObUserAuth
 
 	ocpModel *route.ObOcpModel
 
-	tableMutexes       sync.Map // map[tableName]sync.RWMutex
+	tableMutexes       sync.Map // map[tableName]*sync.RWMutex
 	tableLocations     sync.Map // map[tableName]*route.ObTableEntry
-	tableRoster        sync.Map
+	tableRoster        sync.Map // map[route.ObServerAddr{}]*ObTable
 	serverRoster       obServerRoster
 	tableRowKeyElement map[string]*table.ObRowKeyElement
 
@@ -81,7 +81,7 @@ func newObClient(
 
 	// 3. init other members
 	cli.password = passWord
-	cli.sysUA = *route.NewObUserAuth(sysUserName, sysPassWord)
+	cli.sysUA = route.NewObUserAuth(sysUserName, sysPassWord)
 	cli.config = cliConfig
 	cli.tableRowKeyElement = make(map[string]*table.ObRowKeyElement)
 
@@ -259,6 +259,15 @@ func (c *ObClient) Get(
 			tableName, table.ColumnsToString(rowKey), util.StringArrayToString(getColumns))
 	}
 	return res.Entity().GetSimpleProperties(), nil
+}
+
+func (c *ObClient) Close() {
+	c.tableRoster.Range(func(key, value interface{}) bool {
+		c.tableRoster.Delete(key)
+		obTable := value.(*ObTable)
+		obTable.close()
+		return true
+	})
 }
 
 func (c *ObClient) NewBatchExecutor(tableName string) BatchExecutor {
@@ -463,7 +472,7 @@ func (c *ObClient) refreshTableEntry(ctx context.Context, entry **route.ObTableE
 		}
 	} else {
 		key := route.NewObTableEntryKey(c.clusterName, c.tenantName, c.database, tableName)
-		*entry, err = route.GetTableEntryFromRemote(ctx, c.serverRoster.GetServer(), &c.sysUA, key)
+		*entry, err = route.GetTableEntryFromRemote(ctx, c.serverRoster.GetServer(), c.sysUA, key)
 		if err != nil {
 			return errors.WithMessagef(err, "get table entry from remote, key:%s", key.String())
 		}
@@ -494,7 +503,7 @@ func (c *ObClient) loadTableEntryLocation(ctx context.Context, entry *route.ObTa
 		c.sysUA.Password(),
 		addr.Ip(),
 		strconv.Itoa(addr.SvrPort()),
-		route.OceanbaseDatabase,
+		route.OceanBaseDatabase,
 	)
 	if err != nil {
 		return errors.WithMessagef(err, "new db, sysUA:%s, addr:%s", c.sysUA.String(), addr.String())
@@ -569,7 +578,7 @@ func (c *ObClient) fetchMetadata() error {
 	addr := c.ocpModel.GetServerAddressRandomly()
 
 	// 2. Get ob cluster version and init route sql
-	ver, err := route.GetObVersionFromRemote(addr, &c.sysUA)
+	ver, err := route.GetObVersionFromRemote(addr, c.sysUA)
 	if err != nil {
 		return errors.WithMessagef(err, "get ob version from remote, addr:%s, sysUA:%s",
 			addr.String(), c.sysUA.String())
@@ -586,10 +595,10 @@ func (c *ObClient) fetchMetadata() error {
 	rootServerKey := route.NewObTableEntryKey(
 		c.clusterName,
 		c.tenantName,
-		route.OceanbaseDatabase,
+		route.OceanBaseDatabase,
 		route.AllDummyTable,
 	)
-	entry, err := route.GetTableEntryFromRemote(context.TODO(), addr, &c.sysUA, rootServerKey)
+	entry, err := route.GetTableEntryFromRemote(context.TODO(), addr, c.sysUA, rootServerKey)
 	if err != nil {
 		return errors.WithMessagef(err, "dummy tenant server from remote, addr:%s, sysUA:%s, key:%s",
 			addr.String(), c.sysUA.String(), rootServerKey.String())

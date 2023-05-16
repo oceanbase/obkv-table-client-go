@@ -95,32 +95,36 @@ func NewConnectionPool(option *PoolOption) (*ConnectionPool, error) {
 	return pool, nil
 }
 
-func (p *ConnectionPool) GetConnection(ctx context.Context) (*Connection, error) {
-	randomIndex := rand.Intn(len(p.connections))
+func (p *ConnectionPool) GetConnection() (*Connection, int) {
+	index := rand.Intn(p.option.connPoolMaxConnSize)
 
-	p.rwMutexes[randomIndex].RLock()
-	if p.connections[randomIndex].active.Load() {
-		p.rwMutexes[randomIndex].RUnlock()
-		return p.connections[randomIndex], nil
-	}
-	p.rwMutexes[randomIndex].RUnlock()
+	p.rwMutexes[index].RLock()
+	defer p.rwMutexes[index].RUnlock()
 
-	p.rwMutexes[randomIndex].Lock()
-	if p.connections[randomIndex].active.Load() {
-		p.rwMutexes[randomIndex].Unlock()
-		return p.connections[randomIndex], nil
+	if p.connections[index].active.Load() {
+		return p.connections[index], 0
 	}
-	// Recreate the connection and login
+
+	return nil, index
+}
+
+// RecreateConnection recreate the connection and login
+func (p *ConnectionPool) RecreateConnection(ctx context.Context, connectionIdx int) (*Connection, error) {
+	p.rwMutexes[connectionIdx].Lock()
+	defer p.rwMutexes[connectionIdx].Unlock()
+
+	if p.connections[connectionIdx].active.Load() {
+		return p.connections[connectionIdx], nil
+	}
+
 	connection, err := p.CreateConnection(ctx)
 	if err != nil {
-		p.rwMutexes[randomIndex].Unlock()
-		return nil, errors.WithMessage(err, "recreate connection")
+		return nil, errors.WithMessage(err, "create connection")
 	}
 
-	p.connections[randomIndex] = connection
+	p.connections[connectionIdx] = connection
 
-	p.rwMutexes[randomIndex].Unlock()
-	return p.connections[randomIndex], nil
+	return p.connections[connectionIdx], nil
 }
 
 func (p *ConnectionPool) CreateConnection(ctx context.Context) (*Connection, error) {
@@ -136,4 +140,10 @@ func (p *ConnectionPool) CreateConnection(ctx context.Context) (*Connection, err
 		return nil, errors.WithMessage(err, "connection login")
 	}
 	return connection, nil
+}
+
+func (p *ConnectionPool) Close() {
+	for _, connection := range p.connections {
+		connection.Close()
+	}
 }

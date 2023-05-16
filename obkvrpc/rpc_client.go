@@ -90,9 +90,20 @@ func NewRpcClient(rpcClientOption *RpcClientOption) (*RpcClient, error) {
 }
 
 func (c *RpcClient) Execute(ctx context.Context, request protocol.ObPayload, response protocol.ObPayload) error {
-	connection, err := c.connectionPool.GetConnection(ctx)
-	if err != nil {
-		return errors.WithMessage(err, "connection pool get connection")
+	var (
+		connection *Connection
+		index      int
+		err        error
+	)
+
+	connection, index = c.connectionPool.GetConnection()
+	if connection == nil {
+
+		connection, err = c.connectionPool.RecreateConnection(ctx, index)
+		if err != nil {
+			return errors.WithMessage(err, "recreate connection")
+		}
+
 	}
 
 	err = connection.Execute(ctx, request, response)
@@ -101,4 +112,8 @@ func (c *RpcClient) Execute(ctx context.Context, request protocol.ObPayload, res
 	}
 
 	return nil
+}
+
+func (c *RpcClient) Close() {
+	c.connectionPool.Close()
 }
