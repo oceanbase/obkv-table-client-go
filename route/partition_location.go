@@ -24,11 +24,14 @@ const (
 	ConsistencyWeak   ObConsistency = 1
 )
 
+// obPartitionLocation indicates the location of a partition,
+// including a leader replica and other read replicas
 type obPartitionLocation struct {
 	leader   obReplicaLocation
 	replicas []obReplicaLocation
 }
 
+// addReplicaLocation add a replica to obPartitionLocation
 func (l *obPartitionLocation) addReplicaLocation(replica *obReplicaLocation) {
 	if replica.isLeader() {
 		l.leader = *replica
@@ -36,10 +39,13 @@ func (l *obPartitionLocation) addReplicaLocation(replica *obReplicaLocation) {
 	l.replicas = append(l.replicas, *replica)
 }
 
+// getReplica get the copy according to the consistency requirements you need,
+// strong consistency get the leader replica, weak consistency get the read replica (todo).
 func (l *obPartitionLocation) getReplica(consistency ObConsistency) *obReplicaLocation {
 	if consistency == ConsistencyStrong {
 		return &l.leader
 	}
+	// todo: get read replica
 	return &l.leader
 }
 

@@ -19,6 +19,8 @@ package table
 
 import "github.com/oceanbase/obkv-table-client-go/util"
 
+// Column represents a column in a table,
+// consisting of a column name and a column value.
 type Column struct {
 	name  string
 	value interface{}

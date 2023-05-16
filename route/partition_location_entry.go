@@ -19,6 +19,7 @@ package route
 
 import "strconv"
 
+// ObPartLocationEntry store location information for all replicas.
 type ObPartLocationEntry struct {
 	partLocations map[int64]*obPartitionLocation
 }

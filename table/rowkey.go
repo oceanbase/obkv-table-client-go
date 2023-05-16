@@ -21,6 +21,8 @@ import (
 	"strconv"
 )
 
+// ObRowKeyElement store each primary key column name
+// and its location index within the primary key.
 type ObRowKeyElement struct {
 	nameIdxMap map[string]int
 }

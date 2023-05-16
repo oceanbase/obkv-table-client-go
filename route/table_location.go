@@ -17,6 +17,7 @@
 
 package route
 
+// ObTableLocation represents the location information of all replaces of a table.
 type ObTableLocation struct {
 	replicaLocations []*obReplicaLocation
 }

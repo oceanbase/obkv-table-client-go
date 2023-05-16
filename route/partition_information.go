@@ -34,13 +34,17 @@ const (
 	PartLevelTwo     obPartLevel = 2
 )
 
+// obPartitionInfo store meta information about partition keys
 type obPartitionInfo struct {
 	level           obPartLevel
 	firstPartDesc   obPartDesc
 	subPartDesc     obPartDesc
 	partColumns     []*obColumn
-	partTabletIdMap map[int64]int64
-	partNameIdMap   map[string]int64
+	partTabletIdMap map[int64]int64 // partId mean [0, partNum), tabletId For example, 500029
+}
+
+func newObPartitionInfo(level obPartLevel) *obPartitionInfo {
+	return &obPartitionInfo{level: level}
 }
 
 func (p *obPartitionInfo) SubPartDesc() obPartDesc {
@@ -51,6 +55,8 @@ func (p *obPartitionInfo) FirstPartDesc() obPartDesc {
 	return p.firstPartDesc
 }
 
+// GetTabletId obtain tabletId through partId.
+// In ob version 4.0 and above, tabletId needs to be serialized to the server
 func (p *obPartitionInfo) GetTabletId(partId int64) (int64, error) {
 	if p.partTabletIdMap == nil {
 		return 0, errors.New("partTabletIdMap is nil")
@@ -96,19 +102,6 @@ func (p *obPartitionInfo) String() string {
 	}
 	partTabletIdMapStr += "}"
 
-	// partNameIdMap to string
-	var partNameIdMapStr string
-	i = 0
-	partNameIdMapStr = partNameIdMapStr + "{"
-	for k, v := range p.partNameIdMap {
-		if i > 0 {
-			partNameIdMapStr += ", "
-		}
-		i++
-		partNameIdMapStr += "m[" + k + "]=" + strconv.Itoa(int(v))
-	}
-	partNameIdMapStr += "}"
-
 	// firstPartDesc to string
 	var firstPartDescStr string
 	if p.firstPartDesc != nil {
@@ -130,7 +123,6 @@ func (p *obPartitionInfo) String() string {
 		"firstPartDesc:" + firstPartDescStr + ", " +
 		"subPartDesc:" + subPartDescStr + ", " +
 		"partColumns:" + partColumnsStr + ", " +
-		"partTabletIdMap:" + partTabletIdMapStr + ", " +
-		"partNameIdMap:" + partNameIdMapStr +
+		"partTabletIdMap:" + partTabletIdMapStr +
 		"}"
 }

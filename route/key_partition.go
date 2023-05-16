@@ -29,19 +29,30 @@ import (
 	"github.com/oceanbase/obkv-table-client-go/util"
 )
 
+// obKeyPartDesc description of the key partition.
 type obKeyPartDesc struct {
-	obPartDescCommon
-	partSpace     int
-	partNum       int
-	partNameIdMap map[string]int64
+	*obPartDescCommon
+	partSpace int
+	partNum   int
 }
 
 func (d *obKeyPartDesc) SetPartNum(partNum int) {
 	d.partNum = partNum
 }
 
-func newObKeyPartDesc() *obKeyPartDesc {
-	return &obKeyPartDesc{}
+func newObKeyPartDesc(
+	partSpace int,
+	partNum int,
+	partFuncType obPartFuncType,
+	partExpr string) *obKeyPartDesc {
+	// eg:"c1, c2", need to remove ' '
+	str := strings.ReplaceAll(partExpr, " ", "")
+	orderedPartColumnNames := strings.Split(str, ",")
+	return &obKeyPartDesc{
+		obPartDescCommon: newObPartDescCommon(partFuncType, partExpr, orderedPartColumnNames),
+		partSpace:        partSpace,
+		partNum:          partNum,
+	}
 }
 
 func (d *obKeyPartDesc) partFuncType() obPartFuncType {
@@ -50,12 +61,6 @@ func (d *obKeyPartDesc) partFuncType() obPartFuncType {
 
 func (d *obKeyPartDesc) orderedPartColumnNames() []string {
 	return d.OrderedPartColumnNames
-}
-
-func (d *obKeyPartDesc) setOrderedPartColumnNames(partExpr string) {
-	// eg:"c1, c2", need to remove ' '
-	str := strings.ReplaceAll(partExpr, " ", "")
-	d.OrderedPartColumnNames = strings.Split(str, ",")
 }
 
 func (d *obKeyPartDesc) orderedPartRefColumnRowKeyRelations() []*obColumnIndexesPair {
@@ -74,6 +79,7 @@ func (d *obKeyPartDesc) setPartColumns(partColumns []*obColumn) {
 	d.PartColumns = partColumns
 }
 
+// GetPartId get partition id.
 func (d *obKeyPartDesc) GetPartId(rowKey []interface{}) (int64, error) {
 	if len(rowKey) == 0 {
 		return ObInvalidPartId, errors.New("rowKey size is 0")
@@ -229,22 +235,9 @@ func (d *obKeyPartDesc) varcharHash(
 }
 
 func (d *obKeyPartDesc) String() string {
-	// partNameIdMap to string
-	var partNameIdMapStr string
-	partNameIdMapStr = partNameIdMapStr + "{"
-	var i = 0
-	for k, v := range d.partNameIdMap {
-		if i > 0 {
-			partNameIdMapStr += ", "
-		}
-		i++
-		partNameIdMapStr += "m[" + k + "]=" + strconv.Itoa(int(v))
-	}
-	partNameIdMapStr += "}"
 	return "obKeyPartDesc{" +
 		"comm:" + d.CommString() + ", " +
 		"partSpace:" + strconv.Itoa(d.partSpace) + ", " +
-		"partNum:" + strconv.Itoa(d.partNum) + ", " +
-		"partNameIdMap:" + partNameIdMapStr +
+		"partNum:" + strconv.Itoa(d.partNum) +
 		"}"
 }

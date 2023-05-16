@@ -17,6 +17,7 @@
 
 package route
 
+// ObTableEntryKey is used for getting ObTableEntry
 type ObTableEntryKey struct {
 	clusterName  string
 	tenantName   string

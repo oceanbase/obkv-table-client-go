@@ -23,6 +23,7 @@ import (
 	"github.com/oceanbase/obkv-table-client-go/table"
 )
 
+// BatchExecutor is for batch operation.
 type BatchExecutor interface {
 	// AddInsertOp add an insert operation to the batch executor.
 	AddInsertOp(rowKey []*table.Column, mutateValues []*table.Column, opts ...ObkvOption) error

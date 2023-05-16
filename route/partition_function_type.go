@@ -19,6 +19,7 @@ package route
 
 type obPartFuncType int
 
+// all partition function type, it should be updated with the server.
 const (
 	partFuncTypeUnknown   obPartFuncType = -1
 	partFuncTypeHash      obPartFuncType = 0
@@ -34,10 +35,12 @@ const (
 	partFuncTypeKeyImplV2 obPartFuncType = 10
 )
 
+// isRangePart check is range partition or not.
 func isRangePart(partType obPartFuncType) bool {
 	return partType == partFuncTypeRange || partType == partFuncTypeRangeCol
 }
 
+// isKeyPart check is key partition or not.
 func isKeyPart(partType obPartFuncType) bool {
 	return partType == partFuncTypeKey ||
 		partType == partFuncTypeKeyImpl ||
@@ -46,10 +49,12 @@ func isKeyPart(partType obPartFuncType) bool {
 		partType == partFuncTypeKeyImplV2
 }
 
+// isHashPart check is hash partition or not.
 func isHashPart(partType obPartFuncType) bool {
 	return partType == partFuncTypeHash || partType == partFuncTypeHashV2
 }
 
+// isListPart check is list partition or not.
 func isListPart(partType obPartFuncType) bool {
 	return partType == partFuncTypeList || partType == partFuncTypeListCol
 }

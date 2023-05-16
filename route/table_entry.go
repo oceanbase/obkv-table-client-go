@@ -26,15 +26,16 @@ import (
 	"github.com/oceanbase/obkv-table-client-go/util"
 )
 
+// ObTableEntry represents all the routing information of a table.
 type ObTableEntry struct {
 	tableId           uint64
 	partNum           int
 	replicaNum        int
-	refreshTimeMills  int64
-	tableEntryKey     ObTableEntryKey
-	partitionInfo     *obPartitionInfo
-	tableLocation     *ObTableLocation
-	partLocationEntry *ObPartLocationEntry
+	refreshTimeMills  int64                // last refresh time
+	tableEntryKey     ObTableEntryKey      // clusterName/tenantName/databaseName/tableName
+	partitionInfo     *obPartitionInfo     // partition key meta info
+	tableLocation     *ObTableLocation     // location of table, all replica information of table
+	partLocationEntry *ObPartLocationEntry // all partition location of table
 }
 
 func (e *ObTableEntry) SetPartLocationEntry(partLocationEntry *ObPartLocationEntry) {
@@ -102,8 +103,11 @@ func (e *ObTableEntry) extractSubpartIdx(id int64) int64 {
 	return id & ObSubPartIdMask
 }
 
+// getPartitionLocation get partition location by partId and consistency.
 func (e *ObTableEntry) getPartitionLocation(partId int64, consistency ObConsistency) (*obReplicaLocation, error) {
 	if util.ObVersion() >= 4 && e.IsPartitionTable() {
+		// In ob version 4.0 and above, get tabletId firstly.
+		// Because in version 4.0 and above we set up a relationship between tabletId and Location.
 		tabletId, ok := e.partitionInfo.partTabletIdMap[partId]
 		if !ok {
 			return nil, errors.Errorf("tablet id not found, partId:%d, partInfo:%s", partId, e.partitionInfo.String())
@@ -115,6 +119,7 @@ func (e *ObTableEntry) getPartitionLocation(partId int64, consistency ObConsiste
 		}
 		return partLoc.getReplica(consistency), nil
 	} else {
+		// Below version 4.0 we set up a relationship between partId and Location.
 		partLoc, ok := e.partLocationEntry.partLocations[partId]
 		if !ok {
 			return nil, errors.Errorf("part location not found, partId:%d, partLocationEntry:%s",
@@ -124,6 +129,7 @@ func (e *ObTableEntry) getPartitionLocation(partId int64, consistency ObConsiste
 	}
 }
 
+// GetPartitionReplicaLocation get partition location by partId and consistency.
 func (e *ObTableEntry) GetPartitionReplicaLocation(partId int64, consistency ObConsistency) (*obReplicaLocation, error) {
 	logicId := partId
 	if e.partitionInfo != nil && e.partitionInfo.level == PartLevelTwo {
@@ -132,6 +138,7 @@ func (e *ObTableEntry) GetPartitionReplicaLocation(partId int64, consistency ObC
 	return e.getPartitionLocation(logicId, consistency)
 }
 
+// SetRowKeyElement set the primary key name to the routing module, which is required when calculating partId.
 func (e *ObTableEntry) SetRowKeyElement(rowKeyElement *table.ObRowKeyElement) {
 	if e.partitionInfo != nil {
 		e.partitionInfo.setRowKeyElement(rowKeyElement)

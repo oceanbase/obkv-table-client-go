@@ -20,6 +20,7 @@ package test
 import (
 	"context"
 	"fmt"
+	"os"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -44,12 +45,29 @@ const (
 		"PRIMARY KEY (`c1`, `c2`)) PARTITION BY KEY(`c1`) SUBPARTITION BY KEY(`c2`) SUBPARTITIONS 4 PARTITIONS 16;"
 )
 
+func setup() {
+	createTable(hashPartitionL1)
+	createTable(keyPartitionIntL1)
+	createTable(keyPartitionVarcharL1)
+	createTable(hashPartitionL2)
+	createTable(keyPartitionIntL2)
+	createTable(keyPartitionVarcharL2)
+}
+
+func teardown() {
+	dropTable("hashPartitionL1")
+	dropTable("keyPartitionIntL1")
+	dropTable("keyPartitionVarcharL1")
+	dropTable("hashPartitionL2")
+	dropTable("keyPartitionIntL2")
+	dropTable("keyPartitionVarcharL2")
+}
+
 func TestHashPartitionL1(t *testing.T) {
 	tableName := "hashPartitionL1"
 	cli := newClient()
-	createTable(hashPartitionL1)
 	defer func() {
-		dropTable(tableName)
+		deleteTable(tableName)
 	}()
 
 	err := cli.AddRowKey(tableName, []string{"c1"})
@@ -101,9 +119,8 @@ func TestHashPartitionL1(t *testing.T) {
 func TestKeyPartitionIntL1(t *testing.T) {
 	tableName := "keyPartitionIntL1"
 	cli := newClient()
-	createTable(keyPartitionIntL1)
 	defer func() {
-		dropTable(tableName)
+		deleteTable(tableName)
 	}()
 
 	err := cli.AddRowKey(tableName, []string{"c1"})
@@ -155,9 +172,8 @@ func TestKeyPartitionIntL1(t *testing.T) {
 func TestKeyPartitionVarcharL1(t *testing.T) {
 	tableName := "keyPartitionVarcharL1"
 	cli := newClient()
-	createTable(keyPartitionVarcharL1)
 	defer func() {
-		dropTable(tableName)
+		deleteTable(tableName)
 	}()
 
 	err := cli.AddRowKey(tableName, []string{"c1"})
@@ -211,9 +227,8 @@ func TestKeyPartitionVarcharL1(t *testing.T) {
 func TestHashPartitionL2(t *testing.T) {
 	tableName := "hashPartitionL2"
 	cli := newClient()
-	createTable(hashPartitionL2)
 	defer func() {
-		dropTable(tableName)
+		deleteTable(tableName)
 	}()
 
 	err := cli.AddRowKey(tableName, []string{"c1", "c2"})
@@ -268,9 +283,8 @@ func TestHashPartitionL2(t *testing.T) {
 func TestKeyPartitionIntL2(t *testing.T) {
 	tableName := "keyPartitionIntL2"
 	cli := newClient()
-	createTable(keyPartitionIntL2)
 	defer func() {
-		dropTable(tableName)
+		deleteTable(tableName)
 	}()
 
 	err := cli.AddRowKey(tableName, []string{"c1", "c2"})
@@ -325,9 +339,8 @@ func TestKeyPartitionIntL2(t *testing.T) {
 func TestKeyPartitionVarcharL2(t *testing.T) {
 	tableName := "keyPartitionVarcharL2"
 	cli := newClient()
-	createTable(keyPartitionVarcharL2)
 	defer func() {
-		dropTable(tableName)
+		deleteTable(tableName)
 	}()
 
 	err := cli.AddRowKey(tableName, []string{"c1", "c2"})
@@ -379,4 +392,11 @@ func TestKeyPartitionVarcharL2(t *testing.T) {
 			assert.EqualValues(t, c3Val, m["c3"])
 		}
 	}
+}
+
+func TestMain(m *testing.M) {
+	setup()
+	code := m.Run()
+	teardown()
+	os.Exit(code)
 }

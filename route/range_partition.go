@@ -27,20 +27,32 @@ import (
 	"github.com/oceanbase/obkv-table-client-go/table"
 )
 
+// obRangePartDesc description of the range partition.
 type obRangePartDesc struct {
-	obPartDescCommon
+	*obPartDescCommon
 	partSpace                 int
 	partNum                   int
-	orderedCompareColumns     []*obColumn
-	orderedCompareColumnTypes []protocol.ObObjType
+	orderedCompareColumns     []*obColumn          // all range partition columns
+	orderedCompareColumnTypes []protocol.ObObjType // all object type of range partition columns
 }
 
 func (d *obRangePartDesc) SetPartNum(partNum int) {
 	d.partNum = partNum
 }
 
-func newObRangePartDesc() *obRangePartDesc {
-	return &obRangePartDesc{}
+func newObRangePartDesc(
+	partSpace int,
+	partNum int,
+	partFuncType obPartFuncType,
+	partExpr string) *obRangePartDesc {
+	// eg:"c1, c2", need to remove ' '
+	str := strings.ReplaceAll(partExpr, " ", "")
+	orderedPartColumnNames := strings.Split(str, ",")
+	return &obRangePartDesc{
+		obPartDescCommon: newObPartDescCommon(partFuncType, partExpr, orderedPartColumnNames),
+		partSpace:        partSpace,
+		partNum:          partNum,
+	}
 }
 
 func (d *obRangePartDesc) partFuncType() obPartFuncType {
@@ -49,12 +61,6 @@ func (d *obRangePartDesc) partFuncType() obPartFuncType {
 
 func (d *obRangePartDesc) orderedPartColumnNames() []string {
 	return d.OrderedPartColumnNames
-}
-
-func (d *obRangePartDesc) setOrderedPartColumnNames(partExpr string) {
-	// eg:"c1, c2", need to remove ' '
-	str := strings.ReplaceAll(partExpr, " ", "")
-	d.OrderedPartColumnNames = strings.Split(str, ",")
 }
 
 func (d *obRangePartDesc) orderedPartRefColumnRowKeyRelations() []*obColumnIndexesPair {
@@ -73,8 +79,7 @@ func (d *obRangePartDesc) setPartColumns(partColumns []*obColumn) {
 }
 
 func (d *obRangePartDesc) GetPartId(rowKey []interface{}) (int64, error) {
-	// todo: impl
-	return ObInvalidPartId, errors.New("not implement")
+	return ObInvalidPartId, errors.New("not support range partition now")
 }
 
 func (d *obRangePartDesc) String() string {
