@@ -33,7 +33,7 @@ import (
 )
 
 const (
-	OceanbaseDatabase = "OCEANBASE"   // OceanbaseDatabase is used to obtain route.
+	OceanBaseDatabase = "OCEANBASE"   // OceanBaseDatabase is used to obtain route.
 	AllDummyTable     = "__all_dummy" // AllDummyTable is used to obtain all tenant server distributions.
 )
 
@@ -132,7 +132,7 @@ func GetObVersionFromRemote(addr *ObServerAddr, sysUA *ObUserAuth) (float32, err
 		sysUA.password,
 		addr.ip,
 		strconv.Itoa(addr.sqlPort),
-		OceanbaseDatabase,
+		OceanBaseDatabase,
 	)
 	if err != nil {
 		return 0.0, errors.WithMessagef(err, "new db, sysUA:%s, addr:%s", sysUA.String(), addr.String())
@@ -181,7 +181,7 @@ func GetTableEntryFromRemote(
 		sysUA.password,
 		addr.ip,
 		strconv.Itoa(addr.sqlPort),
-		OceanbaseDatabase,
+		OceanBaseDatabase,
 	)
 	if err != nil {
 		return nil, errors.WithMessagef(err, "new db, sysUA:%s, addr:%s", sysUA.String(), addr.String())
