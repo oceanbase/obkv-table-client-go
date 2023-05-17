@@ -15,7 +15,7 @@
  * #L%
  */
 
-package test
+package single
 
 import (
 	"context"
@@ -24,20 +24,12 @@ import (
 	"github.com/stretchr/testify/assert"
 
 	"github.com/oceanbase/obkv-table-client-go/table"
-)
-
-// create table statement
-const (
-	hashTable = "CREATE TABLE IF NOT EXISTS hashTable(`c1` bigint(20) NOT NULL, c2 bigint(20) NOT NULL, PRIMARY KEY (`c1`)) PARTITION BY HASH(c1) PARTITIONS 2;"
+	"github.com/oceanbase/obkv-table-client-go/test"
 )
 
 func TestInsert(t *testing.T) {
-	tableName := "hashTable"
-	cli := newClient()
-	createTable(hashTable)
-	defer func() {
-		deleteTable(tableName)
-	}()
+	tableName := singleOpTableTableName
+	defer test.DeleteTable(tableName)
 
 	err := cli.AddRowKey(tableName, []string{"c1"})
 	assert.Equal(t, nil, err)
@@ -66,21 +58,17 @@ func TestInsert(t *testing.T) {
 }
 
 func TestUpdate(t *testing.T) {
-	tableName := "hashTable"
-	cli := newClient()
-	createTable(hashTable)
-	defer func() {
-		deleteTable(tableName)
-	}()
+	tableName := singleOpTableTableName
+	defer test.DeleteTable(tableName)
 
-	err := cli.AddRowKey("hashTable", []string{"c1"})
+	err := cli.AddRowKey(tableName, []string{"c1"})
 	assert.Equal(t, nil, err)
 
 	rowKey := []*table.Column{table.NewColumn("c1", int64(1))}
 	mutateColumns := []*table.Column{table.NewColumn("c2", int64(1))}
 	affectRows, err := cli.Insert(
 		context.TODO(),
-		"hashTable",
+		tableName,
 		rowKey,
 		mutateColumns,
 	)
@@ -110,12 +98,8 @@ func TestUpdate(t *testing.T) {
 }
 
 func TestInsertOrUpdate(t *testing.T) {
-	tableName := "hashTable"
-	cli := newClient()
-	createTable(hashTable)
-	defer func() {
-		deleteTable(tableName)
-	}()
+	tableName := singleOpTableTableName
+	defer test.DeleteTable(tableName)
 
 	err := cli.AddRowKey(tableName, []string{"c1"})
 	assert.Equal(t, nil, err)
@@ -164,14 +148,10 @@ func TestInsertOrUpdate(t *testing.T) {
 }
 
 func TestDelete(t *testing.T) {
-	tableName := "hashTable"
-	cli := newClient()
-	createTable(hashTable)
-	defer func() {
-		deleteTable(tableName)
-	}()
+	tableName := singleOpTableTableName
+	defer test.DeleteTable(tableName)
 
-	err := cli.AddRowKey("hashTable", []string{"c1"})
+	err := cli.AddRowKey(tableName, []string{"c1"})
 	assert.Equal(t, nil, err)
 
 	rowKey := []*table.Column{table.NewColumn("c1", int64(1))}
@@ -203,12 +183,8 @@ func TestDelete(t *testing.T) {
 }
 
 func TestGet(t *testing.T) {
-	tableName := "hashTable"
-	cli := newClient()
-	createTable(hashTable)
-	defer func() {
-		deleteTable(tableName)
-	}()
+	tableName := singleOpTableTableName
+	defer test.DeleteTable(tableName)
 
 	err := cli.AddRowKey(tableName, []string{"c1"})
 	assert.Equal(t, nil, err)
@@ -257,7 +233,7 @@ func TestGet(t *testing.T) {
 	assert.EqualValues(t, 1, m["c1"])
 	assert.EqualValues(t, 1, m["c2"])
 
-	deleteTable(tableName)
+	test.DeleteTable(tableName)
 	m, err = cli.Get(
 		context.TODO(),
 		tableName,
