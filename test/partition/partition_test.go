@@ -15,60 +15,22 @@
  * #L%
  */
 
-package test
+package partition
 
 import (
 	"context"
 	"fmt"
-	"os"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
 
 	"github.com/oceanbase/obkv-table-client-go/table"
+	"github.com/oceanbase/obkv-table-client-go/test"
 )
-
-// create table statement
-const (
-	hashPartitionL1 = "CREATE TABLE IF NOT EXISTS hashPartitionL1(`c1` bigint(20) NOT NULL, c2 bigint(20) NOT NULL, " +
-		"PRIMARY KEY (`c1`)) PARTITION BY HASH(c1) PARTITIONS 2;"
-	keyPartitionIntL1 = "CREATE TABLE IF NOT EXISTS keyPartitionIntL1(`c1` bigint(20) NOT NULL, c2 bigint(20) NOT NULL, " +
-		"PRIMARY KEY (`c1`)) PARTITION BY KEY(c1) PARTITIONS 15;"
-	// todo test date type
-	keyPartitionVarcharL1 = "CREATE TABLE IF NOT EXISTS keyPartitionVarcharL1(`c1` varchar(20) NOT NULL, c2 bigint(20) NOT NULL, " +
-		"PRIMARY KEY (`c1`)) PARTITION BY KEY(c1) PARTITIONS 15;"
-	hashPartitionL2 = "CREATE TABLE IF NOT EXISTS hashPartitionL2(`c1` bigint(20) NOT NULL, `c2` bigint(20) NOT NULL, `c3` bigint(20) NOT NULL, " +
-		"PRIMARY KEY (`c1`, `c2`)) PARTITION BY HASH(`c1`) SUBPARTITION BY hash(`c2`) SUBPARTITIONS 4 PARTITIONS 16;"
-	keyPartitionIntL2 = "CREATE TABLE IF NOT EXISTS keyPartitionIntL2(`c1` bigint(20) NOT NULL, c2 bigint(20) NOT NULL, `c3` bigint(20) NOT NULL, " +
-		"PRIMARY KEY (`c1`, `c2`)) PARTITION BY KEY(`c1`) SUBPARTITION BY KEY(`c2`) SUBPARTITIONS 4 PARTITIONS 16;"
-	keyPartitionVarcharL2 = "CREATE TABLE IF NOT EXISTS keyPartitionVarcharL2(`c1` varchar(20) NOT NULL, `c2` varchar(20) NOT NULL, c3 bigint(20) NOT NULL, " +
-		"PRIMARY KEY (`c1`, `c2`)) PARTITION BY KEY(`c1`) SUBPARTITION BY KEY(`c2`) SUBPARTITIONS 4 PARTITIONS 16;"
-)
-
-func setup() {
-	createTable(hashPartitionL1)
-	createTable(keyPartitionIntL1)
-	createTable(keyPartitionVarcharL1)
-	createTable(hashPartitionL2)
-	createTable(keyPartitionIntL2)
-	createTable(keyPartitionVarcharL2)
-}
-
-func teardown() {
-	dropTable("hashPartitionL1")
-	dropTable("keyPartitionIntL1")
-	dropTable("keyPartitionVarcharL1")
-	dropTable("hashPartitionL2")
-	dropTable("keyPartitionIntL2")
-	dropTable("keyPartitionVarcharL2")
-}
 
 func TestHashPartitionL1(t *testing.T) {
-	tableName := "hashPartitionL1"
-	cli := newClient()
-	defer func() {
-		deleteTable(tableName)
-	}()
+	tableName := hashPartitionL1TableName
+	defer test.DeleteTable(tableName)
 
 	err := cli.AddRowKey(tableName, []string{"c1"})
 	assert.Equal(t, nil, err)
@@ -104,7 +66,7 @@ func TestHashPartitionL1(t *testing.T) {
 
 		// select by sql
 		selectStatement := fmt.Sprintf("select c1, c2 from %s where c1 = %d;", tableName, i)
-		rows := selectTable(selectStatement)
+		rows := test.SelectTable(selectStatement)
 		var c1Val int
 		var c2Val int
 		for rows.Next() {
@@ -117,11 +79,8 @@ func TestHashPartitionL1(t *testing.T) {
 }
 
 func TestKeyPartitionIntL1(t *testing.T) {
-	tableName := "keyPartitionIntL1"
-	cli := newClient()
-	defer func() {
-		deleteTable(tableName)
-	}()
+	tableName := keyPartitionIntL1TableName
+	defer test.DeleteTable(tableName)
 
 	err := cli.AddRowKey(tableName, []string{"c1"})
 	assert.Equal(t, nil, err)
@@ -157,7 +116,7 @@ func TestKeyPartitionIntL1(t *testing.T) {
 
 		// select by sql
 		selectStatement := fmt.Sprintf("select c1, c2 from %s where c1 = %d;", tableName, i)
-		rows := selectTable(selectStatement)
+		rows := test.SelectTable(selectStatement)
 		var c1Val int
 		var c2Val int
 		for rows.Next() {
@@ -170,11 +129,8 @@ func TestKeyPartitionIntL1(t *testing.T) {
 }
 
 func TestKeyPartitionVarcharL1(t *testing.T) {
-	tableName := "keyPartitionVarcharL1"
-	cli := newClient()
-	defer func() {
-		deleteTable(tableName)
-	}()
+	tableName := keyPartitionVarcharL1TableName
+	defer test.DeleteTable(tableName)
 
 	err := cli.AddRowKey(tableName, []string{"c1"})
 	assert.Equal(t, nil, err)
@@ -212,7 +168,7 @@ func TestKeyPartitionVarcharL1(t *testing.T) {
 
 		// select by sql
 		selectStatement := fmt.Sprintf("select c1, c2 from %s where c1 = '%s';", tableName, rowKeyVal)
-		rows := selectTable(selectStatement)
+		rows := test.SelectTable(selectStatement)
 		var c1Val string
 		var c2Val int
 		for rows.Next() {
@@ -225,11 +181,8 @@ func TestKeyPartitionVarcharL1(t *testing.T) {
 }
 
 func TestHashPartitionL2(t *testing.T) {
-	tableName := "hashPartitionL2"
-	cli := newClient()
-	defer func() {
-		deleteTable(tableName)
-	}()
+	tableName := hashPartitionL2TableName
+	defer test.DeleteTable(tableName)
 
 	err := cli.AddRowKey(tableName, []string{"c1", "c2"})
 	assert.Equal(t, nil, err)
@@ -266,7 +219,7 @@ func TestHashPartitionL2(t *testing.T) {
 
 		// select by sql
 		selectStatement := fmt.Sprintf("select c1, c2, c3 from %s where c1 = %d and c2 = %d;", tableName, i, i)
-		rows := selectTable(selectStatement)
+		rows := test.SelectTable(selectStatement)
 		var c1Val int
 		var c2Val int
 		var c3Val int
@@ -281,11 +234,8 @@ func TestHashPartitionL2(t *testing.T) {
 }
 
 func TestKeyPartitionIntL2(t *testing.T) {
-	tableName := "keyPartitionIntL2"
-	cli := newClient()
-	defer func() {
-		deleteTable(tableName)
-	}()
+	tableName := keyPartitionIntL2TableName
+	defer test.DeleteTable(tableName)
 
 	err := cli.AddRowKey(tableName, []string{"c1", "c2"})
 	assert.Equal(t, nil, err)
@@ -322,7 +272,7 @@ func TestKeyPartitionIntL2(t *testing.T) {
 
 		// select by sql
 		selectStatement := fmt.Sprintf("select c1, c2, c3 from %s where c1 = %d and c2 = %d;", tableName, i, i)
-		rows := selectTable(selectStatement)
+		rows := test.SelectTable(selectStatement)
 		var c1Val int
 		var c2Val int
 		var c3Val int
@@ -337,11 +287,8 @@ func TestKeyPartitionIntL2(t *testing.T) {
 }
 
 func TestKeyPartitionVarcharL2(t *testing.T) {
-	tableName := "keyPartitionVarcharL2"
-	cli := newClient()
-	defer func() {
-		deleteTable(tableName)
-	}()
+	tableName := keyPartitionVarcharL2TableName
+	defer test.DeleteTable(tableName)
 
 	err := cli.AddRowKey(tableName, []string{"c1", "c2"})
 	assert.Equal(t, nil, err)
@@ -380,7 +327,7 @@ func TestKeyPartitionVarcharL2(t *testing.T) {
 
 		// select by sql
 		selectStatement := fmt.Sprintf("select c1, c2, c3 from %s where c1 = '%s' and c2 = '%s';", tableName, rowKeyVal, rowKeyVal)
-		rows := selectTable(selectStatement)
+		rows := test.SelectTable(selectStatement)
 		var c1Val string
 		var c2Val string
 		var c3Val int
@@ -392,11 +339,4 @@ func TestKeyPartitionVarcharL2(t *testing.T) {
 			assert.EqualValues(t, c3Val, m["c3"])
 		}
 	}
-}
-
-func TestMain(m *testing.M) {
-	setup()
-	code := m.Run()
-	teardown()
-	os.Exit(code)
 }

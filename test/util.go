@@ -19,6 +19,9 @@ package test
 
 import (
 	"database/sql"
+	"fmt"
+
+	_ "github.com/go-sql-driver/mysql"
 
 	"github.com/oceanbase/obkv-table-client-go/client"
 	"github.com/oceanbase/obkv-table-client-go/config"
@@ -41,9 +44,7 @@ const (
 	sqlDatabase = "test"
 )
 
-var globalDb *sql.DB = nil
-
-func newClient() client.Client {
+func CreateClient() client.Client {
 	cli, err := client.NewClient(configUrl, fullUserName, passWord, sysUserName, sysPassWord, config.NewDefaultClientConfig())
 	if err != nil {
 		panic(err.Error())
@@ -51,39 +52,46 @@ func newClient() client.Client {
 	return cli
 }
 
-func newDB() *sql.DB {
-	if globalDb == nil {
-		dsn := sqlUser + ":" + sqlPassWord + "@tcp(" + sqlIp + ":" + sqlPort + ")/" + sqlDatabase
+var globalDB *sql.DB
+
+func CreateDB() {
+	if globalDB == nil {
+		dsn := fmt.Sprintf("%s:%s@tcp(%s:%s)/%s", sqlUser, passWord, sqlIp, sqlPort, sqlDatabase)
 		db, err := sql.Open("mysql", dsn)
 		if err != nil {
 			panic(err.Error())
 		}
-		globalDb = db
+		globalDB = db
 	}
-	return globalDb
 }
 
-func createTable(createTableStatement string) {
-	db := newDB()
-	_, err := db.Exec(createTableStatement)
+func CloseDB() {
+	globalDB.Close()
+}
+
+func CreateTable(createTableStatement string) {
+	_, err := globalDB.Exec(createTableStatement)
 	if err != nil {
 		panic(err.Error())
 	}
 }
 
-func dropTable(tableName string) {
-	db := newDB()
-	_, _ = db.Exec("DROP TABLE " + tableName + ";")
+func DropTable(tableName string) {
+	_, err := globalDB.Exec(fmt.Sprintf("drop table %s;", tableName))
+	if err != nil {
+		panic(err.Error())
+	}
 }
 
-func deleteTable(tableName string) {
-	db := newDB()
-	_, _ = db.Exec("DELETE FROM " + tableName + ";")
+func DeleteTable(tableName string) {
+	_, err := globalDB.Exec(fmt.Sprintf("delete from %s;", tableName))
+	if err != nil {
+		panic(err.Error())
+	}
 }
 
-func selectTable(selectStatement string) *sql.Rows {
-	db := newDB()
-	rows, err := db.Query(selectStatement)
+func SelectTable(selectStatement string) *sql.Rows {
+	rows, err := globalDB.Query(selectStatement)
 	if err != nil {
 		panic(err.Error())
 	}

@@ -15,7 +15,7 @@
  * #L%
  */
 
-package test
+package batch
 
 import (
 	"context"
@@ -24,19 +24,12 @@ import (
 	"github.com/stretchr/testify/assert"
 
 	"github.com/oceanbase/obkv-table-client-go/table"
-)
-
-const (
-	batchOpTable = "CREATE TABLE IF NOT EXISTS batchOpTable(`c1` bigint(20) NOT NULL, c2 bigint(20) NOT NULL, PRIMARY KEY (`c1`)) PARTITION BY HASH(c1) PARTITIONS 2;"
+	"github.com/oceanbase/obkv-table-client-go/test"
 )
 
 func TestBatch(t *testing.T) {
-	tableName := "batchOpTable"
-	cli := newClient()
-	createTable(batchOpTable)
-	defer func() {
-		dropTable(tableName)
-	}()
+	tableName := batchOpTableTableName
+	defer test.DeleteTable(tableName)
 
 	err := cli.AddRowKey(tableName, []string{"c1"})
 	assert.Equal(t, nil, err)
@@ -60,6 +53,7 @@ func TestBatch(t *testing.T) {
 	batchRes, err := batchExecutor.Execute(context.TODO())
 	assert.Equal(t, nil, err)
 	allResults := batchRes.GetResults()
+
 	assert.Equal(t, 4, len(allResults))
 	assert.EqualValues(t, 1, allResults[0].AffectedRows())
 	assert.EqualValues(t, 1, allResults[1].AffectedRows())
