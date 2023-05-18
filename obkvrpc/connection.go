@@ -29,8 +29,10 @@ import (
 	"time"
 
 	"github.com/pkg/errors"
+	"go.uber.org/zap"
 
 	oberror "github.com/oceanbase/obkv-table-client-go/error"
+	"github.com/oceanbase/obkv-table-client-go/log"
 	"github.com/oceanbase/obkv-table-client-go/protocol"
 	"github.com/oceanbase/obkv-table-client-go/util"
 )
@@ -224,7 +226,7 @@ func (c *Connection) receivePacket() {
 		ezHeaderBuf := make([]byte, protocol.EzHeaderLength)
 		_, err := io.ReadFull(c.conn, ezHeaderBuf)
 		if err != nil {
-			fmt.Printf("failed to connection read ezHeader, connection uniqueId: %d error: %s\n", c.uniqueId, err.Error())
+			log.Warn("failed to connection read header", zap.Error(err), zap.Uint64("uniqueId", c.uniqueId))
 			return
 		}
 
@@ -232,7 +234,7 @@ func (c *Connection) receivePacket() {
 		ezHeaderBuffer := bytes.NewBuffer(ezHeaderBuf)
 		err = ezHeader.Decode(ezHeaderBuffer)
 		if err != nil {
-			fmt.Printf("failed to decode ezHeader, connection uniqueId: %d error: %s\n", c.uniqueId, err.Error())
+			log.Warn("failed to decode ezHeader", zap.Error(err), zap.Uint64("uniqueId", c.uniqueId))
 			return
 		}
 
@@ -253,7 +255,7 @@ func (c *Connection) receivePacket() {
 			call.Error = err
 			call.done()
 
-			fmt.Printf("failed to connection read content, connection uniqueId: %d error: %s\n", c.uniqueId, err.Error())
+			log.Warn("failed to connection read content", zap.Error(err), zap.Uint64("uniqueId", c.uniqueId))
 			return
 		}
 
@@ -265,7 +267,7 @@ func (c *Connection) receivePacket() {
 
 		// call already deleted
 		if call == nil {
-			fmt.Printf("failed to not found table packet, connection uniqueId: %d seq: %d\n", c.uniqueId, channelId)
+			log.Warn("failed to not found table packet", zap.Uint64("uniqueId", c.uniqueId), zap.Uint32("seq", channelId))
 			continue
 		}
 		call.Content = contentBuf
@@ -331,8 +333,6 @@ func (c *Connection) encodeRpcHeader(payload protocol.ObPayload, payloadBuf []by
 	rpcHeader.SetTimeout(payload.Timeout())
 	rpcHeader.SetTraceId0(payload.UniqueId())
 	rpcHeader.SetTraceId1(payload.Sequence())
-	// TODO To be added
-	// rpcHeader.SetPriority(0)
 	rpcHeader.SetChecksum(util.Calculate(0, payloadBuf))
 
 	rpcHeaderBuf := rpcHeader.Encode()
@@ -354,6 +354,6 @@ func (call *Call) done() {
 	case call.Done <- call:
 		// ok
 	default:
-		fmt.Printf("rpc: discarding Call reply due to insufficient Done chan capacity\n")
+		log.Warn("rpc: discarding Call reply due to insufficient Done chan capacity")
 	}
 }
