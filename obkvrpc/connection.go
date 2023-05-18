@@ -18,6 +18,7 @@
 package obkvrpc
 
 import (
+	"bufio"
 	"bytes"
 	"context"
 	"fmt"
@@ -35,6 +36,14 @@ import (
 	"github.com/oceanbase/obkv-table-client-go/log"
 	"github.com/oceanbase/obkv-table-client-go/protocol"
 	"github.com/oceanbase/obkv-table-client-go/util"
+)
+
+const (
+	connSystemWriteBufferSize = 16 * 1024
+	connSystemReadBufferSize  = 16 * 1024
+
+	connReaderBufferSize = 16 * 1024
+	connWriterBufferSize = 16 * 1024
 )
 
 type ConnectionOption struct {
@@ -66,15 +75,18 @@ func NewConnectionOption(ip string, port int, connectTimeout time.Duration, logi
 type Connection struct {
 	option *ConnectionOption
 
-	conn    net.Conn
+	conn   net.Conn
+	reader *bufio.Reader
+	writer *bufio.Reader
+
 	mutex   sync.Mutex
 	seq     atomic.Uint32 // as channel id in ez header
 	pending map[uint32]*Call
-	active  atomic.Bool
 
-	uniqueId uint64        // as trace0 in rpc header
-	sequence atomic.Uint64 // as trace1 in rpc header
+	active   atomic.Bool
+	uniqueId uint64 // as trace0 in rpc header
 
+	sequence   atomic.Uint64 // as trace1 in rpc header
 	credential []byte
 	tenantId   uint64
 }
@@ -109,6 +121,11 @@ func (c *Connection) Connect(ctx context.Context) error {
 		return errors.WithMessagef(err, "net dial, uniqueId: %d remote addr: %s", c.uniqueId, address)
 	}
 	c.conn = conn
+	c.conn.(*net.TCPConn).SetReadBuffer(connSystemReadBufferSize)
+	c.conn.(*net.TCPConn).SetWriteBuffer(connSystemWriteBufferSize)
+
+	c.reader = bufio.NewReaderSize(c.conn, connReaderBufferSize)
+	// c.writer = bufio.NewReaderSize(c.conn, connReaderBufferSize)
 
 	/* layout of uniqueId(64 bytes)
 	 * ip_: 32
@@ -224,7 +241,7 @@ func (c *Connection) receivePacket() {
 	defer c.Close()
 	for {
 		ezHeaderBuf := make([]byte, protocol.EzHeaderLength)
-		_, err := io.ReadFull(c.conn, ezHeaderBuf)
+		_, err := io.ReadFull(c.reader, ezHeaderBuf)
 		if err != nil {
 			log.Warn("failed to connection read header", zap.Error(err), zap.Uint64("uniqueId", c.uniqueId))
 			return
@@ -245,7 +262,7 @@ func (c *Connection) receivePacket() {
 
 		// TODO Use buf pool optimization
 		contentBuf := make([]byte, contentLen)
-		_, err = io.ReadFull(c.conn, contentBuf)
+		_, err = io.ReadFull(c.reader, contentBuf)
 		if err != nil {
 			// read failed
 			c.mutex.Lock()
