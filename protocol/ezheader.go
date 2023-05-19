@@ -19,6 +19,7 @@ package protocol
 
 import (
 	"bytes"
+	"encoding/binary"
 
 	"github.com/pkg/errors"
 
@@ -61,14 +62,11 @@ func NewEzHeader() *EzHeader {
 	return &EzHeader{}
 }
 
-func (h *EzHeader) Encode() []byte {
-	ezHeaderBuf := make([]byte, EzHeaderLength)
-	ezHeaderBuffer := bytes.NewBuffer(ezHeaderBuf)
-	copy(ezHeaderBuffer.Next(4), MagicHeaderFlag)
-	util.PutUint32(ezHeaderBuffer, h.contentLen)
-	util.PutUint32(ezHeaderBuffer, h.channelId)
-	copy(ezHeaderBuffer.Next(4), Reserved)
-	return ezHeaderBuf
+func (h *EzHeader) Encode(ezHeaderBuf []byte) {
+	copy(ezHeaderBuf[:4], MagicHeaderFlag)
+	binary.BigEndian.PutUint32(ezHeaderBuf[4:8], h.contentLen)
+	binary.BigEndian.PutUint32(ezHeaderBuf[8:12], h.channelId)
+	copy(ezHeaderBuf[12:16], Reserved)
 }
 
 func (h *EzHeader) Decode(buffer *bytes.Buffer) error {

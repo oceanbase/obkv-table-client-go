@@ -313,7 +313,9 @@ func (c *Connection) sendPacket(call *Call, seq uint32, rpcHeaderBuf []byte, pay
 	ezHeader.SetChannelId(seq)
 	ezHeader.SetContentLen(uint32(rpcHeaderLen + payloadLen))
 
-	ezHeaderBuf := ezHeader.Encode()
+	ezHeaderBuf := c.ezHeaderPool.Get().([]byte)
+
+	ezHeader.Encode(ezHeaderBuf)
 
 	ezHeaderLen := len(ezHeaderBuf)
 	totalLen := ezHeaderLen + rpcHeaderLen + payloadLen
@@ -323,6 +325,8 @@ func (c *Connection) sendPacket(call *Call, seq uint32, rpcHeaderBuf []byte, pay
 	copy(totalBuf[:ezHeaderLen], ezHeaderBuf)
 	copy(totalBuf[ezHeaderLen:ezHeaderLen+rpcHeaderLen], rpcHeaderBuf)
 	copy(totalBuf[ezHeaderLen+rpcHeaderLen:], payloadBuf)
+
+	c.ezHeaderPool.Put(ezHeaderBuf)
 
 	c.mutex.Lock()
 	c.pending[seq] = call
