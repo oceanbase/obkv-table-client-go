@@ -46,6 +46,8 @@ const (
 	connWriterBufferSize = 16 * 1024
 )
 
+var bufferPool = NewLimitedPool(256, 16*1024)
+
 type ConnectionOption struct {
 	ip             string
 	port           int
@@ -89,6 +91,8 @@ type Connection struct {
 	sequence   atomic.Uint64 // as trace1 in rpc header
 	credential []byte
 	tenantId   uint64
+
+	ezHeaderPool sync.Pool
 }
 
 // Call represents an active RPC.
@@ -126,6 +130,9 @@ func (c *Connection) Connect(ctx context.Context) error {
 	c.conn.(*net.TCPConn).SetNoDelay(false)
 	c.reader = bufio.NewReaderSize(c.conn, connReaderBufferSize)
 	c.writer = bufio.NewWriterSize(c.conn, connWriterBufferSize)
+	c.ezHeaderPool.New = func() any {
+		return make([]byte, protocol.EzHeaderLength)
+	}
 
 	/* layout of uniqueId(64 bytes)
 	 * ip_: 32
@@ -234,13 +241,16 @@ func (c *Connection) Execute(ctx context.Context, request protocol.ObPayload, re
 
 	c.decodePayload(response, contentBuffer)
 
+	bufferPool.Put(&contentBuf)
+
 	return nil
 }
 
 func (c *Connection) receivePacket() {
 	defer c.Close()
 	for {
-		ezHeaderBuf := make([]byte, protocol.EzHeaderLength)
+		ezHeaderBuf := c.ezHeaderPool.Get().([]byte)
+
 		_, err := io.ReadFull(c.reader, ezHeaderBuf)
 		if err != nil {
 			log.Warn("failed to connection read header", zap.Error(err), zap.Uint64("uniqueId", c.uniqueId))
@@ -255,13 +265,16 @@ func (c *Connection) receivePacket() {
 			return
 		}
 
+		c.ezHeaderPool.Put(ezHeaderBuf)
+
 		var call *Call
 
 		contentLen := ezHeader.ContentLen()
 		channelId := ezHeader.ChannelId()
 
 		// TODO Use buf pool optimization
-		contentBuf := make([]byte, contentLen)
+		contentBuf := *bufferPool.Get(int(contentLen))
+
 		_, err = io.ReadFull(c.reader, contentBuf)
 		if err != nil {
 			// read failed
@@ -306,7 +319,7 @@ func (c *Connection) sendPacket(call *Call, seq uint32, rpcHeaderBuf []byte, pay
 	totalLen := ezHeaderLen + rpcHeaderLen + payloadLen
 
 	// TODO Use buf pool optimization
-	totalBuf := make([]byte, totalLen)
+	totalBuf := *bufferPool.Get(totalLen)
 	copy(totalBuf[:ezHeaderLen], ezHeaderBuf)
 	copy(totalBuf[ezHeaderLen:ezHeaderLen+rpcHeaderLen], rpcHeaderBuf)
 	copy(totalBuf[ezHeaderLen+rpcHeaderLen:], payloadBuf)
@@ -325,6 +338,7 @@ func (c *Connection) sendPacket(call *Call, seq uint32, rpcHeaderBuf []byte, pay
 		return errors.WithMessage(err, "conn write")
 	}
 	// write success
+	bufferPool.Put(&totalBuf)
 	return nil
 }
 
@@ -335,7 +349,7 @@ func (c *Connection) Close() {
 
 func (c *Connection) encodePayload(payload protocol.ObPayload) []byte {
 	payloadLen := payload.PayloadLen()
-	payloadBuf := make([]byte, payloadLen)
+	payloadBuf := *bufferPool.Get(payloadLen)
 	payloadBuffer := bytes.NewBuffer(payloadBuf)
 	payload.Encode(payloadBuffer)
 	return payloadBuf
