@@ -77,7 +77,7 @@ type Connection struct {
 
 	conn   net.Conn
 	reader *bufio.Reader
-	writer *bufio.Reader
+	writer *bufio.Writer
 
 	mutex   sync.Mutex
 	seq     atomic.Uint32 // as channel id in ez header
@@ -123,9 +123,9 @@ func (c *Connection) Connect(ctx context.Context) error {
 	c.conn = conn
 	c.conn.(*net.TCPConn).SetReadBuffer(connSystemReadBufferSize)
 	c.conn.(*net.TCPConn).SetWriteBuffer(connSystemWriteBufferSize)
-
+	c.conn.(*net.TCPConn).SetNoDelay(false)
 	c.reader = bufio.NewReaderSize(c.conn, connReaderBufferSize)
-	// c.writer = bufio.NewReaderSize(c.conn, connReaderBufferSize)
+	c.writer = bufio.NewWriterSize(c.conn, connWriterBufferSize)
 
 	/* layout of uniqueId(64 bytes)
 	 * ip_: 32
