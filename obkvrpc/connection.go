@@ -39,8 +39,11 @@ import (
 )
 
 const (
-	connReaderBufferSize = 4096
-	connWriterBufferSize = 4096
+	connReaderBufferSize = 4 * 1024
+	connWriterBufferSize = 4 * 1024
+
+	connSystemReadBufferSize  = 128 * 1024
+	connSystemWriteBufferSize = 64 * 1024
 )
 
 var bufferPool = NewLimitedPool(256, 8192)
@@ -111,6 +114,9 @@ func (c *Connection) Connect(ctx context.Context) error {
 		return errors.WithMessagef(err, "net dial, uniqueId: %d remote addr: %s", c.uniqueId, address)
 	}
 	c.conn = conn
+	c.conn.(*net.TCPConn).SetNoDelay(true)
+	c.conn.(*net.TCPConn).SetReadBuffer(connSystemReadBufferSize)
+	c.conn.(*net.TCPConn).SetWriteBuffer(connSystemWriteBufferSize)
 	c.reader = bufio.NewReaderSize(c.conn, connReaderBufferSize)
 
 	// ez header pool
