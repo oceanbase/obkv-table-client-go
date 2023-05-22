@@ -307,6 +307,7 @@ func (c *Connection) encodePacket(seq uint32, request protocol.ObPayload) []byte
 	rpcHeaderBuf := c.rpcHeaderPool.Get().([]byte)
 	rpcHeaderBuffer := bytes.NewBuffer(rpcHeaderBuf)
 	rpcHeaderLen := len(rpcHeaderBuf)
+	rpcHeader.SetHLen(uint8(rpcHeaderLen))
 	rpcHeader.Encode(rpcHeaderBuffer)
 
 	// encode ez header
