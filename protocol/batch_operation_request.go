@@ -67,7 +67,7 @@ func NewObTableBatchOperationRequest(
 		returnAffectedEntity:    false,
 		returnAffectedRows:      false,
 		partitionId:             partitionId,
-		atomicOperation:         true,
+		atomicOperation:         atomicOperation,
 	}
 }
 
