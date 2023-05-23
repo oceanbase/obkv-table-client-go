@@ -25,6 +25,7 @@ import (
 
 type ObLoginRequest struct {
 	*ObUniVersionHeader
+	*ObPayloadBase
 	authMethod    uint8
 	clientType    uint8
 	clientVersion uint8
@@ -51,6 +52,7 @@ func NewObLoginRequest(tenantName string, databaseName string, userName string, 
 
 	return &ObLoginRequest{
 		ObUniVersionHeader: NewObUniVersionHeader(),
+		ObPayloadBase:      NewObPayloadBase(),
 		authMethod:         0x01,
 		clientType:         0x02,
 		clientVersion:      0x01,
@@ -203,6 +205,14 @@ func (r *ObLoginRequest) PayloadContentLen() int {
 
 	r.ObUniVersionHeader.SetContentLength(totalLen) // Set on first acquisition
 	return r.ObUniVersionHeader.ContentLength()
+}
+
+func (r *ObLoginRequest) Credential() []byte {
+	return nil
+}
+
+func (r *ObLoginRequest) SetCredential(credential []byte) {
+	return
 }
 
 func (r *ObLoginRequest) Encode(buffer *bytes.Buffer) {

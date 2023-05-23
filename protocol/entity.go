@@ -45,6 +45,14 @@ func NewObTableEntity() *ObTableEntity {
 	}
 }
 
+func NewObTableEntityWithParams(rowKeyLen int, propertiesLen int) *ObTableEntity {
+	return &ObTableEntity{
+		ObUniVersionHeader: NewObUniVersionHeader(),
+		rowKey:             NewRowKeyWithParams(rowKeyLen),
+		properties:         make(map[string]*ObObject, propertiesLen),
+	}
+}
+
 func (e *ObTableEntity) RowKey() *RowKey {
 	return e.rowKey
 }

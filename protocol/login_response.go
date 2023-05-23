@@ -25,13 +25,13 @@ import (
 
 type ObLoginResponse struct {
 	*ObUniVersionHeader
+	*ObPayloadBase
 	serverCapabilities int32
 	reserved1          int32
 	reserved2          int64
 
 	serverVersion string
 	credential    []byte
-	tenantId      uint64
 	userId        int64
 	databaseId    int64
 }
@@ -39,12 +39,12 @@ type ObLoginResponse struct {
 func NewObLoginResponse() *ObLoginResponse {
 	return &ObLoginResponse{
 		ObUniVersionHeader: NewObUniVersionHeader(),
+		ObPayloadBase:      NewObPayloadBase(),
 		serverCapabilities: 0,
 		reserved1:          0,
 		reserved2:          0,
 		serverVersion:      "",
 		credential:         nil,
-		tenantId:           0,
 		userId:             0,
 		databaseId:         0,
 	}
@@ -96,14 +96,6 @@ func (r *ObLoginResponse) DatabaseId() int64 {
 
 func (r *ObLoginResponse) SetDatabaseId(databaseId int64) {
 	r.databaseId = databaseId
-}
-
-func (r *ObLoginResponse) TenantId() uint64 {
-	return r.tenantId
-}
-
-func (r *ObLoginResponse) SetTenantId(tenantId uint64) {
-	r.tenantId = tenantId
 }
 
 func (r *ObLoginResponse) PCode() ObTablePacketCode {
