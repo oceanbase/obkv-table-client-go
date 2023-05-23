@@ -19,6 +19,8 @@ package protocol
 
 import (
 	"bytes"
+
+	"github.com/oceanbase/obkv-table-client-go/util"
 )
 
 type ObObject struct {
@@ -65,4 +67,15 @@ func (o *ObObject) Decode(buffer *bytes.Buffer) {
 
 func (o *ObObject) EncodedLength() int {
 	return o.meta.EncodedLength() + o.meta.ObjType().EncodedLength(o.value)
+}
+
+func (o *ObObject) String() string {
+	var metaStr = "nil"
+	if o.meta != nil {
+		metaStr = o.meta.String()
+	}
+	return "ObObject{" +
+		"meta:" + metaStr + ", " +
+		"value:" + util.InterfaceToString(o.value) +
+		"}"
 }

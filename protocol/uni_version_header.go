@@ -19,6 +19,7 @@ package protocol
 
 import (
 	"bytes"
+	"strconv"
 	"time"
 
 	"github.com/oceanbase/obkv-table-client-go/util"
@@ -139,4 +140,17 @@ func (h *ObUniVersionHeader) Encode(buffer *bytes.Buffer) {
 func (h *ObUniVersionHeader) Decode(buffer *bytes.Buffer) {
 	h.version = util.DecodeVi64(buffer)
 	h.contentLength = int(util.DecodeVi64(buffer)) // contentLength useless right now
+}
+
+func (h *ObUniVersionHeader) String() string {
+	return "ObUniVersionHeader{" +
+		"version:" + strconv.Itoa(int(h.version)) + ", " +
+		"contentLength:" + strconv.Itoa(h.contentLength) + ", " +
+		"flag:" + strconv.Itoa(int(h.flag)) + ", " +
+		"tenantId:" + strconv.Itoa(int(h.tenantId)) + ", " +
+		"sessionId:" + strconv.Itoa(int(h.sessionId)) + ", " +
+		"timeout:" + h.timeout.String() + ", " +
+		"uniqueId:" + strconv.Itoa(int(h.uniqueId)) + ", " +
+		"sequence:" + strconv.Itoa(int(h.sequence)) +
+		"}"
 }

@@ -44,6 +44,7 @@ func NewObTableBatchOperationRequest(
 	tableId uint64,
 	partitionId int64,
 	obTableBatchOperation *ObTableBatchOperation,
+	atomicOperation bool,
 	timeout time.Duration,
 	flag uint16) *ObTableBatchOperationRequest {
 
