@@ -38,13 +38,13 @@ const (
 		obCostTimeEncodeSize +
 		8 // dstClusterId
 
-	encodeSize = headerEncodeSize +
+	RpcHeaderEncodeSize = headerEncodeSize +
 		obCostTimeEncodeSize +
 		8 + // dstClusterId
 		4 + // compressType
 		4 // originalLen
 
-	encodeSizeV4 = headerEncodeSize +
+	RpcHeaderEncodeSizeV4 = headerEncodeSize +
 		obCostTimeEncodeSize +
 		8 + // dstClusterId
 		4 + // compressType
@@ -320,19 +320,7 @@ func (h *ObRpcHeader) SetClusterNameHash(clusterNameHash int64) {
 	h.clusterNameHash = clusterNameHash
 }
 
-func (h *ObRpcHeader) Encode() []byte {
-	var rpcHeaderBuf []byte
-	// Maybe it would be better to use the version number to judge
-	if util.ObVersion() >= 4 {
-		rpcHeaderBuf = make([]byte, encodeSizeV4)
-		h.hLen = encodeSizeV4
-	} else { // v3
-		rpcHeaderBuf = make([]byte, encodeSize)
-		h.hLen = encodeSize
-	}
-
-	rpcHeaderBuffer := bytes.NewBuffer(rpcHeaderBuf)
-
+func (h *ObRpcHeader) Encode(rpcHeaderBuffer *bytes.Buffer) {
 	util.PutUint32(rpcHeaderBuffer, h.pCode)
 	util.PutUint8(rpcHeaderBuffer, h.hLen)
 	util.PutUint8(rpcHeaderBuffer, h.priority)
@@ -363,8 +351,6 @@ func (h *ObRpcHeader) Encode() []byte {
 		util.PutUint64(rpcHeaderBuffer, uint64(h.traceId3))
 		util.PutUint64(rpcHeaderBuffer, uint64(h.clusterNameHash))
 	}
-
-	return rpcHeaderBuf
 }
 
 func (h *ObRpcHeader) Decode(buffer *bytes.Buffer) {
@@ -382,7 +368,7 @@ func (h *ObRpcHeader) Decode(buffer *bytes.Buffer) {
 	h.timestamp = int64(util.Uint64(buffer))
 
 	// Maybe it would be better to use the version number to judge
-	if h.hLen >= encodeSizeV4 {
+	if h.hLen >= RpcHeaderEncodeSizeV4 {
 		h.obRpcCostTime.Decode(buffer)
 
 		h.dstClusterId = int64(util.Uint64(buffer))
@@ -398,15 +384,15 @@ func (h *ObRpcHeader) Decode(buffer *bytes.Buffer) {
 		h.traceId3 = int64(util.Uint64(buffer))
 		h.clusterNameHash = int64(util.Uint64(buffer))
 
-		util.SkipBytes(buffer, int(h.hLen-encodeSizeV4))
-	} else if h.hLen >= encodeSize {
+		util.SkipBytes(buffer, int(h.hLen-RpcHeaderEncodeSizeV4))
+	} else if h.hLen >= RpcHeaderEncodeSize {
 		h.obRpcCostTime.Decode(buffer)
 
 		h.dstClusterId = int64(util.Uint64(buffer))
 		h.compressType = ObCompressType(util.Uint32(buffer))
 		h.originalLen = int32(util.Uint32(buffer))
 
-		util.SkipBytes(buffer, int(h.hLen-encodeSize))
+		util.SkipBytes(buffer, int(h.hLen-RpcHeaderEncodeSize))
 	} else if h.hLen >= encodeSizeWithCostTimeAndDstClusterId {
 		h.obRpcCostTime.Decode(buffer)
 

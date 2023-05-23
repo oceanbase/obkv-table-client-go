@@ -19,10 +19,9 @@ package protocol
 
 import (
 	"bytes"
+	"encoding/binary"
 
 	"github.com/pkg/errors"
-
-	"github.com/oceanbase/obkv-table-client-go/util"
 )
 
 const (
@@ -31,8 +30,8 @@ const (
 )
 
 var (
-	MagicHeaderFlag = []uint8{version, 0xDB, 0xDB, 0xCE}
-	Reserved        = []uint8{0, 0, 0, 0}
+	magicHeaderFlag = []uint8{version, 0xDB, 0xDB, 0xCE}
+	reserved        = []uint8{0, 0, 0, 0}
 )
 
 // EzHeader ...
@@ -61,22 +60,19 @@ func NewEzHeader() *EzHeader {
 	return &EzHeader{}
 }
 
-func (h *EzHeader) Encode() []byte {
-	ezHeaderBuf := make([]byte, EzHeaderLength)
-	ezHeaderBuffer := bytes.NewBuffer(ezHeaderBuf)
-	copy(ezHeaderBuffer.Next(4), MagicHeaderFlag)
-	util.PutUint32(ezHeaderBuffer, h.contentLen)
-	util.PutUint32(ezHeaderBuffer, h.channelId)
-	copy(ezHeaderBuffer.Next(4), Reserved)
-	return ezHeaderBuf
+func (h *EzHeader) Encode(ezHeaderBuf []byte) {
+	copy(ezHeaderBuf[:4], magicHeaderFlag)
+	binary.BigEndian.PutUint32(ezHeaderBuf[4:8], h.contentLen)
+	binary.BigEndian.PutUint32(ezHeaderBuf[8:12], h.channelId)
+	copy(ezHeaderBuf[12:16], reserved)
 }
 
-func (h *EzHeader) Decode(buffer *bytes.Buffer) error {
-	if ok := bytes.Equal(MagicHeaderFlag, buffer.Next(4)); !ok {
+func (h *EzHeader) Decode(ezHeaderBuf []byte) error {
+	if ok := bytes.Equal(magicHeaderFlag, ezHeaderBuf[0:4]); !ok {
 		return errors.New("magic header flag not match")
 	}
-	h.contentLen = util.Uint32(buffer)
-	h.channelId = util.Uint32(buffer)
-	_ = buffer.Next(4) // reserved
+	h.contentLen = binary.BigEndian.Uint32(ezHeaderBuf[4:8])
+	h.channelId = binary.BigEndian.Uint32(ezHeaderBuf[8:12])
+	_ = ezHeaderBuf[12:16] // reserved
 	return nil
 }

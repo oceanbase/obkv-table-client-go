@@ -39,12 +39,14 @@ import (
 )
 
 const (
-	connSystemWriteBufferSize = 16 * 1024
-	connSystemReadBufferSize  = 16 * 1024
+	connReaderBufferSize = 4 * 1024
+	connWriterBufferSize = 4 * 1024
 
-	connReaderBufferSize = 16 * 1024
-	connWriterBufferSize = 16 * 1024
+	connSystemReadBufferSize  = 128 * 1024
+	connSystemWriteBufferSize = 64 * 1024
 )
+
+var bufferPool = NewLimitedPool(256, 8192)
 
 type ConnectionOption struct {
 	ip             string
@@ -77,7 +79,6 @@ type Connection struct {
 
 	conn   net.Conn
 	reader *bufio.Reader
-	writer *bufio.Writer
 
 	mutex   sync.Mutex
 	seq     atomic.Uint32 // as channel id in ez header
@@ -89,6 +90,9 @@ type Connection struct {
 	sequence   atomic.Uint64 // as trace1 in rpc header
 	credential []byte
 	tenantId   uint64
+
+	ezHeaderPool  sync.Pool
+	rpcHeaderPool sync.Pool
 }
 
 // Call represents an active RPC.
@@ -104,28 +108,31 @@ func NewConnection(option *ConnectionOption) *Connection {
 
 func (c *Connection) Connect(ctx context.Context) error {
 	address := fmt.Sprintf("%s:%s", c.option.ip, strconv.Itoa(c.option.port))
-
-	deadline, _ := ctx.Deadline() // ok always true
-	nowTimeDifference := time.Until(deadline)
-	if nowTimeDifference < 0 {
-		return errors.WithMessagef(ctx.Err(), "time out, uniqueId: %d remote addr: %s", c.uniqueId, address)
-	}
-
-	if nowTimeDifference > c.option.connectTimeout {
-		ctx, _ = context.WithTimeout(ctx, c.option.connectTimeout) // use config connect timeout
-	}
-
 	dialer := &net.Dialer{}
 	conn, err := dialer.DialContext(ctx, "tcp", address)
 	if err != nil {
 		return errors.WithMessagef(err, "net dial, uniqueId: %d remote addr: %s", c.uniqueId, address)
 	}
 	c.conn = conn
+	c.conn.(*net.TCPConn).SetNoDelay(true)
 	c.conn.(*net.TCPConn).SetReadBuffer(connSystemReadBufferSize)
 	c.conn.(*net.TCPConn).SetWriteBuffer(connSystemWriteBufferSize)
-	c.conn.(*net.TCPConn).SetNoDelay(false)
 	c.reader = bufio.NewReaderSize(c.conn, connReaderBufferSize)
-	c.writer = bufio.NewWriterSize(c.conn, connWriterBufferSize)
+
+	// ez header pool
+	c.ezHeaderPool.New = func() any {
+		return make([]byte, protocol.EzHeaderLength)
+	}
+
+	// rpc header pool
+	c.rpcHeaderPool.New = func() any {
+		return make([]byte, protocol.RpcHeaderEncodeSize)
+	}
+	if util.ObVersion() >= 4 {
+		c.rpcHeaderPool.New = func() any {
+			return make([]byte, protocol.RpcHeaderEncodeSizeV4)
+		}
+	}
 
 	/* layout of uniqueId(64 bytes)
 	 * ip_: 32
@@ -145,17 +152,6 @@ func (c *Connection) Connect(ctx context.Context) error {
 }
 
 func (c *Connection) Login(ctx context.Context) error {
-	deadline, _ := ctx.Deadline() // ok always true
-	nowTimeDifference := time.Until(deadline)
-	if nowTimeDifference < 0 {
-		return errors.WithMessagef(ctx.Err(), "time out, uniqueId: %d remote addr: %s tenantname: %s databasename: %s",
-			c.uniqueId, c.conn.RemoteAddr().String(), c.option.tenantName, c.option.databaseName)
-	}
-
-	if nowTimeDifference > c.option.loginTimeout {
-		ctx, _ = context.WithTimeout(ctx, c.option.loginTimeout) // use config connect timeout
-	}
-
 	loginRequest := protocol.NewObLoginRequest(c.option.tenantName, c.option.databaseName, c.option.userName, c.option.password)
 	loginResponse := protocol.NewObLoginResponse()
 	err := c.Execute(ctx, loginRequest, loginResponse)
@@ -175,21 +171,13 @@ func (c *Connection) Login(ctx context.Context) error {
 func (c *Connection) Execute(ctx context.Context, request protocol.ObPayload, response protocol.ObPayload) error {
 	seq := c.seq.Add(1)
 
-	request.SetUniqueId(c.uniqueId)
-	request.SetSequence(c.sequence.Add(1))
-
-	request.SetTenantId(c.tenantId)
-	request.SetCredential(c.credential)
-
-	payloadBuf := c.encodePayload(request)
-
-	rpcHeaderBuf := c.encodeRpcHeader(request, payloadBuf)
+	packetBuf := c.encodePacket(seq, request)
 
 	done := make(chan *Call, 1)
 	call := new(Call)
 	call.Done = done
 
-	err := c.sendPacket(call, seq, rpcHeaderBuf, payloadBuf)
+	err := c.sendPacket(seq, call, packetBuf)
 	if err != nil {
 		return errors.WithMessage(err, "send packet")
 	}
@@ -209,30 +197,10 @@ func (c *Connection) Execute(ctx context.Context, request protocol.ObPayload, re
 	}
 
 	// transport success
-	contentBuf := call.Content
-	contentBuffer := bytes.NewBuffer(contentBuf)
-
-	rpcHeader := c.decodeRpcHeader(contentBuffer)
-
-	rpcResponseCode := protocol.NewObRpcResponseCode()
-
-	rpcResponseCode.Decode(contentBuffer)
-
-	if rpcResponseCode.Code() != oberror.ObSuccess {
-		return oberror.NewProtocolError(
-			c.option.ip,
-			c.option.port,
-			rpcResponseCode.Code(),
-			rpcHeader.TraceId1(),
-			rpcHeader.TraceId0(),
-			"",
-		)
+	err = c.decodePacket(call.Content, response)
+	if err != nil {
+		return err
 	}
-
-	response.SetUniqueId(rpcHeader.TraceId0())
-	response.SetSequence(rpcHeader.TraceId1())
-
-	c.decodePayload(response, contentBuffer)
 
 	return nil
 }
@@ -240,7 +208,8 @@ func (c *Connection) Execute(ctx context.Context, request protocol.ObPayload, re
 func (c *Connection) receivePacket() {
 	defer c.Close()
 	for {
-		ezHeaderBuf := make([]byte, protocol.EzHeaderLength)
+		ezHeaderBuf := c.ezHeaderPool.Get().([]byte)
+
 		_, err := io.ReadFull(c.reader, ezHeaderBuf)
 		if err != nil {
 			log.Warn("failed to connection read header", zap.Error(err), zap.Uint64("uniqueId", c.uniqueId))
@@ -248,20 +217,21 @@ func (c *Connection) receivePacket() {
 		}
 
 		ezHeader := protocol.NewEzHeader()
-		ezHeaderBuffer := bytes.NewBuffer(ezHeaderBuf)
-		err = ezHeader.Decode(ezHeaderBuffer)
+		err = ezHeader.Decode(ezHeaderBuf)
 		if err != nil {
 			log.Warn("failed to decode ezHeader", zap.Error(err), zap.Uint64("uniqueId", c.uniqueId))
 			return
 		}
+
+		c.ezHeaderPool.Put(ezHeaderBuf)
 
 		var call *Call
 
 		contentLen := ezHeader.ContentLen()
 		channelId := ezHeader.ChannelId()
 
-		// TODO Use buf pool optimization
-		contentBuf := make([]byte, contentLen)
+		contentBuf := *bufferPool.Get(int(contentLen)) // reuse
+
 		_, err = io.ReadFull(c.reader, contentBuf)
 		if err != nil {
 			// read failed
@@ -269,9 +239,12 @@ func (c *Connection) receivePacket() {
 			call = c.pending[channelId]
 			delete(c.pending, channelId)
 			c.mutex.Unlock()
-			call.Error = err
-			call.done()
-
+			if call == nil {
+				log.Warn("failed to not found table packet", zap.Uint64("uniqueId", c.uniqueId), zap.Uint32("seq", channelId))
+			} else {
+				call.Error = err
+				call.done()
+			}
 			log.Warn("failed to connection read content", zap.Error(err), zap.Uint64("uniqueId", c.uniqueId))
 			return
 		}
@@ -292,30 +265,12 @@ func (c *Connection) receivePacket() {
 	}
 }
 
-func (c *Connection) sendPacket(call *Call, seq uint32, rpcHeaderBuf []byte, payloadBuf []byte) error {
-	rpcHeaderLen := len(rpcHeaderBuf)
-	payloadLen := len(payloadBuf)
-
-	ezHeader := protocol.NewEzHeader()
-	ezHeader.SetChannelId(seq)
-	ezHeader.SetContentLen(uint32(rpcHeaderLen + payloadLen))
-
-	ezHeaderBuf := ezHeader.Encode()
-
-	ezHeaderLen := len(ezHeaderBuf)
-	totalLen := ezHeaderLen + rpcHeaderLen + payloadLen
-
-	// TODO Use buf pool optimization
-	totalBuf := make([]byte, totalLen)
-	copy(totalBuf[:ezHeaderLen], ezHeaderBuf)
-	copy(totalBuf[ezHeaderLen:ezHeaderLen+rpcHeaderLen], rpcHeaderBuf)
-	copy(totalBuf[ezHeaderLen+rpcHeaderLen:], payloadBuf)
-
+func (c *Connection) sendPacket(seq uint32, call *Call, packetBuf []byte) error {
 	c.mutex.Lock()
 	c.pending[seq] = call
 	c.mutex.Unlock()
 
-	_, err := c.conn.Write(totalBuf)
+	_, err := c.conn.Write(packetBuf)
 	if err != nil {
 		// write failed
 		c.mutex.Lock()
@@ -325,6 +280,7 @@ func (c *Connection) sendPacket(call *Call, seq uint32, rpcHeaderBuf []byte, pay
 		return errors.WithMessage(err, "conn write")
 	}
 	// write success
+	bufferPool.Put(&packetBuf) // reuse
 	return nil
 }
 
@@ -333,37 +289,85 @@ func (c *Connection) Close() {
 	c.conn.Close()
 }
 
-func (c *Connection) encodePayload(payload protocol.ObPayload) []byte {
-	payloadLen := payload.PayloadLen()
-	payloadBuf := make([]byte, payloadLen)
+func (c *Connection) encodePacket(seq uint32, request protocol.ObPayload) []byte {
+	// encode request
+	request.SetUniqueId(c.uniqueId)
+	request.SetSequence(c.sequence.Add(1))
+	request.SetTenantId(c.tenantId)
+	request.SetCredential(c.credential)
+	payloadLen := request.PayloadLen()
+	payloadBuf := *bufferPool.Get(payloadLen)
 	payloadBuffer := bytes.NewBuffer(payloadBuf)
-	payload.Encode(payloadBuffer)
-	return payloadBuf
-}
+	request.Encode(payloadBuffer)
 
-func (c *Connection) encodeRpcHeader(payload protocol.ObPayload, payloadBuf []byte) []byte {
+	// encode rpc header
 	rpcHeader := protocol.NewObRpcHeader()
-	rpcHeader.SetPCode(payload.PCode().Value())
-	rpcHeader.SetFlag(payload.Flag())
-	rpcHeader.SetTenantId(payload.TenantId())
-	rpcHeader.SetSessionId(payload.SessionId())
-	rpcHeader.SetTimeout(payload.Timeout())
-	rpcHeader.SetTraceId0(payload.UniqueId())
-	rpcHeader.SetTraceId1(payload.Sequence())
+	rpcHeader.SetPCode(request.PCode().Value())
+	rpcHeader.SetFlag(request.Flag())
+	rpcHeader.SetTenantId(request.TenantId())
+	rpcHeader.SetSessionId(request.SessionId())
+	rpcHeader.SetTimeout(request.Timeout())
+	rpcHeader.SetTraceId0(request.UniqueId())
+	rpcHeader.SetTraceId1(request.Sequence())
 	rpcHeader.SetChecksum(util.Calculate(0, payloadBuf))
+	rpcHeaderBuf := c.rpcHeaderPool.Get().([]byte)
+	rpcHeaderBuffer := bytes.NewBuffer(rpcHeaderBuf)
+	rpcHeaderLen := len(rpcHeaderBuf)
+	rpcHeader.SetHLen(uint8(rpcHeaderLen))
+	rpcHeader.Encode(rpcHeaderBuffer)
 
-	rpcHeaderBuf := rpcHeader.Encode()
-	return rpcHeaderBuf
+	// encode ez header
+	ezHeader := protocol.NewEzHeader()
+	ezHeader.SetChannelId(seq)
+	ezHeader.SetContentLen(uint32(rpcHeaderLen + payloadLen))
+	ezHeaderBuf := c.ezHeaderPool.Get().([]byte)
+	ezHeaderLen := len(ezHeaderBuf)
+	ezHeader.Encode(ezHeaderBuf)
+
+	// packet total buf
+	totalLen := ezHeaderLen + rpcHeaderLen + payloadLen
+	packetBuf := *bufferPool.Get(totalLen) // reuse
+	copy(packetBuf[:ezHeaderLen], ezHeaderBuf)
+	copy(packetBuf[ezHeaderLen:ezHeaderLen+rpcHeaderLen], rpcHeaderBuf)
+	copy(packetBuf[ezHeaderLen+rpcHeaderLen:], payloadBuf)
+
+	// reuse buf
+	c.ezHeaderPool.Put(ezHeaderBuf)
+	c.rpcHeaderPool.Put(rpcHeaderBuf)
+	bufferPool.Put(&payloadBuf)
+
+	return packetBuf
 }
 
-func (c *Connection) decodeRpcHeader(contentBuffer *bytes.Buffer) *protocol.ObRpcHeader {
+func (c *Connection) decodePacket(contentBuf []byte, response protocol.ObPayload) error {
+	contentBuffer := bytes.NewBuffer(contentBuf)
+
+	// decode rpc header
 	rpcHeader := protocol.NewObRpcHeader()
 	rpcHeader.Decode(contentBuffer)
-	return rpcHeader
-}
 
-func (c *Connection) decodePayload(payload protocol.ObPayload, contentBuffer *bytes.Buffer) {
-	payload.Decode(contentBuffer)
+	// decode rpc response code
+	rpcResponseCode := protocol.NewObRpcResponseCode()
+	rpcResponseCode.Decode(contentBuffer)
+
+	if rpcResponseCode.Code() != oberror.ObSuccess {
+		return oberror.NewProtocolError(
+			c.option.ip,
+			c.option.port,
+			rpcResponseCode.Code(),
+			rpcHeader.TraceId1(),
+			rpcHeader.TraceId0(),
+			"",
+		)
+	}
+
+	// decode response
+	response.SetUniqueId(rpcHeader.TraceId0())
+	response.SetSequence(rpcHeader.TraceId1())
+	response.Decode(contentBuffer)
+
+	bufferPool.Put(&contentBuf) // reuse
+	return nil
 }
 
 func (call *Call) done() {
