@@ -36,7 +36,7 @@ func NewObTableOperation(
 	tableOperationType ObTableOperationType,
 	rowKey []*table.Column,
 	columns []*table.Column) (*ObTableOperation, error) {
-	tableEntity := NewObTableEntity()
+	tableEntity := NewObTableEntityWithParams(len(rowKey), len(columns))
 
 	// add rowKey
 	for _, column := range rowKey {
