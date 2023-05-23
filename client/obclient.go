@@ -50,11 +50,10 @@ type ObClient struct {
 	sysUA    *route.ObUserAuth
 	ocpModel *route.ObOcpModel
 
-	tableMutexes       sync.Map // map[tableName]sync.RWMutex
-	tableLocations     sync.Map // map[tableName]*route.ObTableEntry
-	tableRoster        sync.Map // map[route.ObServerAddr{}]*ObTable
-	serverRoster       obServerRoster
-	tableRowKeyElement map[string]*table.ObRowKeyElement
+	tableMutexes   sync.Map // map[tableName]sync.RWMutex
+	tableLocations sync.Map // map[tableName]*route.ObTableEntry
+	tableRoster    sync.Map // map[route.ObServerAddr{}]*ObTable
+	serverRoster   obServerRoster
 
 	lastRefreshMetadataTimestamp atomic.Int64
 	refreshMetadataLock          sync.Mutex
@@ -83,7 +82,6 @@ func newObClient(
 	cli.password = passWord
 	cli.sysUA = route.NewObUserAuth(sysUserName, sysPassWord)
 	cli.config = cliConfig
-	cli.tableRowKeyElement = make(map[string]*table.ObRowKeyElement)
 
 	return cli, nil
 }
@@ -93,14 +91,20 @@ func (c *ObClient) String() string {
 	if c.config != nil {
 		configStr = c.config.String()
 	}
+
+	var sysUAStr = "nil"
+	if c.sysUA != nil {
+		sysUAStr = c.sysUA.String()
+	}
 	return "ObClient{" +
+		"config:" + configStr + ", " +
 		"configUrl:" + c.configUrl + ", " +
 		"fullUserName:" + c.fullUserName + ", " +
 		"userName:" + c.userName + ", " +
 		"tenantName:" + c.tenantName + ", " +
 		"clusterName:" + c.clusterName + ", " +
-		"sysUA:" + c.sysUA.String() + ", " +
-		"config:" + configStr +
+		"database:" + c.database + ", " +
+		"sysUA:" + sysUAStr +
 		"}"
 }
 
@@ -145,19 +149,6 @@ func (c *ObClient) parseConfigUrl(configUrl string) error {
 
 func (c *ObClient) init() error {
 	return c.fetchMetadata()
-}
-
-func (c *ObClient) AddRowKey(tableName string, rowKey []string) error {
-	if tableName == "" || len(rowKey) == 0 {
-		return errors.Errorf("nil table name or empty rowKey, tableName:%s, rowKey size:%d", tableName, len(rowKey))
-	}
-	m := make(map[string]int, 1)
-	for i := 0; i < len(rowKey); i++ {
-		columnName := rowKey[i]
-		m[columnName] = i
-	}
-	c.tableRowKeyElement[tableName] = table.NewObRowKeyElement(m)
-	return nil
 }
 
 func (c *ObClient) Insert(
@@ -288,12 +279,8 @@ func (c *ObClient) execute(
 		ctx, _ = context.WithTimeout(ctx, c.config.OperationTimeOut) // default timeout operation timeout
 	}
 
-	var rowKeyValue []interface{}
-	for _, col := range rowKey {
-		rowKeyValue = append(rowKeyValue, col.Value())
-	}
 	// 1. Get table route
-	tableParam, err := c.getTableParam(ctx, tableName, rowKeyValue, false /* refresh */)
+	tableParam, err := c.getTableParam(ctx, tableName, rowKey, false /* refresh */)
 	if err != nil {
 		return nil, errors.WithMessagef(err, "get table param, tableName:%s, opType:%d", tableName, opType)
 	}
@@ -338,13 +325,13 @@ func (c *ObClient) execute(
 func (c *ObClient) getTableParam(
 	ctx context.Context,
 	tableName string,
-	rowKeyValue []interface{},
+	rowKey []*table.Column,
 	refresh bool) (*ObTableParam, error) {
 	entry, err := c.getOrRefreshTableEntry(ctx, tableName, refresh, false)
 	if err != nil {
 		return nil, errors.WithMessagef(err, "get or refresh table entry, tableName:%s", tableName)
 	}
-	partId, err := c.getPartitionId(entry, rowKeyValue)
+	partId, err := c.getPartitionId(entry, rowKey)
 	if err != nil {
 		return nil, errors.WithMessagef(err, "get partition id, tableName:%s, tableEntry:%s", tableName, entry.String())
 	}
@@ -354,7 +341,7 @@ func (c *ObClient) getTableParam(
 			tableName, entry.String(), partId)
 	}
 
-	if util.ObVersion() >= 4 {
+	if util.ObVersion() >= 4 && entry.IsPartitionTable() {
 		partId, err = entry.PartitionInfo().GetTabletId(partId)
 		if err != nil {
 			return nil, errors.WithMessagef(err, "get tablet id, tableName:%s, tableEntry:%s, partId:%d",
@@ -482,18 +469,9 @@ func (c *ObClient) refreshTableEntry(ctx context.Context, entry *route.ObTableEn
 		}
 	}
 
-	// 2. Set rowKey element to entry.
-	if entry.IsPartitionTable() {
-		rowKeyElement, ok := c.tableRowKeyElement[tableName]
-		if !ok {
-			return nil, errors.Errorf("failed to get rowKey element by table name, tableName:%s", tableName)
-		}
-		entry.SetRowKeyElement(rowKeyElement)
-	}
+	// 2. todo:prepare the table entry for weak read.
 
-	// 3. todo:prepare the table entry for weak read.
-
-	// 4. Put entry to cache.
+	// 3. Put entry to cache.
 	c.tableLocations.Store(tableName, entry)
 
 	return entry, nil
@@ -665,7 +643,7 @@ func (c *ObClient) fetchMetadata() error {
 }
 
 // get partition id by rowKey
-func (c *ObClient) getPartitionId(entry *route.ObTableEntry, rowKeyValue []interface{}) (int64, error) {
+func (c *ObClient) getPartitionId(entry *route.ObTableEntry, rowKeyValue []*table.Column) (int64, error) {
 	if !entry.IsPartitionTable() || entry.PartitionInfo().Level() == route.PartLevelZero {
 		return 0, nil
 	}

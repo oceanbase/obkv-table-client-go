@@ -26,22 +26,30 @@ import (
 	"github.com/oceanbase/obkv-table-client-go/table"
 )
 
-func TestObRangePartDesc_String(t *testing.T) {
-	desc := &obRangePartDesc{}
-	assert.Equal(t, "obRangePartDesc{partSpace:0, partNum:0, partColumns[]}", desc.String())
-	desc = newObRangePartDesc(0, 10, partFuncTypeRange)
-	assert.Equal(t, "obRangePartDesc{partSpace:0, partNum:10, partColumns[]}", desc.String())
-
-	desc = newObRangePartDesc(0, 10, partFuncTypeHash)
+func TestObSimpleColumn_String(t *testing.T) {
+	col := &obSimpleColumn{}
+	assert.Equal(t, "obSimpleColumn{columnName:, objType:nil, collationType:0}", col.String())
 	objType, _ := protocol.NewObjType(protocol.ObObjTypeInt64TypeValue)
-	col := newObSimpleColumn("c1", objType, protocol.ObCollationTypeBinary)
-	desc.SetPartColumns([]obColumn{col})
-	assert.Equal(t, "obRangePartDesc{partSpace:0, partNum:10, partColumns[obSimpleColumn{columnName:c1, objType:ObObjType{type:ObInt64Type}, collationType:63}]}", desc.String())
+	col = newObSimpleColumn("c1", objType, protocol.ObCollationTypeBinary)
+	assert.Equal(t, "obSimpleColumn{columnName:c1, objType:ObObjType{type:ObInt64Type}, collationType:63}", col.String())
 }
 
-func TestObRangePartDesc_GetPartId(t *testing.T) {
-	desc := &obRangePartDesc{}
-	partId, err := desc.GetPartId([]*table.Column{})
+func TestObSimpleColumn_eval(t *testing.T) {
+	objType, _ := protocol.NewObjType(protocol.ObObjTypeInt64TypeValue)
+	col := newObSimpleColumn("c1", objType, protocol.ObCollationTypeBinary)
+	value, err := col.eval([]*table.Column{table.NewColumn("c1", int64(1))})
+	assert.Equal(t, nil, err)
+	assert.EqualValues(t, 1, value)
+	value, err = col.eval([]*table.Column{table.NewColumn("C1", int64(1))})
+	assert.Equal(t, nil, err)
+	assert.EqualValues(t, 1, value)
+
+	value, err = col.eval([]*table.Column{})
 	assert.NotEqual(t, nil, err)
-	assert.EqualValues(t, -1, partId)
+	value, err = col.eval([]*table.Column{
+		table.NewColumn("C1", int64(1)),
+		table.NewColumn("C2", int64(2)),
+	})
+	assert.Equal(t, nil, err)
+	assert.EqualValues(t, 1, value)
 }

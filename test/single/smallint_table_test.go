@@ -36,9 +36,6 @@ func TestInsertSmallint(t *testing.T) {
 	tableName := testSmallintTableName
 	defer test.DeleteTable(tableName)
 
-	err := cli.AddRowKey(tableName, []string{"c1"})
-	assert.Equal(t, nil, err)
-
 	rowKey := []*table.Column{table.NewColumn("c1", int16(1))}
 	mutateColumns := []*table.Column{table.NewColumn("c2", int16(1))}
 	affectRows, err := cli.Insert(
@@ -65,9 +62,6 @@ func TestInsertSmallint(t *testing.T) {
 func TestUpdateSmallint(t *testing.T) {
 	tableName := testSmallintTableName
 	defer test.DeleteTable(tableName)
-
-	err := cli.AddRowKey(tableName, []string{"c1"})
-	assert.Equal(t, nil, err)
 
 	rowKey := []*table.Column{table.NewColumn("c1", int16(1))}
 	mutateColumns := []*table.Column{table.NewColumn("c2", int16(1))}
@@ -105,9 +99,6 @@ func TestUpdateSmallint(t *testing.T) {
 func TestInsertOrUpdateSmallint(t *testing.T) {
 	tableName := testSmallintTableName
 	defer test.DeleteTable(tableName)
-
-	err := cli.AddRowKey(tableName, []string{"c1"})
-	assert.Equal(t, nil, err)
 
 	rowKey := []*table.Column{table.NewColumn("c1", int16(1))}
 	mutateColumns := []*table.Column{table.NewColumn("c2", int16(1))}
@@ -156,9 +147,6 @@ func TestDeleteSmallint(t *testing.T) {
 	tableName := testSmallintTableName
 	defer test.DeleteTable(tableName)
 
-	err := cli.AddRowKey(tableName, []string{"c1"})
-	assert.Equal(t, nil, err)
-
 	rowKey := []*table.Column{table.NewColumn("c1", int16(1))}
 	mutateColumns := []*table.Column{table.NewColumn("c2", int16(1))}
 	affectRows, err := cli.Insert(
@@ -190,9 +178,6 @@ func TestDeleteSmallint(t *testing.T) {
 func TestGetSmallint(t *testing.T) {
 	tableName := testSmallintTableName
 	defer test.DeleteTable(tableName)
-
-	err := cli.AddRowKey(tableName, []string{"c1"})
-	assert.Equal(t, nil, err)
 
 	rowKey := []*table.Column{table.NewColumn("c1", int16(1))}
 	mutateColumns := []*table.Column{table.NewColumn("c2", int16(1))}

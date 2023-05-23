@@ -21,8 +21,6 @@ import (
 	"strconv"
 
 	"github.com/pkg/errors"
-
-	"github.com/oceanbase/obkv-table-client-go/table"
 )
 
 type obPartLevel int
@@ -39,7 +37,6 @@ type obPartitionInfo struct {
 	level           obPartLevel
 	firstPartDesc   obPartDesc
 	subPartDesc     obPartDesc
-	partColumns     []*obColumn
 	partTabletIdMap map[int64]int64 // partId mean [0, partNum), tabletId For example, 500029
 }
 
@@ -68,27 +65,7 @@ func (p *obPartitionInfo) Level() obPartLevel {
 	return p.level
 }
 
-func (p *obPartitionInfo) setRowKeyElement(rowKeyElement *table.ObRowKeyElement) {
-	if p.firstPartDesc != nil {
-		p.firstPartDesc.setRowKeyElement(rowKeyElement)
-	}
-	if p.subPartDesc != nil {
-		p.subPartDesc.setRowKeyElement(rowKeyElement)
-	}
-}
-
 func (p *obPartitionInfo) String() string {
-	// partColumns to string
-	var partColumnsStr string
-	partColumnsStr = partColumnsStr + "["
-	for i := 0; i < len(p.partColumns); i++ {
-		if i > 0 {
-			partColumnsStr += ", "
-		}
-		partColumnsStr += p.partColumns[i].String()
-	}
-	partColumnsStr += "]"
-
 	// partTabletIdMap to string
 	var partTabletIdMapStr string
 	var i = 0
@@ -122,7 +99,6 @@ func (p *obPartitionInfo) String() string {
 		"level:" + strconv.Itoa(int(p.level)) + ", " +
 		"firstPartDesc:" + firstPartDescStr + ", " +
 		"subPartDesc:" + subPartDescStr + ", " +
-		"partColumns:" + partColumnsStr + ", " +
 		"partTabletIdMap:" + partTabletIdMapStr +
 		"}"
 }

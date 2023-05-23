@@ -36,9 +36,6 @@ func TestInsertInt32(t *testing.T) {
 	tableName := testInt32TableName
 	defer test.DeleteTable(tableName)
 
-	err := cli.AddRowKey(tableName, []string{"c1"})
-	assert.Equal(t, nil, err)
-
 	rowKey := []*table.Column{table.NewColumn("c1", int32(1))}
 	mutateColumns := []*table.Column{table.NewColumn("c2", int32(1))}
 	affectRows, err := cli.Insert(
@@ -65,9 +62,6 @@ func TestInsertInt32(t *testing.T) {
 func TestUpdateInt32(t *testing.T) {
 	tableName := testInt32TableName
 	defer test.DeleteTable(tableName)
-
-	err := cli.AddRowKey(tableName, []string{"c1"})
-	assert.Equal(t, nil, err)
 
 	rowKey := []*table.Column{table.NewColumn("c1", int32(1))}
 	mutateColumns := []*table.Column{table.NewColumn("c2", int32(1))}
@@ -105,9 +99,6 @@ func TestUpdateInt32(t *testing.T) {
 func TestInsertOrUpdateInt32(t *testing.T) {
 	tableName := testInt32TableName
 	defer test.DeleteTable(tableName)
-
-	err := cli.AddRowKey(tableName, []string{"c1"})
-	assert.Equal(t, nil, err)
 
 	rowKey := []*table.Column{table.NewColumn("c1", int32(1))}
 	mutateColumns := []*table.Column{table.NewColumn("c2", int32(1))}
@@ -156,9 +147,6 @@ func TestDeleteInt32(t *testing.T) {
 	tableName := testInt32TableName
 	defer test.DeleteTable(tableName)
 
-	err := cli.AddRowKey(tableName, []string{"c1"})
-	assert.Equal(t, nil, err)
-
 	rowKey := []*table.Column{table.NewColumn("c1", int32(1))}
 	mutateColumns := []*table.Column{table.NewColumn("c2", int32(1))}
 	affectRows, err := cli.Insert(
@@ -190,9 +178,6 @@ func TestDeleteInt32(t *testing.T) {
 func TestGetInt32(t *testing.T) {
 	tableName := testInt32TableName
 	defer test.DeleteTable(tableName)
-
-	err := cli.AddRowKey(tableName, []string{"c1"})
-	assert.Equal(t, nil, err)
 
 	rowKey := []*table.Column{table.NewColumn("c1", int32(1))}
 	mutateColumns := []*table.Column{table.NewColumn("c2", int32(1))}

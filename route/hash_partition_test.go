@@ -28,25 +28,27 @@ import (
 
 func TestObHashPartDesc_String(t *testing.T) {
 	desc := &obHashPartDesc{}
-	assert.Equal(t, "obHashPartDesc{comm:nil, completeWorks:[], partSpace:0, partNum:0}", desc.String())
-	desc = newObHashPartDesc(0, 10, partFuncTypeHash, "c1")
-	assert.Equal(t, "obHashPartDesc{comm:obPartDescCommon{partFuncType:0, partExpr:c1, orderedPartColumnNames:c1, orderedPartRefColumnRowKeyRelations:[], partColumns:[], rowKeyElement:nil}, completeWorks:[], partSpace:0, partNum:10}", desc.String())
+	assert.Equal(t, "obHashPartDesc{completeWorks:[], partSpace:0, partNum:0, partColumns[]}", desc.String())
+	desc = newObHashPartDesc(0, 10, partFuncTypeHash)
+	assert.Equal(t, "obHashPartDesc{completeWorks:[], partSpace:0, partNum:10, partColumns[]}", desc.String())
+
+	desc = newObHashPartDesc(0, 10, partFuncTypeHash)
+	objType, _ := protocol.NewObjType(protocol.ObObjTypeInt64TypeValue)
+	col := newObSimpleColumn("c1", objType, protocol.ObCollationTypeBinary)
+	desc.SetPartColumns([]obColumn{col})
+	assert.Equal(t, "obHashPartDesc{completeWorks:[], partSpace:0, partNum:10, partColumns[obSimpleColumn{columnName:c1, objType:ObObjType{type:ObInt64Type}, collationType:63}]}", desc.String())
 }
 
 func TestObHashPartDesc_GetPartId(t *testing.T) {
-	desc := newObHashPartDesc(0, 10, partFuncTypeHash, "c1")
-	partId, err := desc.GetPartId([]interface{}{1})
+	desc := newObHashPartDesc(0, 10, partFuncTypeHash)
+	partId, err := desc.GetPartId([]*table.Column{})
 	assert.NotEqual(t, nil, err)
 	assert.EqualValues(t, ObInvalidPartId, partId)
 
 	objType, _ := protocol.NewObjType(protocol.ObObjTypeInt64TypeValue)
-	col := newObSimpleColumn("c1", 1, objType, protocol.ObCollationTypeBinary)
-	desc.PartColumns = []*obColumn{col}
-	nameIdxMap := make(map[string]int)
-	nameIdxMap["c1"] = 0
-	rowkeyElement := table.NewObRowKeyElement(nameIdxMap)
-	desc.setCommRowKeyElement(rowkeyElement)
-	partId, err = desc.GetPartId([]interface{}{int64(1)})
+	col := newObSimpleColumn("c1", objType, protocol.ObCollationTypeBinary)
+	desc.SetPartColumns([]obColumn{col})
+	partId, err = desc.GetPartId([]*table.Column{table.NewColumn("c1", int64(1))})
 	assert.Equal(t, nil, err)
 	assert.EqualValues(t, 1, partId)
 }

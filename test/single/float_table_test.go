@@ -36,9 +36,6 @@ func TestInsertFloat(t *testing.T) {
 	tableName := testFloatTableName
 	defer test.DeleteTable(tableName)
 
-	err := cli.AddRowKey(tableName, []string{"c1"})
-	assert.Equal(t, nil, err)
-
 	rowKey := []*table.Column{table.NewColumn("c1", float32(1))}
 	mutateColumns := []*table.Column{table.NewColumn("c2", float32(1))}
 	affectRows, err := cli.Insert(
@@ -65,9 +62,6 @@ func TestInsertFloat(t *testing.T) {
 func TestUpdateFloat(t *testing.T) {
 	tableName := testFloatTableName
 	defer test.DeleteTable(tableName)
-
-	err := cli.AddRowKey(tableName, []string{"c1"})
-	assert.Equal(t, nil, err)
 
 	rowKey := []*table.Column{table.NewColumn("c1", float32(1))}
 	mutateColumns := []*table.Column{table.NewColumn("c2", float32(1))}
@@ -105,9 +99,6 @@ func TestUpdateFloat(t *testing.T) {
 func TestInsertOrUpdateFloat(t *testing.T) {
 	tableName := testFloatTableName
 	defer test.DeleteTable(tableName)
-
-	err := cli.AddRowKey(tableName, []string{"c1"})
-	assert.Equal(t, nil, err)
 
 	rowKey := []*table.Column{table.NewColumn("c1", float32(1))}
 	mutateColumns := []*table.Column{table.NewColumn("c2", float32(1))}
@@ -156,9 +147,6 @@ func TestDeleteFloat(t *testing.T) {
 	tableName := testFloatTableName
 	defer test.DeleteTable(tableName)
 
-	err := cli.AddRowKey(tableName, []string{"c1"})
-	assert.Equal(t, nil, err)
-
 	rowKey := []*table.Column{table.NewColumn("c1", float32(1))}
 	mutateColumns := []*table.Column{table.NewColumn("c2", float32(1))}
 	affectRows, err := cli.Insert(
@@ -190,9 +178,6 @@ func TestDeleteFloat(t *testing.T) {
 func TestGetFloat(t *testing.T) {
 	tableName := testFloatTableName
 	defer test.DeleteTable(tableName)
-
-	err := cli.AddRowKey(tableName, []string{"c1"})
-	assert.Equal(t, nil, err)
 
 	rowKey := []*table.Column{table.NewColumn("c1", float32(1))}
 	mutateColumns := []*table.Column{table.NewColumn("c2", float32(1))}

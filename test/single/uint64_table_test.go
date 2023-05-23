@@ -36,9 +36,6 @@ func TestInsertUInt64(t *testing.T) {
 	tableName := testUInt64TableName
 	defer test.DeleteTable(tableName)
 
-	err := cli.AddRowKey(tableName, []string{"c1"})
-	assert.Equal(t, nil, err)
-
 	rowKey := []*table.Column{table.NewColumn("c1", uint64(1))}
 	mutateColumns := []*table.Column{table.NewColumn("c2", uint64(1))}
 	affectRows, err := cli.Insert(
@@ -65,9 +62,6 @@ func TestInsertUInt64(t *testing.T) {
 func TestUpdateUInt64(t *testing.T) {
 	tableName := testUInt64TableName
 	defer test.DeleteTable(tableName)
-
-	err := cli.AddRowKey(tableName, []string{"c1"})
-	assert.Equal(t, nil, err)
 
 	rowKey := []*table.Column{table.NewColumn("c1", uint64(1))}
 	mutateColumns := []*table.Column{table.NewColumn("c2", uint64(1))}
@@ -105,9 +99,6 @@ func TestUpdateUInt64(t *testing.T) {
 func TestInsertOrUpdateUInt64(t *testing.T) {
 	tableName := testUInt64TableName
 	defer test.DeleteTable(tableName)
-
-	err := cli.AddRowKey(tableName, []string{"c1"})
-	assert.Equal(t, nil, err)
 
 	rowKey := []*table.Column{table.NewColumn("c1", uint64(1))}
 	mutateColumns := []*table.Column{table.NewColumn("c2", uint64(1))}
@@ -156,9 +147,6 @@ func TestDeleteUInt64(t *testing.T) {
 	tableName := testUInt64TableName
 	defer test.DeleteTable(tableName)
 
-	err := cli.AddRowKey(tableName, []string{"c1"})
-	assert.Equal(t, nil, err)
-
 	rowKey := []*table.Column{table.NewColumn("c1", uint64(1))}
 	mutateColumns := []*table.Column{table.NewColumn("c2", uint64(1))}
 	affectRows, err := cli.Insert(
@@ -190,9 +178,6 @@ func TestDeleteUInt64(t *testing.T) {
 func TestGetUInt64(t *testing.T) {
 	tableName := testUInt64TableName
 	defer test.DeleteTable(tableName)
-
-	err := cli.AddRowKey(tableName, []string{"c1"})
-	assert.Equal(t, nil, err)
 
 	rowKey := []*table.Column{table.NewColumn("c1", uint64(1))}
 	mutateColumns := []*table.Column{table.NewColumn("c2", uint64(1))}
