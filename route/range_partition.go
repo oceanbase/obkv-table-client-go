@@ -19,105 +19,69 @@ package route
 
 import (
 	"strconv"
-	"strings"
 
 	"github.com/pkg/errors"
 
-	"github.com/oceanbase/obkv-table-client-go/protocol"
 	"github.com/oceanbase/obkv-table-client-go/table"
 )
 
+// newObRangePartDesc create a range partition description.
+func newObRangePartDesc(
+	partSpace int,
+	partNum int,
+	partFuncType obPartFuncType) *obRangePartDesc {
+	return &obRangePartDesc{
+		partFuncType: partFuncType,
+		partSpace:    partSpace,
+		partNum:      partNum,
+	}
+}
+
 // obRangePartDesc description of the range partition.
 type obRangePartDesc struct {
-	*obPartDescCommon
-	partSpace                 int
-	partNum                   int
-	orderedCompareColumns     []*obColumn          // all range partition columns
-	orderedCompareColumnTypes []protocol.ObObjType // all object type of range partition columns
+	partFuncType obPartFuncType
+	partSpace    int
+	partNum      int
+	partColumns  []obColumn
+}
+
+func (d *obRangePartDesc) PartColumns() []obColumn {
+	return d.partColumns
 }
 
 func (d *obRangePartDesc) SetPartNum(partNum int) {
 	d.partNum = partNum
 }
 
-func newObRangePartDesc(
-	partSpace int,
-	partNum int,
-	partFuncType obPartFuncType,
-	partExpr string) *obRangePartDesc {
-	// eg:"c1, c2", need to remove ' '
-	str := strings.ReplaceAll(partExpr, " ", "")
-	orderedPartColumnNames := strings.Split(str, ",")
-	return &obRangePartDesc{
-		obPartDescCommon: newObPartDescCommon(partFuncType, partExpr, orderedPartColumnNames),
-		partSpace:        partSpace,
-		partNum:          partNum,
-	}
+func (d *obRangePartDesc) PartFuncType() obPartFuncType {
+	return d.partFuncType
 }
 
-func (d *obRangePartDesc) partFuncType() obPartFuncType {
-	return d.PartFuncType
+func (d *obRangePartDesc) SetPartColumns(partColumns []obColumn) {
+	d.partColumns = partColumns
 }
 
-func (d *obRangePartDesc) orderedPartColumnNames() []string {
-	return d.OrderedPartColumnNames
-}
-
-func (d *obRangePartDesc) orderedPartRefColumnRowKeyRelations() []*obColumnIndexesPair {
-	return d.OrderedPartRefColumnRowKeyRelations
-}
-func (d *obRangePartDesc) rowKeyElement() *table.ObRowKeyElement {
-	return d.RowKeyElement
-}
-
-func (d *obRangePartDesc) setRowKeyElement(rowKeyElement *table.ObRowKeyElement) {
-	d.setCommRowKeyElement(rowKeyElement)
-}
-
-func (d *obRangePartDesc) setPartColumns(partColumns []*obColumn) {
-	d.PartColumns = partColumns
-}
-
-func (d *obRangePartDesc) GetPartId(rowKey []interface{}) (int64, error) {
+// GetPartId get partition id by rowKey.
+// Not support range partition now.
+func (d *obRangePartDesc) GetPartId(rowKey []*table.Column) (int64, error) {
 	return ObInvalidPartId, errors.New("not support range partition now")
 }
 
 func (d *obRangePartDesc) String() string {
-	// obPartDescCommon to string
-	var commStr string
-	if d.obPartDescCommon == nil {
-		commStr = "nil"
-	} else {
-		commStr = d.CommString()
-	}
-
-	// orderedCompareColumns to string
-	var orderedCompareColumnsStr string
-	orderedCompareColumnsStr = orderedCompareColumnsStr + "["
-	for i := 0; i < len(d.orderedCompareColumns); i++ {
+	// partColumns to string
+	var partColumnsStr string
+	partColumnsStr = partColumnsStr + "["
+	for i := 0; i < len(d.partColumns); i++ {
 		if i > 0 {
-			orderedCompareColumnsStr += ", "
+			partColumnsStr += ", "
 		}
-		orderedCompareColumnsStr += d.orderedCompareColumns[i].String()
+		partColumnsStr += d.partColumns[i].String()
 	}
-	orderedCompareColumnsStr += "]"
-
-	// orderedCompareColumnTypes to string
-	var orderedCompareColumnTypesStr string
-	orderedCompareColumnTypesStr = orderedCompareColumnTypesStr + "["
-	for i := 0; i < len(d.orderedCompareColumns); i++ {
-		if i > 0 {
-			orderedCompareColumnTypesStr += ", "
-		}
-		orderedCompareColumnTypesStr += d.orderedCompareColumnTypes[i].String()
-	}
-	orderedCompareColumnTypesStr += "]"
+	partColumnsStr += "]"
 
 	return "obRangePartDesc{" +
-		"comm:" + commStr + ", " +
 		"partSpace:" + strconv.Itoa(d.partSpace) + ", " +
 		"partNum:" + strconv.Itoa(d.partNum) + ", " +
-		"orderedCompareColumns:" + orderedCompareColumnsStr + ", " +
-		"orderedCompareColumnTypes:" + orderedCompareColumnTypesStr +
+		"partColumns" + partColumnsStr +
 		"}"
 }

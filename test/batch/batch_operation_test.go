@@ -31,9 +31,6 @@ func TestBatch(t *testing.T) {
 	tableName := batchOpTableTableName
 	defer test.DeleteTable(tableName)
 
-	err := cli.AddRowKey(tableName, []string{"c1"})
-	assert.Equal(t, nil, err)
-
 	rowKey1 := []*table.Column{table.NewColumn("c1", int64(1))}
 	rowKey2 := []*table.Column{table.NewColumn("c1", int64(2))}
 	selectColumns1 := []string{"c1"}
@@ -42,7 +39,7 @@ func TestBatch(t *testing.T) {
 	mutateColumns2 := []*table.Column{table.NewColumn("c2", int64(2))}
 
 	batchExecutor := cli.NewBatchExecutor(tableName)
-	err = batchExecutor.AddInsertOp(rowKey1, mutateColumns1)
+	err := batchExecutor.AddInsertOp(rowKey1, mutateColumns1)
 	assert.Equal(t, nil, err)
 	err = batchExecutor.AddInsertOp(rowKey2, mutateColumns2)
 	assert.Equal(t, nil, err)

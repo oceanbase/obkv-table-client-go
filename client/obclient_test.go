@@ -41,7 +41,7 @@ func TestNewObClient(t *testing.T) {
 
 func TestObClient_String(t *testing.T) {
 	cli := &ObClient{}
-	assert.Equal(t, "ObClient{configUrl:, fullUserName:, userName:, tenantName:, clusterName:, sysUA:ObUserAuth{userName:, password:}, config:nil}", cli.String())
+	assert.Equal(t, "ObClient{config:nil, configUrl:, fullUserName:, userName:, tenantName:, clusterName:, database:, sysUA:nil}", cli.String())
 	const (
 		testConfigUrl    = "http://127.0.0.1:8080/services?User_ID=xxx&UID=xxx&Action=ObRootServiceInfo&ObCluster=xxx&database=xxx"
 		testFullUserName = "user@mysql#obkv_cluster"
@@ -52,7 +52,7 @@ func TestObClient_String(t *testing.T) {
 	cfg := config.NewDefaultClientConfig()
 	cli, err := newObClient(testConfigUrl, testFullUserName, testPassWord, testSysUserName, testSysPassWord, cfg)
 	assert.Equal(t, nil, err)
-	assert.Equal(t, "ObClient{configUrl:http://127.0.0.1:8080/services?User_ID=xxx&UID=xxx&Action=ObRootServiceInfo&ObCluster=xxx&database=xxx, fullUserName:user@mysql#obkv_cluster, userName:user, tenantName:mysql, clusterName:obkv_cluster, sysUA:ObUserAuth{userName:sys, password:}, config:ClientConfig{ConnPoolMaxConnSize:1, OperationTimeOut:10000000000, LogLevel:7}}", cli.String())
+	assert.Equal(t, "ObClient{config:ClientConfig{ConnPoolMaxConnSize:1, OperationTimeOut:10000000000, LogLevel:7}, configUrl:http://127.0.0.1:8080/services?User_ID=xxx&UID=xxx&Action=ObRootServiceInfo&ObCluster=xxx&database=xxx, fullUserName:user@mysql#obkv_cluster, userName:user, tenantName:mysql, clusterName:obkv_cluster, database:xxx, sysUA:ObUserAuth{userName:sys, password:}}", cli.String())
 }
 
 func TestObClient_parseFullUserName(t *testing.T) {

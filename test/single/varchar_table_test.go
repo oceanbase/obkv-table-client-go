@@ -36,9 +36,6 @@ func TestInsertVarchar(t *testing.T) {
 	tableName := testVarcharTableName
 	defer test.DeleteTable(tableName)
 
-	err := cli.AddRowKey(tableName, []string{"c1"})
-	assert.Equal(t, nil, err)
-
 	rowKey := []*table.Column{table.NewColumn("c1", "1")}
 	mutateColumns := []*table.Column{table.NewColumn("c2", "1")}
 	affectRows, err := cli.Insert(
@@ -65,9 +62,6 @@ func TestInsertVarchar(t *testing.T) {
 func TestUpdateVarchar(t *testing.T) {
 	tableName := testVarcharTableName
 	defer test.DeleteTable(tableName)
-
-	err := cli.AddRowKey(tableName, []string{"c1"})
-	assert.Equal(t, nil, err)
 
 	rowKey := []*table.Column{table.NewColumn("c1", "1")}
 	mutateColumns := []*table.Column{table.NewColumn("c2", "1")}
@@ -105,9 +99,6 @@ func TestUpdateVarchar(t *testing.T) {
 func TestInsertOrUpdateVarchar(t *testing.T) {
 	tableName := testVarcharTableName
 	defer test.DeleteTable(tableName)
-
-	err := cli.AddRowKey(tableName, []string{"c1"})
-	assert.Equal(t, nil, err)
 
 	rowKey := []*table.Column{table.NewColumn("c1", "1")}
 	mutateColumns := []*table.Column{table.NewColumn("c2", "1")}
@@ -156,9 +147,6 @@ func TestDeleteVarchar(t *testing.T) {
 	tableName := testVarcharTableName
 	defer test.DeleteTable(tableName)
 
-	err := cli.AddRowKey(tableName, []string{"c1"})
-	assert.Equal(t, nil, err)
-
 	rowKey := []*table.Column{table.NewColumn("c1", "1")}
 	mutateColumns := []*table.Column{table.NewColumn("c2", "1")}
 	affectRows, err := cli.Insert(
@@ -190,9 +178,6 @@ func TestDeleteVarchar(t *testing.T) {
 func TestGetVarchar(t *testing.T) {
 	tableName := testVarcharTableName
 	defer test.DeleteTable(tableName)
-
-	err := cli.AddRowKey(tableName, []string{"c1"})
-	assert.Equal(t, nil, err)
 
 	rowKey := []*table.Column{table.NewColumn("c1", "1")}
 	mutateColumns := []*table.Column{table.NewColumn("c2", "1")}

@@ -43,10 +43,6 @@ func main() {
 		panic(err)
 	}
 
-	err = cli.AddRowKey(tableName, []string{"c1"})
-	if err != nil {
-		panic(err)
-	}
 	rowKey := []*table.Column{table.NewColumn("c1", int64(1))}
 	mutateColumns := []*table.Column{table.NewColumn("c2", int64(1))}
 	affectRows, err := cli.Insert(

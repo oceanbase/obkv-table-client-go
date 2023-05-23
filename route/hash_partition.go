@@ -19,66 +19,51 @@ package route
 
 import (
 	"strconv"
-	"strings"
 
 	"github.com/pkg/errors"
 
 	"github.com/oceanbase/obkv-table-client-go/table"
 )
 
+// newObHashPartDesc create a hash partition description.
+func newObHashPartDesc(
+	partSpace int,
+	partNum int,
+	partFuncType obPartFuncType) *obHashPartDesc {
+	return &obHashPartDesc{
+		partFuncType: partFuncType,
+		partSpace:    partSpace,
+		partNum:      partNum,
+	}
+}
+
 // obHashPartDesc description of the hash partition.
 type obHashPartDesc struct {
-	*obPartDescCommon
+	partFuncType  obPartFuncType
 	completeWorks []int64 // all partition id, use in query
 	partSpace     int
 	partNum       int
+	partColumns   []obColumn
+}
+
+func (d *obHashPartDesc) PartColumns() []obColumn {
+	return d.partColumns
 }
 
 func (d *obHashPartDesc) SetPartNum(partNum int) {
 	d.partNum = partNum
 }
 
-func newObHashPartDesc(
-	partSpace int,
-	partNum int,
-	partFuncType obPartFuncType,
-	partExpr string) *obHashPartDesc {
-	// eg:"c1, c2", need to remove ' '
-	str := strings.ReplaceAll(partExpr, " ", "")
-	orderedPartColumnNames := strings.Split(str, ",")
-	return &obHashPartDesc{
-		obPartDescCommon: newObPartDescCommon(partFuncType, partExpr, orderedPartColumnNames),
-		partSpace:        partSpace,
-		partNum:          partNum,
-	}
+func (d *obHashPartDesc) PartFuncType() obPartFuncType {
+	return d.partFuncType
 }
 
-func (d *obHashPartDesc) partFuncType() obPartFuncType {
-	return d.PartFuncType
-}
-
-func (d *obHashPartDesc) orderedPartColumnNames() []string {
-	return d.OrderedPartColumnNames
-}
-
-func (d *obHashPartDesc) orderedPartRefColumnRowKeyRelations() []*obColumnIndexesPair {
-	return d.OrderedPartRefColumnRowKeyRelations
-}
-
-func (d *obHashPartDesc) rowKeyElement() *table.ObRowKeyElement {
-	return d.RowKeyElement
-}
-
-func (d *obHashPartDesc) setRowKeyElement(rowKeyElement *table.ObRowKeyElement) {
-	d.setCommRowKeyElement(rowKeyElement)
-}
-
-func (d *obHashPartDesc) setPartColumns(partColumns []*obColumn) {
-	d.PartColumns = partColumns
+func (d *obHashPartDesc) SetPartColumns(partColumns []obColumn) {
+	d.partColumns = partColumns
 }
 
 // GetPartId get partition id by inner hash function.
-func (d *obHashPartDesc) GetPartId(rowKey []interface{}) (int64, error) {
+func (d *obHashPartDesc) GetPartId(rowKey []*table.Column) (int64, error) {
 	if len(rowKey) == 0 {
 		return ObInvalidPartId, errors.New("rowKey size is 0")
 	}
@@ -100,6 +85,7 @@ func (d *obHashPartDesc) GetPartId(rowKey []interface{}) (int64, error) {
 	}
 }
 
+// innerHash hash method for computing partition id
 func (d *obHashPartDesc) innerHash(hashVal int64) int64 {
 	// abs(hashVal)
 	if hashVal < 0 {
@@ -109,14 +95,6 @@ func (d *obHashPartDesc) innerHash(hashVal int64) int64 {
 }
 
 func (d *obHashPartDesc) String() string {
-	// comm to string
-	var commStr string
-	if d.obPartDescCommon == nil {
-		commStr = "nil"
-	} else {
-		commStr = d.CommString()
-	}
-
 	// completeWorks to string
 	var completeWorksStr string
 	completeWorksStr = completeWorksStr + "["
@@ -128,10 +106,21 @@ func (d *obHashPartDesc) String() string {
 	}
 	completeWorksStr += "]"
 
+	// partColumns to string
+	var partColumnsStr string
+	partColumnsStr = partColumnsStr + "["
+	for i := 0; i < len(d.partColumns); i++ {
+		if i > 0 {
+			partColumnsStr += ", "
+		}
+		partColumnsStr += d.partColumns[i].String()
+	}
+	partColumnsStr += "]"
+
 	return "obHashPartDesc{" +
-		"comm:" + commStr + ", " +
 		"completeWorks:" + completeWorksStr + ", " +
 		"partSpace:" + strconv.Itoa(d.partSpace) + ", " +
-		"partNum:" + strconv.Itoa(d.partNum) +
+		"partNum:" + strconv.Itoa(d.partNum) + ", " +
+		"partColumns" + partColumnsStr +
 		"}"
 }

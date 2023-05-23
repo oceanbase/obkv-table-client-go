@@ -36,11 +36,8 @@ func TestInsertDouble(t *testing.T) {
 	tableName := testDoubleTableName
 	defer test.DeleteTable(tableName)
 
-	err := cli.AddRowKey(tableName, []string{"c1"})
-	assert.Equal(t, nil, err)
-
-	rowKey := []*table.Column{table.NewColumn("c1", float32(1))}
-	mutateColumns := []*table.Column{table.NewColumn("c2", float32(1))}
+	rowKey := []*table.Column{table.NewColumn("c1", float64(1))}
+	mutateColumns := []*table.Column{table.NewColumn("c2", float64(1))}
 	affectRows, err := cli.Insert(
 		context.TODO(),
 		tableName,
@@ -65,9 +62,6 @@ func TestInsertDouble(t *testing.T) {
 func TestUpdateDouble(t *testing.T) {
 	tableName := testDoubleTableName
 	defer test.DeleteTable(tableName)
-
-	err := cli.AddRowKey(tableName, []string{"c1"})
-	assert.Equal(t, nil, err)
 
 	rowKey := []*table.Column{table.NewColumn("c1", float32(1))}
 	mutateColumns := []*table.Column{table.NewColumn("c2", float32(1))}
@@ -105,9 +99,6 @@ func TestUpdateDouble(t *testing.T) {
 func TestInsertOrUpdateDouble(t *testing.T) {
 	tableName := testDoubleTableName
 	defer test.DeleteTable(tableName)
-
-	err := cli.AddRowKey(tableName, []string{"c1"})
-	assert.Equal(t, nil, err)
 
 	rowKey := []*table.Column{table.NewColumn("c1", float32(1))}
 	mutateColumns := []*table.Column{table.NewColumn("c2", float32(1))}
@@ -156,9 +147,6 @@ func TestDeleteDouble(t *testing.T) {
 	tableName := testDoubleTableName
 	defer test.DeleteTable(tableName)
 
-	err := cli.AddRowKey(tableName, []string{"c1"})
-	assert.Equal(t, nil, err)
-
 	rowKey := []*table.Column{table.NewColumn("c1", float32(1))}
 	mutateColumns := []*table.Column{table.NewColumn("c2", float32(1))}
 	affectRows, err := cli.Insert(
@@ -190,9 +178,6 @@ func TestDeleteDouble(t *testing.T) {
 func TestGetDouble(t *testing.T) {
 	tableName := testDoubleTableName
 	defer test.DeleteTable(tableName)
-
-	err := cli.AddRowKey(tableName, []string{"c1"})
-	assert.Equal(t, nil, err)
 
 	rowKey := []*table.Column{table.NewColumn("c1", float32(1))}
 	mutateColumns := []*table.Column{table.NewColumn("c2", float32(1))}

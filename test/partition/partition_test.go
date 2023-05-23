@@ -32,9 +32,6 @@ func TestHashPartitionL1(t *testing.T) {
 	tableName := hashPartitionL1TableName
 	defer test.DeleteTable(tableName)
 
-	err := cli.AddRowKey(tableName, []string{"c1"})
-	assert.Equal(t, nil, err)
-
 	// insert
 	rowCount := 10
 	for i := 0; i < rowCount; i++ {
@@ -82,9 +79,6 @@ func TestKeyPartitionIntL1(t *testing.T) {
 	tableName := keyPartitionIntL1TableName
 	defer test.DeleteTable(tableName)
 
-	err := cli.AddRowKey(tableName, []string{"c1"})
-	assert.Equal(t, nil, err)
-
 	// insert
 	rowCount := 10
 	for i := 0; i < rowCount; i++ {
@@ -131,9 +125,6 @@ func TestKeyPartitionIntL1(t *testing.T) {
 func TestKeyPartitionVarcharL1(t *testing.T) {
 	tableName := keyPartitionVarcharL1TableName
 	defer test.DeleteTable(tableName)
-
-	err := cli.AddRowKey(tableName, []string{"c1"})
-	assert.Equal(t, nil, err)
 
 	// insert
 	rowCount := 10
@@ -183,9 +174,6 @@ func TestKeyPartitionVarcharL1(t *testing.T) {
 func TestHashPartitionL2(t *testing.T) {
 	tableName := hashPartitionL2TableName
 	defer test.DeleteTable(tableName)
-
-	err := cli.AddRowKey(tableName, []string{"c1", "c2"})
-	assert.Equal(t, nil, err)
 
 	// insert
 	rowCount := 10
@@ -237,9 +225,6 @@ func TestKeyPartitionIntL2(t *testing.T) {
 	tableName := keyPartitionIntL2TableName
 	defer test.DeleteTable(tableName)
 
-	err := cli.AddRowKey(tableName, []string{"c1", "c2"})
-	assert.Equal(t, nil, err)
-
 	// insert
 	rowCount := 10
 	for i := 0; i < rowCount; i++ {
@@ -289,9 +274,6 @@ func TestKeyPartitionIntL2(t *testing.T) {
 func TestKeyPartitionVarcharL2(t *testing.T) {
 	tableName := keyPartitionVarcharL2TableName
 	defer test.DeleteTable(tableName)
-
-	err := cli.AddRowKey(tableName, []string{"c1", "c2"})
-	assert.Equal(t, nil, err)
 
 	// insert
 	rowCount := 10

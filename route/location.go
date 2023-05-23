@@ -225,7 +225,7 @@ func GetTableEntryFromRemote(
 
 		// 4.1. Fetch first partition info
 		if info.level >= 1 {
-			err = fetchFirstPart(ctx, db, info.firstPartDesc.partFuncType(), entry)
+			err = fetchFirstPart(ctx, db, info.firstPartDesc.PartFuncType(), entry)
 			if err != nil {
 				return nil, errors.WithMessagef(err, "fetch first partition info, table entry:%s", entry.String())
 			}
@@ -233,7 +233,7 @@ func GetTableEntryFromRemote(
 
 		// 4.2. Fetch sub partition info
 		if info.level == 2 {
-			err = fetchSubPart(ctx, db, info.subPartDesc.partFuncType(), entry)
+			err = fetchSubPart(ctx, db, info.subPartDesc.PartFuncType(), entry)
 			if err != nil {
 				return nil, errors.WithMessagef(err, "fetch sub partition info, table entry:%s", entry.String())
 			}
@@ -451,8 +451,19 @@ func getPartitionInfoFromRemote(ctx context.Context, db *DB, tenantName string, 
 }
 
 // getPartitionInfoFromResultSet get the meta information for the partition key from sql rows.
+// create table if not exists keyPartitionIntL2(`c1` bigint(20) not null, c2 bigint(20) not null, `c3` bigint(20) not null, primary key (`c1`, `c2`, `c3`)) partition by key(`c1`) subpartition by key(`c2`, `c3`) subpartitions 4 partitions 16;
+// +------------+----------+-----------+------------+-----------+-----------------+--------------+---------------+----------------+---------------------+---------------+---------------+---------------+--------------+----------------+-------------------------+
+// | part_level | part_num | part_type | part_space | part_expr | part_range_type | sub_part_num | sub_part_type | sub_part_space | sub_part_range_type | sub_part_expr | part_key_name | part_key_type | part_key_idx | part_key_extra | part_key_collation_type |
+// +------------+----------+-----------+------------+-----------+-----------------+--------------+---------------+----------------+---------------------+---------------+---------------+---------------+--------------+----------------+-------------------------+
+// |          2 |       16 |         1 |          0 | `c1`      |                 |            0 |             1 |              0 |                     | `c2`, `c3`    | c1            |             5 |            0 |                |                      63 |
+// |          2 |       16 |         1 |          0 | `c1`      |                 |            0 |             1 |              0 |                     | `c2`, `c3`    | c2            |             5 |            1 |                |                      63 |
+// |          2 |       16 |         1 |          0 | `c1`      |                 |            0 |             1 |              0 |                     | `c2`, `c3`    | c3            |             5 |            2 |                |                      63 |
+// +------------+----------+-----------+------------+-----------+-----------------+--------------+---------------+----------------+---------------------+---------------+---------------+---------------+--------------+----------------+-------------------------+
 func getPartitionInfoFromResultSet(rows *Rows) (*obPartitionInfo, error) {
 	var info *obPartitionInfo = nil
+	var partColumns []obColumn
+	var firstPartColumnNames []string
+	var subPartColumnNames []string
 	var (
 		partLevel        int
 		partNum          int
@@ -496,6 +507,7 @@ func getPartitionInfoFromResultSet(rows *Rows) (*obPartitionInfo, error) {
 		}
 		if isFirstRow {
 			isFirstRow = false
+			partColumns = make([]obColumn, 0, 1)
 			info = newObPartitionInfo(obPartLevel(partLevel))
 			// build first part
 			if info.level >= PartLevelOne {
@@ -503,13 +515,16 @@ func getPartitionInfoFromResultSet(rows *Rows) (*obPartitionInfo, error) {
 					partNum,
 					obPartFuncType(partType),
 					partSpace,
-					partExpr,
-					partRangeType,
 				)
 				if err != nil {
 					return nil, errors.WithMessagef(err, "build first part desc, partNum:%d, partType:%d", partNum, partType)
 				}
 				info.firstPartDesc = firstPartDesc
+
+				// eg:"c1, c2", need to remove ' '
+				str := strings.ReplaceAll(partExpr, " ", "")
+				str = strings.ReplaceAll(partExpr, "`", "")
+				firstPartColumnNames = strings.Split(str, ",")
 			}
 
 			// build sub part
@@ -518,19 +533,22 @@ func getPartitionInfoFromResultSet(rows *Rows) (*obPartitionInfo, error) {
 					subPartNum,
 					obPartFuncType(subPartType),
 					subPartSpace,
-					subPartExpr,
-					subPartRangeType,
 				)
 				if err != nil {
 					return nil, errors.WithMessagef(err, "build sub part desc, partNum:%d, partType:%d", partNum, subPartType)
 				}
 				info.subPartDesc = subPartDesc
+
+				// eg:"`c1`, `c2`", need to remove ' ' and '`'
+				str := strings.ReplaceAll(subPartExpr, " ", "")
+				str = strings.ReplaceAll(subPartExpr, "`", "")
+				subPartColumnNames = strings.Split(str, ",")
 			}
 		}
 
 		partKeyExtra = strings.ReplaceAll(partKeyExtra, "`", "") // '`' is not supported by druid
 		partKeyExtra = strings.ReplaceAll(partKeyExtra, " ", "") // ' ' should be removed
-		var column *obColumn
+		var column obColumn
 		if partKeyExtra != "" {
 			return nil, errors.New("not support generate column now")
 		} else {
@@ -540,104 +558,54 @@ func getPartitionInfoFromResultSet(rows *Rows) (*obPartitionInfo, error) {
 			}
 			column = newObSimpleColumn(
 				partKeyName,
-				partKeyIdx,
 				objType,
 				protocol.ObCollationType(spare1),
 			)
 		}
-		info.partColumns = append(info.partColumns, column)
+		partColumns = append(partColumns, column)
 	}
+
+	if info == nil {
+		return nil, errors.New("empty set")
+	}
+
 	info.partTabletIdMap = make(map[int64]int64, partNum)
-
-	var orderedPartedColumns1 []*obColumn
-	if info.level >= PartLevelOne {
-		if isListPart(info.firstPartDesc.partFuncType()) ||
-			isRangePart(info.firstPartDesc.partFuncType()) {
-			orderedPartedColumns1 = getOrderedPartColumns(info.partColumns, info.firstPartDesc)
+	if info.firstPartDesc != nil {
+		firstColumns := make([]obColumn, 0, 1)
+		for _, name := range firstPartColumnNames {
+			for _, column := range partColumns {
+				if strings.EqualFold(column.ColumnName(), name) {
+					firstColumns = append(firstColumns, column)
+				}
+			}
 		}
-		// set the property of first part
-		err := setPartDescProperty(info.firstPartDesc, info.partColumns, orderedPartedColumns1)
-		if err != nil {
-			return nil, errors.WithMessagef(err, "set first part property, part info:%s", info.String())
-		}
-	}
-
-	var orderedPartedColumns2 []*obColumn
-	if info.level == PartLevelTwo {
-		if isListPart(info.firstPartDesc.partFuncType()) ||
-			isRangePart(info.firstPartDesc.partFuncType()) {
-			orderedPartedColumns2 = getOrderedPartColumns(info.partColumns, info.subPartDesc)
-		}
-		// set the property of sub part
-		err := setPartDescProperty(info.subPartDesc, info.partColumns, orderedPartedColumns2)
-		if err != nil {
-			return nil, errors.WithMessagef(err, "set sub part property, part info:%s", info.String())
+		info.firstPartDesc.SetPartColumns(firstColumns)
+		if info.subPartDesc != nil {
+			subColumns := make([]obColumn, 0, 1)
+			for _, name := range subPartColumnNames {
+				for _, column := range partColumns {
+					if strings.EqualFold(column.ColumnName(), name) {
+						subColumns = append(subColumns, column)
+					}
+				}
+			}
+			info.subPartDesc.SetPartColumns(subColumns)
 		}
 	}
 
 	return info, nil
 }
 
-func getOrderedPartColumns(
-	partitionKeyColumns []*obColumn,
-	partDesc obPartDesc) []*obColumn {
-	columns := make([]*obColumn, 0, len(partitionKeyColumns))
-	for _, partColumnName := range partDesc.orderedPartColumnNames() {
-		for _, keyColumn := range partitionKeyColumns {
-			if strings.EqualFold(keyColumn.columnName, partColumnName) {
-				columns = append(columns, keyColumn)
-			}
-		}
-	}
-	return columns
-}
-
-func setPartDescProperty(
-	partDesc obPartDesc,
-	partColumns []*obColumn,
-	orderedCompareColumns []*obColumn) error {
-	partDesc.setPartColumns(partColumns)
-	if isKeyPart(partDesc.partFuncType()) {
-		if len(partColumns) == 0 {
-			return errors.Errorf("part column is empty, partDesc:%s", partDesc.String())
-		}
-	} else if isListPart(partDesc.partFuncType()) {
-		return errors.New("list part is not support now")
-	} else if isRangePart(partDesc.partFuncType()) {
-		if rangeDesc, ok := partDesc.(*obRangePartDesc); ok {
-			rangeDesc.orderedCompareColumns = orderedCompareColumns
-		} else {
-			return errors.Errorf("failed to convert to obRangePartDesc, partDesc:%s", partDesc.String())
-		}
-	}
-	return nil
-}
-
 // buildPartDesc generate partition key description information.
 func buildPartDesc(partNum int,
 	partFuncType obPartFuncType,
-	partSpace int,
-	partExpr string,
-	partRangeType string) (obPartDesc, error) {
-	partExpr = strings.ReplaceAll(partExpr, "`", "") // '`' is not supported by druid
+	partSpace int) (obPartDesc, error) {
 	if isRangePart(partFuncType) {
-		rangeDesc := newObRangePartDesc(partSpace, partNum, partFuncType, partExpr)
-		for _, typeStr := range strings.Split(partRangeType, ",") {
-			typeValue, err := strconv.Atoi(typeStr)
-			if err != nil {
-				return nil, errors.WithMessagef(err, "convert string to int, typeStr:%s", typeStr)
-			}
-			objType, err := protocol.NewObjType(protocol.ObObjTypeValue(typeValue))
-			if err != nil {
-				return nil, errors.WithMessagef(err, "new object typ, typeStr:%s", typeStr)
-			}
-			rangeDesc.orderedCompareColumnTypes = append(rangeDesc.orderedCompareColumnTypes, objType)
-		}
-		return rangeDesc, nil
+		return newObRangePartDesc(partSpace, partNum, partFuncType), nil
 	} else if isHashPart(partFuncType) {
-		return newObHashPartDesc(partSpace, partNum, partFuncType, partExpr), nil
+		return newObHashPartDesc(partSpace, partNum, partFuncType), nil
 	} else if isKeyPart(partFuncType) {
-		return newObKeyPartDesc(partSpace, partNum, partFuncType, partExpr), nil
+		return newObKeyPartDesc(partSpace, partNum, partFuncType), nil
 	} else {
 		return nil, errors.Errorf("invalid part type, partFuncType:%d", partFuncType)
 	}
