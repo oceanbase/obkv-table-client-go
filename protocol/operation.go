@@ -19,6 +19,7 @@ package protocol
 
 import (
 	"bytes"
+	"strconv"
 
 	"github.com/pkg/errors"
 
@@ -128,5 +129,18 @@ func (o *ObTableOperation) Decode(buffer *bytes.Buffer) {
 }
 
 func (o *ObTableOperation) String() string {
-	return ""
+	var ObUniVersionHeaderStr = "nil"
+	if o.ObUniVersionHeader != nil {
+		ObUniVersionHeaderStr = o.ObUniVersionHeader.String()
+	}
+
+	var entityStr = "nil"
+	if o.entity != nil {
+		entityStr = o.entity.String()
+	}
+	return "ObTableOperation{" +
+		"ObUniVersionHeader:" + ObUniVersionHeaderStr + ", " +
+		"opType:" + strconv.Itoa(int(o.opType)) + ", " +
+		"entity:" + entityStr +
+		"}"
 }
