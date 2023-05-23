@@ -29,6 +29,7 @@ import (
 
 type ObTableOperationRequest struct {
 	*ObUniVersionHeader
+	*ObPayloadBase
 	credential           []byte
 	tableName            string
 	tableId              uint64
@@ -55,11 +56,13 @@ func NewObTableOperationRequest(
 		return nil, errors.WithMessage(err, "create table operation")
 	}
 	uniVersionHeader := NewObUniVersionHeader()
-	uniVersionHeader.SetFlag(flag)
-	uniVersionHeader.SetTimeout(timeout)
+	obPayloadBase := NewObPayloadBase()
+	obPayloadBase.SetFlag(flag)
+	obPayloadBase.SetTimeout(timeout)
 
 	return &ObTableOperationRequest{
 		ObUniVersionHeader:   uniVersionHeader,
+		ObPayloadBase:        obPayloadBase,
 		credential:           nil, // when execute set
 		tableName:            tableName,
 		tableId:              tableId,

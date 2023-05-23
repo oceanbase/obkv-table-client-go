@@ -26,6 +26,7 @@ import (
 
 type ObTableBatchOperationRequest struct {
 	*ObUniVersionHeader
+	*ObPayloadBase
 	credential              []byte
 	tableName               string
 	tableId                 uint64
@@ -48,12 +49,14 @@ func NewObTableBatchOperationRequest(
 	flag uint16) *ObTableBatchOperationRequest {
 
 	uniVersionHeader := NewObUniVersionHeader()
-	uniVersionHeader.SetFlag(flag)
-	uniVersionHeader.SetTimeout(timeout)
+	obPayloadBase := NewObPayloadBase()
+	obPayloadBase.SetFlag(flag)
+	obPayloadBase.SetTimeout(timeout)
 
 	return &ObTableBatchOperationRequest{
 		ObUniVersionHeader:      uniVersionHeader,
-		credential:              nil,
+		ObPayloadBase:           obPayloadBase,
+		credential:              nil, // when execute set
 		tableName:               tableName,
 		tableId:                 tableId,
 		obTableEntityType:       ObTableEntityTypeDynamic,
@@ -65,14 +68,6 @@ func NewObTableBatchOperationRequest(
 		partitionId:             partitionId,
 		atomicOperation:         true,
 	}
-}
-
-func (r *ObTableBatchOperationRequest) Credential() []byte {
-	return r.credential
-}
-
-func (r *ObTableBatchOperationRequest) SetCredential(credential []byte) {
-	r.credential = credential
 }
 
 func (r *ObTableBatchOperationRequest) TableName() string {
@@ -185,6 +180,14 @@ func (r *ObTableBatchOperationRequest) PayloadContentLen() int {
 
 	r.ObUniVersionHeader.SetContentLength(totalLen)
 	return r.ObUniVersionHeader.ContentLength()
+}
+
+func (r *ObTableBatchOperationRequest) Credential() []byte {
+	return r.credential
+}
+
+func (r *ObTableBatchOperationRequest) SetCredential(credential []byte) {
+	r.credential = credential
 }
 
 func (r *ObTableBatchOperationRequest) Encode(buffer *bytes.Buffer) {

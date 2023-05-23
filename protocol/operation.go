@@ -45,9 +45,7 @@ func NewObTableOperation(
 			return nil, errors.WithMessage(err, "create obj meta by row key")
 		}
 
-		object := NewObObject()
-		object.SetMeta(objMeta)
-		object.SetValue(column.Value())
+		object := NewObObjectWithParams(objMeta, column.Value())
 
 		tableEntity.RowKey().AppendKey(object)
 	}
@@ -59,9 +57,7 @@ func NewObTableOperation(
 			return nil, errors.WithMessage(err, "create obj meta by column")
 		}
 
-		object := NewObObject()
-		object.SetMeta(objMeta)
-		object.SetValue(column.Value())
+		object := NewObObjectWithParams(objMeta, column.Value())
 
 		tableEntity.SetProperty(column.Name(), object)
 	}

@@ -25,12 +25,14 @@ import (
 
 type ObTableBatchOperationResponse struct {
 	*ObUniVersionHeader
+	*ObPayloadBase
 	obTableOperationResponses []*ObTableOperationResponse
 }
 
 func NewObTableBatchOperationResponse() *ObTableBatchOperationResponse {
 	return &ObTableBatchOperationResponse{
 		ObUniVersionHeader:        NewObUniVersionHeader(),
+		ObPayloadBase:             NewObPayloadBase(),
 		obTableOperationResponses: nil,
 	}
 }
@@ -57,6 +59,16 @@ func (r *ObTableBatchOperationResponse) PayloadLen() int {
 }
 
 func (r *ObTableBatchOperationResponse) PayloadContentLen() int {
+	// TODO implement me
+	panic("implement me")
+}
+
+func (r *ObTableBatchOperationResponse) Credential() []byte {
+	// TODO implement me
+	panic("implement me")
+}
+
+func (r *ObTableBatchOperationResponse) SetCredential(credential []byte) {
 	// TODO implement me
 	panic("implement me")
 }

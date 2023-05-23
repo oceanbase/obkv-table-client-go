@@ -25,6 +25,7 @@ import (
 
 type ObTableOperationResponse struct {
 	*ObUniVersionHeader
+	*ObPayloadBase
 	header        *ObTableResponse
 	operationType ObTableOperationType
 	entity        *ObTableEntity
@@ -34,6 +35,7 @@ type ObTableOperationResponse struct {
 func NewObTableOperationResponse() *ObTableOperationResponse {
 	return &ObTableOperationResponse{
 		ObUniVersionHeader: NewObUniVersionHeader(),
+		ObPayloadBase:      NewObPayloadBase(),
 		header:             NewObTableResponse(),
 		operationType:      ObTableOperationGet,
 		entity:             NewObTableEntity(),
@@ -83,6 +85,16 @@ func (r *ObTableOperationResponse) PayloadLen() int {
 }
 
 func (r *ObTableOperationResponse) PayloadContentLen() int {
+	// TODO implement me
+	panic("implement me")
+}
+
+func (r *ObTableOperationResponse) Credential() []byte {
+	// TODO implement me
+	panic("implement me")
+}
+
+func (r *ObTableOperationResponse) SetCredential(credential []byte) {
 	// TODO implement me
 	panic("implement me")
 }
