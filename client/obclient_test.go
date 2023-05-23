@@ -52,7 +52,7 @@ func TestObClient_String(t *testing.T) {
 	cfg := config.NewDefaultClientConfig()
 	cli, err := newObClient(testConfigUrl, testFullUserName, testPassWord, testSysUserName, testSysPassWord, cfg)
 	assert.Equal(t, nil, err)
-	assert.Equal(t, "ObClient{config:ClientConfig{ConnPoolMaxConnSize:1, OperationTimeOut:10000000000, LogLevel:7}, configUrl:http://127.0.0.1:8080/services?User_ID=xxx&UID=xxx&Action=ObRootServiceInfo&ObCluster=xxx&database=xxx, fullUserName:user@mysql#obkv_cluster, userName:user, tenantName:mysql, clusterName:obkv_cluster, database:xxx, sysUA:ObUserAuth{userName:sys, password:}}", cli.String())
+	assert.Equal(t, "ObClient{config:ClientConfig{ConnPoolMaxConnSize:1, ConnConnectTimeOut:1s, ConnLoginTimeout:1s, OperationTimeOut:10s, LogLevel:7, TableEntryRefreshLockTimeout:4s, TableEntryRefreshTryTimes:3, TableEntryRefreshIntervalBase:100ms, TableEntryRefreshIntervalCeiling:1.6s, MetadataRefreshInterval:1m0s, MetadataRefreshLockTimeout:8s, RsListLocalFileLocation:, RsListHttpGetTimeout:1s, RsListHttpGetRetryTimes:3, RsListHttpGetRetryInterval:100ms}, configUrl:http://127.0.0.1:8080/services?User_ID=xxx&UID=xxx&Action=ObRootServiceInfo&ObCluster=xxx&database=xxx, fullUserName:user@mysql#obkv_cluster, userName:user, tenantName:mysql, clusterName:obkv_cluster, database:xxx, sysUA:ObUserAuth{userName:sys, password:}}", cli.String())
 }
 
 func TestObClient_parseFullUserName(t *testing.T) {

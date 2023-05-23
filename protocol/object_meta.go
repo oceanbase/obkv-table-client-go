@@ -19,6 +19,7 @@ package protocol
 
 import (
 	"bytes"
+	"strconv"
 	"time"
 
 	"github.com/pkg/errors"
@@ -71,6 +72,19 @@ func (m *ObObjectMeta) Scale() byte {
 
 func (m *ObObjectMeta) SetScale(scale byte) {
 	m.scale = scale
+}
+
+func (m *ObObjectMeta) String() string {
+	var objTypeStr = "nil"
+	if m.objType != nil {
+		objTypeStr = m.objType.String()
+	}
+	return "ObObjectMeta{" +
+		"objType:" + objTypeStr + ", " +
+		"collationLevel:" + strconv.Itoa(int(m.collationLevel)) + ", " +
+		"collationType:" + strconv.Itoa(int(m.collationType)) + ", " +
+		"scale:" + strconv.Itoa(int(m.scale)) +
+		"}"
 }
 
 func (m *ObObjectMeta) Encode(buffer *bytes.Buffer) {

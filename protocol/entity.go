@@ -138,3 +138,37 @@ func (e *ObTableEntity) Decode(buffer *bytes.Buffer) {
 		e.properties[name] = property
 	}
 }
+
+func (e *ObTableEntity) String() string {
+	var ObUniVersionHeaderStr = "nil"
+	if e.ObUniVersionHeader != nil {
+		ObUniVersionHeaderStr = e.ObUniVersionHeader.String()
+	}
+
+	var rowKeyStr = "nil"
+	if e.rowKey != nil {
+		rowKeyStr = e.rowKey.String()
+	}
+
+	var propertiesStr = "{"
+	var i = 0
+	for k, v := range e.properties {
+		if i > 0 {
+			propertiesStr += ", "
+		}
+		i++
+
+		objStr := "nil"
+		if v != nil {
+			objStr = v.String()
+		}
+		propertiesStr += "m[" + k + "]=" + objStr
+	}
+	propertiesStr += "}"
+
+	return "ObTableEntity{" +
+		"ObUniVersionHeader:" + ObUniVersionHeaderStr + ", " +
+		"rowKey:" + rowKeyStr + ", " +
+		"propertiesStr:" + propertiesStr +
+		"}"
+}

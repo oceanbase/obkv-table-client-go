@@ -30,20 +30,44 @@ import (
 	"github.com/oceanbase/obkv-table-client-go/util"
 )
 
-type obBatchExecutor struct {
-	tableName  string
-	batchOps   *protocol.ObTableBatchOperation
-	cli        *ObClient
-	rowKeyName []string
-}
-
+// newObBatchExecutor create a batch executor and bind a client.
 func newObBatchExecutor(tableName string, cli *ObClient) *obBatchExecutor {
 	return &obBatchExecutor{
 		tableName:  tableName,
 		batchOps:   protocol.NewObTableBatchOperation(),
 		cli:        cli,
 		rowKeyName: nil,
+		isAtomic:   true,
 	}
+}
+
+type obBatchExecutor struct {
+	tableName  string
+	batchOps   *protocol.ObTableBatchOperation
+	cli        *ObClient
+	rowKeyName []string
+	isAtomic   bool
+}
+
+func (b *obBatchExecutor) String() string {
+	var rowKeyNameStr string
+	rowKeyNameStr = rowKeyNameStr + "["
+	for i := 0; i < len(b.rowKeyName); i++ {
+		if i > 0 {
+			rowKeyNameStr += ", "
+		}
+		rowKeyNameStr += b.rowKeyName[i]
+	}
+	rowKeyNameStr += "]"
+	return "obBatchExecutor{" +
+		"tableName:" + b.tableName + ", " +
+		"rowKeyName:" + rowKeyNameStr + ", " +
+		"isAtomic:" + strconv.FormatBool(b.isAtomic) +
+		"}"
+}
+
+func (b *obBatchExecutor) SetIsAtomic(isAtomic bool) {
+	b.isAtomic = isAtomic
 }
 
 // addDmlOp add dml operation witch include insert/update/insertOrUpdate/replace/increment/append
@@ -53,6 +77,13 @@ func (b *obBatchExecutor) addDmlOp(
 	rowKey []*table.Column,
 	mutateValues []*table.Column,
 	opts ...ObkvOption) error {
+
+	if rowKey == nil {
+		return errors.New("rowKey is nil")
+	}
+	if mutateValues == nil {
+		return errors.New("mutateValues is nil")
+	}
 
 	// 1. Add rowkey name firstly
 	if b.rowKeyName == nil {
@@ -106,6 +137,10 @@ func (b *obBatchExecutor) AddAppendOp(rowKey []*table.Column, mutateValues []*ta
 
 // AddDeleteOp add a delete operation to the batch executor
 func (b *obBatchExecutor) AddDeleteOp(rowKey []*table.Column, opts ...ObkvOption) error {
+	if rowKey == nil {
+		return errors.New("rowKey is nil")
+	}
+
 	// 1. Add rowkey name firstly
 	if b.rowKeyName == nil {
 		b.rowKeyName = make([]string, 0, len(rowKey))
@@ -128,6 +163,10 @@ func (b *obBatchExecutor) AddDeleteOp(rowKey []*table.Column, opts ...ObkvOption
 
 // AddGetOp add a get operation to the batch executor
 func (b *obBatchExecutor) AddGetOp(rowKey []*table.Column, getColumns []string, opts ...ObkvOption) error {
+	if rowKey == nil {
+		return errors.New("rowKey is nil")
+	}
+
 	// 1. Add rowkey name firstly
 	b.rowKeyName = make([]string, 0, len(rowKey))
 	for _, column := range rowKey {
@@ -194,6 +233,7 @@ func (b *obBatchExecutor) partitionExecute(
 		partOp.tableParam.tableId,
 		partOp.tableParam.partitionId,
 		batchOp,
+		b.isAtomic,
 		b.cli.config.OperationTimeOut,
 		b.cli.config.LogLevel,
 	)
@@ -284,7 +324,7 @@ func (b *obBatchExecutor) Execute(ctx context.Context) (BatchOperationResult, er
 		}
 	}
 
-	return newBatchOperationResult(res), nil
+	return newObBatchOperationResult(res), nil
 }
 
 type obPartOp struct {
@@ -302,6 +342,11 @@ func (p *obPartOp) addOperation(op *obSingleOp) {
 }
 
 func (p *obPartOp) String() string {
+	var tableParamStr = "nil"
+	if p.tableParam != nil {
+		tableParamStr = p.tableParam.String()
+	}
+
 	var opsStr string
 	opsStr = opsStr + "["
 	for i := 0; i < len(p.ops); i++ {
@@ -312,7 +357,7 @@ func (p *obPartOp) String() string {
 	}
 	opsStr += "]"
 	return "obPartOp{" +
-		"tableParam:" + p.tableParam.String() + ", " +
+		"tableParam:" + tableParamStr + ", " +
 		"ops:" + opsStr +
 		"}"
 }
@@ -327,24 +372,12 @@ func newSingleOp(index int, op *protocol.ObTableOperation) *obSingleOp {
 }
 
 func (s *obSingleOp) String() string {
+	var opStr = "nil"
+	if s.op != nil {
+		opStr = s.op.String()
+	}
 	return "obSingleOp{" +
 		"indexOfBatch:" + strconv.Itoa(s.indexOfBatch) + ", " +
-		"op:" + s.op.String() +
+		"op:" + opStr +
 		"}"
-}
-
-type BatchOperationResult interface {
-	GetResults() []*protocol.ObTableOperationResponse
-}
-
-type obBatchOperationResult struct {
-	results []*protocol.ObTableOperationResponse
-}
-
-func newBatchOperationResult(results []*protocol.ObTableOperationResponse) *obBatchOperationResult {
-	return &obBatchOperationResult{results}
-}
-
-func (r *obBatchOperationResult) GetResults() []*protocol.ObTableOperationResponse {
-	return r.results
 }

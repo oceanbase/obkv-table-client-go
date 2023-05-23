@@ -87,3 +87,23 @@ func (k *RowKey) GetRowKeyValue() []interface{} {
 	}
 	return rowKey
 }
+
+func (k *RowKey) String() string {
+	var keysStr string
+	keysStr = keysStr + "["
+	for i := 0; i < len(k.keys); i++ {
+		if i > 0 {
+			keysStr += ", "
+		}
+		if k.keys[i] != nil {
+			keysStr += k.keys[i].String()
+		} else {
+			keysStr += "nil"
+		}
+	}
+	keysStr += "]"
+
+	return "RowKey{" +
+		"keys:" + keysStr +
+		"}"
+}

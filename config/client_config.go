@@ -66,7 +66,19 @@ func NewDefaultClientConfig() *ClientConfig {
 func (c *ClientConfig) String() string {
 	return "ClientConfig{" +
 		"ConnPoolMaxConnSize:" + strconv.Itoa(c.ConnPoolMaxConnSize) + ", " +
-		"OperationTimeOut:" + strconv.Itoa(int(c.OperationTimeOut)) + ", " +
-		"LogLevel:" + strconv.Itoa(int(c.LogLevel)) +
+		"ConnConnectTimeOut:" + c.ConnConnectTimeOut.String() + ", " +
+		"ConnLoginTimeout:" + c.ConnLoginTimeout.String() + ", " +
+		"OperationTimeOut:" + c.OperationTimeOut.String() + ", " +
+		"LogLevel:" + strconv.Itoa(int(c.LogLevel)) + ", " +
+		"TableEntryRefreshLockTimeout:" + c.TableEntryRefreshLockTimeout.String() + ", " +
+		"TableEntryRefreshTryTimes:" + strconv.Itoa(c.TableEntryRefreshTryTimes) + ", " +
+		"TableEntryRefreshIntervalBase:" + c.TableEntryRefreshIntervalBase.String() + ", " +
+		"TableEntryRefreshIntervalCeiling:" + c.TableEntryRefreshIntervalCeiling.String() + ", " +
+		"MetadataRefreshInterval:" + c.MetadataRefreshInterval.String() + ", " +
+		"MetadataRefreshLockTimeout:" + c.MetadataRefreshLockTimeout.String() + ", " +
+		"RsListLocalFileLocation:" + c.RsListLocalFileLocation + ", " +
+		"RsListHttpGetTimeout:" + c.RsListHttpGetTimeout.String() + ", " +
+		"RsListHttpGetRetryTimes:" + strconv.Itoa(c.RsListHttpGetRetryTimes) + ", " +
+		"RsListHttpGetRetryInterval:" + c.RsListHttpGetRetryInterval.String() +
 		"}"
 }
