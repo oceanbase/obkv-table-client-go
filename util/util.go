@@ -93,16 +93,14 @@ func StringToBytes(str string) []byte {
 	if str == "" {
 		return nil
 	}
-	return unsafe.Slice(unsafe.StringData(str), len(str))
+	return *(*[]byte)(unsafe.Pointer(&str))
 }
 
 func BytesToString(bys []byte) string {
 	if len(bys) == 0 {
 		return ""
 	}
-	// unsafeString converts a []byte to a string with no allocation.
-	// The caller must not modify b while the result string is in use.
-	return unsafe.String(unsafe.SliceData(bys), len(bys))
+	return *(*string)(unsafe.Pointer(&bys))
 }
 
 func BoolToByte(b bool) byte {
