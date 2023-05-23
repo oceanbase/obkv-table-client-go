@@ -31,16 +31,18 @@ import (
 )
 
 type obBatchExecutor struct {
-	tableName string
-	batchOps  *protocol.ObTableBatchOperation
-	cli       *ObClient
+	tableName  string
+	batchOps   *protocol.ObTableBatchOperation
+	cli        *ObClient
+	rowKeyName []string
 }
 
 func newObBatchExecutor(tableName string, cli *ObClient) *obBatchExecutor {
 	return &obBatchExecutor{
-		tableName: tableName,
-		batchOps:  protocol.NewObTableBatchOperation(),
-		cli:       cli,
+		tableName:  tableName,
+		batchOps:   protocol.NewObTableBatchOperation(),
+		cli:        cli,
+		rowKeyName: nil,
 	}
 }
 
@@ -51,11 +53,23 @@ func (b *obBatchExecutor) addDmlOp(
 	rowKey []*table.Column,
 	mutateValues []*table.Column,
 	opts ...ObkvOption) error {
+
+	// 1. Add rowkey name firstly
+	if b.rowKeyName == nil {
+		b.rowKeyName = make([]string, 0, len(rowKey))
+		for _, column := range rowKey {
+			b.rowKeyName = append(b.rowKeyName, column.Name())
+		}
+	}
+
+	// 2. Create new operation
 	op, err := protocol.NewObTableOperation(opType, rowKey, mutateValues)
 	if err != nil {
 		return errors.WithMessagef(err, "new table operation, opType:%d, tableName:%s, rowKey:%s, mutateValues:%s",
 			opType, b.tableName, table.ColumnsToString(rowKey), table.ColumnsToString(mutateValues))
 	}
+
+	// 3. Append operation
 	b.batchOps.AppendObTableOperation(op)
 	return nil
 }
@@ -92,17 +106,35 @@ func (b *obBatchExecutor) AddAppendOp(rowKey []*table.Column, mutateValues []*ta
 
 // AddDeleteOp add a delete operation to the batch executor
 func (b *obBatchExecutor) AddDeleteOp(rowKey []*table.Column, opts ...ObkvOption) error {
+	// 1. Add rowkey name firstly
+	if b.rowKeyName == nil {
+		b.rowKeyName = make([]string, 0, len(rowKey))
+		for _, column := range rowKey {
+			b.rowKeyName = append(b.rowKeyName, column.Name())
+		}
+	}
+
+	// 2. Create new operation
 	op, err := protocol.NewObTableOperation(protocol.ObTableOperationDel, rowKey, nil)
 	if err != nil {
 		return errors.WithMessagef(err, "new delete table operation, tableName:%s, rowKey:%s",
 			b.tableName, table.ColumnsToString(rowKey))
 	}
+
+	// 3. Append operation
 	b.batchOps.AppendObTableOperation(op)
 	return nil
 }
 
 // AddGetOp add a get operation to the batch executor
 func (b *obBatchExecutor) AddGetOp(rowKey []*table.Column, getColumns []string, opts ...ObkvOption) error {
+	// 1. Add rowkey name firstly
+	b.rowKeyName = make([]string, 0, len(rowKey))
+	for _, column := range rowKey {
+		b.rowKeyName = append(b.rowKeyName, column.Name())
+	}
+
+	// 2. Create new operation
 	var columns []*table.Column
 	for _, columnName := range getColumns {
 		columns = append(columns, table.NewColumn(columnName, nil))
@@ -112,6 +144,8 @@ func (b *obBatchExecutor) AddGetOp(rowKey []*table.Column, getColumns []string, 
 		return errors.WithMessagef(err, "new get table operation, tableName:%s, rowKey:%s",
 			b.tableName, table.ColumnsToString(rowKey))
 	}
+
+	// 3. Append operation
 	b.batchOps.AppendObTableOperation(op)
 	return nil
 }
@@ -120,11 +154,15 @@ func (b *obBatchExecutor) AddGetOp(rowKey []*table.Column, getColumns []string, 
 func (b *obBatchExecutor) constructPartOpMap(ctx context.Context) (map[int64]*obPartOp, error) {
 	partOpMap := make(map[int64]*obPartOp)
 	for i, op := range b.batchOps.ObTableOperations() {
-		rowKey := op.Entity().RowKey().GetRowKeyValue()
+		rowKey := make([]*table.Column, 0, len(b.rowKeyName))
+		rowKeyValue := op.Entity().RowKey().GetRowKeyValue()
+		for i, v := range rowKeyValue {
+			rowKey = append(rowKey, table.NewColumn(b.rowKeyName[i], v))
+		}
 		tableParam, err := b.cli.getTableParam(ctx, b.tableName, rowKey, false)
 		if err != nil {
-			return nil, errors.WithMessagef(err, "get table param, tableName:%s, rowKey:%s",
-				b.tableName, util.InterfacesToString(rowKey))
+			return nil, errors.WithMessagef(err, "get table param, tableName:%s, rowKeyValue:%s",
+				b.tableName, util.InterfacesToString(rowKeyValue))
 		}
 		singleOp := newSingleOp(i, op)
 		partOp, exist := partOpMap[tableParam.partitionId]

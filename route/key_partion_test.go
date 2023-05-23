@@ -28,25 +28,27 @@ import (
 
 func TestObKeyPartDesc_String(t *testing.T) {
 	desc := &obKeyPartDesc{}
-	assert.Equal(t, "obKeyPartDesc{comm:nil, partSpace:0, partNum:0}", desc.String())
-	desc = newObKeyPartDesc(0, 10, partFuncTypeKeyImplV2, "c1")
-	assert.Equal(t, "obKeyPartDesc{comm:obPartDescCommon{partFuncType:10, partExpr:c1, orderedPartColumnNames:c1, orderedPartRefColumnRowKeyRelations:[], partColumns:[], rowKeyElement:nil}, partSpace:0, partNum:10}", desc.String())
+	assert.Equal(t, "obKeyPartDesc{partSpace:0, partNum:0, partColumns[]}", desc.String())
+	desc = newObKeyPartDesc(0, 10, partFuncTypeKeyImplV2)
+	assert.Equal(t, "obKeyPartDesc{partSpace:0, partNum:10, partColumns[]}", desc.String())
+
+	desc = newObKeyPartDesc(0, 10, partFuncTypeHash)
+	objType, _ := protocol.NewObjType(protocol.ObObjTypeInt64TypeValue)
+	col := newObSimpleColumn("c1", objType, protocol.ObCollationTypeBinary)
+	desc.SetPartColumns([]obColumn{col})
+	assert.Equal(t, "obKeyPartDesc{partSpace:0, partNum:10, partColumns[obSimpleColumn{columnName:c1, objType:ObObjType{type:ObInt64Type}, collationType:63}]}", desc.String())
 }
 
 func TestObKeyPartDesc_GetPartId(t *testing.T) {
-	desc := newObKeyPartDesc(0, 10, partFuncTypeKeyImplV2, "c1")
-	partId, err := desc.GetPartId([]interface{}{1})
+	desc := newObKeyPartDesc(0, 10, partFuncTypeKeyImplV2)
+	partId, err := desc.GetPartId([]*table.Column{})
 	assert.NotEqual(t, nil, err)
 	assert.EqualValues(t, ObInvalidPartId, partId)
 
 	objType, _ := protocol.NewObjType(protocol.ObObjTypeInt64TypeValue)
-	col := newObSimpleColumn("c1", 1, objType, protocol.ObCollationTypeBinary)
-	desc.PartColumns = []*obColumn{col}
-	nameIdxMap := make(map[string]int)
-	nameIdxMap["c1"] = 0
-	rowkeyElement := table.NewObRowKeyElement(nameIdxMap)
-	desc.setCommRowKeyElement(rowkeyElement)
-	partId, err = desc.GetPartId([]interface{}{int64(1)})
+	col := newObSimpleColumn("c1", objType, protocol.ObCollationTypeBinary)
+	desc.SetPartColumns([]obColumn{col})
+	partId, err = desc.GetPartId([]*table.Column{table.NewColumn("c1", int64(1))})
 	assert.Equal(t, nil, err)
 	assert.EqualValues(t, 6, partId)
 }
@@ -80,53 +82,37 @@ func TestObKeyPartDesc_intToInt64(t *testing.T) {
 
 func TestObKeyPartDesc_toHashCode(t *testing.T) {
 	// int64
-	desc := newObKeyPartDesc(0, 10, partFuncTypeKeyImplV2, "c1")
+	desc := newObKeyPartDesc(0, 10, partFuncTypeKeyImplV2)
 	objType, _ := protocol.NewObjType(protocol.ObObjTypeInt64TypeValue)
-	col := newObSimpleColumn("c1", 1, objType, protocol.ObCollationTypeBinary)
-	desc.PartColumns = []*obColumn{col}
-	nameIdxMap := make(map[string]int)
-	nameIdxMap["c1"] = 0
-	rowkeyElement := table.NewObRowKeyElement(nameIdxMap)
-	desc.setCommRowKeyElement(rowkeyElement)
+	col := newObSimpleColumn("c1", objType, protocol.ObCollationTypeBinary)
+	desc.SetPartColumns([]obColumn{col})
 	var hashCode int64 = 0
 	hashCode, err := desc.toHashCode(int64(123), col, hashCode, partFuncTypeKeyImplV2)
 	assert.Equal(t, nil, err)
 	assert.EqualValues(t, -1234695888563024189, hashCode)
 	// varchar ObCollationTypeUtf8mb4GeneralCi
-	desc = newObKeyPartDesc(0, 10, partFuncTypeKeyImplV2, "c1")
+	desc = newObKeyPartDesc(0, 10, partFuncTypeKeyImplV2)
 	objType, _ = protocol.NewObjType(protocol.ObObjTypeVarcharTypeValue)
-	col = newObSimpleColumn("c1", 1, objType, protocol.ObCollationTypeUtf8mb4GeneralCi)
-	desc.PartColumns = []*obColumn{col}
-	nameIdxMap = make(map[string]int)
-	nameIdxMap["c1"] = 0
-	rowkeyElement = table.NewObRowKeyElement(nameIdxMap)
-	desc.setCommRowKeyElement(rowkeyElement)
+	col = newObSimpleColumn("c1", objType, protocol.ObCollationTypeUtf8mb4GeneralCi)
+	desc.SetPartColumns([]obColumn{col})
 	hashCode = 0
 	hashCode, err = desc.toHashCode("abc", col, hashCode, partFuncTypeKeyImplV2)
 	assert.Equal(t, nil, err)
 	assert.EqualValues(t, -925032385642742853, hashCode)
 	// varchar ObCollationTypeUtf8mb4Bin
-	desc = newObKeyPartDesc(0, 10, partFuncTypeKeyImplV2, "c1")
+	desc = newObKeyPartDesc(0, 10, partFuncTypeKeyImplV2)
 	objType, _ = protocol.NewObjType(protocol.ObObjTypeVarcharTypeValue)
-	col = newObSimpleColumn("c1", 1, objType, protocol.ObCollationTypeUtf8mb4Bin)
-	desc.PartColumns = []*obColumn{col}
-	nameIdxMap = make(map[string]int)
-	nameIdxMap["c1"] = 0
-	rowkeyElement = table.NewObRowKeyElement(nameIdxMap)
-	desc.setCommRowKeyElement(rowkeyElement)
+	col = newObSimpleColumn("c1", objType, protocol.ObCollationTypeUtf8mb4Bin)
+	desc.SetPartColumns([]obColumn{col})
 	hashCode = 0
 	hashCode, err = desc.toHashCode("abc", col, hashCode, partFuncTypeKeyImplV2)
 	assert.Equal(t, nil, err)
 	assert.EqualValues(t, -7148968302806999301, hashCode)
 	// varchar ObCollationTypeInvalid
-	desc = newObKeyPartDesc(0, 10, partFuncTypeKeyImplV2, "c1")
+	desc = newObKeyPartDesc(0, 10, partFuncTypeKeyImplV2)
 	objType, _ = protocol.NewObjType(protocol.ObObjTypeVarcharTypeValue)
-	col = newObSimpleColumn("c1", 1, objType, protocol.ObCollationTypeInvalid)
-	desc.PartColumns = []*obColumn{col}
-	nameIdxMap = make(map[string]int)
-	nameIdxMap["c1"] = 0
-	rowkeyElement = table.NewObRowKeyElement(nameIdxMap)
-	desc.setCommRowKeyElement(rowkeyElement)
+	col = newObSimpleColumn("c1", objType, protocol.ObCollationTypeInvalid)
+	desc.SetPartColumns([]obColumn{col})
 	hashCode = 0
 	_, err = desc.toHashCode("abc", col, hashCode, partFuncTypeKeyImplV2)
 	assert.NotEqual(t, nil, err)

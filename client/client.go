@@ -67,8 +67,6 @@ func NewClient(
 }
 
 type Client interface {
-	// AddRowKey add the primary key of the current table to the client.
-	AddRowKey(tableName string, rowKey []string) error
 	// Insert a record by rowKey.
 	Insert(ctx context.Context, tableName string, rowKey []*table.Column, mutateColumns []*table.Column, opts ...ObkvOption) (int64, error)
 	// Update a record by rowKey.

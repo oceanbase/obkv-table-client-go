@@ -31,9 +31,6 @@ func TestInsert(t *testing.T) {
 	tableName := singleOpTableTableName
 	defer test.DeleteTable(tableName)
 
-	err := cli.AddRowKey(tableName, []string{"c1"})
-	assert.Equal(t, nil, err)
-
 	rowKey := []*table.Column{table.NewColumn("c1", int64(1))}
 	mutateColumns := []*table.Column{table.NewColumn("c2", int64(1))}
 	affectRows, err := cli.Insert(
@@ -60,9 +57,6 @@ func TestInsert(t *testing.T) {
 func TestUpdate(t *testing.T) {
 	tableName := singleOpTableTableName
 	defer test.DeleteTable(tableName)
-
-	err := cli.AddRowKey(tableName, []string{"c1"})
-	assert.Equal(t, nil, err)
 
 	rowKey := []*table.Column{table.NewColumn("c1", int64(1))}
 	mutateColumns := []*table.Column{table.NewColumn("c2", int64(1))}
@@ -100,9 +94,6 @@ func TestUpdate(t *testing.T) {
 func TestInsertOrUpdate(t *testing.T) {
 	tableName := singleOpTableTableName
 	defer test.DeleteTable(tableName)
-
-	err := cli.AddRowKey(tableName, []string{"c1"})
-	assert.Equal(t, nil, err)
 
 	rowKey := []*table.Column{table.NewColumn("c1", int64(1))}
 	mutateColumns := []*table.Column{table.NewColumn("c2", int64(1))}
@@ -151,9 +142,6 @@ func TestDelete(t *testing.T) {
 	tableName := singleOpTableTableName
 	defer test.DeleteTable(tableName)
 
-	err := cli.AddRowKey(tableName, []string{"c1"})
-	assert.Equal(t, nil, err)
-
 	rowKey := []*table.Column{table.NewColumn("c1", int64(1))}
 	mutateColumns := []*table.Column{table.NewColumn("c2", int64(1))}
 	affectRows, err := cli.Insert(
@@ -185,9 +173,6 @@ func TestDelete(t *testing.T) {
 func TestGet(t *testing.T) {
 	tableName := singleOpTableTableName
 	defer test.DeleteTable(tableName)
-
-	err := cli.AddRowKey(tableName, []string{"c1"})
-	assert.Equal(t, nil, err)
 
 	rowKey := []*table.Column{table.NewColumn("c1", int64(1))}
 	mutateColumns := []*table.Column{table.NewColumn("c2", int64(1))}

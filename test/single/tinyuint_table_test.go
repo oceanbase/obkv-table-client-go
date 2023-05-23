@@ -36,9 +36,6 @@ func TestInsertUTinyint(t *testing.T) {
 	tableName := testUTinyintTableName
 	defer test.DeleteTable(tableName)
 
-	err := cli.AddRowKey(tableName, []string{"c1"})
-	assert.Equal(t, nil, err)
-
 	rowKey := []*table.Column{table.NewColumn("c1", uint8(1))}
 	mutateColumns := []*table.Column{table.NewColumn("c2", uint8(1))}
 	affectRows, err := cli.Insert(
@@ -65,9 +62,6 @@ func TestInsertUTinyint(t *testing.T) {
 func TestUpdateUTinyint(t *testing.T) {
 	tableName := testUTinyintTableName
 	defer test.DeleteTable(tableName)
-
-	err := cli.AddRowKey(tableName, []string{"c1"})
-	assert.Equal(t, nil, err)
 
 	rowKey := []*table.Column{table.NewColumn("c1", uint8(1))}
 	mutateColumns := []*table.Column{table.NewColumn("c2", uint8(1))}
@@ -105,9 +99,6 @@ func TestUpdateUTinyint(t *testing.T) {
 func TestInsertOrUpdateUTinyint(t *testing.T) {
 	tableName := testUTinyintTableName
 	defer test.DeleteTable(tableName)
-
-	err := cli.AddRowKey(tableName, []string{"c1"})
-	assert.Equal(t, nil, err)
 
 	rowKey := []*table.Column{table.NewColumn("c1", uint8(1))}
 	mutateColumns := []*table.Column{table.NewColumn("c2", uint8(1))}
@@ -156,9 +147,6 @@ func TestDeleteUTinyint(t *testing.T) {
 	tableName := testUTinyintTableName
 	defer test.DeleteTable(tableName)
 
-	err := cli.AddRowKey(tableName, []string{"c1"})
-	assert.Equal(t, nil, err)
-
 	rowKey := []*table.Column{table.NewColumn("c1", uint8(1))}
 	mutateColumns := []*table.Column{table.NewColumn("c2", uint8(1))}
 	affectRows, err := cli.Insert(
@@ -190,9 +178,6 @@ func TestDeleteUTinyint(t *testing.T) {
 func TestGetUTinyint(t *testing.T) {
 	tableName := testUTinyintTableName
 	defer test.DeleteTable(tableName)
-
-	err := cli.AddRowKey(tableName, []string{"c1"})
-	assert.Equal(t, nil, err)
 
 	rowKey := []*table.Column{table.NewColumn("c1", uint8(1))}
 	mutateColumns := []*table.Column{table.NewColumn("c2", uint8(1))}

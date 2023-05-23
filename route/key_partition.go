@@ -19,7 +19,6 @@ package route
 
 import (
 	"strconv"
-	"strings"
 	"time"
 
 	"github.com/pkg/errors"
@@ -29,58 +28,44 @@ import (
 	"github.com/oceanbase/obkv-table-client-go/util"
 )
 
+// newObHashPartDesc create a key partition description.
+func newObKeyPartDesc(
+	partSpace int,
+	partNum int,
+	partFuncType obPartFuncType) *obKeyPartDesc {
+	return &obKeyPartDesc{
+		partFuncType: partFuncType,
+		partSpace:    partSpace,
+		partNum:      partNum,
+	}
+}
+
 // obKeyPartDesc description of the key partition.
 type obKeyPartDesc struct {
-	*obPartDescCommon
-	partSpace int
-	partNum   int
+	partFuncType obPartFuncType
+	partSpace    int
+	partNum      int
+	partColumns  []obColumn
+}
+
+func (d *obKeyPartDesc) PartColumns() []obColumn {
+	return d.partColumns
 }
 
 func (d *obKeyPartDesc) SetPartNum(partNum int) {
 	d.partNum = partNum
 }
 
-func newObKeyPartDesc(
-	partSpace int,
-	partNum int,
-	partFuncType obPartFuncType,
-	partExpr string) *obKeyPartDesc {
-	// eg:"c1, c2", need to remove ' '
-	str := strings.ReplaceAll(partExpr, " ", "")
-	orderedPartColumnNames := strings.Split(str, ",")
-	return &obKeyPartDesc{
-		obPartDescCommon: newObPartDescCommon(partFuncType, partExpr, orderedPartColumnNames),
-		partSpace:        partSpace,
-		partNum:          partNum,
-	}
+func (d *obKeyPartDesc) PartFuncType() obPartFuncType {
+	return d.partFuncType
 }
 
-func (d *obKeyPartDesc) partFuncType() obPartFuncType {
-	return d.PartFuncType
-}
-
-func (d *obKeyPartDesc) orderedPartColumnNames() []string {
-	return d.OrderedPartColumnNames
-}
-
-func (d *obKeyPartDesc) orderedPartRefColumnRowKeyRelations() []*obColumnIndexesPair {
-	return d.OrderedPartRefColumnRowKeyRelations
-}
-
-func (d *obKeyPartDesc) rowKeyElement() *table.ObRowKeyElement {
-	return d.RowKeyElement
-}
-
-func (d *obKeyPartDesc) setRowKeyElement(rowKeyElement *table.ObRowKeyElement) {
-	d.setCommRowKeyElement(rowKeyElement)
-}
-
-func (d *obKeyPartDesc) setPartColumns(partColumns []*obColumn) {
-	d.PartColumns = partColumns
+func (d *obKeyPartDesc) SetPartColumns(partColumns []obColumn) {
+	d.partColumns = partColumns
 }
 
 // GetPartId get partition id.
-func (d *obKeyPartDesc) GetPartId(rowKey []interface{}) (int64, error) {
+func (d *obKeyPartDesc) GetPartId(rowKey []*table.Column) (int64, error) {
 	if len(rowKey) == 0 {
 		return ObInvalidPartId, errors.New("rowKey size is 0")
 	}
@@ -88,17 +73,13 @@ func (d *obKeyPartDesc) GetPartId(rowKey []interface{}) (int64, error) {
 	if err != nil {
 		return ObInvalidPartId, errors.WithMessagef(err, "eval part key value, part desc:%s", d.String())
 	}
-	if len(evalValues) < len(d.OrderedPartRefColumnRowKeyRelations) {
-		return ObInvalidPartId, errors.Errorf("invalid eval values length, "+
-			"evalValues length:%d, OrderedPartRefColumnRowKeyRelations length: %d", len(evalValues), len(d.OrderedPartRefColumnRowKeyRelations))
-	}
 	var hashValue int64
-	for i := 0; i < len(d.OrderedPartRefColumnRowKeyRelations); i++ {
+	for i := 0; i < len(d.partColumns); i++ {
 		hashValue, err = d.toHashCode(
 			evalValues[i],
-			d.OrderedPartRefColumnRowKeyRelations[i].column,
+			d.partColumns[i],
 			hashValue,
-			d.PartFuncType,
+			d.partFuncType,
 		)
 		if err != nil {
 			return ObInvalidPartId, errors.WithMessagef(err, "convert to hash code, part desc:%s", d.String())
@@ -143,10 +124,10 @@ func intToInt64(value interface{}) (int64, error) {
 
 func (d *obKeyPartDesc) toHashCode(
 	value interface{},
-	refColumn *obColumn,
+	column obColumn,
 	hashCode int64,
 	partFuncType obPartFuncType) (int64, error) {
-	typeValue := refColumn.objType.Value()
+	typeValue := column.ObjType().Value()
 	if typeValue >= protocol.ObObjTypeTinyIntTypeValue && typeValue <= protocol.ObObjTypeUInt64TypeValue {
 		i64, err := intToInt64(value)
 		if err != nil {
@@ -167,9 +148,9 @@ func (d *obKeyPartDesc) toHashCode(
 		}
 		return d.dateHash(date, hashCode), nil
 	} else if typeValue == protocol.ObObjTypeVarcharTypeValue || typeValue == protocol.ObObjTypeCharTypeValue {
-		return d.varcharHash(value, refColumn.collationType, hashCode, partFuncType)
+		return d.varcharHash(value, column.CollationType(), hashCode, partFuncType)
 	} else {
-		return -1, errors.Errorf("unsupported type for key hash, objType:%s", refColumn.objType.String())
+		return -1, errors.Errorf("unsupported type for key hash, objType:%s", column.ObjType().String())
 	}
 }
 
@@ -240,15 +221,20 @@ func (d *obKeyPartDesc) varcharHash(
 }
 
 func (d *obKeyPartDesc) String() string {
-	var commStr string
-	if d.obPartDescCommon == nil {
-		commStr = "nil"
-	} else {
-		commStr = d.CommString()
+	// partColumns to string
+	var partColumnsStr string
+	partColumnsStr = partColumnsStr + "["
+	for i := 0; i < len(d.partColumns); i++ {
+		if i > 0 {
+			partColumnsStr += ", "
+		}
+		partColumnsStr += d.partColumns[i].String()
 	}
+	partColumnsStr += "]"
+
 	return "obKeyPartDesc{" +
-		"comm:" + commStr + ", " +
 		"partSpace:" + strconv.Itoa(d.partSpace) + ", " +
-		"partNum:" + strconv.Itoa(d.partNum) +
+		"partNum:" + strconv.Itoa(d.partNum) + ", " +
+		"partColumns" + partColumnsStr +
 		"}"
 }

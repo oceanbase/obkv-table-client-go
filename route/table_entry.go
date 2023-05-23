@@ -22,7 +22,6 @@ import (
 
 	"github.com/pkg/errors"
 
-	"github.com/oceanbase/obkv-table-client-go/table"
 	"github.com/oceanbase/obkv-table-client-go/util"
 )
 
@@ -136,11 +135,4 @@ func (e *ObTableEntry) GetPartitionReplicaLocation(partId int64, consistency ObC
 		logicId = e.extractSubpartIdx(partId)
 	}
 	return e.getPartitionLocation(logicId, consistency)
-}
-
-// SetRowKeyElement set the primary key name to the routing module, which is required when calculating partId.
-func (e *ObTableEntry) SetRowKeyElement(rowKeyElement *table.ObRowKeyElement) {
-	if e.partitionInfo != nil {
-		e.partitionInfo.setRowKeyElement(rowKeyElement)
-	}
 }
