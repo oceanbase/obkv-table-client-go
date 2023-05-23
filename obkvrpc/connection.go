@@ -102,8 +102,10 @@ type Call struct {
 	Content []byte
 }
 
+const defaultConnPendingSize = 1024
+
 func NewConnection(option *ConnectionOption) *Connection {
-	return &Connection{option: option, pending: make(map[uint32]*Call)}
+	return &Connection{option: option, pending: make(map[uint32]*Call, defaultConnPendingSize)}
 }
 
 func (c *Connection) Connect(ctx context.Context) error {

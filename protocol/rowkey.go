@@ -33,9 +33,9 @@ func NewRowKey() *RowKey {
 	}
 }
 
-func NewRowKeyWithParams(rowKeyCap int) *RowKey {
+func NewRowKeyWithParams(rowKeyLen int) *RowKey {
 	return &RowKey{
-		keys: make([]*ObObject, 0, rowKeyCap),
+		keys: make([]*ObObject, 0, rowKeyLen),
 	}
 }
 

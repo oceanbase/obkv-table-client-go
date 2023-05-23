@@ -45,11 +45,11 @@ func NewObTableEntity() *ObTableEntity {
 	}
 }
 
-func NewObTableEntityWithParams(rowKeyCap int, propertiesCap int) *ObTableEntity {
+func NewObTableEntityWithParams(rowKeyLen int, propertiesLen int) *ObTableEntity {
 	return &ObTableEntity{
 		ObUniVersionHeader: NewObUniVersionHeader(),
-		rowKey:             NewRowKeyWithParams(rowKeyCap),
-		properties:         make(map[string]*ObObject, propertiesCap),
+		rowKey:             NewRowKeyWithParams(rowKeyLen),
+		properties:         make(map[string]*ObObject, propertiesLen),
 	}
 }
 
