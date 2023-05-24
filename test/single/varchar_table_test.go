@@ -55,8 +55,8 @@ func TestInsertVarchar(t *testing.T) {
 		selectColumns,
 	)
 	assert.Equal(t, nil, err)
-	assert.EqualValues(t, 1, m["c1"])
-	assert.EqualValues(t, 1, m["c2"])
+	assert.EqualValues(t, "1", m["c1"])
+	assert.EqualValues(t, "1", m["c2"])
 }
 
 func TestUpdateVarchar(t *testing.T) {
@@ -92,8 +92,8 @@ func TestUpdateVarchar(t *testing.T) {
 		selectColumns,
 	)
 	assert.Equal(t, nil, err)
-	assert.EqualValues(t, 1, m["c1"])
-	assert.EqualValues(t, 2, m["c2"])
+	assert.EqualValues(t, "1", m["c1"])
+	assert.EqualValues(t, "2", m["c2"])
 }
 
 func TestInsertOrUpdateVarchar(t *testing.T) {
@@ -119,8 +119,8 @@ func TestInsertOrUpdateVarchar(t *testing.T) {
 		selectColumns,
 	)
 	assert.Equal(t, nil, err)
-	assert.EqualValues(t, 1, m["c1"])
-	assert.EqualValues(t, 1, m["c2"])
+	assert.EqualValues(t, "1", m["c1"])
+	assert.EqualValues(t, "1", m["c2"])
 
 	affectRows, err = cli.InsertOrUpdate(
 		context.TODO(),
@@ -139,8 +139,8 @@ func TestInsertOrUpdateVarchar(t *testing.T) {
 		selectColumns,
 	)
 	assert.Equal(t, nil, err)
-	assert.EqualValues(t, 1, m["c1"])
-	assert.EqualValues(t, 1, m["c2"])
+	assert.EqualValues(t, "1", m["c1"])
+	assert.EqualValues(t, "1", m["c2"])
 }
 
 func TestDeleteVarchar(t *testing.T) {
@@ -198,8 +198,8 @@ func TestGetVarchar(t *testing.T) {
 		selectColumns,
 	)
 	assert.Equal(t, nil, err)
-	assert.EqualValues(t, 1, m["c1"])
-	assert.EqualValues(t, 1, m["c2"])
+	assert.EqualValues(t, "1", m["c1"])
+	assert.EqualValues(t, "1", m["c2"])
 
 	selectColumns = []string{"c1"} // select c1
 	m, err = cli.Get(
@@ -209,7 +209,7 @@ func TestGetVarchar(t *testing.T) {
 		selectColumns,
 	)
 	assert.Equal(t, nil, err)
-	assert.EqualValues(t, 1, m["c1"])
+	assert.EqualValues(t, "1", m["c1"])
 	assert.EqualValues(t, nil, m["c2"])
 
 	selectColumns = nil // default select all when selectColumns is nil
@@ -220,8 +220,8 @@ func TestGetVarchar(t *testing.T) {
 		selectColumns,
 	)
 	assert.Equal(t, nil, err)
-	assert.EqualValues(t, 1, m["c1"])
-	assert.EqualValues(t, 1, m["c2"])
+	assert.EqualValues(t, "1", m["c1"])
+	assert.EqualValues(t, "1", m["c2"])
 
 	test.DeleteTable(tableName)
 	m, err = cli.Get(
