@@ -200,7 +200,7 @@ func (r *ObTableOperationRequest) Encode(buffer *bytes.Buffer) {
 	if util.ObVersion() >= 4 {
 		util.PutUint64(buffer, r.partitionId)
 	} else {
-		util.PutUint64(buffer, r.partitionId)
+		util.EncodeVi64(buffer, int64(r.partitionId))
 	}
 
 	util.PutUint8(buffer, uint8(r.entityType))

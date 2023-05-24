@@ -78,7 +78,17 @@ func TestBoolToByte(t *testing.T) {
 	assert.EqualValues(t, 0, BoolToByte(false))
 }
 
+func TestByteToBool(t *testing.T) {
+	assert.EqualValues(t, true, ByteToBool(1))
+	assert.EqualValues(t, false, ByteToBool(0))
+}
+
 func TestConvertIpToUint32(t *testing.T) {
 	assert.EqualValues(t, uint32(0x7f000001), ConvertIpToUint32(net.IP{127, 0, 0, 1}))
 	assert.EqualValues(t, 0, ConvertIpToUint32(net.IP{0xfc, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0}))
+}
+
+func TestConvertUint32ToIp(t *testing.T) {
+	assert.EqualValues(t, net.IP{127, 0, 0, 1}, ConvertUint32ToIp(uint32(0x7f000001)))
+	assert.EqualValues(t, net.IP{0, 0, 0, 0}, ConvertUint32ToIp(0))
 }
