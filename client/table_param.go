@@ -22,10 +22,10 @@ import "strconv"
 type ObTableParam struct {
 	table       *ObTable
 	tableId     uint64
-	partitionId int64 // partition id in 3.x aka tablet id in 4.x
+	partitionId uint64 // partition id in 3.x aka tablet id in 4.x
 }
 
-func NewObTableParam(table *ObTable, tableId uint64, partitionId int64) *ObTableParam {
+func NewObTableParam(table *ObTable, tableId uint64, partitionId uint64) *ObTableParam {
 	return &ObTableParam{table, tableId, partitionId}
 }
 

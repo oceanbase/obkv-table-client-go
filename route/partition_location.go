@@ -27,40 +27,49 @@ const (
 // obPartitionLocation indicates the location of a partition,
 // including a leader replica and other read replicas
 type obPartitionLocation struct {
-	leader   obReplicaLocation
-	replicas []obReplicaLocation
+	leader   *obReplicaLocation
+	replicas []*obReplicaLocation
 }
 
 // addReplicaLocation add a replica to obPartitionLocation
 func (l *obPartitionLocation) addReplicaLocation(replica *obReplicaLocation) {
 	if replica.isLeader() {
-		l.leader = *replica
+		l.leader = replica
 	}
-	l.replicas = append(l.replicas, *replica)
+	l.replicas = append(l.replicas, replica)
 }
 
 // getReplica get the copy according to the consistency requirements you need,
 // strong consistency get the leader replica, weak consistency get the read replica (todo).
 func (l *obPartitionLocation) getReplica(consistency ObConsistency) *obReplicaLocation {
 	if consistency == ConsistencyStrong {
-		return &l.leader
+		return l.leader
 	}
 	// todo: get read replica
-	return &l.leader
+	return l.leader
 }
 
 func (l *obPartitionLocation) String() string {
+	var leaderStr = "nil"
+	if l.leader != nil {
+		leaderStr = l.leader.String()
+	}
+
 	var replicasStr string
 	replicasStr = replicasStr + "["
 	for i := 0; i < len(l.replicas); i++ {
 		if i > 0 {
 			replicasStr += ", "
 		}
-		replicasStr += l.replicas[i].String()
+		str := "nil"
+		if l.replicas[i] != nil {
+			str = l.replicas[i].String()
+		}
+		replicasStr += str
 	}
 	replicasStr += "]"
 	return "obPartitionLocation{" +
-		"leader:" + l.leader.String() + ", " +
+		"leader:" + leaderStr + ", " +
 		"replicas:" + replicasStr +
 		"}"
 }

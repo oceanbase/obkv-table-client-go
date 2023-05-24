@@ -16,3 +16,17 @@
  */
 
 package log
+
+import (
+	"os"
+	"testing"
+)
+
+func TestLogger(t *testing.T) {
+	myLogger := NewLogger(os.Stderr, InfoLevel, AddCaller())
+	ResetDefaultLogger(myLogger)
+	myLogger.Debug("Debug msg", String("Debug", "Debug"))
+	myLogger.Info("Info msg", String("Info", "Info"))
+	myLogger.Warn("Warn msg", String("Warn", "Warn"))
+	myLogger.Error("Error msg", String("Error", "Error"))
+}

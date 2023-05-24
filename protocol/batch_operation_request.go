@@ -36,14 +36,14 @@ type ObTableBatchOperationRequest struct {
 	returnRowKey            bool
 	returnAffectedEntity    bool
 	returnAffectedRows      bool
-	partitionId             int64
+	partitionId             uint64
 	atomicOperation         bool
 }
 
 func NewObTableBatchOperationRequest(
 	tableName string,
 	tableId uint64,
-	partitionId int64,
+	partitionId uint64,
 	obTableBatchOperation *ObTableBatchOperation,
 	atomicOperation bool,
 	timeout time.Duration,
@@ -135,11 +135,11 @@ func (r *ObTableBatchOperationRequest) SetReturnAffectedRows(returnAffectedRows 
 	r.returnAffectedRows = returnAffectedRows
 }
 
-func (r *ObTableBatchOperationRequest) PartitionId() int64 {
+func (r *ObTableBatchOperationRequest) PartitionId() uint64 {
 	return r.partitionId
 }
 
-func (r *ObTableBatchOperationRequest) SetPartitionId(partitionId int64) {
+func (r *ObTableBatchOperationRequest) SetPartitionId(partitionId uint64) {
 	r.partitionId = partitionId
 }
 
@@ -175,7 +175,7 @@ func (r *ObTableBatchOperationRequest) PayloadContentLen() int {
 				util.EncodedLengthByVString(r.tableName) +
 				util.EncodedLengthByVi64(int64(r.tableId)) +
 				6 + // obTableEntityType obTableConsistencyLevel returnRowKey returnAffectedEntity returnAffectedRows atomicOperation
-				util.EncodedLengthByVi64(r.partitionId) + // partitionId
+				util.EncodedLengthByVi64(int64(r.partitionId)) + // partitionId
 				r.obTableBatchOperation.PayloadLen()
 	}
 
@@ -213,9 +213,9 @@ func (r *ObTableBatchOperationRequest) Encode(buffer *bytes.Buffer) {
 	util.PutUint8(buffer, util.BoolToByte(r.returnAffectedRows))
 
 	if util.ObVersion() >= 4 {
-		util.PutUint64(buffer, uint64(r.partitionId))
+		util.PutUint64(buffer, r.partitionId)
 	} else {
-		util.EncodeVi64(buffer, r.partitionId)
+		util.PutUint64(buffer, r.partitionId)
 	}
 
 	util.PutUint8(buffer, util.BoolToByte(r.atomicOperation))

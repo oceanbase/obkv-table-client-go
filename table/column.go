@@ -48,7 +48,7 @@ func (c *Column) SetValue(value interface{}) {
 
 func (c *Column) String() string {
 	return "column{" +
-		"name: " + c.name + ", " +
-		"value: " + util.InterfaceToString(c.value) +
+		"name:" + c.name + ", " +
+		"value:" + util.InterfaceToString(c.value) +
 		"}"
 }

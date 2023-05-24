@@ -110,22 +110,9 @@ func BoolToByte(b bool) byte {
 	return 0
 }
 
-func ByteToBool(b byte) bool {
-	if b == 0 {
-		return false
-	}
-	return true
-}
-
 func ConvertIpToUint32(ip net.IP) uint32 {
 	if len(ip) == net.IPv6len {
 		return binary.BigEndian.Uint32(ip[12:16])
 	}
 	return binary.BigEndian.Uint32(ip)
-}
-
-func ConvertUint32ToIp(num uint32) net.IP {
-	ip := make(net.IP, net.IPv4len)
-	binary.BigEndian.PutUint32(ip, num)
-	return ip
 }

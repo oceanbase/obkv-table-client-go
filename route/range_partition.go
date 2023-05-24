@@ -63,7 +63,7 @@ func (d *obRangePartDesc) SetPartColumns(partColumns []obColumn) {
 
 // GetPartId get partition id by rowKey.
 // Not support range partition now.
-func (d *obRangePartDesc) GetPartId(rowKey []*table.Column) (int64, error) {
+func (d *obRangePartDesc) GetPartId(rowKey []*table.Column) (uint64, error) {
 	return ObInvalidPartId, errors.New("not support range partition now")
 }
 
