@@ -24,6 +24,7 @@ import (
 	"fmt"
 	"io"
 	"net"
+	"runtime"
 	"strconv"
 	"sync"
 	"sync/atomic"
@@ -41,6 +42,7 @@ import (
 const (
 	connReaderBufferSize = 4 * 1024
 	connWriterBufferSize = 4 * 1024
+	minBatchWriteSize    = 1024
 
 	connSystemReadBufferSize  = 128 * 1024
 	connSystemWriteBufferSize = 64 * 1024
@@ -297,7 +299,7 @@ func (c *Connection) receivePacket() {
 
 func (c *Connection) sendPacket() {
 	var packet *packet
-	var chanLen int
+	var gosched = false
 	for {
 		select {
 		case packet = <-c.packetChannel:
@@ -322,12 +324,25 @@ func (c *Connection) sendPacket() {
 			}
 		}
 
+		gosched = true
 		c.writerWrite(packet)
 
-		chanLen = len(c.packetChannel) // get current channel len, write all packages at once reduce syscall.
-		for i := 0; i < chanLen; i++ {
-			packet = <-c.packetChannel
-			c.writerWrite(packet)
+	hasPacket:
+		for { // write all packages at once reduce syscall.
+			select {
+			case packet = <-c.packetChannel:
+				c.writerWrite(packet)
+			default:
+				break hasPacket
+			}
+		}
+
+		if gosched { // only once true
+			gosched = false
+			if c.writer.Buffered() < minBatchWriteSize {
+				runtime.Gosched()
+				goto hasPacket
+			}
 		}
 
 		c.writer.Flush()
