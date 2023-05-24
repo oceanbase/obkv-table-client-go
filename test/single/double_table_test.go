@@ -63,8 +63,8 @@ func TestUpdateDouble(t *testing.T) {
 	tableName := testDoubleTableName
 	defer test.DeleteTable(tableName)
 
-	rowKey := []*table.Column{table.NewColumn("c1", float32(1))}
-	mutateColumns := []*table.Column{table.NewColumn("c2", float32(1))}
+	rowKey := []*table.Column{table.NewColumn("c1", float64(1))}
+	mutateColumns := []*table.Column{table.NewColumn("c2", float64(1))}
 	affectRows, err := cli.Insert(
 		context.TODO(),
 		tableName,
@@ -74,7 +74,7 @@ func TestUpdateDouble(t *testing.T) {
 	assert.Equal(t, nil, err)
 	assert.EqualValues(t, 1, affectRows)
 
-	updateColumns := []*table.Column{table.NewColumn("c2", float32(2))}
+	updateColumns := []*table.Column{table.NewColumn("c2", float64(2))}
 	affectRows, err = cli.Update(
 		context.TODO(),
 		tableName,
@@ -100,8 +100,8 @@ func TestInsertOrUpdateDouble(t *testing.T) {
 	tableName := testDoubleTableName
 	defer test.DeleteTable(tableName)
 
-	rowKey := []*table.Column{table.NewColumn("c1", float32(1))}
-	mutateColumns := []*table.Column{table.NewColumn("c2", float32(1))}
+	rowKey := []*table.Column{table.NewColumn("c1", float64(1))}
+	mutateColumns := []*table.Column{table.NewColumn("c2", float64(1))}
 	affectRows, err := cli.InsertOrUpdate(
 		context.TODO(),
 		tableName,
@@ -147,8 +147,8 @@ func TestDeleteDouble(t *testing.T) {
 	tableName := testDoubleTableName
 	defer test.DeleteTable(tableName)
 
-	rowKey := []*table.Column{table.NewColumn("c1", float32(1))}
-	mutateColumns := []*table.Column{table.NewColumn("c2", float32(1))}
+	rowKey := []*table.Column{table.NewColumn("c1", float64(1))}
+	mutateColumns := []*table.Column{table.NewColumn("c2", float64(1))}
 	affectRows, err := cli.Insert(
 		context.TODO(),
 		tableName,
@@ -179,8 +179,8 @@ func TestGetDouble(t *testing.T) {
 	tableName := testDoubleTableName
 	defer test.DeleteTable(tableName)
 
-	rowKey := []*table.Column{table.NewColumn("c1", float32(1))}
-	mutateColumns := []*table.Column{table.NewColumn("c2", float32(1))}
+	rowKey := []*table.Column{table.NewColumn("c1", float64(1))}
+	mutateColumns := []*table.Column{table.NewColumn("c2", float64(1))}
 	affectRows, err := cli.Insert(
 		context.TODO(),
 		tableName,
