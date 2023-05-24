@@ -83,14 +83,19 @@ type Connection struct {
 
 	conn   net.Conn
 	reader *bufio.Reader
+	writer *bufio.Writer
 
-	mutex   sync.Mutex
-	seq     atomic.Uint32 // as channel id in ez header
-	pending map[uint32]*Call
+	packetChannel      chan *packet
+	packetChannelClose chan struct{}
+	closeOnce          sync.Once
 
-	active   atomic.Bool
-	uniqueId uint64 // as trace0 in rpc header
+	mutex sync.Mutex
+	seq   atomic.Uint32 // as channel id in ez header
 
+	pending map[uint32]*call
+	active  atomic.Bool
+
+	uniqueId   uint64        // as trace0 in rpc header
 	sequence   atomic.Uint64 // as trace1 in rpc header
 	credential []byte
 	tenantId   uint64
@@ -99,17 +104,26 @@ type Connection struct {
 	rpcHeaderLength int
 }
 
-// Call represents an active RPC.
-type Call struct {
-	Error   error
-	Done    chan *Call // Strobes when call is complete.
-	Content []byte
+type packet struct {
+	seq  uint32
+	data []byte
 }
 
-const defaultConnPendingSize = 1024
+// call represents an active RPC.
+type call struct {
+	err     error
+	signal  chan *call // Strobes when call is complete.
+	content []byte
+}
+
+const (
+	defaultConnPendingSize   = 1024
+	defaultPacketChannelSize = 1024
+)
 
 func NewConnection(option *ConnectionOption) *Connection {
-	return &Connection{option: option, pending: make(map[uint32]*Call, defaultConnPendingSize)}
+	return &Connection{option: option, pending: make(map[uint32]*call, defaultConnPendingSize),
+		packetChannel: make(chan *packet, defaultPacketChannelSize), packetChannelClose: make(chan struct{})}
 }
 
 func (c *Connection) Connect(ctx context.Context) error {
@@ -124,6 +138,7 @@ func (c *Connection) Connect(ctx context.Context) error {
 	c.conn.(*net.TCPConn).SetReadBuffer(connSystemReadBufferSize)
 	c.conn.(*net.TCPConn).SetWriteBuffer(connSystemWriteBufferSize)
 	c.reader = bufio.NewReaderSize(c.conn, connReaderBufferSize)
+	c.writer = bufio.NewWriterSize(c.conn, connWriterBufferSize)
 
 	// ez header length rpc header length
 	c.ezHeaderLength = protocol.EzHeaderLength
@@ -146,6 +161,7 @@ func (c *Connection) Connect(ctx context.Context) error {
 	c.uniqueId = uint64(ip | port | isUserRequest | reserved)
 
 	go c.receivePacket()
+	go c.sendPacket()
 	return nil
 }
 
@@ -171,31 +187,47 @@ func (c *Connection) Execute(ctx context.Context, request protocol.ObPayload, re
 
 	totalBuf := c.encodePacket(seq, request)
 
-	done := make(chan *Call, 1)
-	call := new(Call)
-	call.Done = done
+	call := &call{
+		err:     nil,
+		signal:  make(chan *call, 1),
+		content: nil, // call back to user goroutine content
+	}
 
-	err := c.sendPacket(seq, call, totalBuf)
-	if err != nil {
-		return errors.WithMessage(err, "send packet")
+	packet := &packet{
+		seq:  seq,
+		data: totalBuf,
+	}
+
+	c.mutex.Lock()
+	c.pending[seq] = call
+	c.mutex.Unlock()
+
+	select {
+	case c.packetChannel <- packet: // write packet channel success, but not equal to connection write success.
+	case <-ctx.Done():
+		// timeout
+		c.mutex.Lock()
+		delete(c.pending, seq)
+		c.mutex.Unlock()
+		return errors.WithMessage(ctx.Err(), "wait send packet to channel")
 	}
 
 	// wait call back
 	select {
+	case call = <-call.signal:
+		if call.err != nil { // transport failed
+			return errors.WithMessage(call.err, "receive packet")
+		}
 	case <-ctx.Done():
 		// timeout
 		c.mutex.Lock()
 		delete(c.pending, seq)
 		c.mutex.Unlock()
 		return errors.WithMessage(ctx.Err(), "wait transport packet")
-	case call = <-call.Done:
-		if call.Error != nil { // transport failed
-			return errors.WithMessage(call.Error, "receive packet")
-		}
 	}
 
 	// transport success
-	err = c.decodePacket(call.Content, response)
+	err := c.decodePacket(call.content, response)
 	if err != nil {
 		return err
 	}
@@ -223,7 +255,7 @@ func (c *Connection) receivePacket() {
 
 		ezHeaderPool.Put(ezHeaderBuf)
 
-		var call *Call
+		var call *call
 
 		contentLen := ezHeader.ContentLen()
 		channelId := ezHeader.ChannelId()
@@ -240,7 +272,7 @@ func (c *Connection) receivePacket() {
 			if call == nil {
 				log.Warn("failed to not found table packet", zap.Uint64("uniqueId", c.uniqueId), zap.Uint32("seq", channelId))
 			} else {
-				call.Error = err
+				call.err = err
 				call.done()
 			}
 			log.Warn("failed to connection read content", zap.Error(err), zap.Uint64("uniqueId", c.uniqueId))
@@ -258,33 +290,82 @@ func (c *Connection) receivePacket() {
 			log.Warn("failed to not found table packet", zap.Uint64("uniqueId", c.uniqueId), zap.Uint32("seq", channelId))
 			continue
 		}
-		call.Content = contentBuf
+		call.content = contentBuf
 		call.done()
 	}
 }
 
-func (c *Connection) sendPacket(seq uint32, call *Call, totalBuf []byte) error {
-	c.mutex.Lock()
-	c.pending[seq] = call
-	c.mutex.Unlock()
+func (c *Connection) sendPacket() {
+	var packet *packet
+	var chanLen int
+	for {
+		select {
+		case packet = <-c.packetChannel:
+		case <-c.packetChannelClose:
+			// clear packet channel
+			for {
+				select {
+				case packet = <-c.packetChannel:
+					var call *call
+					c.mutex.Lock()
+					call = c.pending[packet.seq]
+					delete(c.pending, packet.seq)
+					c.mutex.Unlock()
+					if call != nil {
+						call.err = errors.New("send packet channel is close")
+						call.done()
+					}
+				default:
+					log.Warn("send packet channel closed", zap.Uint64("uniqueId", c.uniqueId))
+					return
+				}
+			}
+		}
 
-	_, err := c.conn.Write(totalBuf)
+		c.writerWrite(packet)
+
+		chanLen = len(c.packetChannel) // get current channel len, write all packages at once reduce syscall.
+		for i := 0; i < chanLen; i++ {
+			packet = <-c.packetChannel
+			c.writerWrite(packet)
+		}
+
+		c.writer.Flush()
+	}
+}
+
+func (c *Connection) writerWrite(packet *packet) {
+	_, err := c.writer.Write(packet.data)
 	if err != nil {
 		// write failed
+		var call *call
 		c.mutex.Lock()
-		delete(c.pending, seq)
+		call = c.pending[packet.seq]
+		delete(c.pending, packet.seq)
 		c.mutex.Unlock()
+		if call != nil {
+			call.err = err
+			call.done()
+		}
 		c.Close()
-		return errors.WithMessage(err, "conn write")
 	}
-	// write success
-	bufferPool.Put(&totalBuf) // reuse
-	return nil
+	bufferPool.Put(&packet.data)
 }
 
 func (c *Connection) Close() {
 	c.active.Store(false)
-	c.conn.Close()
+	c.closeOnce.Do(func() {
+		close(c.packetChannelClose) // close packet channel
+		c.conn.Close()
+		// clear pending call
+		c.mutex.Lock()
+		for seq, call := range c.pending {
+			delete(c.pending, seq)
+			call.err = errors.New("connection close")
+			call.done()
+		}
+		c.mutex.Unlock()
+	})
 }
 
 func (c *Connection) encodePacket(seq uint32, request protocol.ObPayload) []byte {
@@ -358,11 +439,11 @@ func (c *Connection) decodePacket(contentBuf []byte, response protocol.ObPayload
 	return nil
 }
 
-func (call *Call) done() {
+func (call *call) done() {
 	select {
-	case call.Done <- call:
+	case call.signal <- call:
 		// ok
 	default:
-		log.Warn("rpc: discarding Call reply due to insufficient Done chan capacity")
+		log.Warn("rpc: discarding call reply due to insufficient signal chan capacity")
 	}
 }
