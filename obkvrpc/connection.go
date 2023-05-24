@@ -50,8 +50,16 @@ const (
 
 var bufferPool = NewLimitedPool(256, 8192)
 
-var ezHeaderPool = sync.Pool{New: func() any {
+var ezHeaderBufferPool = sync.Pool{New: func() any {
 	return make([]byte, protocol.EzHeaderLength)
+}}
+
+var ezHeaderPool = sync.Pool{New: func() any {
+	return protocol.NewEzHeader()
+}}
+
+var rpcHeaderPool = sync.Pool{New: func() any {
+	return protocol.NewObRpcHeader()
 }}
 
 type ConnectionOption struct {
@@ -240,7 +248,7 @@ func (c *Connection) Execute(ctx context.Context, request protocol.ObPayload, re
 func (c *Connection) receivePacket() {
 	defer c.Close()
 	for {
-		ezHeaderBuf := ezHeaderPool.Get().([]byte)
+		ezHeaderBuf := ezHeaderBufferPool.Get().([]byte)
 
 		_, err := io.ReadFull(c.reader, ezHeaderBuf)
 		if err != nil {
@@ -248,19 +256,22 @@ func (c *Connection) receivePacket() {
 			return
 		}
 
-		ezHeader := protocol.NewEzHeader()
+		ezHeader := ezHeaderPool.Get().(*protocol.EzHeader)
+
 		err = ezHeader.Decode(ezHeaderBuf)
 		if err != nil {
 			log.Warn("failed to decode ezHeader", zap.Error(err), zap.Uint64("uniqueId", c.uniqueId))
 			return
 		}
 
-		ezHeaderPool.Put(ezHeaderBuf)
-
-		var call *call
+		ezHeaderBufferPool.Put(ezHeaderBuf)
 
 		contentLen := ezHeader.ContentLen()
 		channelId := ezHeader.ChannelId()
+
+		ezHeaderPool.Put(ezHeader)
+
+		var call *call
 
 		contentBuf := *bufferPool.Get(int(contentLen)) // reuse
 
@@ -400,7 +411,9 @@ func (c *Connection) encodePacket(seq uint32, request protocol.ObPayload) []byte
 
 	// encode rpc header
 	rpcHeaderBuf := totalBuf[c.ezHeaderLength : c.ezHeaderLength+c.rpcHeaderLength] // rpc header buf
-	rpcHeader := protocol.NewObRpcHeader()
+	rpcHeader := rpcHeaderPool.Get().(*protocol.ObRpcHeader)
+
+	rpcHeader.SetTimestamp(time.Now().Unix())
 	rpcHeader.SetPCode(request.PCode().Value())
 	rpcHeader.SetFlag(request.Flag())
 	rpcHeader.SetTenantId(request.TenantId())
@@ -413,12 +426,18 @@ func (c *Connection) encodePacket(seq uint32, request protocol.ObPayload) []byte
 	rpcHeader.SetHLen(uint8(c.rpcHeaderLength))
 	rpcHeader.Encode(rpcHeaderBuffer)
 
+	rpcHeader.Reset()
+	rpcHeaderPool.Put(rpcHeader) // reset before put
+
 	// encode ez header
 	ezHeaderBuf := totalBuf[:c.ezHeaderLength] // ez header buf
-	ezHeader := protocol.NewEzHeader()
+	ezHeader := ezHeaderPool.Get().(*protocol.EzHeader)
+
 	ezHeader.SetChannelId(seq)
 	ezHeader.SetContentLen(uint32(c.rpcHeaderLength + payloadLen))
 	ezHeader.Encode(ezHeaderBuf)
+
+	ezHeaderPool.Put(ezHeader) // reset before put
 
 	return totalBuf
 }
@@ -427,7 +446,7 @@ func (c *Connection) decodePacket(contentBuf []byte, response protocol.ObPayload
 	contentBuffer := bytes.NewBuffer(contentBuf)
 
 	// decode rpc header
-	rpcHeader := protocol.NewObRpcHeader()
+	rpcHeader := rpcHeaderPool.Get().(*protocol.ObRpcHeader)
 	rpcHeader.Decode(contentBuffer)
 
 	// decode rpc response code
@@ -449,6 +468,9 @@ func (c *Connection) decodePacket(contentBuf []byte, response protocol.ObPayload
 	response.SetUniqueId(rpcHeader.TraceId0())
 	response.SetSequence(rpcHeader.TraceId1())
 	response.Decode(contentBuffer)
+
+	rpcHeader.Reset()
+	rpcHeaderPool.Put(rpcHeader)
 
 	bufferPool.Put(&contentBuf) // reuse
 	return nil

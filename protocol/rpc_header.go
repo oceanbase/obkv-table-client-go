@@ -112,7 +112,7 @@ func NewObRpcHeader() *ObRpcHeader {
 		traceId0:        0,
 		traceId1:        0,
 		timeout:         defaultOperationTimeout,
-		timestamp:       time.Now().Unix(),
+		timestamp:       0,
 		obRpcCostTime:   NewObRpcCostTime(),
 		dstClusterId:    -1,
 		compressType:    ObCompressTypeInvalid,
@@ -126,6 +126,33 @@ func NewObRpcHeader() *ObRpcHeader {
 		traceId3:        0,
 		clusterNameHash: 0,
 	}
+}
+
+func (h *ObRpcHeader) Reset() {
+	h.pCode = 0
+	h.hLen = 0
+	h.priority = 5
+	h.flag = defaultFlag
+	h.checksum = 0
+	h.tenantId = 1
+	h.prevTenantId = 1
+	h.sessionId = 1
+	h.traceId0 = 0
+	h.traceId1 = 0
+	h.timeout = defaultOperationTimeout
+	h.timestamp = 0
+	h.obRpcCostTime.Reset()
+	h.dstClusterId = -1
+	h.compressType = ObCompressTypeInvalid
+	h.originalLen = 0
+	h.srcClusterId = -1
+	h.unisVersion = 0
+	h.requestLevel = 0
+	h.seqNo = 0
+	h.groupId = 0
+	h.traceId2 = 0
+	h.traceId3 = 0
+	h.clusterNameHash = 0
 }
 
 func (h *ObRpcHeader) PCode() uint32 {
@@ -432,6 +459,17 @@ func NewObRpcCostTime() *ObRpcCostTime {
 		packetId:               0,
 		requestArriveTime:      0,
 	}
+}
+
+func (t *ObRpcCostTime) Reset() {
+	t.len = obCostTimeEncodeSize
+	t.arrivalPushDiff = 0
+	t.pushPopDiff = 0
+	t.popProcessStartDiff = 0
+	t.processStartEndDiff = 0
+	t.processEndResponseDiff = 0
+	t.packetId = 0
+	t.requestArriveTime = 0
 }
 
 func (t *ObRpcCostTime) Len() int32 {
