@@ -19,18 +19,15 @@ package route
 
 import (
 	"testing"
+
+	"github.com/stretchr/testify/assert"
 )
 
-func TestObOcpModel_GetServerAddressRandomly(t *testing.T) {
-	server1 := NewObServerAddr("127.0.0.1", 1, 1)
-	server2 := NewObServerAddr("127.0.0.1", 1, 2)
-	server3 := NewObServerAddr("127.0.0.1", 1, 3)
-	server4 := NewObServerAddr("127.0.0.1", 1, 4)
-	server5 := NewObServerAddr("127.0.0.1", 1, 5)
-	servers := []*ObServerAddr{server1, server2, server3, server4, server5}
-	ocp := newOcpModel(servers, 1)
-	for i := 0; i < 10; i++ {
-		svr := ocp.GetServerAddressRandomly()
-		println(svr.String())
-	}
+func TestObUserAuth(t *testing.T) {
+	au := &ObUserAuth{}
+	assert.Equal(t, "ObUserAuth{userName:, password:}", au.String())
+	au = NewObUserAuth("sys", "pass")
+	assert.EqualValues(t, "sys", au.UserName())
+	assert.EqualValues(t, "pass", au.Password())
+	assert.Equal(t, "ObUserAuth{userName:sys, password:pass}", au.String())
 }

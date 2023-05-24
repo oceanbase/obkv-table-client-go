@@ -31,7 +31,7 @@ type ObTableEntry struct {
 	partNum           int
 	replicaNum        int
 	refreshTimeMills  int64                // last refresh time
-	tableEntryKey     ObTableEntryKey      // clusterName/tenantName/databaseName/tableName
+	tableEntryKey     *ObTableEntryKey     // clusterName/tenantName/databaseName/tableName
 	partitionInfo     *obPartitionInfo     // partition key meta info
 	tableLocation     *ObTableLocation     // location of table, all replica information of table
 	partLocationEntry *ObPartLocationEntry // all partition location of table
@@ -62,6 +62,14 @@ func (e *ObTableEntry) IsPartitionTable() bool {
 }
 
 func (e *ObTableEntry) String() string {
+	// tableEntryKey to string
+	var tableEntryKeyStr string
+	if e.tableEntryKey != nil {
+		tableEntryKeyStr = e.tableEntryKey.String()
+	} else {
+		tableEntryKeyStr = "nil"
+	}
+
 	// partitionInfo to string
 	var partitionInfoStr string
 	if e.partitionInfo != nil {
@@ -90,20 +98,20 @@ func (e *ObTableEntry) String() string {
 		"partNum:" + strconv.Itoa(int(e.partNum)) + ", " +
 		"replicaNum:" + strconv.Itoa(int(e.replicaNum)) + ", " +
 		"refreshTimeMills:" + strconv.Itoa(int(e.refreshTimeMills)) + ", " +
-		"tableEntryKey:" + e.tableEntryKey.String() + ", " +
+		"tableEntryKey:" + tableEntryKeyStr + ", " +
 		"partitionInfo:" + partitionInfoStr + ", " +
 		"tableLocation:" + tableLocationStr + ", " +
 		"partitionEntry:" + partLocationEntryStr +
 		"}"
 }
 
-func (e *ObTableEntry) extractSubpartIdx(id int64) int64 {
+func (e *ObTableEntry) extractSubpartIdx(id uint64) uint64 {
 	// equal id & (^(0xffffffffffffffff << ObPartIdShift)) & (^(0xffffffffffffffff << ObPartIdBitNum))
 	return id & ObSubPartIdMask
 }
 
 // getPartitionLocation get partition location by partId and consistency.
-func (e *ObTableEntry) getPartitionLocation(partId int64, consistency ObConsistency) (*obReplicaLocation, error) {
+func (e *ObTableEntry) getPartitionLocation(partId uint64, consistency ObConsistency) (*obReplicaLocation, error) {
 	if util.ObVersion() >= 4 && e.IsPartitionTable() {
 		// In ob version 4.0 and above, get tabletId firstly.
 		// Because in version 4.0 and above we set up a relationship between tabletId and Location.
@@ -129,7 +137,7 @@ func (e *ObTableEntry) getPartitionLocation(partId int64, consistency ObConsiste
 }
 
 // GetPartitionReplicaLocation get partition location by partId and consistency.
-func (e *ObTableEntry) GetPartitionReplicaLocation(partId int64, consistency ObConsistency) (*obReplicaLocation, error) {
+func (e *ObTableEntry) GetPartitionReplicaLocation(partId uint64, consistency ObConsistency) (*obReplicaLocation, error) {
 	logicId := partId
 	if e.partitionInfo != nil && e.partitionInfo.level == PartLevelTwo {
 		logicId = e.extractSubpartIdx(partId)

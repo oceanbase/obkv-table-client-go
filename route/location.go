@@ -213,7 +213,7 @@ func GetTableEntryFromRemote(
 	if err != nil {
 		return nil, errors.WithMessagef(err, "get table entry from result set, key:%s", key.String())
 	}
-	entry.tableEntryKey = *key
+	entry.tableEntryKey = key
 
 	// 4. Fetch partition info
 	if entry.IsPartitionTable() {
@@ -359,7 +359,7 @@ func getPartLocationEntryFromResultSet(rows *Rows, tableName string) (*ObPartLoc
 	var partitionEntry *ObPartLocationEntry = nil
 	isFirstRow := true
 	var (
-		partitionId int
+		partitionId uint64
 		svrIp       string
 		sqlPort     int
 		tableId     uint64
@@ -409,10 +409,10 @@ func getPartLocationEntryFromResultSet(rows *Rows, tableName string) (*ObPartLoc
 		)
 
 		// 2. find or create location, then add replica location
-		location, ok := partitionEntry.partLocations[int64(partitionId)]
+		location, ok := partitionEntry.partLocations[partitionId]
 		if !ok {
 			location = new(obPartitionLocation)
-			partitionEntry.partLocations[int64(partitionId)] = location
+			partitionEntry.partLocations[partitionId] = location
 		}
 		location.addReplicaLocation(replica)
 	}
@@ -569,7 +569,7 @@ func getPartitionInfoFromResultSet(rows *Rows) (*obPartitionInfo, error) {
 		return nil, errors.New("empty set")
 	}
 
-	info.partTabletIdMap = make(map[int64]int64, partNum)
+	info.partTabletIdMap = make(map[uint64]uint64, partNum)
 	if info.firstPartDesc != nil {
 		firstColumns := make([]obColumn, 0, 1)
 		for _, name := range firstPartColumnNames {
@@ -630,13 +630,13 @@ func fetchFirstPart(ctx context.Context, db *DB, partFuncType obPartFuncType, en
 	}()
 
 	var (
-		partId       int64
+		partId       uint64
 		partName     string
 		highBoundVal interface{}
-		tabletId     int64
+		tabletId     uint64
 		subPartNum   int
 	)
-	var idx int64 = 0
+	var idx uint64 = 0
 	for rows.Next() {
 		if util.ObVersion() >= 4 {
 			err = rows.Scan(&partId, &partName, &tabletId, &highBoundVal, &subPartNum)
@@ -682,12 +682,12 @@ func fetchSubPart(ctx context.Context, db *DB, partFuncType obPartFuncType, entr
 	}()
 
 	var (
-		subPartId    int64
+		subPartId    uint64
 		partName     string
 		highBoundVal interface{} // maybe is sql type NULL
-		tabletId     int64
+		tabletId     uint64
 	)
-	var idx int64 = 0
+	var idx uint64 = 0
 	for rows.Next() {
 		if util.ObVersion() >= 4 {
 			err = rows.Scan(&subPartId, &partName, &tabletId, &highBoundVal)

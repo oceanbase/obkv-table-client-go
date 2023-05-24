@@ -190,8 +190,8 @@ func (b *obBatchExecutor) AddGetOp(rowKey []*table.Column, getColumns []string, 
 }
 
 // constructPartOpMap classify all operations by the dimension of the partition.
-func (b *obBatchExecutor) constructPartOpMap(ctx context.Context) (map[int64]*obPartOp, error) {
-	partOpMap := make(map[int64]*obPartOp)
+func (b *obBatchExecutor) constructPartOpMap(ctx context.Context) (map[uint64]*obPartOp, error) {
+	partOpMap := make(map[uint64]*obPartOp)
 	for i, op := range b.batchOps.ObTableOperations() {
 		rowKey := make([]*table.Column, 0, len(b.rowKeyName))
 		rowKeyValue := op.Entity().RowKey().GetRowKeyValue()

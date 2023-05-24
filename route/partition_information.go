@@ -37,7 +37,7 @@ type obPartitionInfo struct {
 	level           obPartLevel
 	firstPartDesc   obPartDesc
 	subPartDesc     obPartDesc
-	partTabletIdMap map[int64]int64 // partId mean [0, partNum), tabletId For example, 500029
+	partTabletIdMap map[uint64]uint64 // partId mean [0, partNum), tabletId For example, 500029
 }
 
 func newObPartitionInfo(level obPartLevel) *obPartitionInfo {
@@ -54,7 +54,7 @@ func (p *obPartitionInfo) FirstPartDesc() obPartDesc {
 
 // GetTabletId obtain tabletId through partId.
 // In ob version 4.0 and above, tabletId needs to be serialized to the server
-func (p *obPartitionInfo) GetTabletId(partId int64) (int64, error) {
+func (p *obPartitionInfo) GetTabletId(partId uint64) (uint64, error) {
 	if p.partTabletIdMap == nil {
 		return 0, errors.New("partTabletIdMap is nil")
 	}

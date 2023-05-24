@@ -26,8 +26,8 @@ import (
 const (
 	testTableIdV3 uint64 = 1099511677791
 	testTableIdV4 uint64 = 500039
-	testPartIdV3  int64  = 0
-	testPartIdV4  int64  = 500040
+	testPartIdV3  uint64 = 0
+	testPartIdV4  uint64 = 500040
 )
 
 func TestObTableParam_String(t *testing.T) {
