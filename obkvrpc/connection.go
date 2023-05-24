@@ -24,6 +24,7 @@ import (
 	"fmt"
 	"io"
 	"net"
+	"runtime"
 	"strconv"
 	"sync"
 	"sync/atomic"
@@ -41,12 +42,17 @@ import (
 const (
 	connReaderBufferSize = 4 * 1024
 	connWriterBufferSize = 4 * 1024
+	minBatchWriteSize    = 1024
 
 	connSystemReadBufferSize  = 128 * 1024
 	connSystemWriteBufferSize = 64 * 1024
 )
 
 var bufferPool = NewLimitedPool(256, 8192)
+
+var ezHeaderPool = sync.Pool{New: func() any {
+	return make([]byte, protocol.EzHeaderLength)
+}}
 
 type ConnectionOption struct {
 	ip             string
@@ -79,33 +85,47 @@ type Connection struct {
 
 	conn   net.Conn
 	reader *bufio.Reader
+	writer *bufio.Writer
 
-	mutex   sync.Mutex
-	seq     atomic.Uint32 // as channel id in ez header
-	pending map[uint32]*Call
+	packetChannel      chan *packet
+	packetChannelClose chan struct{}
+	closeOnce          sync.Once
 
-	active   atomic.Bool
-	uniqueId uint64 // as trace0 in rpc header
+	mutex sync.Mutex
+	seq   atomic.Uint32 // as channel id in ez header
 
+	pending map[uint32]*call
+	active  atomic.Bool
+
+	uniqueId   uint64        // as trace0 in rpc header
 	sequence   atomic.Uint64 // as trace1 in rpc header
 	credential []byte
 	tenantId   uint64
 
-	ezHeaderPool  sync.Pool
-	rpcHeaderPool sync.Pool
+	ezHeaderLength  int
+	rpcHeaderLength int
 }
 
-// Call represents an active RPC.
-type Call struct {
-	Error   error
-	Done    chan *Call // Strobes when call is complete.
-	Content []byte
+type packet struct {
+	seq  uint32
+	data []byte
 }
 
-const defaultConnPendingSize = 1024
+// call represents an active RPC.
+type call struct {
+	err     error
+	signal  chan *call // Strobes when call is complete.
+	content []byte
+}
+
+const (
+	defaultConnPendingSize   = 1024
+	defaultPacketChannelSize = 1024
+)
 
 func NewConnection(option *ConnectionOption) *Connection {
-	return &Connection{option: option, pending: make(map[uint32]*Call, defaultConnPendingSize)}
+	return &Connection{option: option, pending: make(map[uint32]*call, defaultConnPendingSize),
+		packetChannel: make(chan *packet, defaultPacketChannelSize), packetChannelClose: make(chan struct{})}
 }
 
 func (c *Connection) Connect(ctx context.Context) error {
@@ -120,20 +140,13 @@ func (c *Connection) Connect(ctx context.Context) error {
 	c.conn.(*net.TCPConn).SetReadBuffer(connSystemReadBufferSize)
 	c.conn.(*net.TCPConn).SetWriteBuffer(connSystemWriteBufferSize)
 	c.reader = bufio.NewReaderSize(c.conn, connReaderBufferSize)
+	c.writer = bufio.NewWriterSize(c.conn, connWriterBufferSize)
 
-	// ez header pool
-	c.ezHeaderPool.New = func() any {
-		return make([]byte, protocol.EzHeaderLength)
-	}
-
-	// rpc header pool
-	c.rpcHeaderPool.New = func() any {
-		return make([]byte, protocol.RpcHeaderEncodeSize)
-	}
+	// ez header length rpc header length
+	c.ezHeaderLength = protocol.EzHeaderLength
+	c.rpcHeaderLength = protocol.RpcHeaderEncodeSize
 	if util.ObVersion() >= 4 {
-		c.rpcHeaderPool.New = func() any {
-			return make([]byte, protocol.RpcHeaderEncodeSizeV4)
-		}
+		c.rpcHeaderLength = protocol.RpcHeaderEncodeSizeV4
 	}
 
 	/* layout of uniqueId(64 bytes)
@@ -150,6 +163,7 @@ func (c *Connection) Connect(ctx context.Context) error {
 	c.uniqueId = uint64(ip | port | isUserRequest | reserved)
 
 	go c.receivePacket()
+	go c.sendPacket()
 	return nil
 }
 
@@ -173,33 +187,49 @@ func (c *Connection) Login(ctx context.Context) error {
 func (c *Connection) Execute(ctx context.Context, request protocol.ObPayload, response protocol.ObPayload) error {
 	seq := c.seq.Add(1)
 
-	packetBuf := c.encodePacket(seq, request)
+	totalBuf := c.encodePacket(seq, request)
 
-	done := make(chan *Call, 1)
-	call := new(Call)
-	call.Done = done
+	call := &call{
+		err:     nil,
+		signal:  make(chan *call, 1),
+		content: nil, // call back to user goroutine content
+	}
 
-	err := c.sendPacket(seq, call, packetBuf)
-	if err != nil {
-		return errors.WithMessage(err, "send packet")
+	packet := &packet{
+		seq:  seq,
+		data: totalBuf,
+	}
+
+	c.mutex.Lock()
+	c.pending[seq] = call
+	c.mutex.Unlock()
+
+	select {
+	case c.packetChannel <- packet: // write packet channel success, but not equal to connection write success.
+	case <-ctx.Done():
+		// timeout
+		c.mutex.Lock()
+		delete(c.pending, seq)
+		c.mutex.Unlock()
+		return errors.WithMessage(ctx.Err(), "wait send packet to channel")
 	}
 
 	// wait call back
 	select {
+	case call = <-call.signal:
+		if call.err != nil { // transport failed
+			return errors.WithMessage(call.err, "receive packet")
+		}
 	case <-ctx.Done():
 		// timeout
 		c.mutex.Lock()
 		delete(c.pending, seq)
 		c.mutex.Unlock()
 		return errors.WithMessage(ctx.Err(), "wait transport packet")
-	case call = <-call.Done:
-		if call.Error != nil { // transport failed
-			return errors.WithMessage(call.Error, "receive packet")
-		}
 	}
 
 	// transport success
-	err = c.decodePacket(call.Content, response)
+	err := c.decodePacket(call.content, response)
 	if err != nil {
 		return err
 	}
@@ -210,7 +240,7 @@ func (c *Connection) Execute(ctx context.Context, request protocol.ObPayload, re
 func (c *Connection) receivePacket() {
 	defer c.Close()
 	for {
-		ezHeaderBuf := c.ezHeaderPool.Get().([]byte)
+		ezHeaderBuf := ezHeaderPool.Get().([]byte)
 
 		_, err := io.ReadFull(c.reader, ezHeaderBuf)
 		if err != nil {
@@ -225,9 +255,9 @@ func (c *Connection) receivePacket() {
 			return
 		}
 
-		c.ezHeaderPool.Put(ezHeaderBuf)
+		ezHeaderPool.Put(ezHeaderBuf)
 
-		var call *Call
+		var call *call
 
 		contentLen := ezHeader.ContentLen()
 		channelId := ezHeader.ChannelId()
@@ -244,7 +274,7 @@ func (c *Connection) receivePacket() {
 			if call == nil {
 				log.Warn("failed to not found table packet", zap.Uint64("uniqueId", c.uniqueId), zap.Uint32("seq", channelId))
 			} else {
-				call.Error = err
+				call.err = err
 				call.done()
 			}
 			log.Warn("failed to connection read content", zap.Error(err), zap.Uint64("uniqueId", c.uniqueId))
@@ -262,33 +292,95 @@ func (c *Connection) receivePacket() {
 			log.Warn("failed to not found table packet", zap.Uint64("uniqueId", c.uniqueId), zap.Uint32("seq", channelId))
 			continue
 		}
-		call.Content = contentBuf
+		call.content = contentBuf
 		call.done()
 	}
 }
 
-func (c *Connection) sendPacket(seq uint32, call *Call, packetBuf []byte) error {
-	c.mutex.Lock()
-	c.pending[seq] = call
-	c.mutex.Unlock()
+func (c *Connection) sendPacket() {
+	var packet *packet
+	var gosched = false
+	for {
+		select {
+		case packet = <-c.packetChannel:
+		case <-c.packetChannelClose:
+			// clear packet channel
+			for {
+				select {
+				case packet = <-c.packetChannel:
+					var call *call
+					c.mutex.Lock()
+					call = c.pending[packet.seq]
+					delete(c.pending, packet.seq)
+					c.mutex.Unlock()
+					if call != nil {
+						call.err = errors.New("send packet channel is close")
+						call.done()
+					}
+				default:
+					log.Warn("send packet channel closed", zap.Uint64("uniqueId", c.uniqueId))
+					return
+				}
+			}
+		}
 
-	_, err := c.conn.Write(packetBuf)
+		gosched = true
+		c.writerWrite(packet)
+
+	hasPacket:
+		for { // write all packages at once reduce syscall.
+			select {
+			case packet = <-c.packetChannel:
+				c.writerWrite(packet)
+			default:
+				break hasPacket
+			}
+		}
+
+		if gosched { // only once true
+			gosched = false
+			if c.writer.Buffered() < minBatchWriteSize {
+				runtime.Gosched()
+				goto hasPacket
+			}
+		}
+
+		c.writer.Flush()
+	}
+}
+
+func (c *Connection) writerWrite(packet *packet) {
+	_, err := c.writer.Write(packet.data)
 	if err != nil {
 		// write failed
+		var call *call
 		c.mutex.Lock()
-		delete(c.pending, seq)
+		call = c.pending[packet.seq]
+		delete(c.pending, packet.seq)
 		c.mutex.Unlock()
+		if call != nil {
+			call.err = err
+			call.done()
+		}
 		c.Close()
-		return errors.WithMessage(err, "conn write")
 	}
-	// write success
-	bufferPool.Put(&packetBuf) // reuse
-	return nil
+	bufferPool.Put(&packet.data)
 }
 
 func (c *Connection) Close() {
 	c.active.Store(false)
-	c.conn.Close()
+	c.closeOnce.Do(func() {
+		close(c.packetChannelClose) // close packet channel
+		c.conn.Close()
+		// clear pending call
+		c.mutex.Lock()
+		for seq, call := range c.pending {
+			delete(c.pending, seq)
+			call.err = errors.New("connection close")
+			call.done()
+		}
+		c.mutex.Unlock()
+	})
 }
 
 func (c *Connection) encodePacket(seq uint32, request protocol.ObPayload) []byte {
@@ -298,11 +390,16 @@ func (c *Connection) encodePacket(seq uint32, request protocol.ObPayload) []byte
 	request.SetTenantId(c.tenantId)
 	request.SetCredential(c.credential)
 	payloadLen := request.PayloadLen()
-	payloadBuf := *bufferPool.Get(payloadLen)
+
+	totalLength := payloadLen + c.rpcHeaderLength + c.ezHeaderLength // total length
+	totalBuf := *bufferPool.Get(totalLength)                         // only once get buf
+
+	payloadBuf := totalBuf[c.ezHeaderLength+c.rpcHeaderLength:] // payload buf
 	payloadBuffer := bytes.NewBuffer(payloadBuf)
 	request.Encode(payloadBuffer)
 
 	// encode rpc header
+	rpcHeaderBuf := totalBuf[c.ezHeaderLength : c.ezHeaderLength+c.rpcHeaderLength] // rpc header buf
 	rpcHeader := protocol.NewObRpcHeader()
 	rpcHeader.SetPCode(request.PCode().Value())
 	rpcHeader.SetFlag(request.Flag())
@@ -312,33 +409,18 @@ func (c *Connection) encodePacket(seq uint32, request protocol.ObPayload) []byte
 	rpcHeader.SetTraceId0(request.UniqueId())
 	rpcHeader.SetTraceId1(request.Sequence())
 	rpcHeader.SetChecksum(util.Calculate(0, payloadBuf))
-	rpcHeaderBuf := c.rpcHeaderPool.Get().([]byte)
 	rpcHeaderBuffer := bytes.NewBuffer(rpcHeaderBuf)
-	rpcHeaderLen := len(rpcHeaderBuf)
-	rpcHeader.SetHLen(uint8(rpcHeaderLen))
+	rpcHeader.SetHLen(uint8(c.rpcHeaderLength))
 	rpcHeader.Encode(rpcHeaderBuffer)
 
 	// encode ez header
+	ezHeaderBuf := totalBuf[:c.ezHeaderLength] // ez header buf
 	ezHeader := protocol.NewEzHeader()
 	ezHeader.SetChannelId(seq)
-	ezHeader.SetContentLen(uint32(rpcHeaderLen + payloadLen))
-	ezHeaderBuf := c.ezHeaderPool.Get().([]byte)
-	ezHeaderLen := len(ezHeaderBuf)
+	ezHeader.SetContentLen(uint32(c.rpcHeaderLength + payloadLen))
 	ezHeader.Encode(ezHeaderBuf)
 
-	// packet total buf
-	totalLen := ezHeaderLen + rpcHeaderLen + payloadLen
-	packetBuf := *bufferPool.Get(totalLen) // reuse
-	copy(packetBuf[:ezHeaderLen], ezHeaderBuf)
-	copy(packetBuf[ezHeaderLen:ezHeaderLen+rpcHeaderLen], rpcHeaderBuf)
-	copy(packetBuf[ezHeaderLen+rpcHeaderLen:], payloadBuf)
-
-	// reuse buf
-	c.ezHeaderPool.Put(ezHeaderBuf)
-	c.rpcHeaderPool.Put(rpcHeaderBuf)
-	bufferPool.Put(&payloadBuf)
-
-	return packetBuf
+	return totalBuf
 }
 
 func (c *Connection) decodePacket(contentBuf []byte, response protocol.ObPayload) error {
@@ -372,11 +454,11 @@ func (c *Connection) decodePacket(contentBuf []byte, response protocol.ObPayload
 	return nil
 }
 
-func (call *Call) done() {
+func (call *call) done() {
 	select {
-	case call.Done <- call:
+	case call.signal <- call:
 		// ok
 	default:
-		log.Warn("rpc: discarding Call reply due to insufficient Done chan capacity")
+		log.Warn("rpc: discarding call reply due to insufficient signal chan capacity")
 	}
 }
