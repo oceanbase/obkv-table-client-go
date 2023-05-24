@@ -18,7 +18,9 @@
 package util
 
 import (
+	"bytes"
 	"errors"
+	"net"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -46,4 +48,37 @@ func TestStringArrayToString(t *testing.T) {
 	strArr := []string{"hello", "test", "world"}
 	assert.Equal(t, StringArrayToString(strArr), "[hello, test, world]")
 	assert.Equal(t, StringArrayToString([]string{}), "[]")
+}
+
+func TestInterfacesToString(t *testing.T) {
+	s := []interface{}{1, 2, 3, 4, "abc", 1.1}
+	assert.Equal(t, "[1, 2, 3, 4, abc, 1.1]", InterfacesToString(s))
+}
+
+func TestSkipBytes(t *testing.T) {
+	buf := &bytes.Buffer{}
+	SkipBytes(buf, 0)
+	buf = &bytes.Buffer{}
+	SkipBytes(buf, 1)
+}
+
+func TestStringToBytes(t *testing.T) {
+	assert.EqualValues(t, []byte(nil), StringToBytes(""))
+	b := StringToBytes("abc")
+	assert.EqualValues(t, []byte{0x61, 0x62, 0x63}, b)
+}
+
+func TestBytesToString(t *testing.T) {
+	assert.Equal(t, "", BytesToString([]byte{}))
+	assert.Equal(t, "abc", BytesToString([]byte{0x61, 0x62, 0x63}))
+}
+
+func TestBoolToByte(t *testing.T) {
+	assert.EqualValues(t, 1, BoolToByte(true))
+	assert.EqualValues(t, 0, BoolToByte(false))
+}
+
+func TestConvertIpToUint32(t *testing.T) {
+	assert.EqualValues(t, uint32(0x7f000001), ConvertIpToUint32(net.IP{127, 0, 0, 1}))
+	assert.EqualValues(t, 0, ConvertIpToUint32(net.IP{0xfc, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0}))
 }

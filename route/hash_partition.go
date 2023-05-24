@@ -63,7 +63,7 @@ func (d *obHashPartDesc) SetPartColumns(partColumns []obColumn) {
 }
 
 // GetPartId get partition id by inner hash function.
-func (d *obHashPartDesc) GetPartId(rowKey []*table.Column) (int64, error) {
+func (d *obHashPartDesc) GetPartId(rowKey []*table.Column) (uint64, error) {
 	if len(rowKey) == 0 {
 		return ObInvalidPartId, errors.New("rowKey size is 0")
 	}
@@ -86,12 +86,12 @@ func (d *obHashPartDesc) GetPartId(rowKey []*table.Column) (int64, error) {
 }
 
 // innerHash hash method for computing partition id
-func (d *obHashPartDesc) innerHash(hashVal int64) int64 {
+func (d *obHashPartDesc) innerHash(hashVal int64) uint64 {
 	// abs(hashVal)
 	if hashVal < 0 {
 		hashVal = -hashVal
 	}
-	return (int64(d.partSpace) << ObPartIdBitNum) | (hashVal % int64(d.partNum))
+	return uint64((int64(d.partSpace) << ObPartIdBitNum) | (hashVal % int64(d.partNum)))
 }
 
 func (d *obHashPartDesc) String() string {

@@ -21,12 +21,12 @@ import "strconv"
 
 // ObPartLocationEntry store location information for all replicas.
 type ObPartLocationEntry struct {
-	partLocations map[int64]*obPartitionLocation
+	partLocations map[uint64]*obPartitionLocation
 }
 
 func newObPartLocationEntry(partNum int) *ObPartLocationEntry {
 	entry := new(ObPartLocationEntry)
-	entry.partLocations = make(map[int64]*obPartitionLocation, partNum)
+	entry.partLocations = make(map[uint64]*obPartitionLocation, partNum)
 	return entry
 }
 

@@ -56,12 +56,12 @@ func TestObHashPartDesc_GetPartId(t *testing.T) {
 func TestObHashPartDesc_innerHash(t *testing.T) {
 	hashDesc := obHashPartDesc{partSpace: 0, partNum: 10}
 	hashVal := hashDesc.innerHash(0)
-	assert.Equal(t, int64(0), hashVal)
+	assert.EqualValues(t, 0, hashVal)
 	hashDesc = obHashPartDesc{partSpace: 0, partNum: 10}
 	hashVal = hashDesc.innerHash(1)
-	assert.Equal(t, int64(1), hashVal)
+	assert.EqualValues(t, 1, hashVal)
 	hashVal = hashDesc.innerHash(11)
-	assert.Equal(t, int64(1), hashVal)
+	assert.EqualValues(t, 1, hashVal)
 	hashVal = hashDesc.innerHash(-1)
-	assert.Equal(t, int64(1), hashVal)
+	assert.EqualValues(t, 1, hashVal)
 }

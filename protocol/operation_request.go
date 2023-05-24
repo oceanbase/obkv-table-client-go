@@ -33,7 +33,7 @@ type ObTableOperationRequest struct {
 	credential           []byte
 	tableName            string
 	tableId              uint64
-	partitionId          int64
+	partitionId          uint64
 	entityType           ObTableEntityType
 	tableOperation       *ObTableOperation
 	consistencyLevel     ObTableConsistencyLevel
@@ -45,7 +45,7 @@ type ObTableOperationRequest struct {
 func NewObTableOperationRequest(
 	tableName string,
 	tableId uint64,
-	partitionId int64,
+	partitionId uint64,
 	tableOperationType ObTableOperationType,
 	rowKey []*table.Column,
 	columns []*table.Column,
@@ -92,11 +92,11 @@ func (r *ObTableOperationRequest) SetTableId(tableId uint64) {
 	r.tableId = tableId
 }
 
-func (r *ObTableOperationRequest) PartitionId() int64 {
+func (r *ObTableOperationRequest) PartitionId() uint64 {
 	return r.partitionId
 }
 
-func (r *ObTableOperationRequest) SetPartitionId(partitionId int64) {
+func (r *ObTableOperationRequest) SetPartitionId(partitionId uint64) {
 	r.partitionId = partitionId
 }
 
@@ -171,7 +171,7 @@ func (r *ObTableOperationRequest) PayloadContentLen() int {
 			util.EncodedLengthByBytesString(r.credential) +
 				util.EncodedLengthByVString(r.tableName) +
 				util.EncodedLengthByVi64(int64(r.tableId)) +
-				util.EncodedLengthByVi64(r.partitionId) + // partitionId
+				util.EncodedLengthByVi64(int64(r.partitionId)) + // partitionId
 				5 + // obTableEntityType obTableConsistencyLevel returnRowKey returnAffectedEntity returnAffectedRows
 				r.tableOperation.PayloadLen()
 	}
@@ -198,9 +198,9 @@ func (r *ObTableOperationRequest) Encode(buffer *bytes.Buffer) {
 	util.EncodeVi64(buffer, int64(r.tableId))
 
 	if util.ObVersion() >= 4 {
-		util.PutUint64(buffer, uint64(r.partitionId))
+		util.PutUint64(buffer, r.partitionId)
 	} else {
-		util.EncodeVi64(buffer, r.partitionId)
+		util.PutUint64(buffer, r.partitionId)
 	}
 
 	util.PutUint8(buffer, uint8(r.entityType))

@@ -643,7 +643,7 @@ func (c *ObClient) fetchMetadata() error {
 }
 
 // get partition id by rowKey
-func (c *ObClient) getPartitionId(entry *route.ObTableEntry, rowKeyValue []*table.Column) (int64, error) {
+func (c *ObClient) getPartitionId(entry *route.ObTableEntry, rowKeyValue []*table.Column) (uint64, error) {
 	if !entry.IsPartitionTable() || entry.PartitionInfo().Level() == route.PartLevelZero {
 		return 0, nil
 	}
@@ -653,20 +653,20 @@ func (c *ObClient) getPartitionId(entry *route.ObTableEntry, rowKeyValue []*tabl
 	if entry.PartitionInfo().Level() == route.PartLevelTwo {
 		partId1, err := entry.PartitionInfo().FirstPartDesc().GetPartId(rowKeyValue)
 		if err != nil {
-			return -1, errors.WithMessagef(err, "get part id from first part desc, firstDesc:%s",
+			return route.ObInvalidPartId, errors.WithMessagef(err, "get part id from first part desc, firstDesc:%s",
 				entry.PartitionInfo().FirstPartDesc().String())
 		}
 		partId2, err := entry.PartitionInfo().SubPartDesc().GetPartId(rowKeyValue)
 		if err != nil {
-			return -1, errors.WithMessagef(err, "get part id from sub part desc, firstDesc:%s",
+			return route.ObInvalidPartId, errors.WithMessagef(err, "get part id from sub part desc, firstDesc:%s",
 				entry.PartitionInfo().SubPartDesc().String())
 		}
 		return (partId1)<<route.ObPartIdShift | partId2 | route.ObMask, nil
 	}
-	return -1, errors.Errorf("unknown partition level, partInfo:%s", entry.PartitionInfo().String())
+	return route.ObInvalidPartId, errors.Errorf("unknown partition level, partInfo:%s", entry.PartitionInfo().String())
 }
 
-func (c *ObClient) getTable(entry *route.ObTableEntry, partId int64) (*ObTable, error) {
+func (c *ObClient) getTable(entry *route.ObTableEntry, partId uint64) (*ObTable, error) {
 	// 1. Get replica location by partition id
 	replicaLoc, err := entry.GetPartitionReplicaLocation(partId, route.ConsistencyStrong)
 	if err != nil {

@@ -65,7 +65,7 @@ func (d *obKeyPartDesc) SetPartColumns(partColumns []obColumn) {
 }
 
 // GetPartId get partition id.
-func (d *obKeyPartDesc) GetPartId(rowKey []*table.Column) (int64, error) {
+func (d *obKeyPartDesc) GetPartId(rowKey []*table.Column) (uint64, error) {
 	if len(rowKey) == 0 {
 		return ObInvalidPartId, errors.New("rowKey size is 0")
 	}
@@ -88,7 +88,7 @@ func (d *obKeyPartDesc) GetPartId(rowKey []*table.Column) (int64, error) {
 	if hashValue < 0 {
 		hashValue = -hashValue
 	}
-	return (int64(d.partSpace) << ObPartIdBitNum) | (hashValue % int64(d.partNum)), nil
+	return uint64((int64(d.partSpace) << ObPartIdBitNum) | (hashValue % int64(d.partNum))), nil
 }
 
 func intToInt64(value interface{}) (int64, error) {

@@ -23,20 +23,10 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
-func TestColumn_ToString(t *testing.T) {
-	col := Column{}
-	assert.Equal(t, col.String(), "column{name: , value: <nil>}")
-	col = Column{"c1", 123}
-	assert.Equal(t, col.String(), "column{name: c1, value: 123}")
-}
-
-func TestObRowKeyElement_ToString(t *testing.T) {
-	v := ObRowKeyElement{}
-	assert.Equal(t, v.String(), "ObRowKeyElement{nameIdxMap:{}}")
-	m := make(map[string]int, 3)
-	m["c1"] = 0
-	m["c2"] = 1
-	m["c3"] = 2
-	v = ObRowKeyElement{m}
-	assert.Equal(t, v.String(), "ObRowKeyElement{nameIdxMap:{m[c1]=0, m[c2]=1, m[c3]=2}}")
+func TestColumns_ToString(t *testing.T) {
+	col := &Column{"c1", 123}
+	var cols []*Column
+	assert.Equal(t, "[]", ColumnsToString(cols))
+	cols = []*Column{col, col, col}
+	assert.Equal(t, "[column{name:c1, value:123}, column{name:c1, value:123}, column{name:c1, value:123}]", ColumnsToString(cols))
 }

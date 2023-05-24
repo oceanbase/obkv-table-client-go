@@ -15,22 +15,24 @@
  * #L%
  */
 
-package route
+package table
 
 import (
 	"testing"
+
+	"github.com/stretchr/testify/assert"
 )
 
-func TestObOcpModel_GetServerAddressRandomly(t *testing.T) {
-	server1 := NewObServerAddr("127.0.0.1", 1, 1)
-	server2 := NewObServerAddr("127.0.0.1", 1, 2)
-	server3 := NewObServerAddr("127.0.0.1", 1, 3)
-	server4 := NewObServerAddr("127.0.0.1", 1, 4)
-	server5 := NewObServerAddr("127.0.0.1", 1, 5)
-	servers := []*ObServerAddr{server1, server2, server3, server4, server5}
-	ocp := newOcpModel(servers, 1)
-	for i := 0; i < 10; i++ {
-		svr := ocp.GetServerAddressRandomly()
-		println(svr.String())
-	}
+func TestColumn_String(t *testing.T) {
+	col := &Column{}
+	assert.Equal(t, "column{name:, value:<nil>}", col.String())
+
+	col.SetName("c1")
+	col.SetValue(1)
+	assert.Equal(t, "column{name:c1, value:1}", col.String())
+	assert.EqualValues(t, "c1", col.Name())
+	assert.EqualValues(t, 1, col.Value())
+
+	col = NewColumn("c1", 1)
+	assert.Equal(t, "column{name:c1, value:1}", col.String())
 }

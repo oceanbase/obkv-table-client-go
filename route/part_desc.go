@@ -24,7 +24,7 @@ import (
 )
 
 const (
-	ObInvalidPartId = -1
+	ObInvalidPartId = 0
 	ObPartIdBitNum  = 28
 	ObPartIdShift   = 32
 	ObMask          = (1 << ObPartIdBitNum) | 1<<(ObPartIdBitNum+ObPartIdShift)
@@ -37,7 +37,7 @@ type obPartDesc interface {
 	SetPartColumns(partColumns []obColumn)
 	PartColumns() []obColumn
 	SetPartNum(partNum int)
-	GetPartId(rowKey []*table.Column) (int64, error)
+	GetPartId(rowKey []*table.Column) (uint64, error)
 }
 
 // evalPartKeyValues calculate the value of the partition key

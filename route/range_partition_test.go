@@ -43,5 +43,5 @@ func TestObRangePartDesc_GetPartId(t *testing.T) {
 	desc := &obRangePartDesc{}
 	partId, err := desc.GetPartId([]*table.Column{})
 	assert.NotEqual(t, nil, err)
-	assert.EqualValues(t, -1, partId)
+	assert.EqualValues(t, ObInvalidPartId, partId)
 }
