@@ -85,7 +85,7 @@ func (b *obBatchExecutor) addDmlOp(
 		return errors.New("mutateValues is nil")
 	}
 
-	// 1. Add rowkey name firstly
+	// 1. Add rowKey name firstly
 	if b.rowKeyName == nil {
 		b.rowKeyName = make([]string, 0, len(rowKey))
 		for _, column := range rowKey {
@@ -141,7 +141,7 @@ func (b *obBatchExecutor) AddDeleteOp(rowKey []*table.Column, opts ...ObkvOption
 		return errors.New("rowKey is nil")
 	}
 
-	// 1. Add rowkey name firstly
+	// 1. Add rowKey name firstly
 	if b.rowKeyName == nil {
 		b.rowKeyName = make([]string, 0, len(rowKey))
 		for _, column := range rowKey {
@@ -167,7 +167,7 @@ func (b *obBatchExecutor) AddGetOp(rowKey []*table.Column, getColumns []string, 
 		return errors.New("rowKey is nil")
 	}
 
-	// 1. Add rowkey name firstly
+	// 1. Add rowKey name firstly
 	b.rowKeyName = make([]string, 0, len(rowKey))
 	for _, column := range rowKey {
 		b.rowKeyName = append(b.rowKeyName, column.Name())

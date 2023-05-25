@@ -43,9 +43,9 @@ func TestIncrementResult(t *testing.T) {
 
 	assert.EqualValues(t, []interface{}(nil), res.RowKey())
 	keys := []*protocol.ObObject{obj}
-	rowkey := protocol.NewRowKey()
-	rowkey.SetKeys(keys)
-	entity.SetRowKey(rowkey)
+	rowKey := protocol.NewRowKey()
+	rowKey.SetKeys(keys)
+	entity.SetRowKey(rowKey)
 	r := res.RowKey()
 	assert.EqualValues(t, 1, r[0])
 }
