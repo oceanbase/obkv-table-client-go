@@ -78,6 +78,8 @@ func (c *ObRpcResponseCode) Decode(buffer *bytes.Buffer) {
 
 	waringMsgsLen := int(util.DecodeVi32(buffer))
 
+	c.warningMsgs = make([]*ObRpcResponseWarningMsg, 0, waringMsgsLen)
+
 	for i := 0; i < waringMsgsLen; i++ {
 		rpcResponseWarningMsg := NewObRpcResponseWarningMsg()
 		rpcResponseWarningMsg.Decode(buffer)
