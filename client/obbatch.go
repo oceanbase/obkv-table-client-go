@@ -31,7 +31,7 @@ import (
 )
 
 // newObBatchExecutor create a batch executor and bind a client.
-func newObBatchExecutor(tableName string, cli *ObClient) *obBatchExecutor {
+func newObBatchExecutor(tableName string, cli *obClient) *obBatchExecutor {
 	return &obBatchExecutor{
 		tableName:  tableName,
 		batchOps:   protocol.NewObTableBatchOperation(),
@@ -44,7 +44,7 @@ func newObBatchExecutor(tableName string, cli *ObClient) *obBatchExecutor {
 type obBatchExecutor struct {
 	tableName  string
 	batchOps   *protocol.ObTableBatchOperation
-	cli        *ObClient
+	cli        *obClient
 	rowKeyName []string
 	isAtomic   bool
 }

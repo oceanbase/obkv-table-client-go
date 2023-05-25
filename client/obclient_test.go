@@ -40,8 +40,8 @@ func TestNewObClient(t *testing.T) {
 }
 
 func TestObClient_String(t *testing.T) {
-	cli := &ObClient{}
-	assert.Equal(t, "ObClient{config:nil, configUrl:, fullUserName:, userName:, tenantName:, clusterName:, database:, sysUA:nil}", cli.String())
+	cli := &obClient{}
+	assert.Equal(t, "obClient{config:nil, configUrl:, fullUserName:, userName:, tenantName:, clusterName:, database:, sysUA:nil}", cli.String())
 	const (
 		testConfigUrl    = "http://127.0.0.1:8080/services?User_ID=xxx&UID=xxx&Action=ObRootServiceInfo&ObCluster=xxx&database=xxx"
 		testFullUserName = "user@mysql#obkv_cluster"
@@ -52,12 +52,12 @@ func TestObClient_String(t *testing.T) {
 	cfg := config.NewDefaultClientConfig()
 	cli, err := newObClient(testConfigUrl, testFullUserName, testPassWord, testSysUserName, testSysPassWord, cfg)
 	assert.Equal(t, nil, err)
-	assert.Equal(t, "ObClient{config:ClientConfig{ConnPoolMaxConnSize:1, ConnConnectTimeOut:1s, ConnLoginTimeout:1s, OperationTimeOut:10s, LogLevel:7, TableEntryRefreshLockTimeout:4s, TableEntryRefreshTryTimes:3, TableEntryRefreshIntervalBase:100ms, TableEntryRefreshIntervalCeiling:1.6s, MetadataRefreshInterval:1m0s, MetadataRefreshLockTimeout:8s, RsListLocalFileLocation:, RsListHttpGetTimeout:1s, RsListHttpGetRetryTimes:3, RsListHttpGetRetryInterval:100ms}, configUrl:http://127.0.0.1:8080/services?User_ID=xxx&UID=xxx&Action=ObRootServiceInfo&ObCluster=xxx&database=xxx, fullUserName:user@mysql#obkv_cluster, userName:user, tenantName:mysql, clusterName:obkv_cluster, database:xxx, sysUA:ObUserAuth{userName:sys, password:}}", cli.String())
+	assert.Equal(t, "obClient{config:ClientConfig{ConnPoolMaxConnSize:1, ConnConnectTimeOut:1s, ConnLoginTimeout:1s, OperationTimeOut:10s, LogLevel:7, TableEntryRefreshLockTimeout:4s, TableEntryRefreshTryTimes:3, TableEntryRefreshIntervalBase:100ms, TableEntryRefreshIntervalCeiling:1.6s, MetadataRefreshInterval:1m0s, MetadataRefreshLockTimeout:8s, RsListLocalFileLocation:, RsListHttpGetTimeout:1s, RsListHttpGetRetryTimes:3, RsListHttpGetRetryInterval:100ms}, configUrl:http://127.0.0.1:8080/services?User_ID=xxx&UID=xxx&Action=ObRootServiceInfo&ObCluster=xxx&database=xxx, fullUserName:user@mysql#obkv_cluster, userName:user, tenantName:mysql, clusterName:obkv_cluster, database:xxx, sysUA:ObUserAuth{userName:sys, password:}}", cli.String())
 }
 
 func TestObClient_parseFullUserName(t *testing.T) {
 	testFullUserName := "user@mysql#obkv_cluster"
-	cli := &ObClient{}
+	cli := &obClient{}
 	err := cli.parseFullUserName(testFullUserName)
 	assert.Equal(t, nil, err)
 	assert.EqualValues(t, "user", cli.userName)
@@ -88,7 +88,7 @@ func TestObClient_parseFullUserName(t *testing.T) {
 
 func TestObClient_parseConfigUrl(t *testing.T) {
 	testConfigUrl := "http://127.0.0.1:8080/services?User_ID=xxx&UID=xxx&Action=ObRootServiceInfo&ObCluster=xxx&database=xxx"
-	cli := &ObClient{}
+	cli := &obClient{}
 	err := cli.parseConfigUrl(testConfigUrl)
 	assert.Equal(t, nil, err)
 	assert.EqualValues(t, testConfigUrl, cli.configUrl)
