@@ -58,7 +58,7 @@ func main() {
 
 	// get
 	selectColumns := []string{"c1", "c2"}
-	m, err := cli.Get(
+	result, err := cli.Get(
 		context.TODO(),
 		tableName,
 		rowKey,
@@ -67,6 +67,6 @@ func main() {
 	if err != nil {
 		panic(err)
 	}
-	fmt.Println(m["c1"])
-	fmt.Println(m["c2"])
+	fmt.Println(result.Value("c1"))
+	fmt.Println(result.Value("c2"))
 }
