@@ -23,40 +23,47 @@ import (
 	"github.com/oceanbase/obkv-table-client-go/protocol"
 )
 
-type AppendResult interface {
+type SingleResult interface {
 	AffectedRows() int64
 	Value(columnName string) interface{}
 	RowKey() []interface{}
 }
 
-func newObAppendResult(affectedRows int64, affectedEntity *protocol.ObTableEntity) *obAppendResult {
-	return &obAppendResult{affectedRows, affectedEntity}
+func newObSingleResult(affectedRows int64, affectedEntity *protocol.ObTableEntity) *obSingleResult {
+	return &obSingleResult{affectedRows, affectedEntity}
 }
 
-type obAppendResult struct {
+type obSingleResult struct {
 	affectedRows   int64
 	affectedEntity *protocol.ObTableEntity
 }
 
-func (r *obAppendResult) AffectedRows() int64 {
+func (r *obSingleResult) AffectedRows() int64 {
 	return r.affectedRows
 }
 
-func (r *obAppendResult) Value(columnName string) interface{} {
+func (r *obSingleResult) Value(columnName string) interface{} {
 	if r.affectedEntity == nil {
 		return nil
 	}
 	if r.affectedEntity.Properties() == nil {
 		return nil
 	}
-	obj := r.affectedEntity.Properties()[strings.ToLower(columnName)]
-	if obj == nil {
-		return nil
+
+	obj := r.affectedEntity.Properties()[columnName]
+	if obj != nil {
+		return obj.Value()
 	}
-	return obj.Value()
+
+	for name, obj := range r.affectedEntity.Properties() {
+		if strings.EqualFold(columnName, name) {
+			return obj.Value()
+		}
+	}
+	return nil
 }
 
-func (r *obAppendResult) RowKey() []interface{} {
+func (r *obSingleResult) RowKey() []interface{} {
 	if r.affectedEntity == nil {
 		return nil
 	}

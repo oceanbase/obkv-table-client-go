@@ -64,7 +64,7 @@ func main() {
 		tableName,
 		rowKey,
 		appendColumns,
-		client.WithReturnRowKey(true),         // return rowkey if you need
+		client.WithReturnRowKey(true),         // return rowKey if you need
 		client.WithReturnAffectedEntity(true), // return result entity if you need
 	)
 	if err != nil {
