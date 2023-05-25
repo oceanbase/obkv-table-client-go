@@ -295,7 +295,7 @@ func (c *obClient) Get(
 	tableName string,
 	rowKey []*table.Column,
 	getColumns []string,
-	opts ...ObkvOption) (map[string]interface{}, error) {
+	opts ...ObkvOption) (SingleResult, error) {
 	var columns = make([]*table.Column, 0, len(getColumns))
 	for _, columnName := range getColumns {
 		columns = append(columns, table.NewColumn(columnName, nil))
@@ -311,7 +311,7 @@ func (c *obClient) Get(
 		return nil, errors.WithMessagef(err, "execute get, tableName:%s, rowKey:%s, getColumns:%s",
 			tableName, table.ColumnsToString(rowKey), util.StringArrayToString(getColumns))
 	}
-	return res.Entity().GetSimpleProperties(), nil
+	return newObSingleResult(res.AffectedRows(), res.Entity()), nil
 }
 
 func (c *obClient) NewBatchExecutor(tableName string) BatchExecutor {

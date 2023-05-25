@@ -68,7 +68,7 @@ func (r *obBatchOperationResult) CorrectCount() int {
 }
 
 func (r *obBatchOperationResult) WrongIndexes() []int {
-	indexes := make([]int, 0, 1)
+	var indexes []int
 	for i, result := range r.results {
 		if oberror.ObErrorCode(result.Header().ErrorNo()) != oberror.ObSuccess {
 			indexes = append(indexes, i)
@@ -78,7 +78,7 @@ func (r *obBatchOperationResult) WrongIndexes() []int {
 }
 
 func (r *obBatchOperationResult) CorrectIndexes() []int {
-	indexes := make([]int, 0, 1)
+	var indexes = make([]int, 0, len(r.results))
 	for i, result := range r.results {
 		if oberror.ObErrorCode(result.Header().ErrorNo()) == oberror.ObSuccess {
 			indexes = append(indexes, i)

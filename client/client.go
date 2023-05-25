@@ -83,7 +83,7 @@ type Client interface {
 	// Delete a record by rowKey.
 	Delete(ctx context.Context, tableName string, rowKey []*table.Column, opts ...ObkvOption) (int64, error)
 	// Get a record by rowKey.
-	Get(ctx context.Context, tableName string, rowKey []*table.Column, getColumns []string, opts ...ObkvOption) (map[string]interface{}, error)
+	Get(ctx context.Context, tableName string, rowKey []*table.Column, getColumns []string, opts ...ObkvOption) (SingleResult, error)
 	// NewBatchExecutor create a batch executor.
 	NewBatchExecutor(tableName string) BatchExecutor
 	// Close closes the client.

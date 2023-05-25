@@ -48,15 +48,15 @@ func TestInsertInt32(t *testing.T) {
 	assert.EqualValues(t, 1, affectRows)
 
 	selectColumns := []string{"c1", "c2"}
-	m, err := cli.Get(
+	result, err := cli.Get(
 		context.TODO(),
 		tableName,
 		rowKey,
 		selectColumns,
 	)
 	assert.Equal(t, nil, err)
-	assert.EqualValues(t, 1, m["c1"])
-	assert.EqualValues(t, 1, m["c2"])
+	assert.EqualValues(t, 1, result.Value("c1"))
+	assert.EqualValues(t, 1, result.Value("c2"))
 }
 
 func TestUpdateInt32(t *testing.T) {
@@ -85,15 +85,15 @@ func TestUpdateInt32(t *testing.T) {
 	assert.EqualValues(t, 1, affectRows)
 
 	selectColumns := []string{"c1", "c2"}
-	m, err := cli.Get(
+	result, err := cli.Get(
 		context.TODO(),
 		tableName,
 		rowKey,
 		selectColumns,
 	)
 	assert.Equal(t, nil, err)
-	assert.EqualValues(t, 1, m["c1"])
-	assert.EqualValues(t, 2, m["c2"])
+	assert.EqualValues(t, 1, result.Value("c1"))
+	assert.EqualValues(t, 2, result.Value("c2"))
 }
 
 func TestInsertOrUpdateInt32(t *testing.T) {
@@ -112,15 +112,15 @@ func TestInsertOrUpdateInt32(t *testing.T) {
 	assert.EqualValues(t, 1, affectRows)
 
 	selectColumns := []string{"c1", "c2"}
-	m, err := cli.Get(
+	result, err := cli.Get(
 		context.TODO(),
 		tableName,
 		rowKey,
 		selectColumns,
 	)
 	assert.Equal(t, nil, err)
-	assert.EqualValues(t, 1, m["c1"])
-	assert.EqualValues(t, 1, m["c2"])
+	assert.EqualValues(t, 1, result.Value("c1"))
+	assert.EqualValues(t, 1, result.Value("c2"))
 
 	affectRows, err = cli.InsertOrUpdate(
 		context.TODO(),
@@ -132,15 +132,15 @@ func TestInsertOrUpdateInt32(t *testing.T) {
 	assert.EqualValues(t, 1, affectRows)
 
 	selectColumns = []string{"c1", "c2"}
-	m, err = cli.Get(
+	result, err = cli.Get(
 		context.TODO(),
 		tableName,
 		rowKey,
 		selectColumns,
 	)
 	assert.Equal(t, nil, err)
-	assert.EqualValues(t, 1, m["c1"])
-	assert.EqualValues(t, 1, m["c2"])
+	assert.EqualValues(t, 1, result.Value("c1"))
+	assert.EqualValues(t, 1, result.Value("c2"))
 }
 
 func TestDeleteInt32(t *testing.T) {
@@ -191,46 +191,46 @@ func TestGetInt32(t *testing.T) {
 	assert.EqualValues(t, 1, affectRows)
 
 	selectColumns := []string{"c1", "c2"} // select c1, c2
-	m, err := cli.Get(
+	result, err := cli.Get(
 		context.TODO(),
 		tableName,
 		rowKey,
 		selectColumns,
 	)
 	assert.Equal(t, nil, err)
-	assert.EqualValues(t, 1, m["c1"])
-	assert.EqualValues(t, 1, m["c2"])
+	assert.EqualValues(t, 1, result.Value("c1"))
+	assert.EqualValues(t, 1, result.Value("c2"))
 
 	selectColumns = []string{"c1"} // select c1
-	m, err = cli.Get(
+	result, err = cli.Get(
 		context.TODO(),
 		tableName,
 		rowKey,
 		selectColumns,
 	)
 	assert.Equal(t, nil, err)
-	assert.EqualValues(t, 1, m["c1"])
-	assert.EqualValues(t, nil, m["c2"])
+	assert.EqualValues(t, 1, result.Value("c1"))
+	assert.EqualValues(t, nil, result.Value("c2"))
 
 	selectColumns = nil // default select all when selectColumns is nil
-	m, err = cli.Get(
+	result, err = cli.Get(
 		context.TODO(),
 		tableName,
 		rowKey,
 		selectColumns,
 	)
 	assert.Equal(t, nil, err)
-	assert.EqualValues(t, 1, m["c1"])
-	assert.EqualValues(t, 1, m["c2"])
+	assert.EqualValues(t, 1, result.Value("c1"))
+	assert.EqualValues(t, 1, result.Value("c2"))
 
 	test.DeleteTable(tableName)
-	m, err = cli.Get(
+	result, err = cli.Get(
 		context.TODO(),
 		tableName,
 		rowKey,
 		selectColumns,
 	)
 	assert.Equal(t, nil, err)
-	assert.EqualValues(t, nil, m["c1"])
-	assert.EqualValues(t, nil, m["c2"])
+	assert.EqualValues(t, nil, result.Value("c1"))
+	assert.EqualValues(t, nil, result.Value("c2"))
 }

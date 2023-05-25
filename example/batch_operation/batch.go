@@ -73,6 +73,4 @@ func main() {
 	allResults := batchRes.GetResults()
 	println(allResults[0].AffectedRows())
 	println(allResults[1].AffectedRows())
-	println(allResults[2].Entity().GetSimpleProperties()["c1"])
-	println(allResults[3].Entity().GetSimpleProperties()["c2"])
 }

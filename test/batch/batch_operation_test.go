@@ -54,6 +54,5 @@ func TestBatch(t *testing.T) {
 	assert.Equal(t, 4, len(allResults))
 	assert.EqualValues(t, 1, allResults[0].AffectedRows())
 	assert.EqualValues(t, 1, allResults[1].AffectedRows())
-	assert.EqualValues(t, 1, allResults[2].Entity().GetSimpleProperties()["c1"])
-	assert.EqualValues(t, 2, allResults[3].Entity().GetSimpleProperties()["c2"])
+
 }

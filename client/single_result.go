@@ -49,11 +49,18 @@ func (r *obSingleResult) Value(columnName string) interface{} {
 	if r.affectedEntity.Properties() == nil {
 		return nil
 	}
-	obj := r.affectedEntity.Properties()[strings.ToLower(columnName)]
-	if obj == nil {
-		return nil
+
+	obj := r.affectedEntity.Properties()[columnName]
+	if obj != nil {
+		return obj.Value()
 	}
-	return obj.Value()
+
+	for name, obj := range r.affectedEntity.Properties() {
+		if strings.EqualFold(columnName, name) {
+			return obj.Value()
+		}
+	}
+	return nil
 }
 
 func (r *obSingleResult) RowKey() []interface{} {
