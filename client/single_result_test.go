@@ -25,8 +25,8 @@ import (
 	"github.com/oceanbase/obkv-table-client-go/protocol"
 )
 
-func TestIncrementResult(t *testing.T) {
-	res := newObIncrementResult(1, nil)
+func TestSingleResult(t *testing.T) {
+	res := newObSingleResult(1, nil)
 	assert.EqualValues(t, 1, res.AffectedRows())
 	assert.Equal(t, nil, res.Value("c1"))
 

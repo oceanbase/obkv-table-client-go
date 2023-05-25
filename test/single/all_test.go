@@ -8,19 +8,12 @@ import (
 	"github.com/oceanbase/obkv-table-client-go/test"
 )
 
-const (
-	singleOpTableTableName       = "singleOpTable"
-	singleOpTableCreateStatement = "create table if not exists singleOpTable(`c1` bigint(20) not null, c2 bigint(20) not null, primary key (`c1`)) partition by hash(c1) partitions 2;"
-)
-
 var cli client.Client
 
 func setup() {
 	cli = test.CreateClient()
 
 	test.CreateDB()
-
-	test.CreateTable(singleOpTableCreateStatement)
 
 	test.CreateTable(testTinyintCreateStatement)
 	test.CreateTable(testUTinyintCreateStatement)
@@ -39,8 +32,6 @@ func setup() {
 
 func teardown() {
 	cli.Close()
-
-	test.DropTable(singleOpTableTableName)
 
 	test.DropTable(testTinyintTableName)
 	test.DropTable(testUTinyintTableName)

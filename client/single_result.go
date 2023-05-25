@@ -23,26 +23,26 @@ import (
 	"github.com/oceanbase/obkv-table-client-go/protocol"
 )
 
-type AppendResult interface {
+type SingleResult interface {
 	AffectedRows() int64
 	Value(columnName string) interface{}
 	RowKey() []interface{}
 }
 
-func newObAppendResult(affectedRows int64, affectedEntity *protocol.ObTableEntity) *obAppendResult {
-	return &obAppendResult{affectedRows, affectedEntity}
+func newObSingleResult(affectedRows int64, affectedEntity *protocol.ObTableEntity) *obSingleResult {
+	return &obSingleResult{affectedRows, affectedEntity}
 }
 
-type obAppendResult struct {
+type obSingleResult struct {
 	affectedRows   int64
 	affectedEntity *protocol.ObTableEntity
 }
 
-func (r *obAppendResult) AffectedRows() int64 {
+func (r *obSingleResult) AffectedRows() int64 {
 	return r.affectedRows
 }
 
-func (r *obAppendResult) Value(columnName string) interface{} {
+func (r *obSingleResult) Value(columnName string) interface{} {
 	if r.affectedEntity == nil {
 		return nil
 	}
@@ -56,7 +56,7 @@ func (r *obAppendResult) Value(columnName string) interface{} {
 	return obj.Value()
 }
 
-func (r *obAppendResult) RowKey() []interface{} {
+func (r *obSingleResult) RowKey() []interface{} {
 	if r.affectedEntity == nil {
 		return nil
 	}

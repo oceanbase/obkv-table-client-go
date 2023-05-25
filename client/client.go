@@ -77,9 +77,9 @@ type Client interface {
 	// Replace a record by rowKey.
 	Replace(ctx context.Context, tableName string, rowKey []*table.Column, mutateColumns []*table.Column, opts ...ObkvOption) (int64, error)
 	// Increment a record by rowKey.
-	Increment(ctx context.Context, tableName string, rowKey []*table.Column, mutateColumns []*table.Column, opts ...ObkvOption) (IncrementResult, error)
+	Increment(ctx context.Context, tableName string, rowKey []*table.Column, mutateColumns []*table.Column, opts ...ObkvOption) (SingleResult, error)
 	// Append a record by rowKey.
-	Append(ctx context.Context, tableName string, rowKey []*table.Column, mutateColumns []*table.Column, opts ...ObkvOption) (AppendResult, error)
+	Append(ctx context.Context, tableName string, rowKey []*table.Column, mutateColumns []*table.Column, opts ...ObkvOption) (SingleResult, error)
 	// Delete a record by rowKey.
 	Delete(ctx context.Context, tableName string, rowKey []*table.Column, opts ...ObkvOption) (int64, error)
 	// Get a record by rowKey.

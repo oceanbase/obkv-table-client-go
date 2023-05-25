@@ -236,7 +236,7 @@ func (c *obClient) Increment(
 	tableName string,
 	rowKey []*table.Column,
 	mutateColumns []*table.Column,
-	opts ...ObkvOption) (IncrementResult, error) {
+	opts ...ObkvOption) (SingleResult, error) {
 	res, err := c.execute(
 		ctx,
 		tableName,
@@ -248,7 +248,7 @@ func (c *obClient) Increment(
 		return nil, errors.WithMessagef(err, "execute increment, tableName:%s, rowKey:%s, mutateColumns:%s",
 			tableName, table.ColumnsToString(rowKey), table.ColumnsToString(mutateColumns))
 	}
-	return newObIncrementResult(res.AffectedRows(), res.Entity()), nil
+	return newObSingleResult(res.AffectedRows(), res.Entity()), nil
 }
 
 func (c *obClient) Append(
@@ -256,7 +256,7 @@ func (c *obClient) Append(
 	tableName string,
 	rowKey []*table.Column,
 	mutateColumns []*table.Column,
-	opts ...ObkvOption) (AppendResult, error) {
+	opts ...ObkvOption) (SingleResult, error) {
 	res, err := c.execute(
 		ctx,
 		tableName,
@@ -268,7 +268,7 @@ func (c *obClient) Append(
 		return nil, errors.WithMessagef(err, "execute append, tableName:%s, rowKey:%s, mutateColumns:%s",
 			tableName, table.ColumnsToString(rowKey), table.ColumnsToString(mutateColumns))
 	}
-	return newObAppendResult(res.AffectedRows(), res.Entity()), nil
+	return newObSingleResult(res.AffectedRows(), res.Entity()), nil
 }
 
 func (c *obClient) Delete(
