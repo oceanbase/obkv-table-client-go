@@ -62,6 +62,10 @@ var rpcHeaderPool = sync.Pool{New: func() any {
 	return protocol.NewObRpcHeader()
 }}
 
+var packetPool = sync.Pool{New: func() any {
+	return &packet{}
+}}
+
 type ConnectionOption struct {
 	ip             string
 	port           int
@@ -203,10 +207,9 @@ func (c *Connection) Execute(ctx context.Context, request protocol.ObPayload, re
 		content: nil, // call back to user goroutine content
 	}
 
-	packet := &packet{
-		seq:  seq,
-		data: totalBuf,
-	}
+	packet := packetPool.Get().(*packet)
+	packet.seq = seq
+	packet.data = totalBuf
 
 	c.mutex.Lock()
 	c.pending[seq] = call
@@ -361,13 +364,18 @@ func (c *Connection) sendPacket() {
 }
 
 func (c *Connection) writerWrite(packet *packet) {
-	_, err := c.writer.Write(packet.data)
+	seq := packet.seq
+	data := packet.data
+	packet.reset()
+	packetPool.Put(packet)
+
+	_, err := c.writer.Write(data)
 	if err != nil {
 		// write failed
 		var call *call
 		c.mutex.Lock()
-		call = c.pending[packet.seq]
-		delete(c.pending, packet.seq)
+		call = c.pending[seq]
+		delete(c.pending, seq)
 		c.mutex.Unlock()
 		if call != nil {
 			call.err = err
@@ -375,7 +383,8 @@ func (c *Connection) writerWrite(packet *packet) {
 		}
 		c.Close()
 	}
-	bufferPool.Put(&packet.data)
+
+	bufferPool.Put(&data)
 }
 
 func (c *Connection) Close() {
@@ -474,6 +483,11 @@ func (c *Connection) decodePacket(contentBuf []byte, response protocol.ObPayload
 
 	bufferPool.Put(&contentBuf) // reuse
 	return nil
+}
+
+func (p *packet) reset() {
+	p.seq = 0
+	p.data = nil
 }
 
 func (call *call) done() {
