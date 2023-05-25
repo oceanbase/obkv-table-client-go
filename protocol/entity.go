@@ -41,7 +41,7 @@ func NewObTableEntity() *ObTableEntity {
 	return &ObTableEntity{
 		ObUniVersionHeader: NewObUniVersionHeader(),
 		rowKey:             NewRowKey(),
-		properties:         make(map[string]*ObObject),
+		properties:         nil,
 	}
 }
 
@@ -127,6 +127,8 @@ func (e *ObTableEntity) Decode(buffer *bytes.Buffer) {
 	e.rowKey.Decode(buffer)
 
 	propertiesLen := util.DecodeVi64(buffer)
+
+	e.properties = make(map[string]*ObObject, propertiesLen)
 
 	var i int64
 	for i = 0; i < propertiesLen; i++ {

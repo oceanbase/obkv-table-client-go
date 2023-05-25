@@ -62,6 +62,8 @@ func (k *RowKey) Encode(buffer *bytes.Buffer) {
 func (k *RowKey) Decode(buffer *bytes.Buffer) {
 	keysLen := util.DecodeVi64(buffer)
 
+	k.keys = make([]*ObObject, 0, keysLen)
+
 	var i int64
 	for i = 0; i < keysLen; i++ {
 		key := NewObObject()

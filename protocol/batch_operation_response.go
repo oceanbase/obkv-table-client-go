@@ -83,6 +83,8 @@ func (r *ObTableBatchOperationResponse) Decode(buffer *bytes.Buffer) {
 
 	responsesLen := util.DecodeVi64(buffer)
 
+	r.obTableOperationResponses = make([]*ObTableOperationResponse, 0, responsesLen)
+
 	var i int64
 	for i = 0; i < responsesLen; i++ {
 		obTableOperationResponse := NewObTableOperationResponse()

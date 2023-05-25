@@ -296,7 +296,7 @@ func (c *obClient) Get(
 	rowKey []*table.Column,
 	getColumns []string,
 	opts ...ObkvOption) (map[string]interface{}, error) {
-	var columns []*table.Column
+	var columns = make([]*table.Column, 0, len(getColumns))
 	for _, columnName := range getColumns {
 		columns = append(columns, table.NewColumn(columnName, nil))
 	}
