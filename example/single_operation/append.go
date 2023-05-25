@@ -26,7 +26,7 @@ import (
 	"github.com/oceanbase/obkv-table-client-go/table"
 )
 
-// CREATE TABLE test(c1 bigint, c2 bigint, PRIMARY KEY(c1)) PARTITION BY hash(c1) partitions 2;
+// CREATE TABLE test(c1 bigint, c2 varchar(20), PRIMARY KEY(c1)) PARTITION BY hash(c1) partitions 2;
 func main() {
 	const (
 		configUrl    = "xxx"
@@ -45,28 +45,32 @@ func main() {
 
 	// insert
 	rowKey := []*table.Column{table.NewColumn("c1", int64(1))}
-	mutateColumns := []*table.Column{table.NewColumn("c2", int64(1))}
-	affectRows, err := cli.InsertOrUpdate(
+	insertColumns := []*table.Column{table.NewColumn("c2", "hello")}
+	affectRows, err := cli.Insert(
 		context.TODO(),
 		tableName,
 		rowKey,
-		mutateColumns,
+		insertColumns,
 	)
 	if err != nil {
 		panic(err)
 	}
 	fmt.Println(affectRows)
 
-	// update
-	mutateColumns = []*table.Column{table.NewColumn("c2", int64(2))}
-	affectRows, err = cli.InsertOrUpdate(
+	// append c2(2) -> c2("hello") + (" oceanbase") = c2("hello oceanbase")
+	appendColumns := []*table.Column{table.NewColumn("c2", " oceanbase")}
+	res, err := cli.Append(
 		context.TODO(),
 		tableName,
 		rowKey,
-		mutateColumns,
+		appendColumns,
+		client.WithReturnRowKey(true),         // return rowkey if you need
+		client.WithReturnAffectedEntity(true), // return result entity if you need
 	)
 	if err != nil {
 		panic(err)
 	}
-	fmt.Println(affectRows)
+	fmt.Println(res.AffectedRows())
+	fmt.Println(res.RowKey())
+	fmt.Println(res.Value("c2"))
 }

@@ -45,25 +45,25 @@ func main() {
 
 	// insert
 	rowKey := []*table.Column{table.NewColumn("c1", int64(1))}
-	mutateColumns := []*table.Column{table.NewColumn("c2", int64(1))}
-	affectRows, err := cli.InsertOrUpdate(
+	insertColumns := []*table.Column{table.NewColumn("c2", int64(2))}
+	affectRows, err := cli.Insert(
 		context.TODO(),
 		tableName,
 		rowKey,
-		mutateColumns,
+		insertColumns,
 	)
 	if err != nil {
 		panic(err)
 	}
 	fmt.Println(affectRows)
 
-	// update
-	mutateColumns = []*table.Column{table.NewColumn("c2", int64(2))}
-	affectRows, err = cli.InsertOrUpdate(
+	// replace c2(2) -> c2(3)
+	replaceColumns := []*table.Column{table.NewColumn("c2", int64(3))}
+	affectRows, err = cli.Replace(
 		context.TODO(),
 		tableName,
 		rowKey,
-		mutateColumns,
+		replaceColumns,
 	)
 	if err != nil {
 		panic(err)

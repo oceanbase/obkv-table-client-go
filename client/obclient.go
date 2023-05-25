@@ -37,7 +37,7 @@ import (
 	"github.com/oceanbase/obkv-table-client-go/util"
 )
 
-type ObClient struct {
+type obClient struct {
 	config       *config.ClientConfig
 	configUrl    string
 	fullUserName string
@@ -65,8 +65,8 @@ func newObClient(
 	passWord string,
 	sysUserName string,
 	sysPassWord string,
-	cliConfig *config.ClientConfig) (*ObClient, error) {
-	cli := new(ObClient)
+	cliConfig *config.ClientConfig) (*obClient, error) {
+	cli := new(obClient)
 	// 1. Parse full username to get userName/tenantName/clusterName
 	err := cli.parseFullUserName(fullUserName)
 	if err != nil {
@@ -86,7 +86,7 @@ func newObClient(
 	return cli, nil
 }
 
-func (c *ObClient) String() string {
+func (c *obClient) String() string {
 	var configStr = "nil"
 	if c.config != nil {
 		configStr = c.config.String()
@@ -96,7 +96,7 @@ func (c *ObClient) String() string {
 	if c.sysUA != nil {
 		sysUAStr = c.sysUA.String()
 	}
-	return "ObClient{" +
+	return "obClient{" +
 		"config:" + configStr + ", " +
 		"configUrl:" + c.configUrl + ", " +
 		"fullUserName:" + c.fullUserName + ", " +
@@ -109,7 +109,7 @@ func (c *ObClient) String() string {
 }
 
 // standard format: user_name@tenant_name#cluster_name
-func (c *ObClient) parseFullUserName(fullUserName string) error {
+func (c *obClient) parseFullUserName(fullUserName string) error {
 	utIndex := strings.Index(fullUserName, "@")
 	tcIndex := strings.Index(fullUserName, "#")
 	if utIndex == -1 || tcIndex == -1 || tcIndex <= utIndex {
@@ -130,7 +130,7 @@ func (c *ObClient) parseFullUserName(fullUserName string) error {
 }
 
 // format: http://127.0.0.1:8080/services?User_ID=xxx&UID=xxx&Action=ObRootServiceInfo&ObCluster=xxx&database=xxx
-func (c *ObClient) parseConfigUrl(configUrl string) error {
+func (c *obClient) parseConfigUrl(configUrl string) error {
 	index := strings.Index(configUrl, "database=")
 	if index == -1 {
 		index = strings.Index(configUrl, "DATABASE=")
@@ -147,11 +147,11 @@ func (c *ObClient) parseConfigUrl(configUrl string) error {
 	return nil
 }
 
-func (c *ObClient) init() error {
+func (c *obClient) init() error {
 	return c.fetchMetadata()
 }
 
-func (c *ObClient) Insert(
+func (c *obClient) Insert(
 	ctx context.Context,
 	tableName string,
 	rowKey []*table.Column,
@@ -171,7 +171,7 @@ func (c *ObClient) Insert(
 	return res.AffectedRows(), nil
 }
 
-func (c *ObClient) Update(
+func (c *obClient) Update(
 	ctx context.Context,
 	tableName string,
 	rowKey []*table.Column,
@@ -191,7 +191,7 @@ func (c *ObClient) Update(
 	return res.AffectedRows(), nil
 }
 
-func (c *ObClient) InsertOrUpdate(
+func (c *obClient) InsertOrUpdate(
 	ctx context.Context,
 	tableName string,
 	rowKey []*table.Column,
@@ -211,7 +211,67 @@ func (c *ObClient) InsertOrUpdate(
 	return res.AffectedRows(), nil
 }
 
-func (c *ObClient) Delete(
+func (c *obClient) Replace(
+	ctx context.Context,
+	tableName string,
+	rowKey []*table.Column,
+	mutateColumns []*table.Column,
+	opts ...ObkvOption) (int64, error) {
+	res, err := c.execute(
+		ctx,
+		tableName,
+		protocol.ObTableOperationReplace,
+		rowKey,
+		mutateColumns,
+		opts...)
+	if err != nil {
+		return -1, errors.WithMessagef(err, "execute replace, tableName:%s, rowKey:%s, mutateColumns:%s",
+			tableName, table.ColumnsToString(rowKey), table.ColumnsToString(mutateColumns))
+	}
+	return res.AffectedRows(), nil
+}
+
+func (c *obClient) Increment(
+	ctx context.Context,
+	tableName string,
+	rowKey []*table.Column,
+	mutateColumns []*table.Column,
+	opts ...ObkvOption) (IncrementResult, error) {
+	res, err := c.execute(
+		ctx,
+		tableName,
+		protocol.ObTableOperationIncrement,
+		rowKey,
+		mutateColumns,
+		opts...)
+	if err != nil {
+		return nil, errors.WithMessagef(err, "execute increment, tableName:%s, rowKey:%s, mutateColumns:%s",
+			tableName, table.ColumnsToString(rowKey), table.ColumnsToString(mutateColumns))
+	}
+	return newObIncrementResult(res.AffectedRows(), res.Entity()), nil
+}
+
+func (c *obClient) Append(
+	ctx context.Context,
+	tableName string,
+	rowKey []*table.Column,
+	mutateColumns []*table.Column,
+	opts ...ObkvOption) (AppendResult, error) {
+	res, err := c.execute(
+		ctx,
+		tableName,
+		protocol.ObTableOperationAppend,
+		rowKey,
+		mutateColumns,
+		opts...)
+	if err != nil {
+		return nil, errors.WithMessagef(err, "execute append, tableName:%s, rowKey:%s, mutateColumns:%s",
+			tableName, table.ColumnsToString(rowKey), table.ColumnsToString(mutateColumns))
+	}
+	return newObAppendResult(res.AffectedRows(), res.Entity()), nil
+}
+
+func (c *obClient) Delete(
 	ctx context.Context,
 	tableName string,
 	rowKey []*table.Column,
@@ -230,7 +290,7 @@ func (c *ObClient) Delete(
 	return res.AffectedRows(), nil
 }
 
-func (c *ObClient) Get(
+func (c *obClient) Get(
 	ctx context.Context,
 	tableName string,
 	rowKey []*table.Column,
@@ -254,11 +314,11 @@ func (c *ObClient) Get(
 	return res.Entity().GetSimpleProperties(), nil
 }
 
-func (c *ObClient) NewBatchExecutor(tableName string) BatchExecutor {
+func (c *obClient) NewBatchExecutor(tableName string) BatchExecutor {
 	return newObBatchExecutor(tableName, c)
 }
 
-func (c *ObClient) Close() {
+func (c *obClient) Close() {
 	c.tableRoster.Range(func(key, value interface{}) bool {
 		c.tableRoster.Delete(key)
 		obTable := value.(*ObTable)
@@ -267,7 +327,15 @@ func (c *ObClient) Close() {
 	})
 }
 
-func (c *ObClient) execute(
+func (c *obClient) getObkvOptions(options ...ObkvOption) *ObkvOptions {
+	opts := NewObkvOption()
+	for _, op := range options {
+		op.apply(opts)
+	}
+	return opts
+}
+
+func (c *obClient) execute(
 	ctx context.Context,
 	tableName string,
 	opType protocol.ObTableOperationType,
@@ -278,6 +346,8 @@ func (c *ObClient) execute(
 	if _, ok := ctx.Deadline(); !ok {
 		ctx, _ = context.WithTimeout(ctx, c.config.OperationTimeOut) // default timeout operation timeout
 	}
+
+	kvOpts := c.getObkvOptions(opts...)
 
 	// 1. Get table route
 	tableParam, err := c.getTableParam(ctx, tableName, rowKey, false /* refresh */)
@@ -293,6 +363,8 @@ func (c *ObClient) execute(
 		opType,
 		rowKey,
 		columns,
+		kvOpts.returnRowKey,
+		kvOpts.returnAffectedEntity,
 		c.config.OperationTimeOut,
 		c.config.LogLevel,
 	)
@@ -322,7 +394,7 @@ func (c *ObClient) execute(
 	return result, nil
 }
 
-func (c *ObClient) getTableParam(
+func (c *obClient) getTableParam(
 	ctx context.Context,
 	tableName string,
 	rowKey []*table.Column,
@@ -352,7 +424,7 @@ func (c *ObClient) getTableParam(
 	return NewObTableParam(t, entry.TableId(), partId), nil
 }
 
-func (c *ObClient) needRefreshTableEntry(entry *route.ObTableEntry) (int64, bool) {
+func (c *obClient) needRefreshTableEntry(entry *route.ObTableEntry) (int64, bool) {
 	ratio := math.Pow(2, float64(c.serverRoster.MaxPriority()))
 	intervalMs := float64(c.config.TableEntryRefreshIntervalBase) / ratio
 	ceilingMs := float64(c.config.TableEntryRefreshIntervalCeiling)
@@ -361,7 +433,7 @@ func (c *ObClient) needRefreshTableEntry(entry *route.ObTableEntry) (int64, bool
 		float64(time.Now().UnixMilli()-entry.RefreshTimeMills()) >= intervalMs
 }
 
-func (c *ObClient) getOrRefreshTableEntry(
+func (c *obClient) getOrRefreshTableEntry(
 	ctx context.Context,
 	tableName string,
 	refresh bool,
@@ -444,7 +516,7 @@ func (c *ObClient) getOrRefreshTableEntry(
 	return entry, nil
 }
 
-func (c *ObClient) getTableEntryFromCache(tableName string) *route.ObTableEntry {
+func (c *obClient) getTableEntryFromCache(tableName string) *route.ObTableEntry {
 	v, ok := c.tableLocations.Load(tableName)
 	if ok {
 		entry, _ := v.(*route.ObTableEntry)
@@ -453,7 +525,7 @@ func (c *ObClient) getTableEntryFromCache(tableName string) *route.ObTableEntry 
 	return nil
 }
 
-func (c *ObClient) refreshTableEntry(ctx context.Context, entry *route.ObTableEntry, tableName string) (*route.ObTableEntry, error) {
+func (c *obClient) refreshTableEntry(ctx context.Context, entry *route.ObTableEntry, tableName string) (*route.ObTableEntry, error) {
 	var err error
 	// 1. Load table entry location or table entry.
 	if entry != nil { // If table entry exist we just need to refresh table locations
@@ -477,7 +549,7 @@ func (c *ObClient) refreshTableEntry(ctx context.Context, entry *route.ObTableEn
 	return entry, nil
 }
 
-func (c *ObClient) loadTableEntryLocation(ctx context.Context, entry *route.ObTableEntry) error {
+func (c *obClient) loadTableEntryLocation(ctx context.Context, entry *route.ObTableEntry) error {
 	addr := c.serverRoster.GetServer()
 	// 1. Get db handle
 	db, err := route.NewDB(
@@ -502,11 +574,11 @@ func (c *ObClient) loadTableEntryLocation(ctx context.Context, entry *route.ObTa
 	return nil
 }
 
-func (c *ObClient) isMetaAlreadyRefreshed() bool {
+func (c *obClient) isMetaAlreadyRefreshed() bool {
 	return time.Now().UnixMilli()-c.lastRefreshMetadataTimestamp.Load() < c.config.MetadataRefreshInterval.Milliseconds()
 }
 
-func (c *ObClient) syncRefreshMetadata() error {
+func (c *obClient) syncRefreshMetadata() error {
 	// 1. Check whether the meta has been refreshed or not
 	if c.isMetaAlreadyRefreshed() {
 		log.Info("try to lock metadata refreshing, it has refresh",
@@ -543,7 +615,7 @@ func (c *ObClient) syncRefreshMetadata() error {
 	return nil
 }
 
-func (c *ObClient) fetchMetadata() error {
+func (c *obClient) fetchMetadata() error {
 	// 1. Load ocp mode to get RsList
 	ocpModel, err := route.LoadOcpModel(
 		c.configUrl,
@@ -643,7 +715,7 @@ func (c *ObClient) fetchMetadata() error {
 }
 
 // get partition id by rowKey
-func (c *ObClient) getPartitionId(entry *route.ObTableEntry, rowKeyValue []*table.Column) (uint64, error) {
+func (c *obClient) getPartitionId(entry *route.ObTableEntry, rowKeyValue []*table.Column) (uint64, error) {
 	if !entry.IsPartitionTable() || entry.PartitionInfo().Level() == route.PartLevelZero {
 		return 0, nil
 	}
@@ -666,7 +738,7 @@ func (c *ObClient) getPartitionId(entry *route.ObTableEntry, rowKeyValue []*tabl
 	return route.ObInvalidPartId, errors.Errorf("unknown partition level, partInfo:%s", entry.PartitionInfo().String())
 }
 
-func (c *ObClient) getTable(entry *route.ObTableEntry, partId uint64) (*ObTable, error) {
+func (c *obClient) getTable(entry *route.ObTableEntry, partId uint64) (*ObTable, error) {
 	// 1. Get replica location by partition id
 	replicaLoc, err := entry.GetPartitionReplicaLocation(partId, route.ConsistencyStrong)
 	if err != nil {

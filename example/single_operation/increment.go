@@ -45,28 +45,32 @@ func main() {
 
 	// insert
 	rowKey := []*table.Column{table.NewColumn("c1", int64(1))}
-	mutateColumns := []*table.Column{table.NewColumn("c2", int64(1))}
-	affectRows, err := cli.InsertOrUpdate(
+	insertColumns := []*table.Column{table.NewColumn("c2", int64(2))}
+	affectRows, err := cli.Insert(
 		context.TODO(),
 		tableName,
 		rowKey,
-		mutateColumns,
+		insertColumns,
 	)
 	if err != nil {
 		panic(err)
 	}
 	fmt.Println(affectRows)
 
-	// update
-	mutateColumns = []*table.Column{table.NewColumn("c2", int64(2))}
-	affectRows, err = cli.InsertOrUpdate(
+	// increment c2(2) -> c2(2) + (3) = c2(5)
+	incrementColumns := []*table.Column{table.NewColumn("c2", int64(3))}
+	res, err := cli.Increment(
 		context.TODO(),
 		tableName,
 		rowKey,
-		mutateColumns,
+		incrementColumns,
+		client.WithReturnRowKey(true),         // return rowkey if you need
+		client.WithReturnAffectedEntity(true), // return result entity if you need
 	)
 	if err != nil {
 		panic(err)
 	}
-	fmt.Println(affectRows)
+	fmt.Println(res.AffectedRows())
+	fmt.Println(res.RowKey())
+	fmt.Println(res.Value("c2"))
 }

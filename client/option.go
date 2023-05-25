@@ -17,5 +17,37 @@
 
 package client
 
-type ObkvOption struct {
+type ObkvOption interface {
+	apply(opts *ObkvOptions)
+}
+type ObkvOptionFunc func(opts *ObkvOptions)
+
+func NewObkvOption() *ObkvOptions {
+	return &ObkvOptions{
+		returnRowKey:         false,
+		returnAffectedEntity: false,
+	}
+}
+
+type ObkvOptions struct {
+	returnRowKey         bool
+	returnAffectedEntity bool
+}
+
+func (f ObkvOptionFunc) apply(opts *ObkvOptions) {
+	f(opts)
+}
+
+// WithReturnRowKey only work in increment and append operation
+func WithReturnRowKey(returnRowKey bool) ObkvOption {
+	return ObkvOptionFunc(func(opts *ObkvOptions) {
+		opts.returnRowKey = returnRowKey
+	})
+}
+
+// WithReturnAffectedEntity only work in increment and append operation
+func WithReturnAffectedEntity(returnAffectedEntity bool) ObkvOption {
+	return ObkvOptionFunc(func(opts *ObkvOptions) {
+		opts.returnAffectedEntity = returnAffectedEntity
+	})
 }
