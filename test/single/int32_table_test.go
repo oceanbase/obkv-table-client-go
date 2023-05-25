@@ -23,6 +23,7 @@ import (
 
 	"github.com/stretchr/testify/assert"
 
+	"github.com/oceanbase/obkv-table-client-go/client"
 	"github.com/oceanbase/obkv-table-client-go/table"
 	"github.com/oceanbase/obkv-table-client-go/test"
 )
@@ -233,4 +234,45 @@ func TestGetInt32(t *testing.T) {
 	assert.Equal(t, nil, err)
 	assert.EqualValues(t, nil, result.Value("c1"))
 	assert.EqualValues(t, nil, result.Value("c2"))
+}
+
+func TestIncrementInt32(t *testing.T) {
+	tableName := testInt32TableName
+	defer test.DeleteTable(tableName)
+
+	rowKey := []*table.Column{table.NewColumn("c1", int32(1))}
+	mutateColumns := []*table.Column{table.NewColumn("c2", int32(1))}
+	affectRows, err := cli.Insert(
+		context.TODO(),
+		tableName,
+		rowKey,
+		mutateColumns,
+	)
+	assert.Equal(t, nil, err)
+	assert.EqualValues(t, 1, affectRows)
+
+	incrementColumns := []*table.Column{table.NewColumn("c2", int32(2))}
+	res, err := cli.Increment(
+		context.TODO(),
+		tableName,
+		rowKey,
+		incrementColumns,
+		client.WithReturnRowKey(true),
+		client.WithReturnAffectedEntity(true),
+	)
+	assert.Equal(t, nil, err)
+	assert.EqualValues(t, 1, res.AffectedRows())
+	assert.EqualValues(t, 1, res.RowKey()[0])
+	assert.EqualValues(t, 3, res.Value("c2"))
+
+	selectColumns := []string{"c1", "c2"}
+	result, err := cli.Get(
+		context.TODO(),
+		tableName,
+		rowKey,
+		selectColumns,
+	)
+	assert.Equal(t, nil, err)
+	assert.EqualValues(t, 1, result.Value("c1"))
+	assert.EqualValues(t, 3, result.Value("c2"))
 }

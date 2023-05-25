@@ -17,7 +17,221 @@
 
 package single
 
+import (
+	"context"
+	"testing"
+	"time"
+
+	"github.com/stretchr/testify/assert"
+
+	"github.com/oceanbase/obkv-table-client-go/table"
+	"github.com/oceanbase/obkv-table-client-go/test"
+)
+
 const (
 	testDatetimeTableName       = "test_datetime"
 	testDatetimeCreateStatement = "create table if not exists `test_datetime`(`c1` datetime not null,`c2` datetime default null,primary key (`c1`));"
 )
+
+func TestInsertDatetime(t *testing.T) {
+	tableName := testDatetimeTableName
+	defer test.DeleteTable(tableName)
+
+	rowKey := []*table.Column{table.NewColumn("c1", time.Duration(1))}
+	mutateColumns := []*table.Column{table.NewColumn("c2", time.Duration(1))}
+	affectRows, err := cli.Insert(
+		context.TODO(),
+		tableName,
+		rowKey,
+		mutateColumns,
+	)
+	assert.Equal(t, nil, err)
+	assert.EqualValues(t, 1, affectRows)
+
+	selectColumns := []string{"c1", "c2"}
+	result, err := cli.Get(
+		context.TODO(),
+		tableName,
+		rowKey,
+		selectColumns,
+	)
+	assert.Equal(t, nil, err)
+	assert.EqualValues(t, time.Duration(1), result.Value("c1"))
+	assert.EqualValues(t, time.Duration(1), result.Value("c2"))
+}
+
+func TestUpdateDatetime(t *testing.T) {
+	tableName := testDatetimeTableName
+	defer test.DeleteTable(tableName)
+
+	rowKey := []*table.Column{table.NewColumn("c1", time.Duration(1))}
+	mutateColumns := []*table.Column{table.NewColumn("c2", time.Duration(1))}
+	affectRows, err := cli.Insert(
+		context.TODO(),
+		tableName,
+		rowKey,
+		mutateColumns,
+	)
+	assert.Equal(t, nil, err)
+	assert.EqualValues(t, 1, affectRows)
+
+	updateColumns := []*table.Column{table.NewColumn("c2", time.Duration(2))}
+	affectRows, err = cli.Update(
+		context.TODO(),
+		tableName,
+		rowKey,
+		updateColumns,
+	)
+	assert.Equal(t, nil, err)
+	assert.EqualValues(t, 1, affectRows)
+
+	selectColumns := []string{"c1", "c2"}
+	result, err := cli.Get(
+		context.TODO(),
+		tableName,
+		rowKey,
+		selectColumns,
+	)
+	assert.Equal(t, nil, err)
+	assert.EqualValues(t, time.Duration(1), result.Value("c1"))
+	assert.EqualValues(t, time.Duration(2), result.Value("c2"))
+}
+
+func TestInsertOrUpdateDatetime(t *testing.T) {
+	tableName := testDatetimeTableName
+	defer test.DeleteTable(tableName)
+
+	rowKey := []*table.Column{table.NewColumn("c1", time.Duration(1))}
+	mutateColumns := []*table.Column{table.NewColumn("c2", time.Duration(1))}
+	affectRows, err := cli.InsertOrUpdate(
+		context.TODO(),
+		tableName,
+		rowKey,
+		mutateColumns,
+	)
+	assert.Equal(t, nil, err)
+	assert.EqualValues(t, 1, affectRows)
+
+	selectColumns := []string{"c1", "c2"}
+	result, err := cli.Get(
+		context.TODO(),
+		tableName,
+		rowKey,
+		selectColumns,
+	)
+	assert.Equal(t, nil, err)
+	assert.EqualValues(t, time.Duration(1), result.Value("c1"))
+	assert.EqualValues(t, time.Duration(1), result.Value("c2"))
+
+	affectRows, err = cli.InsertOrUpdate(
+		context.TODO(),
+		tableName,
+		rowKey,
+		mutateColumns,
+	)
+	assert.Equal(t, nil, err)
+	assert.EqualValues(t, 1, affectRows)
+
+	selectColumns = []string{"c1", "c2"}
+	result, err = cli.Get(
+		context.TODO(),
+		tableName,
+		rowKey,
+		selectColumns,
+	)
+	assert.Equal(t, nil, err)
+	assert.EqualValues(t, time.Duration(1), result.Value("c1"))
+	assert.EqualValues(t, time.Duration(1), result.Value("c2"))
+}
+
+func TestDeleteDatetime(t *testing.T) {
+	tableName := testDatetimeTableName
+	defer test.DeleteTable(tableName)
+
+	rowKey := []*table.Column{table.NewColumn("c1", time.Duration(1))}
+	mutateColumns := []*table.Column{table.NewColumn("c2", time.Duration(1))}
+	affectRows, err := cli.Insert(
+		context.TODO(),
+		tableName,
+		rowKey,
+		mutateColumns,
+	)
+	assert.Equal(t, nil, err)
+	assert.EqualValues(t, 1, affectRows)
+
+	affectRows, err = cli.Delete(
+		context.TODO(),
+		tableName,
+		rowKey,
+	)
+	assert.Equal(t, nil, err)
+	assert.EqualValues(t, 1, affectRows)
+
+	affectRows, err = cli.Delete(
+		context.TODO(),
+		tableName,
+		rowKey,
+	)
+	assert.Equal(t, nil, err)
+	assert.EqualValues(t, 0, affectRows)
+}
+
+func TestGetDatetime(t *testing.T) {
+	tableName := testDatetimeTableName
+	defer test.DeleteTable(tableName)
+
+	rowKey := []*table.Column{table.NewColumn("c1", time.Duration(1))}
+	mutateColumns := []*table.Column{table.NewColumn("c2", time.Duration(1))}
+	affectRows, err := cli.Insert(
+		context.TODO(),
+		tableName,
+		rowKey,
+		mutateColumns,
+	)
+	assert.Equal(t, nil, err)
+	assert.EqualValues(t, 1, affectRows)
+
+	selectColumns := []string{"c1", "c2"} // select c1, c2
+	result, err := cli.Get(
+		context.TODO(),
+		tableName,
+		rowKey,
+		selectColumns,
+	)
+	assert.Equal(t, nil, err)
+	assert.EqualValues(t, time.Duration(1), result.Value("c1"))
+	assert.EqualValues(t, time.Duration(1), result.Value("c2"))
+
+	selectColumns = []string{"c1"} // select c1
+	result, err = cli.Get(
+		context.TODO(),
+		tableName,
+		rowKey,
+		selectColumns,
+	)
+	assert.Equal(t, nil, err)
+	assert.EqualValues(t, time.Duration(1), result.Value("c1"))
+	assert.EqualValues(t, nil, result.Value("c2"))
+
+	selectColumns = nil // default select all when selectColumns is nil
+	result, err = cli.Get(
+		context.TODO(),
+		tableName,
+		rowKey,
+		selectColumns,
+	)
+	assert.Equal(t, nil, err)
+	assert.EqualValues(t, time.Duration(1), result.Value("c1"))
+	assert.EqualValues(t, time.Duration(1), result.Value("c2"))
+
+	test.DeleteTable(tableName)
+	result, err = cli.Get(
+		context.TODO(),
+		tableName,
+		rowKey,
+		selectColumns,
+	)
+	assert.Equal(t, nil, err)
+	assert.EqualValues(t, nil, result.Value("c1"))
+	assert.EqualValues(t, nil, result.Value("c2"))
+}
