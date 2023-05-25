@@ -23,6 +23,7 @@ import (
 
 	"github.com/stretchr/testify/assert"
 
+	"github.com/oceanbase/obkv-table-client-go/client"
 	"github.com/oceanbase/obkv-table-client-go/table"
 	"github.com/oceanbase/obkv-table-client-go/test"
 )
@@ -233,4 +234,84 @@ func TestGetVarchar(t *testing.T) {
 	assert.Equal(t, nil, err)
 	assert.EqualValues(t, nil, m["c1"])
 	assert.EqualValues(t, nil, m["c2"])
+}
+
+func TestAppendVarchar(t *testing.T) {
+	tableName := testVarcharTableName
+	defer test.DeleteTable(tableName)
+
+	rowKey := []*table.Column{table.NewColumn("c1", "1")}
+	mutateColumns := []*table.Column{table.NewColumn("c2", "1")}
+	affectRows, err := cli.Insert(
+		context.TODO(),
+		tableName,
+		rowKey,
+		mutateColumns,
+	)
+	assert.Equal(t, nil, err)
+	assert.EqualValues(t, 1, affectRows)
+
+	// append
+	appendColumns := []*table.Column{table.NewColumn("c2", "2")}
+	res, err := cli.Append(
+		context.TODO(),
+		tableName,
+		rowKey,
+		appendColumns,
+		client.WithReturnRowKey(true),
+		client.WithReturnAffectedEntity(true), // return affected entity
+	)
+	assert.Equal(t, nil, err)
+	assert.EqualValues(t, 1, res.AffectedRows())
+	assert.EqualValues(t, "12", res.Value("c2"))
+	assert.EqualValues(t, "1", res.RowKey()[0])
+
+	selectColumns := []string{"c1", "c2"}
+	m, err := cli.Get(
+		context.TODO(),
+		tableName,
+		rowKey,
+		selectColumns,
+	)
+	assert.Equal(t, nil, err)
+	assert.EqualValues(t, "1", m["c1"])
+	assert.EqualValues(t, "12", m["c2"])
+}
+
+func TestReplaceVarchar(t *testing.T) {
+	tableName := testVarcharTableName
+	defer test.DeleteTable(tableName)
+
+	rowKey := []*table.Column{table.NewColumn("c1", "1")}
+	mutateColumns := []*table.Column{table.NewColumn("c2", "1")}
+	affectRows, err := cli.Insert(
+		context.TODO(),
+		tableName,
+		rowKey,
+		mutateColumns,
+	)
+	assert.Equal(t, nil, err)
+	assert.EqualValues(t, 1, affectRows)
+
+	// replace
+	replaceColumns := []*table.Column{table.NewColumn("c2", "2")}
+	affectRows, err = cli.Replace(
+		context.TODO(),
+		tableName,
+		rowKey,
+		replaceColumns,
+	)
+	assert.Equal(t, nil, err)
+	assert.EqualValues(t, 2, affectRows)
+
+	selectColumns := []string{"c1", "c2"}
+	m, err := cli.Get(
+		context.TODO(),
+		tableName,
+		rowKey,
+		selectColumns,
+	)
+	assert.Equal(t, nil, err)
+	assert.EqualValues(t, "1", m["c1"])
+	assert.EqualValues(t, "2", m["c2"])
 }

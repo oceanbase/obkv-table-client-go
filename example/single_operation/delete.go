@@ -42,8 +42,22 @@ func main() {
 		panic(err)
 	}
 
+	// insert
 	rowKey := []*table.Column{table.NewColumn("c1", int64(1))}
-	affectRows, err := cli.Delete(
+	insertColumns := []*table.Column{table.NewColumn("c2", int64(2))}
+	affectRows, err := cli.Insert(
+		context.TODO(),
+		tableName,
+		rowKey,
+		insertColumns,
+	)
+	if err != nil {
+		panic(err)
+	}
+	fmt.Println(affectRows)
+
+	// delete
+	affectRows, err = cli.Delete(
 		context.TODO(),
 		tableName,
 		rowKey,

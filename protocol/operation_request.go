@@ -49,6 +49,8 @@ func NewObTableOperationRequest(
 	tableOperationType ObTableOperationType,
 	rowKey []*table.Column,
 	columns []*table.Column,
+	returnRowKey bool,
+	returnAffectedEntity bool,
 	timeout time.Duration,
 	flag uint16) (*ObTableOperationRequest, error) {
 	tableOperation, err := NewObTableOperation(tableOperationType, rowKey, columns)
@@ -70,8 +72,8 @@ func NewObTableOperationRequest(
 		entityType:           ObTableEntityTypeDynamic,
 		tableOperation:       tableOperation,
 		consistencyLevel:     ObTableConsistencyLevelStrong,
-		returnRowKey:         false,
-		returnAffectedEntity: false,
+		returnRowKey:         returnRowKey,
+		returnAffectedEntity: returnAffectedEntity,
 		returnAffectedRows:   true,
 	}, nil
 }
