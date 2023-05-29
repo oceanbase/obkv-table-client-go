@@ -34,8 +34,6 @@ const (
 	sysUserName  = "root"
 	sysPassWord  = ""
 )
-
-// use for create table by sql driver
 const (
 	sqlUser     = "root"
 	sqlPassWord = ""
@@ -96,4 +94,11 @@ func SelectTable(selectStatement string) *sql.Rows {
 		panic(err.Error())
 	}
 	return rows
+}
+
+func InsertTable(insertStatement string) {
+	_, err := globalDB.Exec(insertStatement)
+	if err != nil {
+		panic(err.Error())
+	}
 }
