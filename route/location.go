@@ -523,7 +523,7 @@ func getPartitionInfoFromResultSet(rows *Rows) (*obPartitionInfo, error) {
 
 				// eg:"c1, c2", need to remove ' '
 				str := strings.ReplaceAll(partExpr, " ", "")
-				str = strings.ReplaceAll(partExpr, "`", "")
+				str = strings.ReplaceAll(str, "`", "")
 				firstPartColumnNames = strings.Split(str, ",")
 			}
 
@@ -541,7 +541,7 @@ func getPartitionInfoFromResultSet(rows *Rows) (*obPartitionInfo, error) {
 
 				// eg:"`c1`, `c2`", need to remove ' ' and '`'
 				str := strings.ReplaceAll(subPartExpr, " ", "")
-				str = strings.ReplaceAll(subPartExpr, "`", "")
+				str = strings.ReplaceAll(str, "`", "")
 				subPartColumnNames = strings.Split(str, ",")
 			}
 		}

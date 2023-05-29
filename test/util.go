@@ -88,12 +88,10 @@ func DeleteTable(tableName string) {
 	}
 }
 
-func SelectTable(selectStatement string) *sql.Rows {
-	rows, err := globalDB.Query(selectStatement)
-	if err != nil {
-		panic(err.Error())
+func DeleteTables(tableNames []string) {
+	for _, name := range tableNames {
+		DeleteTable(name)
 	}
-	return rows
 }
 
 func InsertTable(insertStatement string) {
