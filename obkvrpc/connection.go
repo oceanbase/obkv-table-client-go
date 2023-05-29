@@ -26,6 +26,7 @@ import (
 	"net"
 	"runtime"
 	"strconv"
+	"strings"
 	"sync"
 	"sync/atomic"
 	"time"
@@ -50,20 +51,8 @@ const (
 
 var bufferPool = NewLimitedPool(256, 8192)
 
-var ezHeaderBufferPool = sync.Pool{New: func() any {
-	return make([]byte, protocol.EzHeaderLength)
-}}
-
-var ezHeaderPool = sync.Pool{New: func() any {
-	return protocol.NewEzHeader()
-}}
-
 var rpcHeaderPool = sync.Pool{New: func() any {
 	return protocol.NewObRpcHeader()
-}}
-
-var packetPool = sync.Pool{New: func() any {
-	return &packet{}
 }}
 
 type ConnectionOption struct {
@@ -99,7 +88,7 @@ type Connection struct {
 	reader *bufio.Reader
 	writer *bufio.Writer
 
-	packetChannel      chan *packet
+	packetChannel      chan packet
 	packetChannelClose chan struct{}
 	closeOnce          sync.Once
 
@@ -137,7 +126,7 @@ const (
 
 func NewConnection(option *ConnectionOption) *Connection {
 	return &Connection{option: option, pending: make(map[uint32]*call, defaultConnPendingSize),
-		packetChannel: make(chan *packet, defaultPacketChannelSize), packetChannelClose: make(chan struct{})}
+		packetChannel: make(chan packet, defaultPacketChannelSize), packetChannelClose: make(chan struct{})}
 }
 
 func (c *Connection) Connect(ctx context.Context) error {
@@ -207,16 +196,17 @@ func (c *Connection) Execute(ctx context.Context, request protocol.ObPayload, re
 		content: nil, // call back to user goroutine content
 	}
 
-	packet := packetPool.Get().(*packet)
-	packet.seq = seq
-	packet.data = totalBuf
+	p := packet{
+		seq:  seq,
+		data: totalBuf,
+	}
 
 	c.mutex.Lock()
 	c.pending[seq] = call
 	c.mutex.Unlock()
 
 	select {
-	case c.packetChannel <- packet: // write packet channel success, but not equal to connection write success.
+	case c.packetChannel <- p: // write packet channel success, but not equal to connection write success.
 	case <-ctx.Done():
 		// timeout
 		c.mutex.Lock()
@@ -250,69 +240,74 @@ func (c *Connection) Execute(ctx context.Context, request protocol.ObPayload, re
 
 func (c *Connection) receivePacket() {
 	defer c.Close()
-	for {
-		ezHeaderBuf := ezHeaderBufferPool.Get().([]byte)
 
-		_, err := io.ReadFull(c.reader, ezHeaderBuf)
+	var (
+		ezHeaderBuf = make([]byte, protocol.EzHeaderLength)
+		ezHeader    protocol.EzHeader
+		err         error
+		contentLen  uint32
+		channelId   uint32
+		contentBuf  []byte
+		call        *call
+	)
+
+	for err == nil {
+		_, err = io.ReadFull(c.reader, ezHeaderBuf)
 		if err != nil {
-			log.Warn("failed to connection read header", zap.Error(err), zap.Uint64("uniqueId", c.uniqueId))
-			return
+			err = fmt.Errorf("connection read header error: %w", err)
+			break
 		}
-
-		ezHeader := ezHeaderPool.Get().(*protocol.EzHeader)
 
 		err = ezHeader.Decode(ezHeaderBuf)
 		if err != nil {
-			log.Warn("failed to decode ezHeader", zap.Error(err), zap.Uint64("uniqueId", c.uniqueId))
-			return
+			err = fmt.Errorf("connection decode header error: %w", err)
+			break
 		}
 
-		ezHeaderBufferPool.Put(ezHeaderBuf)
+		contentLen = ezHeader.ContentLen()
+		channelId = ezHeader.ChannelId()
 
-		contentLen := ezHeader.ContentLen()
-		channelId := ezHeader.ChannelId()
-
-		ezHeaderPool.Put(ezHeader)
-
-		var call *call
-
-		contentBuf := *bufferPool.Get(int(contentLen)) // reuse
-
-		_, err = io.ReadFull(c.reader, contentBuf)
-		if err != nil {
-			// read failed
-			c.mutex.Lock()
-			call = c.pending[channelId]
-			delete(c.pending, channelId)
-			c.mutex.Unlock()
-			if call == nil {
-				log.Warn("failed to not found table packet", zap.Uint64("uniqueId", c.uniqueId), zap.Uint32("seq", channelId))
-			} else {
-				call.err = err
-				call.done()
-			}
-			log.Warn("failed to connection read content", zap.Error(err), zap.Uint64("uniqueId", c.uniqueId))
-			return
-		}
-
-		// read success
 		c.mutex.Lock()
 		call = c.pending[channelId]
 		delete(c.pending, channelId)
 		c.mutex.Unlock()
 
-		// call already deleted
-		if call == nil {
-			log.Warn("failed to not found table packet", zap.Uint64("uniqueId", c.uniqueId), zap.Uint32("seq", channelId))
-			continue
+		contentBuf = *bufferPool.Get(int(contentLen)) // reuse
+
+		switch {
+		case call == nil:
+			_, err = io.ReadFull(c.reader, contentBuf)
+			if err != nil {
+				err = fmt.Errorf("connection read body error: %w", err)
+			}
+			// read success, but do nothing.
+		default:
+			_, err = io.ReadFull(c.reader, contentBuf)
+			if err != nil {
+				err = fmt.Errorf("connection read body error: %w", err)
+				call.err = err
+			}
+			// read success, call back to user goroutine.
+			call.content = contentBuf
+			call.done()
 		}
-		call.content = contentBuf
-		call.done()
 	}
+
+	if strings.Contains(err.Error(), "use of closed network connection") {
+		log.Info("connection closed.", zap.Uint64("connection uniqueId", c.uniqueId))
+		return
+	}
+
+	if errors.Is(err, io.EOF) || errors.Is(err, io.ErrUnexpectedEOF) {
+		log.Info("connection closed.", zap.Error(err), zap.Uint64("connection uniqueId", c.uniqueId))
+		return
+	}
+
+	log.Warn("connection closed.", zap.Error(err), zap.Uint64("connection uniqueId", c.uniqueId))
 }
 
 func (c *Connection) sendPacket() {
-	var packet *packet
+	var packet packet
 	var gosched = false
 	for {
 		select {
@@ -332,7 +327,6 @@ func (c *Connection) sendPacket() {
 						call.done()
 					}
 				default:
-					log.Warn("send packet channel closed", zap.Uint64("uniqueId", c.uniqueId))
 					return
 				}
 			}
@@ -363,11 +357,9 @@ func (c *Connection) sendPacket() {
 	}
 }
 
-func (c *Connection) writerWrite(packet *packet) {
+func (c *Connection) writerWrite(packet packet) {
 	seq := packet.seq
 	data := packet.data
-	packet.reset()
-	packetPool.Put(packet)
 
 	_, err := c.writer.Write(data)
 	if err != nil {
@@ -440,14 +432,11 @@ func (c *Connection) encodePacket(seq uint32, request protocol.ObPayload) []byte
 
 	// encode ez header
 	ezHeaderBuf := totalBuf[:c.ezHeaderLength] // ez header buf
-	ezHeader := ezHeaderPool.Get().(*protocol.EzHeader)
+	ezHeader := protocol.EzHeader{}
 
 	ezHeader.SetChannelId(seq)
 	ezHeader.SetContentLen(uint32(c.rpcHeaderLength + payloadLen))
 	ezHeader.Encode(ezHeaderBuf)
-
-	ezHeaderPool.Put(ezHeader) // reset before put
-
 	return totalBuf
 }
 
@@ -483,11 +472,6 @@ func (c *Connection) decodePacket(contentBuf []byte, response protocol.ObPayload
 
 	bufferPool.Put(&contentBuf) // reuse
 	return nil
-}
-
-func (p *packet) reset() {
-	p.seq = 0
-	p.data = nil
 }
 
 func (call *call) done() {

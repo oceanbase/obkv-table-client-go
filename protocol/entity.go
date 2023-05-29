@@ -32,24 +32,30 @@ const (
 )
 
 type ObTableEntity struct {
-	*ObUniVersionHeader
+	ObUniVersionHeader
 	rowKey     *RowKey
 	properties map[string]*ObObject
 }
 
 func NewObTableEntity() *ObTableEntity {
 	return &ObTableEntity{
-		ObUniVersionHeader: NewObUniVersionHeader(),
-		rowKey:             NewRowKey(),
-		properties:         nil,
+		ObUniVersionHeader: ObUniVersionHeader{
+			version:       1,
+			contentLength: 0,
+		},
+		rowKey:     NewRowKey(),
+		properties: nil,
 	}
 }
 
 func NewObTableEntityWithParams(rowKeyLen int, propertiesLen int) *ObTableEntity {
 	return &ObTableEntity{
-		ObUniVersionHeader: NewObUniVersionHeader(),
-		rowKey:             NewRowKeyWithParams(rowKeyLen),
-		properties:         make(map[string]*ObObject, propertiesLen),
+		ObUniVersionHeader: ObUniVersionHeader{
+			version:       1,
+			contentLength: 0,
+		},
+		rowKey:     NewRowKeyWithParams(rowKeyLen),
+		properties: make(map[string]*ObObject, propertiesLen),
 	}
 }
 
@@ -143,7 +149,7 @@ func (e *ObTableEntity) Decode(buffer *bytes.Buffer) {
 
 func (e *ObTableEntity) String() string {
 	var ObUniVersionHeaderStr = "nil"
-	if e.ObUniVersionHeader != nil {
+	if e.ObUniVersionHeader != (ObUniVersionHeader{}) {
 		ObUniVersionHeaderStr = e.ObUniVersionHeader.String()
 	}
 
