@@ -20,18 +20,20 @@ package batch_operation
 import (
 	"context"
 	"fmt"
+	"time"
 
 	"github.com/oceanbase/obkv-table-client-go/client"
 	"github.com/oceanbase/obkv-table-client-go/config"
 	"github.com/oceanbase/obkv-table-client-go/table"
 )
 
+// CREATE TABLE test(c1 bigint, c2 varchar(20), PRIMARY KEY(c1)) PARTITION BY hash(c1) partitions 2;
 func main() {
 	const (
 		configUrl    = "xxx"
-		fullUserName = "root@sys#obcluster"
+		fullUserName = "user@tenant#cluster"
 		passWord     = ""
-		sysUserName  = "root"
+		sysUserName  = "sysUser"
 		sysPassWord  = ""
 		tableName    = "test"
 	)
@@ -41,22 +43,12 @@ func main() {
 		panic(err)
 	}
 
+	batchExecutor := cli.NewBatchExecutor(tableName)
+
 	rowKey1 := []*table.Column{table.NewColumn("c1", int64(1))}
 	rowKey2 := []*table.Column{table.NewColumn("c1", int64(2))}
 	selectColumns1 := []string{"c1"}
 	selectColumns2 := []string{"c2"}
-	mutateColumns1 := []*table.Column{table.NewColumn("c2", int64(1))}
-	mutateColumns2 := []*table.Column{table.NewColumn("c2", int64(2))}
-
-	batchExecutor := cli.NewBatchExecutor(tableName)
-	err = batchExecutor.AddInsertOp(rowKey1, mutateColumns1)
-	if err != nil {
-		panic(err)
-	}
-	err = batchExecutor.AddInsertOp(rowKey2, mutateColumns2)
-	if err != nil {
-		panic(err)
-	}
 	err = batchExecutor.AddGetOp(rowKey1, selectColumns1)
 	if err != nil {
 		panic(err)
@@ -65,12 +57,14 @@ func main() {
 	if err != nil {
 		panic(err)
 	}
-	batchRes, err := batchExecutor.Execute(context.TODO())
+
+	ctx, _ := context.WithTimeout(context.Background(), time.Duration(1000)*time.Millisecond) // 1000ms
+	res, err := batchExecutor.Execute(ctx)
 	if err != nil {
 		panic(err)
 	}
-	fmt.Printf("size:%d, success:%d, fail:%d", batchRes.Size(), batchRes.CorrectCount(), batchRes.WrongCount())
-	allResults := batchRes.GetResults()
-	println(allResults[0].AffectedRows())
-	println(allResults[1].AffectedRows())
+
+	fmt.Printf("size:%d, success:%d, fail:%d", res.Size(), res.CorrectCount(), res.WrongCount())
+	println(res.GetResults()[0].Entity().GetProperty("c1"))
+	println(res.GetResults()[1].Entity().GetProperty("c2"))
 }
