@@ -42,7 +42,7 @@ func setup() {
 	test.CreateTable(keyMultiVarcharL1CreateStatement)
 	test.CreateTable(keyMultiVarcharL2CreateStatement)
 
-	// key-VarBinary
+	// key-MultiVarBinary
 	test.CreateTable(keyMultiVarBinaryL1CreateStatement)
 	test.CreateTable(keyMultiVarBinaryL2CreateStatement)
 }
@@ -75,7 +75,7 @@ func teardown() {
 	test.DropTable(keyMultiVarcharL1TableName)
 	test.DropTable(keyMultiVarcharL2TableName)
 
-	// key-VarBinary
+	// key-MultiVarBinary
 	test.DropTable(keyMultiVarBinaryL1TableName)
 	test.DropTable(keyMultiVarBinaryL2TableName)
 

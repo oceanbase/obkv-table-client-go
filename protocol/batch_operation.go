@@ -35,8 +35,8 @@ func NewObTableBatchOperation() *ObTableBatchOperation {
 	return &ObTableBatchOperation{
 		ObUniVersionHeader:  NewObUniVersionHeader(),
 		obTableOperations:   nil,
-		readOnly:            false,
-		sameType:            false,
+		readOnly:            true,
+		sameType:            true,
 		samePropertiesNames: false,
 	}
 }
@@ -51,6 +51,14 @@ func (o *ObTableBatchOperation) SetObTableOperations(obTableOperations []*ObTabl
 
 func (o *ObTableBatchOperation) AppendObTableOperation(obTableOperation *ObTableOperation) {
 	o.obTableOperations = append(o.obTableOperations, obTableOperation)
+	if o.readOnly && obTableOperation.opType != ObTableOperationGet {
+		o.readOnly = false
+	}
+
+	length := len(o.obTableOperations)
+	if o.sameType && length > 1 && o.obTableOperations[length-1].opType != o.obTableOperations[length-2].opType {
+		o.sameType = false
+	}
 }
 
 func (o *ObTableBatchOperation) ReadOnly() bool {

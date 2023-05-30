@@ -27,33 +27,37 @@ import (
 )
 
 func InterfaceToString(i interface{}) string {
-	switch v := i.(type) {
-	case string:
-		return v
-	case int:
-		return strconv.Itoa(v)
+	switch t := i.(type) {
 	case bool:
-		return strconv.FormatBool(v)
+		return strconv.FormatBool(t)
+	case int:
+		return strconv.Itoa(t)
+	case int8:
+		return strconv.FormatInt(int64(t), 10)
+	case int16:
+		return strconv.FormatInt(int64(t), 10)
+	case int32:
+		return strconv.FormatInt(int64(t), 10)
+	case int64:
+		return strconv.FormatInt(t, 10)
+	case uint:
+		return strconv.FormatUint(uint64(t), 10)
+	case uint8:
+		return strconv.FormatUint(uint64(t), 10)
+	case uint16:
+		return strconv.FormatUint(uint64(t), 10)
+	case uint32:
+		return strconv.FormatUint(uint64(t), 10)
+	case uint64:
+		return strconv.FormatUint(t, 10)
 	case float32:
-		return strconv.FormatFloat(float64(v), 'f', -1, 32)
+		return strconv.FormatFloat(float64(t), 'f', -1, 32)
 	case float64:
-		return strconv.FormatFloat(v, 'f', -1, 64)
-	case complex64:
-		return fmt.Sprintf("(%f+%fi)", real(v), imag(v))
-	case complex128:
-		return fmt.Sprintf("(%f+%fi)", real(v), imag(v))
-	case byte:
-		return string(v)
-	case rune:
-		return string(v)
-	case error:
-		return v.Error()
-	case fmt.Stringer:
-		return v.String()
-	case uintptr, unsafe.Pointer:
-		return fmt.Sprintf("%p", v)
+		return strconv.FormatFloat(t, 'f', -1, 64)
+	case string:
+		return t
 	default:
-		return fmt.Sprintf("%v", v)
+		return fmt.Sprintf("%v", t)
 	}
 }
 

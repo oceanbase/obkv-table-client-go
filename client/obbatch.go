@@ -223,10 +223,10 @@ func (b *obBatchExecutor) partitionExecute(
 	// 1.1 Construct batch operation
 	batchOp := protocol.NewObTableBatchOperation()
 	ops := make([]*protocol.ObTableOperation, 0, len(partOp.ops))
-	for _, op := range partOp.ops {
-		ops = append(ops, op.op)
-	}
 	batchOp.SetObTableOperations(ops)
+	for _, op := range partOp.ops {
+		batchOp.AppendObTableOperation(op.op)
+	}
 	// 1.2 Construct batch operation request
 	request := protocol.NewObTableBatchOperationRequest(
 		b.tableName,
