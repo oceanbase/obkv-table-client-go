@@ -48,7 +48,7 @@ func NewObTableOperation(
 
 		object := NewObObjectWithParams(objMeta, column.Value())
 
-		tableEntity.RowKey().AppendKey(object)
+		tableEntity.AppendRowKeyElement(object)
 	}
 
 	// add column

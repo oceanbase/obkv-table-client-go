@@ -33,7 +33,7 @@ const (
 
 type ObTableEntity struct {
 	ObUniVersionHeader
-	rowKey     *RowKey
+	rowKey     []*ObObject
 	properties map[string]*ObObject
 }
 
@@ -43,7 +43,7 @@ func NewObTableEntity() *ObTableEntity {
 			version:       1,
 			contentLength: 0,
 		},
-		rowKey:     NewRowKey(),
+		rowKey:     nil,
 		properties: nil,
 	}
 }
@@ -54,17 +54,29 @@ func NewObTableEntityWithParams(rowKeyLen int, propertiesLen int) *ObTableEntity
 			version:       1,
 			contentLength: 0,
 		},
-		rowKey:     NewRowKeyWithParams(rowKeyLen),
+		rowKey:     make([]*ObObject, 0, rowKeyLen),
 		properties: make(map[string]*ObObject, propertiesLen),
 	}
 }
 
-func (e *ObTableEntity) RowKey() *RowKey {
+func (e *ObTableEntity) RowKey() []*ObObject {
 	return e.rowKey
 }
 
-func (e *ObTableEntity) SetRowKey(rowKey *RowKey) {
+func (e *ObTableEntity) SetRowKey(rowKey []*ObObject) {
 	e.rowKey = rowKey
+}
+
+func (e *ObTableEntity) AppendRowKeyElement(object *ObObject) {
+	e.rowKey = append(e.rowKey, object)
+}
+
+func (e *ObTableEntity) GetRowKeyValue() []interface{} {
+	rowKey := make([]interface{}, 0, len(e.rowKey))
+	for idx := range e.rowKey {
+		rowKey = append(rowKey, e.rowKey[idx].value)
+	}
+	return rowKey
 }
 
 func (e *ObTableEntity) Properties() map[string]*ObObject {
@@ -87,21 +99,16 @@ func (e *ObTableEntity) DelProperty(name string) {
 	delete(e.properties, name)
 }
 
-// GetSimpleProperties todo optimize
-func (e *ObTableEntity) GetSimpleProperties() map[string]interface{} {
-	m := make(map[string]interface{}, len(e.properties))
-	for k, v := range e.properties {
-		m[k] = v.value
-	}
-	return m
-}
-
 func (e *ObTableEntity) PayloadLen() int {
 	return e.PayloadContentLen() + e.ObUniVersionHeader.UniVersionHeaderLen() // Do not change the order
 }
 
 func (e *ObTableEntity) PayloadContentLen() int {
-	totalLen := e.rowKey.EncodedLength()
+	totalLen := util.EncodedLengthByVi64(int64(len(e.rowKey)))
+
+	for _, key := range e.rowKey {
+		totalLen += key.EncodedLength()
+	}
 
 	totalLen += util.EncodedLengthByVi64(int64(len(e.properties)))
 
@@ -117,7 +124,11 @@ func (e *ObTableEntity) PayloadContentLen() int {
 func (e *ObTableEntity) Encode(buffer *bytes.Buffer) {
 	e.ObUniVersionHeader.Encode(buffer)
 
-	e.rowKey.Encode(buffer)
+	util.EncodeVi64(buffer, int64(len(e.rowKey)))
+
+	for _, key := range e.rowKey {
+		key.Encode(buffer)
+	}
 
 	util.EncodeVi64(buffer, int64(len(e.properties)))
 
@@ -130,13 +141,21 @@ func (e *ObTableEntity) Encode(buffer *bytes.Buffer) {
 func (e *ObTableEntity) Decode(buffer *bytes.Buffer) {
 	e.ObUniVersionHeader.Decode(buffer)
 
-	e.rowKey.Decode(buffer)
+	rowKeyLen := util.DecodeVi64(buffer)
+
+	e.rowKey = make([]*ObObject, 0, rowKeyLen)
+
+	var i int64
+	for i = 0; i < rowKeyLen; i++ {
+		key := NewObObject()
+		key.Decode(buffer)
+		e.rowKey = append(e.rowKey, key)
+	}
 
 	propertiesLen := util.DecodeVi64(buffer)
 
 	e.properties = make(map[string]*ObObject, propertiesLen)
 
-	var i int64
 	for i = 0; i < propertiesLen; i++ {
 		name := util.DecodeVString(buffer)
 
@@ -155,10 +174,23 @@ func (e *ObTableEntity) String() string {
 
 	var rowKeyStr = "nil"
 	if e.rowKey != nil {
-		rowKeyStr = e.rowKey.String()
+		var keysStr string
+		keysStr = keysStr + "["
+		for i := 0; i < len(e.rowKey); i++ {
+			if i > 0 {
+				keysStr += ", "
+			}
+			if e.rowKey[i] != nil {
+				keysStr += e.rowKey[i].String()
+			} else {
+				keysStr += "nil"
+			}
+		}
+		keysStr += "]"
+		rowKeyStr = "rowKey:" + keysStr
 	}
 
-	var propertiesStr = "{"
+	var propertiesStr = "properties:{"
 	var i = 0
 	for k, v := range e.properties {
 		if i > 0 {

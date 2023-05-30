@@ -34,14 +34,6 @@ type ObObjectMeta struct {
 	scale          int8
 }
 
-func NewObObjectMeta() *ObObjectMeta {
-	return &ObObjectMeta{objType: nil, collationLevel: 0, collationType: 0, scale: 0}
-}
-
-func NewObObjectMetaWithParams(objType ObObjType, obCollationLevel ObCollationLevel, obCollationType ObCollationType, scale int8) *ObObjectMeta {
-	return &ObObjectMeta{objType: objType, collationLevel: obCollationLevel, collationType: obCollationType, scale: scale}
-}
-
 func (m *ObObjectMeta) ObjType() ObObjType {
 	return m.objType
 }
@@ -109,13 +101,13 @@ type ObObjType interface {
 	Encode(buffer *bytes.Buffer, value interface{})
 	Decode(buffer *bytes.Buffer, obCollationType ObCollationType) interface{}
 	EncodedLength(value interface{}) int
-	DefaultObjMeta() *ObObjectMeta
+	DefaultObjMeta() ObObjectMeta
 	CheckTypeForValue(value interface{}, obCollationType ObCollationType) (interface{}, error)
 	Value() ObObjTypeValue
 	String() string
 }
 
-func DefaultObjMeta(value interface{}) (*ObObjectMeta, error) {
+func DefaultObjMeta(value interface{}) (ObObjectMeta, error) {
 	if value == nil {
 		return ObObjTypes[ObObjTypeNullTypeValue].DefaultObjMeta(), nil
 	}
@@ -149,7 +141,7 @@ func DefaultObjMeta(value interface{}) (*ObObjectMeta, error) {
 	case time.Duration:
 		return ObObjTypes[ObObjTypeDateTimeTypeValue].DefaultObjMeta(), nil
 	default:
-		return nil, errors.Errorf("not match objmeta, value: %v", value)
+		return ObObjectMeta{}, errors.Errorf("not match objmeta, value: %v", value)
 	}
 }
 
@@ -378,8 +370,8 @@ func (t *ObNullType) EncodedLength(value interface{}) int {
 	return 0
 }
 
-func (t *ObNullType) DefaultObjMeta() *ObObjectMeta {
-	return NewObObjectMetaWithParams(t, ObCollationLevelIgnorable, ObCollationTypeBinary, -1)
+func (t *ObNullType) DefaultObjMeta() ObObjectMeta {
+	return ObObjectMeta{t, ObCollationLevelIgnorable, ObCollationTypeBinary, -1}
 }
 
 func (t *ObNullType) CheckTypeForValue(value interface{}, obCollationType ObCollationType) (interface{}, error) {
@@ -421,8 +413,8 @@ func (t *ObTinyIntType) EncodedLength(value interface{}) int {
 	return 1
 }
 
-func (t *ObTinyIntType) DefaultObjMeta() *ObObjectMeta {
-	return NewObObjectMetaWithParams(t, ObCollationLevelNumeric, ObCollationTypeBinary, -1)
+func (t *ObTinyIntType) DefaultObjMeta() ObObjectMeta {
+	return ObObjectMeta{t, ObCollationLevelNumeric, ObCollationTypeBinary, -1}
 }
 
 func (t *ObTinyIntType) CheckTypeForValue(value interface{}, obCollationType ObCollationType) (interface{}, error) {
@@ -462,8 +454,8 @@ func (t *ObSmallIntType) EncodedLength(value interface{}) int {
 	return util.EncodedLengthByVi32(int32(value.(int16)))
 }
 
-func (t *ObSmallIntType) DefaultObjMeta() *ObObjectMeta {
-	return NewObObjectMetaWithParams(t, ObCollationLevelNumeric, ObCollationTypeBinary, -1)
+func (t *ObSmallIntType) DefaultObjMeta() ObObjectMeta {
+	return ObObjectMeta{t, ObCollationLevelNumeric, ObCollationTypeBinary, -1}
 }
 
 func (t *ObSmallIntType) CheckTypeForValue(value interface{}, obCollationType ObCollationType) (interface{}, error) {
@@ -500,8 +492,8 @@ func (t *ObMediumIntType) EncodedLength(value interface{}) int {
 	return util.EncodedLengthByVi32(value.(int32))
 }
 
-func (t *ObMediumIntType) DefaultObjMeta() *ObObjectMeta {
-	return NewObObjectMetaWithParams(t, ObCollationLevelNumeric, ObCollationTypeBinary, -1)
+func (t *ObMediumIntType) DefaultObjMeta() ObObjectMeta {
+	return ObObjectMeta{t, ObCollationLevelNumeric, ObCollationTypeBinary, -1}
 }
 
 func (t *ObMediumIntType) CheckTypeForValue(value interface{}, obCollationType ObCollationType) (interface{}, error) {
@@ -534,8 +526,8 @@ func (t *ObInt32Type) EncodedLength(value interface{}) int {
 	return util.EncodedLengthByVi32(value.(int32))
 }
 
-func (t *ObInt32Type) DefaultObjMeta() *ObObjectMeta {
-	return NewObObjectMetaWithParams(t, ObCollationLevelNumeric, ObCollationTypeBinary, -1)
+func (t *ObInt32Type) DefaultObjMeta() ObObjectMeta {
+	return ObObjectMeta{t, ObCollationLevelNumeric, ObCollationTypeBinary, -1}
 }
 
 func (t *ObInt32Type) CheckTypeForValue(value interface{}, obCollationType ObCollationType) (interface{}, error) {
@@ -572,8 +564,8 @@ func (t *ObInt64Type) EncodedLength(value interface{}) int {
 	return util.EncodedLengthByVi64(value.(int64))
 }
 
-func (t *ObInt64Type) DefaultObjMeta() *ObObjectMeta {
-	return NewObObjectMetaWithParams(t, ObCollationLevelNumeric, ObCollationTypeBinary, -1)
+func (t *ObInt64Type) DefaultObjMeta() ObObjectMeta {
+	return ObObjectMeta{t, ObCollationLevelNumeric, ObCollationTypeBinary, -1}
 }
 
 func (t *ObInt64Type) CheckTypeForValue(value interface{}, obCollationType ObCollationType) (interface{}, error) {
@@ -610,8 +602,8 @@ func (t *ObUTinyIntType) EncodedLength(value interface{}) int {
 	return 1
 }
 
-func (t *ObUTinyIntType) DefaultObjMeta() *ObObjectMeta {
-	return NewObObjectMetaWithParams(t, ObCollationLevelNumeric, ObCollationTypeBinary, -1)
+func (t *ObUTinyIntType) DefaultObjMeta() ObObjectMeta {
+	return ObObjectMeta{t, ObCollationLevelNumeric, ObCollationTypeBinary, -1}
 }
 
 func (t *ObUTinyIntType) CheckTypeForValue(value interface{}, obCollationType ObCollationType) (interface{}, error) {
@@ -648,8 +640,8 @@ func (t *ObUSmallIntType) EncodedLength(value interface{}) int {
 	return util.EncodedLengthByVi32(int32(value.(uint16)))
 }
 
-func (t *ObUSmallIntType) DefaultObjMeta() *ObObjectMeta {
-	return NewObObjectMetaWithParams(t, ObCollationLevelNumeric, ObCollationTypeBinary, -1)
+func (t *ObUSmallIntType) DefaultObjMeta() ObObjectMeta {
+	return ObObjectMeta{t, ObCollationLevelNumeric, ObCollationTypeBinary, -1}
 }
 
 func (t *ObUSmallIntType) CheckTypeForValue(value interface{}, obCollationType ObCollationType) (interface{}, error) {
@@ -686,8 +678,8 @@ func (t *ObUMediumIntType) EncodedLength(value interface{}) int {
 	return util.EncodedLengthByVi32(int32(value.(uint32)))
 }
 
-func (t *ObUMediumIntType) DefaultObjMeta() *ObObjectMeta {
-	return NewObObjectMetaWithParams(t, ObCollationLevelNumeric, ObCollationTypeBinary, -1)
+func (t *ObUMediumIntType) DefaultObjMeta() ObObjectMeta {
+	return ObObjectMeta{t, ObCollationLevelNumeric, ObCollationTypeBinary, -1}
 }
 
 func (t *ObUMediumIntType) CheckTypeForValue(value interface{}, obCollationType ObCollationType) (interface{}, error) {
@@ -720,8 +712,8 @@ func (t *ObUInt32Type) EncodedLength(value interface{}) int {
 	return util.EncodedLengthByVi32(int32(value.(uint32)))
 }
 
-func (t *ObUInt32Type) DefaultObjMeta() *ObObjectMeta {
-	return NewObObjectMetaWithParams(t, ObCollationLevelNumeric, ObCollationTypeBinary, -1)
+func (t *ObUInt32Type) DefaultObjMeta() ObObjectMeta {
+	return ObObjectMeta{t, ObCollationLevelNumeric, ObCollationTypeBinary, -1}
 }
 
 func (t *ObUInt32Type) CheckTypeForValue(value interface{}, obCollationType ObCollationType) (interface{}, error) {
@@ -758,8 +750,8 @@ func (t *ObUInt64Type) EncodedLength(value interface{}) int {
 	return util.EncodedLengthByVi64(int64(value.(uint64)))
 }
 
-func (t *ObUInt64Type) DefaultObjMeta() *ObObjectMeta {
-	return NewObObjectMetaWithParams(t, ObCollationLevelNumeric, ObCollationTypeBinary, -1)
+func (t *ObUInt64Type) DefaultObjMeta() ObObjectMeta {
+	return ObObjectMeta{t, ObCollationLevelNumeric, ObCollationTypeBinary, -1}
 }
 
 func (t *ObUInt64Type) CheckTypeForValue(value interface{}, obCollationType ObCollationType) (interface{}, error) {
@@ -796,8 +788,8 @@ func (t *ObFloatType) EncodedLength(value interface{}) int {
 	return util.EncodedLengthByVf32(value.(float32))
 }
 
-func (t *ObFloatType) DefaultObjMeta() *ObObjectMeta {
-	return NewObObjectMetaWithParams(t, ObCollationLevelNumeric, ObCollationTypeBinary, -1)
+func (t *ObFloatType) DefaultObjMeta() ObObjectMeta {
+	return ObObjectMeta{t, ObCollationLevelNumeric, ObCollationTypeBinary, -1}
 }
 
 func (t *ObFloatType) CheckTypeForValue(value interface{}, obCollationType ObCollationType) (interface{}, error) {
@@ -834,8 +826,8 @@ func (t *ObDoubleType) EncodedLength(value interface{}) int {
 	return util.EncodedLengthByVf64(value.(float64))
 }
 
-func (t *ObDoubleType) DefaultObjMeta() *ObObjectMeta {
-	return NewObObjectMetaWithParams(t, ObCollationLevelNumeric, ObCollationTypeBinary, -1)
+func (t *ObDoubleType) DefaultObjMeta() ObObjectMeta {
+	return ObObjectMeta{t, ObCollationLevelNumeric, ObCollationTypeBinary, -1}
 }
 
 func (t *ObDoubleType) CheckTypeForValue(value interface{}, obCollationType ObCollationType) (interface{}, error) {
@@ -872,8 +864,8 @@ func (t *ObUFloatType) EncodedLength(value interface{}) int {
 	return 0
 }
 
-func (t *ObUFloatType) DefaultObjMeta() *ObObjectMeta {
-	return NewObObjectMetaWithParams(t, ObCollationLevelNumeric, ObCollationTypeBinary, -1)
+func (t *ObUFloatType) DefaultObjMeta() ObObjectMeta {
+	return ObObjectMeta{t, ObCollationLevelNumeric, ObCollationTypeBinary, -1}
 }
 
 func (t *ObUFloatType) CheckTypeForValue(value interface{}, obCollationType ObCollationType) (interface{}, error) {
@@ -906,8 +898,8 @@ func (t *ObUDoubleType) EncodedLength(value interface{}) int {
 	return 0
 }
 
-func (t *ObUDoubleType) DefaultObjMeta() *ObObjectMeta {
-	return NewObObjectMetaWithParams(t, ObCollationLevelNumeric, ObCollationTypeBinary, -1)
+func (t *ObUDoubleType) DefaultObjMeta() ObObjectMeta {
+	return ObObjectMeta{t, ObCollationLevelNumeric, ObCollationTypeBinary, -1}
 }
 
 func (t *ObUDoubleType) CheckTypeForValue(value interface{}, obCollationType ObCollationType) (interface{}, error) {
@@ -940,8 +932,8 @@ func (t *ObNumberType) EncodedLength(value interface{}) int {
 	return 0
 }
 
-func (t *ObNumberType) DefaultObjMeta() *ObObjectMeta {
-	return NewObObjectMetaWithParams(t, ObCollationLevelNumeric, ObCollationTypeBinary, -1)
+func (t *ObNumberType) DefaultObjMeta() ObObjectMeta {
+	return ObObjectMeta{t, ObCollationLevelNumeric, ObCollationTypeBinary, -1}
 }
 
 func (t *ObNumberType) CheckTypeForValue(value interface{}, obCollationType ObCollationType) (interface{}, error) {
@@ -974,8 +966,8 @@ func (t *ObUNumberType) EncodedLength(value interface{}) int {
 	return 0
 }
 
-func (t *ObUNumberType) DefaultObjMeta() *ObObjectMeta {
-	return NewObObjectMetaWithParams(t, ObCollationLevelNumeric, ObCollationTypeBinary, -1)
+func (t *ObUNumberType) DefaultObjMeta() ObObjectMeta {
+	return ObObjectMeta{t, ObCollationLevelNumeric, ObCollationTypeBinary, -1}
 }
 
 func (t *ObUNumberType) CheckTypeForValue(value interface{}, obCollationType ObCollationType) (interface{}, error) {
@@ -1008,8 +1000,8 @@ func (t *ObDateTimeType) EncodedLength(value interface{}) int {
 	return util.EncodedLengthByVi64(int64(value.(time.Duration)))
 }
 
-func (t *ObDateTimeType) DefaultObjMeta() *ObObjectMeta {
-	return NewObObjectMetaWithParams(t, ObCollationLevelNumeric, ObCollationTypeBinary, -1)
+func (t *ObDateTimeType) DefaultObjMeta() ObObjectMeta {
+	return ObObjectMeta{t, ObCollationLevelNumeric, ObCollationTypeBinary, -1}
 }
 
 func (t *ObDateTimeType) CheckTypeForValue(value interface{}, obCollationType ObCollationType) (interface{}, error) {
@@ -1046,8 +1038,8 @@ func (t *ObTimestampType) EncodedLength(value interface{}) int {
 	return util.EncodedLengthByVi64(int64(value.(time.Duration)))
 }
 
-func (t *ObTimestampType) DefaultObjMeta() *ObObjectMeta {
-	return NewObObjectMetaWithParams(t, ObCollationLevelNumeric, ObCollationTypeBinary, -1)
+func (t *ObTimestampType) DefaultObjMeta() ObObjectMeta {
+	return ObObjectMeta{t, ObCollationLevelNumeric, ObCollationTypeBinary, -1}
 }
 
 func (t *ObTimestampType) CheckTypeForValue(value interface{}, obCollationType ObCollationType) (interface{}, error) {
@@ -1084,8 +1076,8 @@ func (t *ObDateType) EncodedLength(value interface{}) int {
 	return util.EncodedLengthByVi64(int64(value.(time.Duration)))
 }
 
-func (t *ObDateType) DefaultObjMeta() *ObObjectMeta {
-	return NewObObjectMetaWithParams(t, ObCollationLevelNumeric, ObCollationTypeBinary, -1)
+func (t *ObDateType) DefaultObjMeta() ObObjectMeta {
+	return ObObjectMeta{t, ObCollationLevelNumeric, ObCollationTypeBinary, -1}
 }
 
 func (t *ObDateType) CheckTypeForValue(value interface{}, obCollationType ObCollationType) (interface{}, error) {
@@ -1122,8 +1114,8 @@ func (t *ObTimeType) EncodedLength(value interface{}) int {
 	return util.EncodedLengthByVi64(int64(value.(time.Duration)))
 }
 
-func (t *ObTimeType) DefaultObjMeta() *ObObjectMeta {
-	return NewObObjectMetaWithParams(t, ObCollationLevelNumeric, ObCollationTypeBinary, -1)
+func (t *ObTimeType) DefaultObjMeta() ObObjectMeta {
+	return ObObjectMeta{t, ObCollationLevelNumeric, ObCollationTypeBinary, -1}
 }
 
 func (t *ObTimeType) CheckTypeForValue(value interface{}, obCollationType ObCollationType) (interface{}, error) {
@@ -1160,8 +1152,8 @@ func (t *ObYearType) EncodedLength(value interface{}) int {
 	return 1
 }
 
-func (t *ObYearType) DefaultObjMeta() *ObObjectMeta {
-	return NewObObjectMetaWithParams(t, ObCollationLevelNumeric, ObCollationTypeBinary, -1)
+func (t *ObYearType) DefaultObjMeta() ObObjectMeta {
+	return ObObjectMeta{t, ObCollationLevelNumeric, ObCollationTypeBinary, -1}
 }
 
 func (t *ObYearType) CheckTypeForValue(value interface{}, obCollationType ObCollationType) (interface{}, error) {
@@ -1194,8 +1186,8 @@ func (t *ObVarcharType) EncodedLength(value interface{}) int {
 	return EncodedLengthByText(value)
 }
 
-func (t *ObVarcharType) DefaultObjMeta() *ObObjectMeta {
-	return NewObObjectMetaWithParams(t, ObCollationLevelExplicit, ObCollationTypeUtf8mb4GeneralCi, -1)
+func (t *ObVarcharType) DefaultObjMeta() ObObjectMeta {
+	return ObObjectMeta{t, ObCollationLevelExplicit, ObCollationTypeUtf8mb4GeneralCi, -1}
 }
 
 func (t *ObVarcharType) CheckTypeForValue(value interface{}, obCollationType ObCollationType) (interface{}, error) {
@@ -1240,8 +1232,8 @@ func (t *ObCharType) EncodedLength(value interface{}) int {
 	return EncodedLengthByText(value)
 }
 
-func (t *ObCharType) DefaultObjMeta() *ObObjectMeta {
-	return NewObObjectMetaWithParams(t, ObCollationLevelExplicit, ObCollationTypeUtf8mb4GeneralCi, -1)
+func (t *ObCharType) DefaultObjMeta() ObObjectMeta {
+	return ObObjectMeta{t, ObCollationLevelExplicit, ObCollationTypeUtf8mb4GeneralCi, -1}
 }
 
 func (t *ObCharType) CheckTypeForValue(value interface{}, obCollationType ObCollationType) (interface{}, error) {
@@ -1286,8 +1278,8 @@ func (t *ObHexStringType) EncodedLength(value interface{}) int {
 	return 0
 }
 
-func (t *ObHexStringType) DefaultObjMeta() *ObObjectMeta {
-	return NewObObjectMetaWithParams(t, ObCollationLevelNumeric, ObCollationTypeBinary, -1)
+func (t *ObHexStringType) DefaultObjMeta() ObObjectMeta {
+	return ObObjectMeta{t, ObCollationLevelNumeric, ObCollationTypeBinary, -1}
 }
 
 func (t *ObHexStringType) CheckTypeForValue(value interface{}, obCollationType ObCollationType) (interface{}, error) {
@@ -1320,8 +1312,8 @@ func (t *ObExtendType) EncodedLength(value interface{}) int {
 	return util.EncodedLengthByVi64(value.(int64))
 }
 
-func (t *ObExtendType) DefaultObjMeta() *ObObjectMeta {
-	return NewObObjectMetaWithParams(t, ObCollationLevelNumeric, ObCollationTypeBinary, -1)
+func (t *ObExtendType) DefaultObjMeta() ObObjectMeta {
+	return ObObjectMeta{t, ObCollationLevelNumeric, ObCollationTypeBinary, -1}
 }
 
 func (t *ObExtendType) CheckTypeForValue(value interface{}, obCollationType ObCollationType) (interface{}, error) {
@@ -1354,8 +1346,8 @@ func (t *ObUnknownType) EncodedLength(value interface{}) int {
 	return 0
 }
 
-func (t *ObUnknownType) DefaultObjMeta() *ObObjectMeta {
-	return NewObObjectMetaWithParams(t, ObCollationLevelNumeric, ObCollationTypeBinary, -1)
+func (t *ObUnknownType) DefaultObjMeta() ObObjectMeta {
+	return ObObjectMeta{t, ObCollationLevelNumeric, ObCollationTypeBinary, -1}
 }
 
 func (t *ObUnknownType) CheckTypeForValue(value interface{}, obCollationType ObCollationType) (interface{}, error) {
@@ -1388,8 +1380,8 @@ func (t *ObTinyTextType) EncodedLength(value interface{}) int {
 	return EncodedLengthByText(value)
 }
 
-func (t *ObTinyTextType) DefaultObjMeta() *ObObjectMeta {
-	return NewObObjectMetaWithParams(t, ObCollationLevelNumeric, ObCollationTypeBinary, -1)
+func (t *ObTinyTextType) DefaultObjMeta() ObObjectMeta {
+	return ObObjectMeta{t, ObCollationLevelNumeric, ObCollationTypeBinary, -1}
 }
 
 func (t *ObTinyTextType) CheckTypeForValue(value interface{}, obCollationType ObCollationType) (interface{}, error) {
@@ -1434,8 +1426,8 @@ func (t *ObTextType) EncodedLength(value interface{}) int {
 	return EncodedLengthByText(value)
 }
 
-func (t *ObTextType) DefaultObjMeta() *ObObjectMeta {
-	return NewObObjectMetaWithParams(t, ObCollationLevelNumeric, ObCollationTypeBinary, -1)
+func (t *ObTextType) DefaultObjMeta() ObObjectMeta {
+	return ObObjectMeta{t, ObCollationLevelNumeric, ObCollationTypeBinary, -1}
 }
 
 func (t *ObTextType) CheckTypeForValue(value interface{}, obCollationType ObCollationType) (interface{}, error) {
@@ -1480,8 +1472,8 @@ func (t *ObMediumTextType) EncodedLength(value interface{}) int {
 	return EncodedLengthByText(value)
 }
 
-func (t *ObMediumTextType) DefaultObjMeta() *ObObjectMeta {
-	return NewObObjectMetaWithParams(t, ObCollationLevelNumeric, ObCollationTypeBinary, -1)
+func (t *ObMediumTextType) DefaultObjMeta() ObObjectMeta {
+	return ObObjectMeta{t, ObCollationLevelNumeric, ObCollationTypeBinary, -1}
 }
 
 func (t *ObMediumTextType) CheckTypeForValue(value interface{}, obCollationType ObCollationType) (interface{}, error) {
@@ -1526,8 +1518,8 @@ func (t *ObLongTextType) EncodedLength(value interface{}) int {
 	return EncodedLengthByText(value)
 }
 
-func (t *ObLongTextType) DefaultObjMeta() *ObObjectMeta {
-	return NewObObjectMetaWithParams(t, ObCollationLevelNumeric, ObCollationTypeBinary, -1)
+func (t *ObLongTextType) DefaultObjMeta() ObObjectMeta {
+	return ObObjectMeta{t, ObCollationLevelNumeric, ObCollationTypeBinary, -1}
 }
 
 func (t *ObLongTextType) CheckTypeForValue(value interface{}, obCollationType ObCollationType) (interface{}, error) {
@@ -1572,8 +1564,8 @@ func (t *ObBitType) EncodedLength(value interface{}) int {
 	return util.EncodedLengthByVi64(value.(int64))
 }
 
-func (t *ObBitType) DefaultObjMeta() *ObObjectMeta {
-	return NewObObjectMetaWithParams(t, ObCollationLevelNumeric, ObCollationTypeBinary, -1)
+func (t *ObBitType) DefaultObjMeta() ObObjectMeta {
+	return ObObjectMeta{t, ObCollationLevelNumeric, ObCollationTypeBinary, -1}
 }
 
 func (t *ObBitType) CheckTypeForValue(value interface{}, obCollationType ObCollationType) (interface{}, error) {

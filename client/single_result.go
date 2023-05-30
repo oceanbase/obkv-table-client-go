@@ -70,11 +70,11 @@ func (r *obSingleResult) RowKey() []interface{} {
 	if r.affectedEntity.RowKey() == nil {
 		return nil
 	}
-	if r.affectedEntity.RowKey().Keys() == nil || len(r.affectedEntity.RowKey().Keys()) == 0 {
+	if r.affectedEntity.RowKey() == nil || len(r.affectedEntity.RowKey()) == 0 {
 		return nil
 	}
 
-	keys := r.affectedEntity.RowKey().Keys()
+	keys := r.affectedEntity.RowKey()
 	res := make([]interface{}, 0, len(keys))
 	for _, key := range keys {
 		if key != nil {

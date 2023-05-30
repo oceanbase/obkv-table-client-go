@@ -42,10 +42,13 @@ func TestSingleResult(t *testing.T) {
 	assert.EqualValues(t, nil, res.Value("C2"))
 
 	assert.EqualValues(t, []interface{}(nil), res.RowKey())
-	keys := []*protocol.ObObject{obj}
-	rowKey := protocol.NewRowKey()
-	rowKey.SetKeys(keys)
+
+	rowKey := make([]*protocol.ObObject, 0, 1)
+	obj = protocol.NewObObject()
+	obj.SetValue(2)
+	entity = protocol.NewObTableEntity()
 	entity.SetRowKey(rowKey)
-	r := res.RowKey()
-	assert.EqualValues(t, 1, r[0])
+	entity.AppendRowKeyElement(obj)
+	res.affectedEntity = entity
+	assert.EqualValues(t, 2, res.RowKey()[0])
 }
