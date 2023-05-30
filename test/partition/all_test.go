@@ -10,54 +10,74 @@ import (
 
 var cli client.Client
 
+const partitionTestRecordCount = 10
+
 func setup() {
 	cli = test.CreateClient()
 
 	test.CreateDB()
 
 	// hash
-	test.CreateTable(hashBigIntL0CreateStatement)
-	test.CreateTable(hashBigIntL1CreateStatement)
-	test.CreateTable(hashBigIntL2CreateStatement)
+	test.CreateTable(hashBigintL0CreateStatement)
+	test.CreateTable(hashBigintL1CreateStatement)
+	test.CreateTable(hashBigintL2CreateStatement)
 
-	// key-bigint
-	test.CreateTable(keyBigIntL0CreateStatement)
-	test.CreateTable(keyBigIntL1CreateStatement)
-	test.CreateTable(keyBigIntL2CreateStatement)
+	// key-Bigint
+	test.CreateTable(keyBigintL1CreateStatement)
+	test.CreateTable(keyBigintL2CreateStatement)
 
 	// key-varchar
-	test.CreateTable(keyVarcharL0CreateStatement)
 	test.CreateTable(keyVarcharL1CreateStatement)
 	test.CreateTable(keyVarcharL2CreateStatement)
 
 	// key-varbinary
-	test.CreateTable(keyVarBinaryL0CreateStatement)
 	test.CreateTable(keyVarBinaryL1CreateStatement)
 	test.CreateTable(keyVarBinaryL2CreateStatement)
+
+	// key-MultiBigint
+	test.CreateTable(keyMultiBigintL1CreateStatement)
+	test.CreateTable(keyMultiBigintL2CreateStatement)
+
+	// key-MultiVarchar
+	test.CreateTable(keyMultiVarcharL1CreateStatement)
+	test.CreateTable(keyMultiVarcharL2CreateStatement)
+
+	// key-VarBinary
+	test.CreateTable(keyMultiVarBinaryL1CreateStatement)
+	test.CreateTable(keyMultiVarBinaryL2CreateStatement)
 }
 
 func teardown() {
 	cli.Close()
 
 	// hash
-	test.DropTable(hashBigIntL0TableName)
-	test.DropTable(hashBigIntL1TableName)
-	test.DropTable(hashBigIntL2TableName)
+	test.DropTable(hashBigintL0TableName)
+	test.DropTable(hashBigintL1TableName)
+	test.DropTable(hashBigintL2TableName)
 
-	// key-bigint
-	test.DropTable(keyBigIntL0TableName)
-	test.DropTable(keyBigIntL1TableName)
-	test.DropTable(keyBigIntL2TableName)
+	// key-Bigint
+	test.DropTable(keyBigintL1TableName)
+	test.DropTable(keyBigintL2TableName)
 
 	// key-varchar
-	test.DropTable(keyVarcharL0TableName)
 	test.DropTable(keyVarcharL1TableName)
 	test.DropTable(keyVarcharL2TableName)
 
 	// key-varbinary
-	test.DropTable(keyVarBinaryL0TableName)
 	test.DropTable(keyVarBinaryL1TableName)
 	test.DropTable(keyVarBinaryL2TableName)
+
+	// key-MultiBigint
+	test.DropTable(keyMultiBigintL1TableName)
+	test.DropTable(keyMultiBigintL2TableName)
+
+	// key-MultiVarchar
+	test.DropTable(keyMultiVarcharL1TableName)
+	test.DropTable(keyMultiVarcharL2TableName)
+
+	// key-VarBinary
+	test.DropTable(keyMultiVarBinaryL1TableName)
+	test.DropTable(keyMultiVarBinaryL2TableName)
 
 	test.CloseDB()
 }

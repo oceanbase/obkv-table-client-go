@@ -30,97 +30,103 @@ import (
 )
 
 const (
-	keyBigIntL2TableName       = "keyBigIntL2"
-	keyBigIntL2CreateStatement = "create table if not exists keyBigIntL2(`c1` bigint(20) not null, c2 bigint(20) not null, " +
-		"primary key (`c1`, `c2`)) partition by key(`c1`) subpartition by key(`c2`) subpartitions 4 partitions 16;"
+	keyBigintL2TableName       = "keyBigintL2"
+	keyBigintL2CreateStatement = "create table if not exists keyBigintL2(`c1` bigint(20) not null, c2 bigint(20) not null, " +
+		"c3 bigint(20) not null, primary key (`c1`, `c2`, `c3`)) partition by key(`c1`, `c2`) subpartition by key(`c3`) subpartitions 4 partitions 16;"
+	keyMultiBigintL2TableName       = "keyMultiBigintL2"
+	keyMultiBigintL2CreateStatement = "create table if not exists keyMultiBigintL2(`c1` bigint(20) not null, c2 bigint(20) not null, " +
+		"c3 bigint(20) not null, primary key (`c1`, `c2`, `c3`)) partition by key(`c1`, `c2`) subpartition by key(`c3`) subpartitions 4 partitions 16;"
 
 	keyVarcharL2TableName       = "keyVarcharL2"
 	keyVarcharL2CreateStatement = "create table if not exists keyVarcharL2(`c1` varchar(20) not null, `c2` varchar(20) not null, " +
-		"primary key (`c1`, `c2`)) partition by key(`c1`) subpartition by key(`c2`) subpartitions 4 partitions 16;"
+		"c3 varchar(20) not null, primary key (`c1`, `c2`, `c3`)) partition by key(`c1`, `c2`) subpartition by key(`c3`) subpartitions 4 partitions 16;"
+	keyMultiVarcharL2TableName       = "keyMultiVarcharL2"
+	keyMultiVarcharL2CreateStatement = "create table if not exists keyMultiVarcharL2(`c1` varchar(20) not null, `c2` varchar(20) not null, " +
+		"c3 varchar(20) not null, primary key (`c1`, `c2`, `c3`)) partition by key(`c1`, `c2`) subpartition by key(`c3`) subpartitions 4 partitions 16;"
 
 	keyVarBinaryL2TableName       = "keyVarBinaryL2"
-	keyVarBinaryL2CreateStatement = "create table if not exists keyVarBinaryL2(`c1` varchar(20) not null, `c2` varchar(20) not null, " +
-		"primary key (`c1`, `c2`)) partition by key(`c1`) subpartition by key(`c2`) subpartitions 4 partitions 16;"
+	keyVarBinaryL2CreateStatement = "create table if not exists keyVarBinaryL2(`c1` varbinary(20) not null, `c2` varbinary(20) not null, " +
+		"c3 varbinary(20) not null, primary key (`c1`, `c2`, `c3`)) partition by key(`c1`, `c2`) subpartition by key(`c3`) subpartitions 4 partitions 16;"
+	keyMultiVarBinaryL2TableName       = "keyMultiVarBinaryL2"
+	keyMultiVarBinaryL2CreateStatement = "create table if not exists keyMultiVarBinaryL2(`c1` varbinary(20) not null, `c2` varbinary(20) not null, " +
+		"c3 varbinary(20) not null, primary key (`c1`, `c2`, `c3`)) partition by key(`c1`, `c2`) subpartition by key(`c3`) subpartitions 4 partitions 16;"
 )
 
-func TestKeyPartitionL2_BIGINT(t *testing.T) {
-	tableName := keyBigIntL2TableName
-	defer test.DeleteTable(tableName)
-	recordCount := 10
+var l2KeyIntegerTableNames = []string{
+	keyBigintL2TableName,
+	keyMultiBigintL2TableName,
+}
 
-	// insert by sql
-	for i := -recordCount; i < recordCount; i++ {
-		insertStatement := fmt.Sprintf("insert into %s values(%d, %d);", tableName, i, i)
-		test.InsertTable(insertStatement)
-	}
+var l2KeyStringTableNames = []string{
+	keyVarcharL2TableName,
+	keyMultiVarcharL2TableName,
+	keyVarBinaryL2TableName,
+	keyMultiVarBinaryL2TableName,
+}
 
-	// get by obkv
-	for i := -recordCount; i < recordCount; i++ {
-		rowKey := []*table.Column{table.NewColumn("c1", int64(i)), table.NewColumn("c2", int64(i))}
-		res, err := cli.Get(
-			context.TODO(),
-			tableName,
-			rowKey,
-			nil,
-		)
-		assert.Equal(t, nil, err)
-		assert.EqualValues(t, i, res.Value("c1"))
-		assert.EqualValues(t, i, res.Value("c2"))
+func TestKeyPartitionL2_INTEGER(t *testing.T) {
+	defer func() {
+		test.DeleteTables(l2KeyIntegerTableNames)
+	}()
+	for _, tableName := range l2KeyIntegerTableNames {
+		// insert by sql
+		for i := -partitionTestRecordCount; i < partitionTestRecordCount; i++ {
+			insertStatement := fmt.Sprintf("insert into %s values(%d, %d, %d);", tableName, i, i, i)
+			test.InsertTable(insertStatement)
+		}
+
+		// get by obkv
+		for i := -partitionTestRecordCount; i < partitionTestRecordCount; i++ {
+			rowKey := []*table.Column{
+				table.NewColumn("c1", int64(i)),
+				table.NewColumn("c2", int64(i)),
+				table.NewColumn("c3", int64(i)),
+			}
+			res, err := cli.Get(
+				context.TODO(),
+				tableName,
+				rowKey,
+				nil,
+			)
+			assert.Equal(t, nil, err)
+			assert.EqualValues(t, i, res.Value("c1"))
+			assert.EqualValues(t, i, res.Value("c2"))
+			assert.EqualValues(t, i, res.Value("c3"))
+		}
 	}
 }
 
-func TestKeyPartitionL2_VARCHAR(t *testing.T) {
-	tableName := keyVarcharL2TableName
-	defer test.DeleteTable(tableName)
-	recordCount := 10
+func TestKeyPartitionL2_STRING(t *testing.T) {
+	defer func() {
+		test.DeleteTables(l2KeyStringTableNames)
+	}()
 
-	// insert by sql
-	for i := -recordCount; i < recordCount; i++ {
-		v := "key" + strconv.Itoa(i)
-		insertStatement := fmt.Sprintf("insert into %s values('%s', '%s');", tableName, v, v)
-		test.InsertTable(insertStatement)
-	}
+	for _, tableName := range l2KeyStringTableNames {
+		// insert by sql
+		for i := -partitionTestRecordCount; i < partitionTestRecordCount; i++ {
+			v := "key" + strconv.Itoa(i)
+			insertStatement := fmt.Sprintf("insert into %s values('%s', '%s', '%s');", tableName, v, v, v)
+			test.InsertTable(insertStatement)
+		}
 
-	// get by obkv
-	for i := -recordCount; i < recordCount; i++ {
-		v := "key" + strconv.Itoa(i)
-		rowKey := []*table.Column{table.NewColumn("c1", v), table.NewColumn("c2", v)}
-		res, err := cli.Get(
-			context.TODO(),
-			tableName,
-			rowKey,
-			nil,
-		)
-		assert.Equal(t, nil, err)
-		assert.EqualValues(t, v, res.Value("c1"))
-		assert.EqualValues(t, v, res.Value("c2"))
-	}
-}
-
-func TestKeyVarcharL2_VARBINARY(t *testing.T) {
-	tableName := keyVarBinaryL2TableName
-	defer test.DeleteTable(tableName)
-	recordCount := 10
-
-	// insert by sql
-	for i := -recordCount; i < recordCount; i++ {
-		v := "key" + strconv.Itoa(i)
-		insertStatement := fmt.Sprintf("insert into %s values('%s', '%s');", tableName, v, v)
-		test.InsertTable(insertStatement)
-	}
-
-	// get by obkv
-	for i := -recordCount; i < recordCount; i++ {
-		v := "key" + strconv.Itoa(i)
-		rowKey := []*table.Column{table.NewColumn("c1", v), table.NewColumn("c2", v)}
-		res, err := cli.Get(
-			context.TODO(),
-			tableName,
-			rowKey,
-			nil,
-		)
-		assert.Equal(t, nil, err)
-		assert.EqualValues(t, v, res.Value("c1"))
-		assert.EqualValues(t, v, res.Value("c2"))
+		// get by obkv
+		for i := -partitionTestRecordCount; i < partitionTestRecordCount; i++ {
+			v := "key" + strconv.Itoa(i)
+			rowKey := []*table.Column{
+				table.NewColumn("c1", v),
+				table.NewColumn("c2", v),
+				table.NewColumn("c3", v),
+			}
+			res, err := cli.Get(
+				context.TODO(),
+				tableName,
+				rowKey,
+				nil,
+			)
+			assert.Equal(t, nil, err)
+			assert.EqualValues(t, v, res.Value("c1"))
+			assert.EqualValues(t, v, res.Value("c2"))
+			assert.EqualValues(t, v, res.Value("c3"))
+		}
 	}
 }

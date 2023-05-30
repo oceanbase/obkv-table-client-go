@@ -29,14 +29,14 @@ import (
 )
 
 const (
-	hashBigIntL2TableName       = "hashBigIntL2"
-	hashBigIntL2CreateStatement = "create table if not exists hashBigIntL2(`c1` bigint(20) not null, `c2` bigint(20) not null, " +
+	hashBigintL2TableName       = "hashBigintL2"
+	hashBigintL2CreateStatement = "create table if not exists hashBigintL2(`c1` bigint(20) not null, `c2` bigint(20) not null, " +
 		"primary key (`c1`, `c2`)) partition by hash(`c1`) " +
 		"subpartition by hash(`c2`) subpartitions 4 partitions 16;"
 )
 
 func TestHashPartitionL2(t *testing.T) {
-	tableName := hashBigIntL2TableName
+	tableName := hashBigintL2TableName
 	defer test.DeleteTable(tableName)
 	recordCount := 10
 
