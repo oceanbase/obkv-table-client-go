@@ -28,8 +28,8 @@ import (
 )
 
 type ObTableOperationRequest struct {
-	*ObUniVersionHeader
-	*ObPayloadBase
+	ObUniVersionHeader
+	ObPayloadBase
 	credential           []byte
 	tableName            string
 	tableId              uint64
@@ -57,14 +57,19 @@ func NewObTableOperationRequest(
 	if err != nil {
 		return nil, errors.WithMessage(err, "create table operation")
 	}
-	uniVersionHeader := NewObUniVersionHeader()
-	obPayloadBase := NewObPayloadBase()
-	obPayloadBase.SetFlag(flag)
-	obPayloadBase.SetTimeout(timeout)
 
 	return &ObTableOperationRequest{
-		ObUniVersionHeader:   uniVersionHeader,
-		ObPayloadBase:        obPayloadBase,
+		ObUniVersionHeader: ObUniVersionHeader{version: 1,
+			contentLength: 0,
+		},
+		ObPayloadBase: ObPayloadBase{
+			uniqueId:  0,
+			sequence:  0,
+			tenantId:  1,
+			sessionId: 0,
+			flag:      flag,
+			timeout:   timeout,
+		},
 		credential:           nil, // when execute set
 		tableName:            tableName,
 		tableId:              tableId,

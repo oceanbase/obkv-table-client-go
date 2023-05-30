@@ -30,13 +30,6 @@ type ObUniVersionHeader struct {
 	contentLength int
 }
 
-func NewObUniVersionHeader() *ObUniVersionHeader {
-	return &ObUniVersionHeader{
-		version:       1,
-		contentLength: 0,
-	}
-}
-
 func (h *ObUniVersionHeader) Version() int64 {
 	return h.version
 }

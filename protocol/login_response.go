@@ -19,13 +19,14 @@ package protocol
 
 import (
 	"bytes"
+	"time"
 
 	"github.com/oceanbase/obkv-table-client-go/util"
 )
 
 type ObLoginResponse struct {
-	*ObUniVersionHeader
-	*ObPayloadBase
+	ObUniVersionHeader
+	ObPayloadBase
 	serverCapabilities int32
 	reserved1          int32
 	reserved2          int64
@@ -38,8 +39,18 @@ type ObLoginResponse struct {
 
 func NewObLoginResponse() *ObLoginResponse {
 	return &ObLoginResponse{
-		ObUniVersionHeader: NewObUniVersionHeader(),
-		ObPayloadBase:      NewObPayloadBase(),
+		ObUniVersionHeader: ObUniVersionHeader{
+			version:       1,
+			contentLength: 0,
+		},
+		ObPayloadBase: ObPayloadBase{
+			uniqueId:  0,
+			sequence:  0,
+			tenantId:  1,
+			sessionId: 0,
+			flag:      7,
+			timeout:   10 * 1000 * time.Millisecond,
+		},
 		serverCapabilities: 0,
 		reserved1:          0,
 		reserved2:          0,

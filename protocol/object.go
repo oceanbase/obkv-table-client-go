@@ -24,26 +24,29 @@ import (
 )
 
 type ObObject struct {
-	meta  *ObObjectMeta
+	meta  ObObjectMeta
 	value interface{}
 }
 
 func NewObObject() *ObObject {
 	return &ObObject{
-		meta:  NewObObjectMeta(),
+		meta:  ObObjectMeta{},
 		value: nil,
 	}
 }
 
-func NewObObjectWithParams(meta *ObObjectMeta, value interface{}) *ObObject {
-	return &ObObject{meta: meta, value: value}
+func NewObObjectWithParams(meta ObObjectMeta, value interface{}) *ObObject {
+	return &ObObject{
+		meta:  meta,
+		value: value,
+	}
 }
 
-func (o *ObObject) Meta() *ObObjectMeta {
+func (o *ObObject) Meta() ObObjectMeta {
 	return o.meta
 }
 
-func (o *ObObject) SetMeta(meta *ObObjectMeta) {
+func (o *ObObject) SetMeta(meta ObObjectMeta) {
 	o.meta = meta
 }
 
@@ -71,7 +74,7 @@ func (o *ObObject) EncodedLength() int {
 
 func (o *ObObject) String() string {
 	var metaStr = "nil"
-	if o.meta != nil {
+	if o.meta != (ObObjectMeta{}) {
 		metaStr = o.meta.String()
 	}
 	return "ObObject{" +

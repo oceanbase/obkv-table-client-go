@@ -28,7 +28,7 @@ import (
 )
 
 type ObTableOperation struct {
-	*ObUniVersionHeader
+	ObUniVersionHeader
 	opType ObTableOperationType
 	entity *ObTableEntity
 }
@@ -48,7 +48,7 @@ func NewObTableOperation(
 
 		object := NewObObjectWithParams(objMeta, column.Value())
 
-		tableEntity.RowKey().AppendKey(object)
+		tableEntity.AppendRowKeyElement(object)
 	}
 
 	// add column
@@ -64,9 +64,12 @@ func NewObTableOperation(
 	}
 
 	return &ObTableOperation{
-		ObUniVersionHeader: NewObUniVersionHeader(),
-		opType:             tableOperationType,
-		entity:             tableEntity,
+		ObUniVersionHeader: ObUniVersionHeader{
+			version:       1,
+			contentLength: 0,
+		},
+		opType: tableOperationType,
+		entity: tableEntity,
 	}, nil
 }
 
@@ -126,7 +129,7 @@ func (o *ObTableOperation) Decode(buffer *bytes.Buffer) {
 
 func (o *ObTableOperation) String() string {
 	var ObUniVersionHeaderStr = "nil"
-	if o.ObUniVersionHeader != nil {
+	if o.ObUniVersionHeader != (ObUniVersionHeader{}) {
 		ObUniVersionHeaderStr = o.ObUniVersionHeader.String()
 	}
 

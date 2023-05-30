@@ -19,13 +19,14 @@ package protocol
 
 import (
 	"bytes"
+	"time"
 
 	"github.com/oceanbase/obkv-table-client-go/util"
 )
 
 type ObLoginRequest struct {
-	*ObUniVersionHeader
-	*ObPayloadBase
+	ObUniVersionHeader
+	ObPayloadBase
 	authMethod    uint8
 	clientType    uint8
 	clientVersion uint8
@@ -51,8 +52,18 @@ func NewObLoginRequest(tenantName string, databaseName string, userName string, 
 	passSecret := util.ScramblePassword(password, passScramble)
 
 	return &ObLoginRequest{
-		ObUniVersionHeader: NewObUniVersionHeader(),
-		ObPayloadBase:      NewObPayloadBase(),
+		ObUniVersionHeader: ObUniVersionHeader{
+			version:       1,
+			contentLength: 0,
+		},
+		ObPayloadBase: ObPayloadBase{
+			uniqueId:  0,
+			sequence:  0,
+			tenantId:  1,
+			sessionId: 0,
+			flag:      7,
+			timeout:   10 * 1000 * time.Millisecond,
+		},
 		authMethod:         0x01,
 		clientType:         0x02,
 		clientVersion:      0x01,

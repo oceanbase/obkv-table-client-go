@@ -26,7 +26,7 @@ import (
 )
 
 type ObRpcResponseCode struct {
-	*ObUniVersionHeader
+	ObUniVersionHeader
 	code        oberror.ObErrorCode
 	msg         []byte
 	warningMsgs []*ObRpcResponseWarningMsg
@@ -34,10 +34,13 @@ type ObRpcResponseCode struct {
 
 func NewObRpcResponseCode() *ObRpcResponseCode {
 	return &ObRpcResponseCode{
-		ObUniVersionHeader: NewObUniVersionHeader(),
-		code:               0,
-		msg:                nil,
-		warningMsgs:        nil,
+		ObUniVersionHeader: ObUniVersionHeader{
+			version:       1,
+			contentLength: 0,
+		},
+		code:        0,
+		msg:         nil,
+		warningMsgs: nil,
 	}
 }
 

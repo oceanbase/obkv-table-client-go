@@ -19,13 +19,14 @@ package protocol
 
 import (
 	"bytes"
+	"time"
 
 	"github.com/oceanbase/obkv-table-client-go/util"
 )
 
 type ObTableOperationResponse struct {
-	*ObUniVersionHeader
-	*ObPayloadBase
+	ObUniVersionHeader
+	ObPayloadBase
 	header        *ObTableResponse
 	operationType ObTableOperationType
 	entity        *ObTableEntity
@@ -34,12 +35,22 @@ type ObTableOperationResponse struct {
 
 func NewObTableOperationResponse() *ObTableOperationResponse {
 	return &ObTableOperationResponse{
-		ObUniVersionHeader: NewObUniVersionHeader(),
-		ObPayloadBase:      NewObPayloadBase(),
-		header:             NewObTableResponse(),
-		operationType:      ObTableOperationGet,
-		entity:             NewObTableEntity(),
-		affectedRows:       0,
+		ObUniVersionHeader: ObUniVersionHeader{
+			version:       1,
+			contentLength: 0,
+		},
+		ObPayloadBase: ObPayloadBase{
+			uniqueId:  0,
+			sequence:  0,
+			tenantId:  1,
+			sessionId: 0,
+			flag:      7,
+			timeout:   10 * 1000 * time.Millisecond,
+		},
+		header:        NewObTableResponse(),
+		operationType: ObTableOperationGet,
+		entity:        NewObTableEntity(),
+		affectedRows:  0,
 	}
 }
 

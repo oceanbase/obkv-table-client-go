@@ -25,8 +25,8 @@ import (
 )
 
 type ObTableBatchOperationRequest struct {
-	*ObUniVersionHeader
-	*ObPayloadBase
+	ObUniVersionHeader
+	ObPayloadBase
 	credential              []byte
 	tableName               string
 	tableId                 uint64
@@ -49,14 +49,19 @@ func NewObTableBatchOperationRequest(
 	timeout time.Duration,
 	flag uint16) *ObTableBatchOperationRequest {
 
-	uniVersionHeader := NewObUniVersionHeader()
-	obPayloadBase := NewObPayloadBase()
-	obPayloadBase.SetFlag(flag)
-	obPayloadBase.SetTimeout(timeout)
-
 	return &ObTableBatchOperationRequest{
-		ObUniVersionHeader:      uniVersionHeader,
-		ObPayloadBase:           obPayloadBase,
+		ObUniVersionHeader: ObUniVersionHeader{
+			version:       1,
+			contentLength: 0,
+		},
+		ObPayloadBase: ObPayloadBase{
+			uniqueId:  0,
+			sequence:  0,
+			tenantId:  1,
+			sessionId: 0,
+			flag:      flag,
+			timeout:   timeout,
+		},
 		credential:              nil, // when execute set
 		tableName:               tableName,
 		tableId:                 tableId,

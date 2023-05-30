@@ -24,7 +24,7 @@ import (
 )
 
 type ObTableBatchOperation struct {
-	*ObUniVersionHeader
+	ObUniVersionHeader
 	obTableOperations   []*ObTableOperation
 	readOnly            bool
 	sameType            bool
@@ -33,7 +33,10 @@ type ObTableBatchOperation struct {
 
 func NewObTableBatchOperation() *ObTableBatchOperation {
 	return &ObTableBatchOperation{
-		ObUniVersionHeader:  NewObUniVersionHeader(),
+		ObUniVersionHeader: ObUniVersionHeader{
+			version:       1,
+			contentLength: 0,
+		},
 		obTableOperations:   nil,
 		readOnly:            true,
 		sameType:            true,

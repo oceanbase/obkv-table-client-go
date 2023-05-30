@@ -32,6 +32,8 @@ const (
 var (
 	magicHeaderFlag = []uint8{version, 0xDB, 0xDB, 0xCE}
 	reserved        = []uint8{0, 0, 0, 0}
+
+	ErrHeaderNotMatch = errors.New("magic header flag not match")
 )
 
 // EzHeader ...
@@ -56,10 +58,6 @@ func (h *EzHeader) SetChannelId(channelId uint32) {
 	h.channelId = channelId
 }
 
-func NewEzHeader() *EzHeader {
-	return &EzHeader{}
-}
-
 func (h *EzHeader) Encode(ezHeaderBuf []byte) {
 	copy(ezHeaderBuf[:4], magicHeaderFlag)
 	binary.BigEndian.PutUint32(ezHeaderBuf[4:8], h.contentLen)
@@ -69,7 +67,7 @@ func (h *EzHeader) Encode(ezHeaderBuf []byte) {
 
 func (h *EzHeader) Decode(ezHeaderBuf []byte) error {
 	if ok := bytes.Equal(magicHeaderFlag, ezHeaderBuf[0:4]); !ok {
-		return errors.New("magic header flag not match")
+		return ErrHeaderNotMatch
 	}
 	h.contentLen = binary.BigEndian.Uint32(ezHeaderBuf[4:8])
 	h.channelId = binary.BigEndian.Uint32(ezHeaderBuf[8:12])

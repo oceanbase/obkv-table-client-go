@@ -54,7 +54,7 @@ var globalDB *sql.DB
 
 func CreateDB() {
 	if globalDB == nil {
-		dsn := fmt.Sprintf("%s:%s@tcp(%s:%s)/%s", sqlUser, passWord, sqlIp, sqlPort, sqlDatabase)
+		dsn := fmt.Sprintf("%s:%s@tcp(%s:%s)/%s", sqlUser, sqlPassWord, sqlIp, sqlPort, sqlDatabase)
 		db, err := sql.Open("mysql", dsn)
 		if err != nil {
 			panic(err.Error())

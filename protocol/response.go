@@ -24,7 +24,7 @@ import (
 )
 
 type ObTableResponse struct {
-	*ObUniVersionHeader
+	ObUniVersionHeader
 	errorNo  int32
 	sqlState []byte
 	msg      []byte
@@ -32,10 +32,13 @@ type ObTableResponse struct {
 
 func NewObTableResponse() *ObTableResponse {
 	return &ObTableResponse{
-		ObUniVersionHeader: NewObUniVersionHeader(),
-		errorNo:            0,
-		sqlState:           nil,
-		msg:                nil,
+		ObUniVersionHeader: ObUniVersionHeader{
+			version:       1,
+			contentLength: 0,
+		},
+		errorNo:  0,
+		sqlState: nil,
+		msg:      nil,
 	}
 }
 

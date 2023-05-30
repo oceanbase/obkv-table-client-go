@@ -194,7 +194,7 @@ func (b *obBatchExecutor) constructPartOpMap(ctx context.Context) (map[uint64]*o
 	partOpMap := make(map[uint64]*obPartOp)
 	for i, op := range b.batchOps.ObTableOperations() {
 		rowKey := make([]*table.Column, 0, len(b.rowKeyName))
-		rowKeyValue := op.Entity().RowKey().GetRowKeyValue()
+		rowKeyValue := op.Entity().GetRowKeyValue()
 		for i, v := range rowKeyValue {
 			rowKey = append(rowKey, table.NewColumn(b.rowKeyName[i], v))
 		}

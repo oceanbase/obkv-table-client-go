@@ -33,17 +33,6 @@ type ObPayloadBase struct {
 	timeout time.Duration
 }
 
-func NewObPayloadBase() *ObPayloadBase {
-	return &ObPayloadBase{
-		uniqueId:  0,
-		sequence:  0,
-		tenantId:  1,
-		sessionId: 0,
-		flag:      7,
-		timeout:   10 * 1000 * time.Millisecond,
-	}
-}
-
 func (p *ObPayloadBase) UniqueId() uint64 {
 	return p.uniqueId
 }

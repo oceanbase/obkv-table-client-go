@@ -24,7 +24,7 @@ import (
 )
 
 type ObRpcResponseWarningMsg struct {
-	*ObUniVersionHeader
+	ObUniVersionHeader
 	msg       []byte
 	timestamp int64
 	logLevel  int32
@@ -34,12 +34,15 @@ type ObRpcResponseWarningMsg struct {
 
 func NewObRpcResponseWarningMsg() *ObRpcResponseWarningMsg {
 	return &ObRpcResponseWarningMsg{
-		ObUniVersionHeader: NewObUniVersionHeader(),
-		msg:                nil,
-		timestamp:          0,
-		logLevel:           0,
-		lineNo:             0,
-		code:               0,
+		ObUniVersionHeader: ObUniVersionHeader{
+			version:       1,
+			contentLength: 0,
+		},
+		msg:       nil,
+		timestamp: 0,
+		logLevel:  0,
+		lineNo:    0,
+		code:      0,
 	}
 }
 
