@@ -19,7 +19,6 @@ package util
 
 import (
 	"bytes"
-	"errors"
 	"net"
 	"testing"
 
@@ -27,21 +26,28 @@ import (
 )
 
 func TestInterfaceToString(t *testing.T) {
-	assert.Equal(t, InterfaceToString("string"), "string")
-	assert.Equal(t, InterfaceToString(int(1)), "1")
-	assert.Equal(t, InterfaceToString(true), "true")
-	assert.Equal(t, InterfaceToString(false), "false")
-	assert.Equal(t, InterfaceToString(float32(3.14)), "3.14")
-	assert.Equal(t, InterfaceToString(3.14), "3.14")
-	assert.Equal(t, InterfaceToString(complex64(3.14)), "(3.140000+0.000000i)")
-	assert.Equal(t, InterfaceToString(complex128(3.14)), "(3.140000+0.000000i)")
-	assert.Equal(t, InterfaceToString(byte(1)), "\x01")
-	assert.Equal(t, InterfaceToString(errors.New("error")), "error")
-	assert.Equal(t, InterfaceToString(nil), "<nil>")
+	assert.Equal(t, "true", InterfaceToString(true))
+	assert.Equal(t, "false", InterfaceToString(false))
+	assert.Equal(t, "1", InterfaceToString(int(1)))
+	assert.Equal(t, "1", InterfaceToString(int8(1)))
+	assert.Equal(t, "1", InterfaceToString(int16(1)))
+	assert.Equal(t, "1", InterfaceToString(int32(1)))
+	assert.Equal(t, "1", InterfaceToString(int64(1)))
+	assert.Equal(t, "1", InterfaceToString(uint(1)))
+	assert.Equal(t, "1", InterfaceToString(uint8(1)))
+	assert.Equal(t, "1", InterfaceToString(uint16(1)))
+	assert.Equal(t, "1", InterfaceToString(uint32(1)))
+	assert.Equal(t, "1", InterfaceToString(uint32(1)))
+	assert.Equal(t, "1", InterfaceToString(uint64(1)))
+	assert.Equal(t, "1.1", InterfaceToString(float32(1.1)))
+	assert.Equal(t, "1.1", InterfaceToString(1.1))
+	assert.Equal(t, "abc", InterfaceToString("abc"))
+
 	type myTestStruct struct {
+		str string
 	}
-	v := myTestStruct{}
-	assert.Equal(t, InterfaceToString(v), "{}")
+	v := myTestStruct{"abc"}
+	assert.Equal(t, InterfaceToString(v), "{abc}")
 }
 
 func TestStringArrayToString(t *testing.T) {

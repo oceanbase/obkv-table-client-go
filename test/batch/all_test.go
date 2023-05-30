@@ -8,11 +8,6 @@ import (
 	"github.com/oceanbase/obkv-table-client-go/test"
 )
 
-const (
-	batchOpTableTableName       = "batchOpTable"
-	batchOpTableCreateStatement = "create table if not exists batchOpTable(`c1` bigint(20) not null, c2 bigint(20) not null, primary key (`c1`)) partition by hash(c1) partitions 2;"
-)
-
 var cli client.Client
 
 func setup() {
