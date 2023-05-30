@@ -1,5 +1,5 @@
 # obkv-table-client-go
-OBKV Table Client is Java Library that can be used to access table data from OceanBase storage layer. Its access method is different from JDBC, it skips the SQL parsing layer, so it has significant performance advantage.
+OBKV Table Client is go Library that can be used to access table data from OceanBase storage layer. Its access method is different from JDBC, it skips the SQL parsing layer, so it has significant performance advantage.
 
 
 ## Quick Start
