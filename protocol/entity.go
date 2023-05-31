@@ -174,23 +174,21 @@ func (e *ObTableEntity) String() string {
 
 	var rowKeyStr = "nil"
 	if e.rowKey != nil {
-		var keysStr string
-		keysStr = keysStr + "["
+		rowKeyStr = "["
 		for i := 0; i < len(e.rowKey); i++ {
 			if i > 0 {
-				keysStr += ", "
+				rowKeyStr += ", "
 			}
 			if e.rowKey[i] != nil {
-				keysStr += e.rowKey[i].String()
+				rowKeyStr += e.rowKey[i].String()
 			} else {
-				keysStr += "nil"
+				rowKeyStr += "nil"
 			}
 		}
-		keysStr += "]"
-		rowKeyStr = "rowKey:" + keysStr
+		rowKeyStr += "]"
 	}
 
-	var propertiesStr = "properties:{"
+	var propertiesStr = "{"
 	var i = 0
 	for k, v := range e.properties {
 		if i > 0 {
@@ -209,6 +207,6 @@ func (e *ObTableEntity) String() string {
 	return "ObTableEntity{" +
 		"ObUniVersionHeader:" + ObUniVersionHeaderStr + ", " +
 		"rowKey:" + rowKeyStr + ", " +
-		"propertiesStr:" + propertiesStr +
+		"properties:" + propertiesStr +
 		"}"
 }
