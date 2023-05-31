@@ -15,35 +15,28 @@
  * #L%
  */
 
-package batch
+package util
 
 import (
-	"os"
 	"testing"
 
-	"github.com/oceanbase/obkv-table-client-go/client"
-	"github.com/oceanbase/obkv-table-client-go/test"
+	"github.com/stretchr/testify/assert"
 )
 
-var cli client.Client
-
-func setup() {
-	cli = test.CreateClient()
-
-	test.CreateDB()
-	test.CreateTable(batchOpTableCreateStatement)
+func TestGetPasswordScramble(t *testing.T) {
+	for i := 0; i < 20; i++ {
+		s := GetPasswordScramble(i)
+		assert.EqualValues(t, i, len(s))
+	}
 }
 
-func teardown() {
-	cli.Close()
-
-	test.DropTable(batchOpTableTableName)
-	test.CloseDB()
-}
-
-func TestMain(m *testing.M) {
-	setup()
-	code := m.Run()
-	teardown()
-	os.Exit(code)
+func TestScramblePassword(t *testing.T) {
+	password := "hello"
+	seed := "qXA4YhW5PwaWsARvj3KC"
+	scramblePassword1 := ScramblePassword(password, seed)
+	scramblePassword2 := ScramblePassword(password, seed)
+	assert.EqualValues(t, 20, len(scramblePassword1))
+	assert.EqualValues(t, 20, len(scramblePassword2))
+	assert.EqualValues(t, scramblePassword1, scramblePassword2)
+	assert.EqualValues(t, "", ScramblePassword("", seed))
 }

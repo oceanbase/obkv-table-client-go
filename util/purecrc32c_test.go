@@ -15,35 +15,17 @@
  * #L%
  */
 
-package batch
+package util
 
 import (
-	"os"
 	"testing"
 
-	"github.com/oceanbase/obkv-table-client-go/client"
-	"github.com/oceanbase/obkv-table-client-go/test"
+	"github.com/stretchr/testify/assert"
 )
 
-var cli client.Client
-
-func setup() {
-	cli = test.CreateClient()
-
-	test.CreateDB()
-	test.CreateTable(batchOpTableCreateStatement)
-}
-
-func teardown() {
-	cli.Close()
-
-	test.DropTable(batchOpTableTableName)
-	test.CloseDB()
-}
-
-func TestMain(m *testing.M) {
-	setup()
-	code := m.Run()
-	teardown()
-	os.Exit(code)
+func TestCalculate(t *testing.T) {
+	s1 := "StringNeedToBeCalculatedCheckSumAndTest,Make String longer longer longer longer longer to test"
+	assert.EqualValues(t, 1566783161, Calculate(0, []byte(s1)))
+	s1 = "String Need To Be Calculated CheckSum And Test,Make String longer longer longer longer longer to test"
+	assert.EqualValues(t, Calculate(0x05010927, []byte(s1)), Calculate(0x05010927, []byte(s1)))
 }

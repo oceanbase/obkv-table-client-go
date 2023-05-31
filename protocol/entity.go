@@ -174,18 +174,20 @@ func (e *ObTableEntity) String() string {
 
 	var rowKeyStr = "nil"
 	if e.rowKey != nil {
-		rowKeyStr = "["
+		var keysStr string
+		keysStr = keysStr + "["
 		for i := 0; i < len(e.rowKey); i++ {
 			if i > 0 {
-				rowKeyStr += ", "
+				keysStr += ", "
 			}
 			if e.rowKey[i] != nil {
-				rowKeyStr += e.rowKey[i].String()
+				keysStr += e.rowKey[i].String()
 			} else {
-				rowKeyStr += "nil"
+				keysStr += "nil"
 			}
 		}
-		rowKeyStr += "]"
+		keysStr += "]"
+		rowKeyStr = keysStr
 	}
 
 	var propertiesStr = "{"
