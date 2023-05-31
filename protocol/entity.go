@@ -187,10 +187,10 @@ func (e *ObTableEntity) String() string {
 			}
 		}
 		keysStr += "]"
-		rowKeyStr = "rowKey:" + keysStr
+		rowKeyStr = keysStr
 	}
 
-	var propertiesStr = "properties:{"
+	var propertiesStr = "{"
 	var i = 0
 	for k, v := range e.properties {
 		if i > 0 {
@@ -209,6 +209,6 @@ func (e *ObTableEntity) String() string {
 	return "ObTableEntity{" +
 		"ObUniVersionHeader:" + ObUniVersionHeaderStr + ", " +
 		"rowKey:" + rowKeyStr + ", " +
-		"propertiesStr:" + propertiesStr +
+		"properties:" + propertiesStr +
 		"}"
 }
