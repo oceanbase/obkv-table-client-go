@@ -385,8 +385,8 @@ func (c *obClient) execute(
 			tableParam.table.ip,
 			tableParam.table.port,
 			oberror.ObErrorCode(result.Header().ErrorNo()),
-			result.UniqueId(),
 			result.Sequence(),
+			result.UniqueId(),
 			tableName,
 		)
 	}
