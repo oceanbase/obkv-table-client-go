@@ -20,18 +20,20 @@ package main
 import (
 	"context"
 	"fmt"
+	"time"
 
 	"github.com/oceanbase/obkv-table-client-go/client"
 	"github.com/oceanbase/obkv-table-client-go/config"
 	"github.com/oceanbase/obkv-table-client-go/table"
 )
 
+// CREATE TABLE test(c1 bigint, c2 varchar(20), PRIMARY KEY(c1)) PARTITION BY hash(c1) partitions 2;
 func main() {
 	const (
 		configUrl    = "xxx"
-		fullUserName = "root@sys#obcluster"
+		fullUserName = "user@tenant#cluster"
 		passWord     = ""
-		sysUserName  = "root"
+		sysUserName  = "sysUser"
 		sysPassWord  = ""
 		tableName    = "test"
 	)
@@ -43,10 +45,11 @@ func main() {
 	}
 
 	// insert
+	ctx, _ := context.WithTimeout(context.Background(), time.Duration(1000)*time.Millisecond) // 1000ms
 	rowKey := []*table.Column{table.NewColumn("c1", int64(1))}
 	insertColumns := []*table.Column{table.NewColumn("c2", int64(2))}
 	affectRows, err := cli.Insert(
-		context.TODO(),
+		ctx,
 		tableName,
 		rowKey,
 		insertColumns,
@@ -59,7 +62,7 @@ func main() {
 	// get
 	selectColumns := []string{"c1", "c2"}
 	result, err := cli.Get(
-		context.TODO(),
+		ctx,
 		tableName,
 		rowKey,
 		selectColumns,
