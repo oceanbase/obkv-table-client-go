@@ -167,7 +167,7 @@ func TestObSingleOp_String(t *testing.T) {
 
 	rowKey := []*table.Column{table.NewColumn("c1", int64(1))}
 	mutateColumns := []*table.Column{table.NewColumn("c2", int64(1))}
-	req, err := protocol.NewObTableOperation(protocol.ObTableOperationGet, rowKey, mutateColumns)
+	req, err := protocol.NewObTableOperationWithParams(protocol.ObTableOperationGet, rowKey, mutateColumns)
 	assert.Equal(t, nil, err)
 	op = newSingleOp(0, req)
 	assert.Equal(t, "obSingleOp{indexOfBatch:0, op:ObTableOperation{ObUniVersionHeader:ObUniVersionHeader{version:1, contentLength:0}, opType:0, entity:ObTableEntity{ObUniVersionHeader:ObUniVersionHeader{version:1, contentLength:0}, rowKey:[ObObject{meta:ObObjectMeta{objType:ObObjType{type:ObInt64Type}, collationLevel:5, collationType:63, scale:-1}, value:1}], properties:{m[c2]=ObObject{meta:ObObjectMeta{objType:ObObjType{type:ObInt64Type}, collationLevel:5, collationType:63, scale:-1}, value:1}}}}}", op.String())

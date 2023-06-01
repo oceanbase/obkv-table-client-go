@@ -19,6 +19,7 @@ package util
 
 import (
 	"bytes"
+	"math/rand"
 	"net"
 	"testing"
 
@@ -97,4 +98,9 @@ func TestConvertIpToUint32(t *testing.T) {
 func TestConvertUint32ToIp(t *testing.T) {
 	assert.EqualValues(t, net.IP{127, 0, 0, 1}, ConvertUint32ToIp(uint32(0x7f000001)))
 	assert.EqualValues(t, net.IP{0, 0, 0, 0}, ConvertUint32ToIp(0))
+}
+
+func TestString(t *testing.T) {
+	length := rand.Intn(100)
+	assert.EqualValues(t, length, len(String(length)))
 }

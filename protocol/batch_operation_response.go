@@ -88,10 +88,12 @@ func (r *ObTableBatchOperationResponse) SetCredential(credential []byte) {
 }
 
 func (r *ObTableBatchOperationResponse) Encode(buffer *bytes.Buffer) {
-	r.ObUniVersionHeader.Decode(buffer)
+	r.ObUniVersionHeader.Encode(buffer)
+
+	util.EncodeVi64(buffer, int64(len(r.obTableOperationResponses)))
 
 	for _, response := range r.obTableOperationResponses {
-		response.Decode(buffer)
+		response.Encode(buffer)
 	}
 }
 

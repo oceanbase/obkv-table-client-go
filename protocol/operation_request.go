@@ -42,7 +42,34 @@ type ObTableOperationRequest struct {
 	returnAffectedRows   bool
 }
 
-func NewObTableOperationRequest(
+func NewObTableOperationRequest() *ObTableOperationRequest {
+	return &ObTableOperationRequest{
+		ObUniVersionHeader: ObUniVersionHeader{
+			version:       1,
+			contentLength: 0,
+		},
+		ObPayloadBase: ObPayloadBase{
+			uniqueId:  0,
+			sequence:  0,
+			tenantId:  1,
+			sessionId: 0,
+			flag:      7,
+			timeout:   10 * 1000 * time.Millisecond,
+		},
+		credential:           nil,
+		tableName:            "",
+		tableId:              0,
+		partitionId:          0,
+		entityType:           0,
+		tableOperation:       nil,
+		consistencyLevel:     0,
+		returnRowKey:         false,
+		returnAffectedEntity: false,
+		returnAffectedRows:   false,
+	}
+}
+
+func NewObTableOperationRequestWithParams(
 	tableName string,
 	tableId uint64,
 	partitionId uint64,
@@ -53,13 +80,14 @@ func NewObTableOperationRequest(
 	returnAffectedEntity bool,
 	timeout time.Duration,
 	flag uint16) (*ObTableOperationRequest, error) {
-	tableOperation, err := NewObTableOperation(tableOperationType, rowKey, columns)
+	tableOperation, err := NewObTableOperationWithParams(tableOperationType, rowKey, columns)
 	if err != nil {
 		return nil, errors.WithMessage(err, "create table operation")
 	}
 
 	return &ObTableOperationRequest{
-		ObUniVersionHeader: ObUniVersionHeader{version: 1,
+		ObUniVersionHeader: ObUniVersionHeader{
+			version:       1,
 			contentLength: 0,
 		},
 		ObPayloadBase: ObPayloadBase{

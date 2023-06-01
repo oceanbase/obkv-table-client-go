@@ -124,14 +124,17 @@ func (o *ObTableBatchOperation) Encode(buffer *bytes.Buffer) {
 }
 
 func (o *ObTableBatchOperation) Decode(buffer *bytes.Buffer) {
-	o.ObUniVersionHeader.Encode(buffer)
+	o.ObUniVersionHeader.Decode(buffer)
 
 	obTableOperationsLen := util.DecodeVi64(buffer)
 
 	o.obTableOperations = make([]*ObTableOperation, 0, obTableOperationsLen)
 
-	for _, tableOperation := range o.obTableOperations {
-		tableOperation.Decode(buffer)
+	var i int64
+	for i = 0; i < obTableOperationsLen; i++ {
+		obTableOperation := NewObTableOperation()
+		obTableOperation.Decode(buffer)
+		o.obTableOperations = append(o.obTableOperations, obTableOperation)
 	}
 
 	o.readOnly = util.ByteToBool(util.Uint8(buffer))

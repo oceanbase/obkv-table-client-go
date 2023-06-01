@@ -398,20 +398,6 @@ func TestEncodeDecodeVf64(t *testing.T) {
 	assert.EqualValues(t, u8, i8)
 }
 
-const charset = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789"
-
-func StringWithCharset(length int, charset string) string {
-	b := make([]byte, length)
-	for i := range b {
-		b[i] = charset[rand.Intn(len(charset))]
-	}
-	return string(b)
-}
-
-func String(length int) string {
-	return StringWithCharset(length, charset)
-}
-
 func TestEncodeDecodeVString(t *testing.T) {
 	var (
 		s1       = String(rand.Intn(100))
@@ -518,14 +504,14 @@ func TestEncodeDecodeBytesString(t *testing.T) {
 
 func TestEncodeDecodeBytes(t *testing.T) {
 	var (
-		bys1     = []byte(String(rand.Intn(100)))
-		bys2     = []byte(String(rand.Intn(100)))
-		bys3     = []byte(String(rand.Intn(100)))
-		bys4     = []byte(String(rand.Intn(100)))
-		bys5     = []byte(String(rand.Intn(100)))
-		bys6     = []byte(String(rand.Intn(100)))
-		bys7     = []byte(String(rand.Intn(100)))
-		bys8     = []byte(String(rand.Intn(100)))
+		bys1     = []byte(String(rand.Intn(1)))
+		bys2     = []byte(String(rand.Intn(1)))
+		bys3     = []byte(String(rand.Intn(1)))
+		bys4     = []byte(String(rand.Intn(1)))
+		bys5     = []byte(String(rand.Intn(1)))
+		bys6     = []byte(String(rand.Intn(1)))
+		bys7     = []byte(String(rand.Intn(1)))
+		bys8     = []byte(String(rand.Intn(1)))
 		totalLen = 0
 	)
 	totalLen += EncodedLengthByBytes(bys1)

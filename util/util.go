@@ -21,6 +21,7 @@ import (
 	"bytes"
 	"encoding/binary"
 	"fmt"
+	"math/rand"
 	"net"
 	"strconv"
 	"unsafe"
@@ -132,4 +133,18 @@ func ConvertUint32ToIp(num uint32) net.IP {
 	ip := make(net.IP, net.IPv4len)
 	binary.BigEndian.PutUint32(ip, num)
 	return ip
+}
+
+const charset = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789"
+
+func StringWithCharset(length int, charset string) string {
+	b := make([]byte, length)
+	for i := range b {
+		b[i] = charset[rand.Intn(len(charset))]
+	}
+	return string(b)
+}
+
+func String(length int) string {
+	return StringWithCharset(length, charset)
 }

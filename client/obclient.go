@@ -356,7 +356,7 @@ func (c *obClient) execute(
 	}
 
 	// 2. Construct request.
-	request, err := protocol.NewObTableOperationRequest(
+	request, err := protocol.NewObTableOperationRequestWithParams(
 		tableName,
 		tableParam.tableId,
 		tableParam.partitionId,

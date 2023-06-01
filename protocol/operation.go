@@ -33,7 +33,18 @@ type ObTableOperation struct {
 	entity *ObTableEntity
 }
 
-func NewObTableOperation(
+func NewObTableOperation() *ObTableOperation {
+	return &ObTableOperation{
+		ObUniVersionHeader: ObUniVersionHeader{
+			version:       1,
+			contentLength: 0,
+		},
+		opType: 0,
+		entity: NewObTableEntity(),
+	}
+}
+
+func NewObTableOperationWithParams(
 	tableOperationType ObTableOperationType,
 	rowKey []*table.Column,
 	columns []*table.Column) (*ObTableOperation, error) {
