@@ -15,7 +15,7 @@
  * #L%
  */
 
-package batch_operation
+package main
 
 import (
 	"context"

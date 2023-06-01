@@ -124,6 +124,19 @@ func (o *ObTableBatchOperation) Encode(buffer *bytes.Buffer) {
 }
 
 func (o *ObTableBatchOperation) Decode(buffer *bytes.Buffer) {
-	// TODO implement me
-	panic("implement me")
+	o.ObUniVersionHeader.Encode(buffer)
+
+	obTableOperationsLen := util.DecodeVi64(buffer)
+
+	o.obTableOperations = make([]*ObTableOperation, 0, obTableOperationsLen)
+
+	for _, tableOperation := range o.obTableOperations {
+		tableOperation.Decode(buffer)
+	}
+
+	o.readOnly = util.ByteToBool(util.Uint8(buffer))
+
+	o.sameType = util.ByteToBool(util.Uint8(buffer))
+
+	o.samePropertiesNames = util.ByteToBool(util.Uint8(buffer))
 }

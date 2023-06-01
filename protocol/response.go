@@ -67,18 +67,26 @@ func (r *ObTableResponse) SetMsg(msg []byte) {
 }
 
 func (r *ObTableResponse) PayloadLen() int {
-	// TODO implement me
-	panic("implement me")
+	return r.PayloadContentLen() + r.ObUniVersionHeader.UniVersionHeaderLen() // Do not change the order
 }
 
 func (r *ObTableResponse) PayloadContentLen() int {
-	// TODO implement me
-	panic("implement me")
+	totalLen := util.EncodedLengthByVi32(r.errorNo) +
+		util.EncodedLengthByBytes(r.sqlState) +
+		util.EncodedLengthByBytes(r.msg)
+
+	r.ObUniVersionHeader.SetContentLength(totalLen)
+	return r.ObUniVersionHeader.ContentLength()
 }
 
 func (r *ObTableResponse) Encode(buffer *bytes.Buffer) {
-	// TODO implement me
-	panic("implement me")
+	r.ObUniVersionHeader.Encode(buffer)
+
+	util.EncodeVi32(buffer, r.errorNo)
+
+	util.EncodeBytes(buffer, r.sqlState)
+
+	util.EncodeBytes(buffer, r.msg)
 }
 
 func (r *ObTableResponse) Decode(buffer *bytes.Buffer) {

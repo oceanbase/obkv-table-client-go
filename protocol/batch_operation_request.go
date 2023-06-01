@@ -227,8 +227,33 @@ func (r *ObTableBatchOperationRequest) Encode(buffer *bytes.Buffer) {
 }
 
 func (r *ObTableBatchOperationRequest) Decode(buffer *bytes.Buffer) {
-	// TODO implement me
-	panic("implement me")
+	r.ObUniVersionHeader.Encode(buffer)
+
+	r.credential = util.DecodeBytesString(buffer)
+
+	r.tableName = util.DecodeVString(buffer)
+
+	r.tableId = uint64(util.DecodeVi64(buffer))
+
+	r.obTableEntityType = ObTableEntityType(util.Uint8(buffer))
+
+	r.obTableBatchOperation.Decode(buffer)
+
+	r.obTableConsistencyLevel = ObTableConsistencyLevel(util.Uint8(buffer))
+
+	r.returnRowKey = util.ByteToBool(util.Uint8(buffer))
+
+	r.returnAffectedEntity = util.ByteToBool(util.Uint8(buffer))
+
+	r.returnAffectedRows = util.ByteToBool(util.Uint8(buffer))
+
+	if util.ObVersion() >= 4 {
+		r.partitionId = util.Uint64(buffer)
+	} else {
+		r.partitionId = uint64(util.DecodeVi64(buffer))
+	}
+
+	r.atomicOperation = util.ByteToBool(util.Uint8(buffer))
 }
 
 func (r *ObTableBatchOperationRequest) String() string {

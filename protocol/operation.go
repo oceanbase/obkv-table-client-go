@@ -123,8 +123,11 @@ func (o *ObTableOperation) Encode(buffer *bytes.Buffer) {
 }
 
 func (o *ObTableOperation) Decode(buffer *bytes.Buffer) {
-	// TODO implement me
-	panic("implement me")
+	o.ObUniVersionHeader.Decode(buffer)
+
+	o.opType = ObTableOperationType(util.Uint8(buffer))
+
+	o.entity.Decode(buffer)
 }
 
 func (o *ObTableOperation) String() string {

@@ -65,28 +65,34 @@ func (r *ObTableBatchOperationResponse) PCode() ObTablePacketCode {
 }
 
 func (r *ObTableBatchOperationResponse) PayloadLen() int {
-	// TODO implement me
-	panic("implement me")
+	return r.PayloadContentLen() + r.ObUniVersionHeader.UniVersionHeaderLen() // Do not change the order
 }
 
 func (r *ObTableBatchOperationResponse) PayloadContentLen() int {
-	// TODO implement me
-	panic("implement me")
+	totalLen := util.EncodedLengthByVi64(int64(len(r.obTableOperationResponses)))
+
+	for _, response := range r.obTableOperationResponses {
+		totalLen += response.PayloadLen()
+	}
+
+	r.ObUniVersionHeader.SetContentLength(totalLen)
+	return r.ObUniVersionHeader.ContentLength()
 }
 
 func (r *ObTableBatchOperationResponse) Credential() []byte {
-	// TODO implement me
-	panic("implement me")
+	return nil
 }
 
 func (r *ObTableBatchOperationResponse) SetCredential(credential []byte) {
-	// TODO implement me
-	panic("implement me")
+	return
 }
 
 func (r *ObTableBatchOperationResponse) Encode(buffer *bytes.Buffer) {
-	// TODO implement me
-	panic("implement me")
+	r.ObUniVersionHeader.Decode(buffer)
+
+	for _, response := range r.obTableOperationResponses {
+		response.Decode(buffer)
+	}
 }
 
 func (r *ObTableBatchOperationResponse) Decode(buffer *bytes.Buffer) {
