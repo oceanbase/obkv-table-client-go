@@ -94,7 +94,7 @@ func (b *obBatchExecutor) addDmlOp(
 	}
 
 	// 2. Create new operation
-	op, err := protocol.NewObTableOperation(opType, rowKey, mutateValues)
+	op, err := protocol.NewObTableOperationWithParams(opType, rowKey, mutateValues)
 	if err != nil {
 		return errors.WithMessagef(err, "new table operation, opType:%d, tableName:%s, rowKey:%s, mutateValues:%s",
 			opType, b.tableName, table.ColumnsToString(rowKey), table.ColumnsToString(mutateValues))
@@ -150,7 +150,7 @@ func (b *obBatchExecutor) AddDeleteOp(rowKey []*table.Column, opts ...ObkvOption
 	}
 
 	// 2. Create new operation
-	op, err := protocol.NewObTableOperation(protocol.ObTableOperationDel, rowKey, nil)
+	op, err := protocol.NewObTableOperationWithParams(protocol.ObTableOperationDel, rowKey, nil)
 	if err != nil {
 		return errors.WithMessagef(err, "new delete table operation, tableName:%s, rowKey:%s",
 			b.tableName, table.ColumnsToString(rowKey))
@@ -178,7 +178,7 @@ func (b *obBatchExecutor) AddGetOp(rowKey []*table.Column, getColumns []string, 
 	for _, columnName := range getColumns {
 		columns = append(columns, table.NewColumn(columnName, nil))
 	}
-	op, err := protocol.NewObTableOperation(protocol.ObTableOperationGet, rowKey, columns)
+	op, err := protocol.NewObTableOperationWithParams(protocol.ObTableOperationGet, rowKey, columns)
 	if err != nil {
 		return errors.WithMessagef(err, "new get table operation, tableName:%s, rowKey:%s",
 			b.tableName, table.ColumnsToString(rowKey))
@@ -228,7 +228,7 @@ func (b *obBatchExecutor) partitionExecute(
 		batchOp.AppendObTableOperation(op.op)
 	}
 	// 1.2 Construct batch operation request
-	request := protocol.NewObTableBatchOperationRequest(
+	request := protocol.NewObTableBatchOperationRequestWithParams(
 		b.tableName,
 		partOp.tableParam.tableId,
 		partOp.tableParam.partitionId,

@@ -86,9 +86,29 @@ func (m *ObRpcResponseWarningMsg) SetCode(code int32) {
 	m.code = code
 }
 
+func (m *ObRpcResponseWarningMsg) PayloadLen() int {
+	return m.PayloadContentLen() + m.ObUniVersionHeader.UniVersionHeaderLen() // Do not change the order
+}
+
+func (m *ObRpcResponseWarningMsg) PayloadContentLen() int {
+	totalLen := util.EncodedLengthByBytes(m.msg) +
+		util.EncodedLengthByVi64(m.timestamp) +
+		util.EncodedLengthByVi32(m.logLevel) +
+		util.EncodedLengthByVi32(m.lineNo) +
+		util.EncodedLengthByVi32(m.code)
+
+	m.ObUniVersionHeader.SetContentLength(totalLen)
+	return m.ObUniVersionHeader.ContentLength()
+}
+
 func (m *ObRpcResponseWarningMsg) Encode(buffer *bytes.Buffer) {
-	// TODO implement me
-	panic("implement me")
+	m.ObUniVersionHeader.Encode(buffer)
+
+	util.EncodeBytes(buffer, m.msg)
+	util.EncodeVi64(buffer, m.timestamp)
+	util.EncodeVi32(buffer, m.logLevel)
+	util.EncodeVi32(buffer, m.lineNo)
+	util.EncodeVi32(buffer, m.code)
 }
 
 func (m *ObRpcResponseWarningMsg) Decode(buffer *bytes.Buffer) {

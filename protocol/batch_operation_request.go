@@ -40,7 +40,35 @@ type ObTableBatchOperationRequest struct {
 	atomicOperation         bool
 }
 
-func NewObTableBatchOperationRequest(
+func NewObTableBatchOperationRequest() *ObTableBatchOperationRequest {
+	return &ObTableBatchOperationRequest{
+		ObUniVersionHeader: ObUniVersionHeader{
+			version:       1,
+			contentLength: 0,
+		},
+		ObPayloadBase: ObPayloadBase{
+			uniqueId:  0,
+			sequence:  0,
+			tenantId:  1,
+			sessionId: 0,
+			flag:      7,
+			timeout:   10 * 1000 * time.Millisecond,
+		},
+		credential:              nil,
+		tableName:               "",
+		tableId:                 0,
+		obTableEntityType:       0,
+		obTableBatchOperation:   NewObTableBatchOperation(),
+		obTableConsistencyLevel: 0,
+		returnRowKey:            false,
+		returnAffectedEntity:    false,
+		returnAffectedRows:      false,
+		partitionId:             0,
+		atomicOperation:         false,
+	}
+}
+
+func NewObTableBatchOperationRequestWithParams(
 	tableName string,
 	tableId uint64,
 	partitionId uint64,
@@ -227,8 +255,33 @@ func (r *ObTableBatchOperationRequest) Encode(buffer *bytes.Buffer) {
 }
 
 func (r *ObTableBatchOperationRequest) Decode(buffer *bytes.Buffer) {
-	// TODO implement me
-	panic("implement me")
+	r.ObUniVersionHeader.Decode(buffer)
+
+	r.credential = util.DecodeBytesString(buffer)
+
+	r.tableName = util.DecodeVString(buffer)
+
+	r.tableId = uint64(util.DecodeVi64(buffer))
+
+	r.obTableEntityType = ObTableEntityType(util.Uint8(buffer))
+
+	r.obTableBatchOperation.Decode(buffer)
+
+	r.obTableConsistencyLevel = ObTableConsistencyLevel(util.Uint8(buffer))
+
+	r.returnRowKey = util.ByteToBool(util.Uint8(buffer))
+
+	r.returnAffectedEntity = util.ByteToBool(util.Uint8(buffer))
+
+	r.returnAffectedRows = util.ByteToBool(util.Uint8(buffer))
+
+	if util.ObVersion() >= 4 {
+		r.partitionId = util.Uint64(buffer)
+	} else {
+		r.partitionId = uint64(util.DecodeVi64(buffer))
+	}
+
+	r.atomicOperation = util.ByteToBool(util.Uint8(buffer))
 }
 
 func (r *ObTableBatchOperationRequest) String() string {

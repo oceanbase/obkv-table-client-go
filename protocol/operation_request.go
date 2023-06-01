@@ -42,7 +42,34 @@ type ObTableOperationRequest struct {
 	returnAffectedRows   bool
 }
 
-func NewObTableOperationRequest(
+func NewObTableOperationRequest() *ObTableOperationRequest {
+	return &ObTableOperationRequest{
+		ObUniVersionHeader: ObUniVersionHeader{
+			version:       1,
+			contentLength: 0,
+		},
+		ObPayloadBase: ObPayloadBase{
+			uniqueId:  0,
+			sequence:  0,
+			tenantId:  1,
+			sessionId: 0,
+			flag:      7,
+			timeout:   10 * 1000 * time.Millisecond,
+		},
+		credential:           nil,
+		tableName:            "",
+		tableId:              0,
+		partitionId:          0,
+		entityType:           0,
+		tableOperation:       nil,
+		consistencyLevel:     0,
+		returnRowKey:         false,
+		returnAffectedEntity: false,
+		returnAffectedRows:   false,
+	}
+}
+
+func NewObTableOperationRequestWithParams(
 	tableName string,
 	tableId uint64,
 	partitionId uint64,
@@ -53,13 +80,14 @@ func NewObTableOperationRequest(
 	returnAffectedEntity bool,
 	timeout time.Duration,
 	flag uint16) (*ObTableOperationRequest, error) {
-	tableOperation, err := NewObTableOperation(tableOperationType, rowKey, columns)
+	tableOperation, err := NewObTableOperationWithParams(tableOperationType, rowKey, columns)
 	if err != nil {
 		return nil, errors.WithMessage(err, "create table operation")
 	}
 
 	return &ObTableOperationRequest{
-		ObUniVersionHeader: ObUniVersionHeader{version: 1,
+		ObUniVersionHeader: ObUniVersionHeader{
+			version:       1,
 			contentLength: 0,
 		},
 		ObPayloadBase: ObPayloadBase{
@@ -224,8 +252,31 @@ func (r *ObTableOperationRequest) Encode(buffer *bytes.Buffer) {
 }
 
 func (r *ObTableOperationRequest) Decode(buffer *bytes.Buffer) {
-	// TODO implement me
-	panic("implement me")
+	r.ObUniVersionHeader.Decode(buffer)
+
+	r.credential = util.DecodeBytesString(buffer)
+
+	r.tableName = util.DecodeVString(buffer)
+
+	r.tableId = uint64(util.DecodeVi64(buffer))
+
+	if util.ObVersion() >= 4 {
+		r.partitionId = util.Uint64(buffer)
+	} else {
+		r.partitionId = uint64(util.DecodeVi64(buffer))
+	}
+
+	r.entityType = ObTableEntityType(util.Uint8(buffer))
+
+	r.tableOperation.Decode(buffer)
+
+	r.consistencyLevel = ObTableConsistencyLevel(util.Uint8(buffer))
+
+	r.returnRowKey = util.ByteToBool(util.Uint8(buffer))
+
+	r.returnAffectedEntity = util.ByteToBool(util.Uint8(buffer))
+
+	r.returnAffectedRows = util.ByteToBool(util.Uint8(buffer))
 }
 
 func (r *ObTableOperationRequest) String() string {

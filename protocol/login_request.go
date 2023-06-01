@@ -251,6 +251,24 @@ func (r *ObLoginRequest) Encode(buffer *bytes.Buffer) {
 }
 
 func (r *ObLoginRequest) Decode(buffer *bytes.Buffer) {
-	// TODO implement me
-	panic("implement me")
+	r.ObUniVersionHeader.Decode(buffer)
+
+	r.authMethod = util.Uint8(buffer)
+	r.clientType = util.Uint8(buffer)
+	r.clientVersion = util.Uint8(buffer)
+	r.reversed1 = util.Uint8(buffer)
+
+	r.clientCapabilities = util.DecodeVi32(buffer)
+	r.maxPacketSize = util.DecodeVi32(buffer)
+	r.reversed2 = util.DecodeVi32(buffer)
+
+	r.reversed3 = util.DecodeVi64(buffer)
+
+	r.tenantName = util.DecodeVString(buffer)
+	r.userName = util.DecodeVString(buffer)
+	r.passSecret = util.DecodeVString(buffer)
+	r.passScramble = util.DecodeVString(buffer)
+	r.databaseName = util.DecodeVString(buffer)
+
+	r.ttlUs = util.DecodeVi64(buffer)
 }

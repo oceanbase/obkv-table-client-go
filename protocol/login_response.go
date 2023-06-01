@@ -114,13 +114,22 @@ func (r *ObLoginResponse) PCode() ObTablePacketCode {
 }
 
 func (r *ObLoginResponse) PayloadLen() int {
-	// TODO implement me
-	panic("implement me")
+	return r.PayloadContentLen() + r.ObUniVersionHeader.UniVersionHeaderLen() // Do not change the order
 }
 
 func (r *ObLoginResponse) PayloadContentLen() int {
-	// TODO implement me
-	panic("implement me")
+	totalLen :=
+		util.EncodedLengthByVi32(r.serverCapabilities) +
+			util.EncodedLengthByVi32(r.reserved1) +
+			util.EncodedLengthByVi64(r.reserved2) +
+			util.EncodedLengthByVString(r.serverVersion) +
+			util.EncodedLengthByBytesString(r.credential) +
+			util.EncodedLengthByVi64(int64(r.tenantId)) +
+			util.EncodedLengthByVi64(r.userId) +
+			util.EncodedLengthByVi64(r.databaseId)
+
+	r.ObUniVersionHeader.SetContentLength(totalLen) // Set on first acquisition
+	return r.ObUniVersionHeader.ContentLength()
 }
 
 func (r *ObLoginResponse) Credential() []byte {
@@ -132,8 +141,17 @@ func (r *ObLoginResponse) SetCredential(credential []byte) {
 }
 
 func (r *ObLoginResponse) Encode(buffer *bytes.Buffer) {
-	// TODO implement me
-	panic("implement me")
+	r.ObUniVersionHeader.Encode(buffer)
+
+	util.EncodeVi32(buffer, r.serverCapabilities)
+	util.EncodeVi32(buffer, r.reserved1)
+	util.EncodeVi64(buffer, r.reserved2)
+
+	util.EncodeVString(buffer, r.serverVersion)
+	util.EncodeBytesString(buffer, r.credential)
+	util.EncodeVi64(buffer, int64(r.tenantId))
+	util.EncodeVi64(buffer, r.userId)
+	util.EncodeVi64(buffer, r.databaseId)
 }
 
 func (r *ObLoginResponse) Decode(buffer *bytes.Buffer) {
