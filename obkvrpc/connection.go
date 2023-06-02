@@ -145,7 +145,7 @@ func (c *Connection) Connect(ctx context.Context) error {
 
 	// ez header length rpc header length
 	c.ezHeaderLength = protocol.EzHeaderLength
-	c.rpcHeaderLength = protocol.RpcHeaderEncodeSize
+	c.rpcHeaderLength = protocol.RpcHeaderEncodeSizeV3
 	if util.ObVersion() >= 4 {
 		c.rpcHeaderLength = protocol.RpcHeaderEncodeSizeV4
 	}
