@@ -38,7 +38,7 @@ const (
 		obCostTimeEncodeSize +
 		8 // dstClusterId
 
-	RpcHeaderEncodeSize = headerEncodeSize +
+	RpcHeaderEncodeSizeV3 = headerEncodeSize +
 		obCostTimeEncodeSize +
 		8 + // dstClusterId
 		4 + // compressType
@@ -412,14 +412,14 @@ func (h *ObRpcHeader) Decode(buffer *bytes.Buffer) {
 		h.clusterNameHash = int64(util.Uint64(buffer))
 
 		util.SkipBytes(buffer, int(h.hLen-RpcHeaderEncodeSizeV4))
-	} else if h.hLen >= RpcHeaderEncodeSize {
+	} else if h.hLen >= RpcHeaderEncodeSizeV3 {
 		h.obRpcCostTime.Decode(buffer)
 
 		h.dstClusterId = int64(util.Uint64(buffer))
 		h.compressType = ObCompressType(util.Uint32(buffer))
 		h.originalLen = int32(util.Uint32(buffer))
 
-		util.SkipBytes(buffer, int(h.hLen-RpcHeaderEncodeSize))
+		util.SkipBytes(buffer, int(h.hLen-RpcHeaderEncodeSizeV3))
 	} else if h.hLen >= encodeSizeWithCostTimeAndDstClusterId {
 		h.obRpcCostTime.Decode(buffer)
 
