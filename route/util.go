@@ -23,7 +23,7 @@ import (
 )
 
 // createInStatement create "(0,1,2...partNum);" string, is used by route model.
-func createInStatement(values []int) string {
+func createInStatement(values []uint64) string {
 	// Create inStatement "(0,1,2...partNum);".
 	var inStatement string
 	inStatement += "("
@@ -31,7 +31,7 @@ func createInStatement(values []int) string {
 		if i > 0 {
 			inStatement += ", "
 		}
-		inStatement += strconv.Itoa(v)
+		inStatement += strconv.FormatUint(v, 10)
 	}
 	inStatement += ");"
 	return inStatement

@@ -36,6 +36,7 @@ type obPartDesc interface {
 	PartFuncType() obPartFuncType
 	SetPartColumns(partColumns []obColumn)
 	PartColumns() []obColumn
+	PartNum() int
 	SetPartNum(partNum int)
 	GetPartId(rowKey []*table.Column) (uint64, error)
 }
@@ -54,4 +55,11 @@ func evalPartKeyValues(desc obPartDesc, rowKey []*table.Column) ([]interface{}, 
 		partValues = append(partValues, value)
 	}
 	return partValues, nil
+}
+
+// generateSubPartId generate sub partition id
+// partId1 means level one partition idx(0,...,firstPartNum)
+// partId2 means level two partition idx(0,...,subPartNum)
+func generateSubPartId(partId1 uint64, partId2 uint64) uint64 {
+	return (partId1 << ObPartIdShift) | partId2 | ObMask
 }

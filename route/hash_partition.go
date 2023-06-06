@@ -50,6 +50,10 @@ func (d *obHashPartDesc) PartColumns() []obColumn {
 	return d.partColumns
 }
 
+func (d *obHashPartDesc) PartNum() int {
+	return d.partNum
+}
+
 func (d *obHashPartDesc) SetPartNum(partNum int) {
 	d.partNum = partNum
 }

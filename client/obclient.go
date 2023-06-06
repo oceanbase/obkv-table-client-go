@@ -740,7 +740,7 @@ func (c *obClient) getPartitionId(entry *route.ObTableEntry, rowKeyValue []*tabl
 
 func (c *obClient) getTable(entry *route.ObTableEntry, partId uint64) (*ObTable, error) {
 	// 1. Get replica location by partition id
-	replicaLoc, err := entry.GetPartitionReplicaLocation(partId, route.ConsistencyStrong)
+	replicaLoc, err := entry.GetPartitionLocation(partId, route.ConsistencyStrong)
 	if err != nil {
 		return nil, errors.WithMessagef(err, "get partition replica location, partId:%d", partId)
 	}

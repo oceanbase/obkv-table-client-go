@@ -25,7 +25,7 @@ import (
 
 func TestObTableEntry(t *testing.T) {
 	entry := ObTableEntry{}
-	assert.Equal(t, "ObTableEntry{tableId:0, partNum:0, replicaNum:0, refreshTimeMills:0, tableEntryKey:nil, partitionInfo:nil, tableLocation:nil, partitionEntry:nil}", entry.String())
+	assert.Equal(t, "ObTableEntry{tableId:0, partNum:0, replicaNum:0, refreshTimeMills:0, tableEntryKey:nil, partitionInfo:nil, tableLocation:nil}", entry.String())
 	info := newObPartitionInfo(PartLevelTwo)
 	entry = ObTableEntry{
 		tableId:           500021,
@@ -43,5 +43,5 @@ func TestObTableEntry(t *testing.T) {
 	assert.EqualValues(t, 500021, entry.TableId())
 	assert.Equal(t, info, entry.PartitionInfo())
 	assert.Equal(t, true, entry.IsPartitionTable())
-	assert.Equal(t, "ObTableEntry{tableId:500021, partNum:10, replicaNum:16, refreshTimeMills:0, tableEntryKey:ObTableEntryKey{clusterName:cluster, tenantNane:database, databaseName:database, tableName:table}, partitionInfo:obPartitionInfo{level:2, firstPartDesc:nil, subPartDesc:nil, partTabletIdMap:{}}, tableLocation:nil, partitionEntry:ObPartLocationEntry{partLocations:{}}}", entry.String())
+	assert.Equal(t, "ObTableEntry{tableId:500021, partNum:10, replicaNum:16, refreshTimeMills:0, tableEntryKey:ObTableEntryKey{clusterName:cluster, tenantNane:database, databaseName:database, tableName:table}, partitionInfo:obPartitionInfo{level:2, firstPartDesc:nil, subPartDesc:nil, partTabletIdMap:{}}, tableLocation:nil}", entry.String())
 }

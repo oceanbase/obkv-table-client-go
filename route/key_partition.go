@@ -52,6 +52,10 @@ func (d *obKeyPartDesc) PartColumns() []obColumn {
 	return d.partColumns
 }
 
+func (d *obKeyPartDesc) PartNum() int {
+	return d.partNum
+}
+
 func (d *obKeyPartDesc) SetPartNum(partNum int) {
 	d.partNum = partNum
 }

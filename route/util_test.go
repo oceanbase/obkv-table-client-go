@@ -26,9 +26,9 @@ import (
 func TestUtil_createInStatement(t *testing.T) {
 	inStr := createInStatement(nil)
 	assert.Equal(t, "();", inStr)
-	inStr = createInStatement([]int{1})
+	inStr = createInStatement([]uint64{1})
 	assert.Equal(t, "(1);", inStr)
-	inStr = createInStatement([]int{1, 2})
+	inStr = createInStatement([]uint64{1, 2})
 	assert.Equal(t, "(1, 2);", inStr)
 }
 
