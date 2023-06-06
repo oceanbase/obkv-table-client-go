@@ -34,6 +34,7 @@ func newObRangePartDesc(
 		partFuncType: partFuncType,
 		partSpace:    partSpace,
 		partNum:      partNum,
+		bounds:       nil,
 	}
 }
 
@@ -43,10 +44,15 @@ type obRangePartDesc struct {
 	partSpace    int
 	partNum      int
 	partColumns  []obColumn
+	bounds       []interface{}
 }
 
 func (d *obRangePartDesc) PartColumns() []obColumn {
 	return d.partColumns
+}
+
+func (d *obRangePartDesc) PartNum() int {
+	return d.partNum
 }
 
 func (d *obRangePartDesc) SetPartNum(partNum int) {

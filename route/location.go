@@ -320,15 +320,27 @@ func getTableEntryFromResultSet(rows *Rows, tableName string) (*ObTableEntry, er
 // Location information represents the distribution of all replica of the table.
 func GetPartLocationEntryFromRemote(ctx context.Context, db *DB, entry *ObTableEntry) (*ObPartLocationEntry, error) {
 	// 1. Create inStatement "(0,1,2...partNum);".
-	partIds := make([]int, 0, entry.partNum)
+	partIds := make([]uint64, 0, entry.partNum)
 	if util.ObVersion() >= 4 && entry.IsPartitionTable() {
 		for _, v := range entry.partitionInfo.partTabletIdMap {
-			partIds = append(partIds, int(v))
+			partIds = append(partIds, v)
 		}
-		sort.Ints(partIds) // partIds doesn't have to be ascending, so do sort
+		// partIds doesn't have to be ascending, so do sort
+		sort.Slice(partIds, func(i, j int) bool {
+			return partIds[i] < partIds[j]
+		})
 	} else {
-		for i := 0; i < entry.partNum; i++ {
-			partIds = append(partIds, i)
+		// use absolute partition id like（1152921509170249730）to get partition location
+		if entry.partitionInfo != nil && entry.partitionInfo.level == PartLevelTwo {
+			for i := 0; i < entry.partitionInfo.firstPartDesc.PartNum(); i++ {
+				for j := 0; j < entry.partitionInfo.subPartDesc.PartNum(); j++ {
+					partIds = append(partIds, generateSubPartId(uint64(i), uint64(j)))
+				}
+			}
+		} else {
+			for i := 0; i < entry.partNum; i++ {
+				partIds = append(partIds, uint64(i))
+			}
 		}
 	}
 	inStatement := createInStatement(partIds)
@@ -451,14 +463,20 @@ func getPartitionInfoFromRemote(ctx context.Context, db *DB, tenantName string, 
 }
 
 // getPartitionInfoFromResultSet get the meta information for the partition key from sql rows.
-// create table if not exists keyPartitionIntL2(`c1` bigint(20) not null, c2 bigint(20) not null, `c3` bigint(20) not null, primary key (`c1`, `c2`, `c3`)) partition by key(`c1`) subpartition by key(`c2`, `c3`) subpartitions 4 partitions 16;
-// +------------+----------+-----------+------------+-----------+-----------------+--------------+---------------+----------------+---------------------+---------------+---------------+---------------+--------------+----------------+-------------------------+
-// | part_level | part_num | part_type | part_space | part_expr | part_range_type | sub_part_num | sub_part_type | sub_part_space | sub_part_range_type | sub_part_expr | part_key_name | part_key_type | part_key_idx | part_key_extra | part_key_collation_type |
-// +------------+----------+-----------+------------+-----------+-----------------+--------------+---------------+----------------+---------------------+---------------+---------------+---------------+--------------+----------------+-------------------------+
-// |          2 |       16 |         1 |          0 | `c1`      |                 |            0 |             1 |              0 |                     | `c2`, `c3`    | c1            |             5 |            0 |                |                      63 |
-// |          2 |       16 |         1 |          0 | `c1`      |                 |            0 |             1 |              0 |                     | `c2`, `c3`    | c2            |             5 |            1 |                |                      63 |
-// |          2 |       16 |         1 |          0 | `c1`      |                 |            0 |             1 |              0 |                     | `c2`, `c3`    | c3            |             5 |            2 |                |                      63 |
-// +------------+----------+-----------+------------+-----------+-----------------+--------------+---------------+----------------+---------------------+---------------+---------------+---------------+--------------+----------------+-------------------------+
+// primary key(`c1`,`c2`)) partition by range columns(`c1`, `c2`, `c3`) (
+//
+//	PARTITION p0 VALUES LESS THAN (10, 'aaa', 'bbb'),
+//	PARTITION p1 VALUES LESS THAN (20, 'ccc', 'ddd'),
+//	PARTITION p2 VALUES LESS THAN (MAXVALUE, MAXVALUE, MAXVALUE)
+//
+// );
+// +------------+----------+-----------+------------+------------------+-----------------+--------------+---------------+----------------+---------------------+---------------+---------------+---------------+--------------+------------------+-------------------------+
+// | part_level | part_num | part_type | part_space | part_expr        | part_range_type | sub_part_num | sub_part_type | sub_part_space | sub_part_range_type | sub_part_expr | part_key_name | part_key_type | part_key_idx | part_key_extra   | part_key_collation_type |
+// +------------+----------+-----------+------------+------------------+-----------------+--------------+---------------+----------------+---------------------+---------------+---------------+---------------+--------------+------------------+-------------------------+
+// |          1 |        3 |         4 |          0 | `c1`, `c2`, `c3` | 5,22,22         |            0 |             0 |              0 |                     |               | c1            |             5 |            0 |                  |                      63 |
+// |          1 |        3 |         4 |          0 | `c1`, `c2`, `c3` | 5,22,22         |            0 |             0 |              0 |                     |               | c2            |            22 |            1 |                  |                      45 |
+// |          1 |        3 |         4 |          0 | `c1`, `c2`, `c3` | 5,22,22         |            0 |             0 |              0 |                     |               | c3            |            22 |            2 | substr(`c2`,1,4) |                      45 |
+// +------------+----------+-----------+------------+------------------+-----------------+--------------+---------------+----------------+---------------------+---------------+---------------+---------------+--------------+------------------+-------------------------+
 func getPartitionInfoFromResultSet(rows *Rows) (*obPartitionInfo, error) {
 	var info *obPartitionInfo = nil
 	var partColumns []obColumn
@@ -524,7 +542,7 @@ func getPartitionInfoFromResultSet(rows *Rows) (*obPartitionInfo, error) {
 				// eg:"c1, c2", need to remove ' '
 				str := strings.ReplaceAll(partExpr, " ", "")
 				str = strings.ReplaceAll(str, "`", "")
-				firstPartColumnNames = strings.Split(str, ",")
+				firstPartColumnNames = strings.Split(str, ",") // firstPartColumnNames is ordered
 			}
 
 			// build sub part
@@ -542,7 +560,7 @@ func getPartitionInfoFromResultSet(rows *Rows) (*obPartitionInfo, error) {
 				// eg:"`c1`, `c2`", need to remove ' ' and '`'
 				str := strings.ReplaceAll(subPartExpr, " ", "")
 				str = strings.ReplaceAll(str, "`", "")
-				subPartColumnNames = strings.Split(str, ",")
+				subPartColumnNames = strings.Split(str, ",") // subPartColumnNames is ordered
 			}
 		}
 
@@ -569,7 +587,7 @@ func getPartitionInfoFromResultSet(rows *Rows) (*obPartitionInfo, error) {
 		return nil, errors.New("empty set")
 	}
 
-	info.partTabletIdMap = make(map[uint64]uint64, partNum)
+	// order part columns
 	if info.firstPartDesc != nil {
 		firstColumns := make([]obColumn, 0, 1)
 		for _, name := range firstPartColumnNames {
@@ -592,6 +610,8 @@ func getPartitionInfoFromResultSet(rows *Rows) (*obPartitionInfo, error) {
 			info.subPartDesc.SetPartColumns(subColumns)
 		}
 	}
+
+	info.partTabletIdMap = make(map[uint64]uint64, partNum)
 
 	return info, nil
 }
@@ -648,6 +668,13 @@ func fetchFirstPart(ctx context.Context, db *DB, partFuncType obPartFuncType, en
 		}
 
 		if isRangePart(partFuncType) {
+			// +---------+-----------+-----------+----------------------------+--------------+
+			// | part_id | part_name | tablet_id | high_bound_val             | sub_part_num |
+			// +---------+-----------+-----------+----------------------------+--------------+
+			// |  500006 | p0        |    200001 | 10,'aaa','bbb'             |            0 |
+			// |  500007 | p1        |    200002 | 20,'aaa','bbb'             |            0 |
+			// |  500008 | p2        |    200003 | MAXVALUE,MAXVALUE,MAXVALUE |            0 |
+			// +---------+-----------+-----------+----------------------------+--------------+
 			return errors.New("not support range partition now")
 		} else if isListPart(partFuncType) {
 			return errors.New("not support list partition now")

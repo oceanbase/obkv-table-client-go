@@ -59,4 +59,26 @@ func TestHashPartitionL2(t *testing.T) {
 		assert.EqualValues(t, i, res.Value("c1"))
 		assert.EqualValues(t, i, res.Value("c2"))
 	}
+
+	// insert new record by obkv
+	rowKey := []*table.Column{table.NewColumn("c1", int64(recordCount)), table.NewColumn("c2", int64(recordCount))}
+	affectRows, err := cli.Insert(
+		context.TODO(),
+		tableName,
+		rowKey,
+		nil,
+	)
+	assert.Equal(t, nil, err)
+	assert.EqualValues(t, 1, affectRows)
+
+	// get by obkv
+	res, err := cli.Get(
+		context.TODO(),
+		tableName,
+		rowKey,
+		nil,
+	)
+	assert.Equal(t, nil, err)
+	assert.EqualValues(t, recordCount, res.Value("c1"))
+	assert.EqualValues(t, recordCount, res.Value("c2"))
 }
