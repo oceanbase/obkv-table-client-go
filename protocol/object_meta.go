@@ -24,6 +24,7 @@ import (
 
 	"github.com/pkg/errors"
 
+	"github.com/oceanbase/obkv-table-client-go/table"
 	"github.com/oceanbase/obkv-table-client-go/util"
 )
 
@@ -138,8 +139,14 @@ func DefaultObjMeta(value interface{}) (ObObjectMeta, error) {
 		return ObObjTypes[ObObjTypeVarcharTypeValue].DefaultObjMeta(), nil
 	case []byte:
 		return ObObjTypes[ObObjTypeVarcharTypeValue].DefaultObjMeta(), nil
-	case time.Duration:
+	case table.Year:
+		return ObObjTypes[ObObjTypeYearTypeValue].DefaultObjMeta(), nil
+	case table.Date:
+		return ObObjTypes[ObObjTypeDateTypeValue].DefaultObjMeta(), nil
+	case table.DateTime:
 		return ObObjTypes[ObObjTypeDateTimeTypeValue].DefaultObjMeta(), nil
+	case table.TimeStamp:
+		return ObObjTypes[ObObjTypeTimestampTypeValue].DefaultObjMeta(), nil
 	default:
 		return ObObjectMeta{}, errors.Errorf("not match objmeta, value: %v", value)
 	}
@@ -953,15 +960,17 @@ func (t ObUNumberType) String() string {
 type ObDateTimeType ObObjTypeValue
 
 func (t ObDateTimeType) Encode(buffer *bytes.Buffer, value interface{}) {
-	util.EncodeVi64(buffer, int64(value.(time.Duration)))
+	v := value.(table.DateTime).Value
+	util.EncodeVi64(buffer, v.Unix())
 }
 
 func (t ObDateTimeType) Decode(buffer *bytes.Buffer, obCollationType ObCollationType) interface{} {
-	return util.DecodeVi64(buffer)
+	v := util.DecodeVi64(buffer)
+	return time.Unix(v, 0).In(util.TimeZone())
 }
 
 func (t ObDateTimeType) EncodedLength(value interface{}) int {
-	return util.EncodedLengthByVi64(int64(value.(time.Duration)))
+	return util.EncodedLengthByVi64(value.(table.DateTime).Value.Unix())
 }
 
 func (t ObDateTimeType) DefaultObjMeta() ObObjectMeta {
@@ -969,7 +978,7 @@ func (t ObDateTimeType) DefaultObjMeta() ObObjectMeta {
 }
 
 func (t ObDateTimeType) CheckTypeForValue(value interface{}, obCollationType ObCollationType) (interface{}, error) {
-	if v, ok := value.(time.Duration); ok {
+	if v, ok := value.(table.DateTime); ok {
 		return v, nil
 	} else {
 		return nil, errors.Errorf("date time type parse to comparable failed, not match value, value: %v", v)
@@ -989,15 +998,21 @@ func (t ObDateTimeType) String() string {
 type ObTimestampType ObObjTypeValue
 
 func (t ObTimestampType) Encode(buffer *bytes.Buffer, value interface{}) {
-	util.EncodeVi64(buffer, int64(value.(time.Duration)))
+	v := value.(table.TimeStamp).Value
+	util.EncodeVi64(buffer, v.UnixNano())
 }
 
 func (t ObTimestampType) Decode(buffer *bytes.Buffer, obCollationType ObCollationType) interface{} {
-	return util.DecodeVi64(buffer)
+	v := util.DecodeVi64(buffer)
+	if v < 1e10 {
+		return time.Unix(v, 0).In(util.TimeZone())
+	} else {
+		return time.Unix(0, v).In(util.TimeZone())
+	}
 }
 
 func (t ObTimestampType) EncodedLength(value interface{}) int {
-	return util.EncodedLengthByVi64(int64(value.(time.Duration)))
+	return util.EncodedLengthByVi64(value.(table.TimeStamp).Value.UnixNano())
 }
 
 func (t ObTimestampType) DefaultObjMeta() ObObjectMeta {
@@ -1005,7 +1020,7 @@ func (t ObTimestampType) DefaultObjMeta() ObObjectMeta {
 }
 
 func (t ObTimestampType) CheckTypeForValue(value interface{}, obCollationType ObCollationType) (interface{}, error) {
-	if v, ok := value.(time.Duration); ok {
+	if v, ok := value.(table.TimeStamp); ok {
 		return v, nil
 	} else {
 		return nil, errors.Errorf("time stamp type parse to comparable failed, not match value, value: %v", v)
@@ -1025,15 +1040,17 @@ func (t ObTimestampType) String() string {
 type ObDateType ObObjTypeValue
 
 func (t ObDateType) Encode(buffer *bytes.Buffer, value interface{}) {
-	util.EncodeVi64(buffer, int64(value.(time.Duration)))
+	v := value.(table.Date).Value
+	util.EncodeVi64(buffer, v.Unix())
 }
 
 func (t ObDateType) Decode(buffer *bytes.Buffer, obCollationType ObCollationType) interface{} {
-	return util.DecodeVi64(buffer)
+	v := time.Unix(util.DecodeVi64(buffer), 0).In(util.TimeZone())
+	return time.Date(v.Year(), v.Month(), v.Day(), 0, 0, 0, 0, util.TimeZone())
 }
 
 func (t ObDateType) EncodedLength(value interface{}) int {
-	return util.EncodedLengthByVi64(int64(value.(time.Duration)))
+	return util.EncodedLengthByVi64(value.(table.Date).Value.Unix())
 }
 
 func (t ObDateType) DefaultObjMeta() ObObjectMeta {
@@ -1041,7 +1058,7 @@ func (t ObDateType) DefaultObjMeta() ObObjectMeta {
 }
 
 func (t ObDateType) CheckTypeForValue(value interface{}, obCollationType ObCollationType) (interface{}, error) {
-	if v, ok := value.(time.Duration); ok {
+	if v, ok := value.(table.Date); ok {
 		return v, nil
 	} else {
 		return nil, errors.Errorf("data type parse to comparable failed, not match value, value: %v", v)
@@ -1094,14 +1111,24 @@ func (t ObTimeType) String() string {
 		"}"
 }
 
-type ObYearType ObObjTypeValue // TODO not support
+type ObYearType ObObjTypeValue
 
 func (t ObYearType) Encode(buffer *bytes.Buffer, value interface{}) {
-	util.PutUint8(buffer, value.(uint8))
+	// range [1901 - 2155]
+	year := value.(table.Year).Value
+	var fullYear uint16
+	if year > 0 && year <= 69 {
+		fullYear = year + 2000
+	} else if year >= 70 && year <= 99 {
+		fullYear = year + 1900
+	} else {
+		fullYear = year
+	}
+	util.PutUint8(buffer, uint8(fullYear-1901))
 }
 
 func (t ObYearType) Decode(buffer *bytes.Buffer, obCollationType ObCollationType) interface{} {
-	return util.Uint8(buffer)
+	return int16(util.Uint8(buffer)) + 1901
 }
 
 func (t ObYearType) EncodedLength(value interface{}) int {
@@ -1113,7 +1140,11 @@ func (t ObYearType) DefaultObjMeta() ObObjectMeta {
 }
 
 func (t ObYearType) CheckTypeForValue(value interface{}, obCollationType ObCollationType) (interface{}, error) {
-	return nil, errors.New("year type is not support")
+	if v, ok := value.(table.Year); !ok {
+		return nil, errors.Errorf("invalid type:%v for year type", value)
+	} else {
+		return v, nil
+	}
 }
 
 func (t ObYearType) Value() ObObjTypeValue {
