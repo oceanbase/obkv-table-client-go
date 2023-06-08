@@ -642,6 +642,10 @@ func (c *obClient) fetchMetadata() error {
 		util.SetObVersion(ver)
 		route.InitSql(ver)
 	}
+	// 2.2 Set global time zone
+	if util.TimeZone() == nil {
+		util.SetGlobalTimeZone(c.config.TimeZone)
+	}
 
 	// 3. Dummy route to get tenant server and create ObTable for each observer node.
 	//    Each ObTable contains a connection pool.

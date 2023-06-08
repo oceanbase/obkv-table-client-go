@@ -45,6 +45,9 @@ func setup() {
 	test.CreateTable(testVarcharCreateStatement)
 	test.CreateTable(testVarbinaryCreateStatement)
 	test.CreateTable(testDatetimeCreateStatement)
+	test.CreateTable(testTimestampCreateStatement)
+	test.CreateTable(testDateCreateStatement)
+	test.CreateTable(testYearCreateStatement)
 }
 
 func teardown() {
@@ -63,6 +66,9 @@ func teardown() {
 	test.DropTable(testVarcharTableName)
 	test.DropTable(testVarbinaryTableName)
 	test.DropTable(testDatetimeTableName)
+	test.DropTable(testTimestampTableName)
+	test.DropTable(testDateTableName)
+	test.DropTable(testYearTableName)
 
 	test.CloseDB()
 }

@@ -41,9 +41,12 @@ type ClientConfig struct {
 	RsListHttpGetTimeout       time.Duration
 	RsListHttpGetRetryTimes    int
 	RsListHttpGetRetryInterval time.Duration
+	
+	TimeZone *time.Location
 }
 
 func NewDefaultClientConfig() *ClientConfig {
+	localTimeZone, _ := time.LoadLocation("Local")
 	return &ClientConfig{
 		ConnPoolMaxConnSize:              1,
 		ConnConnectTimeOut:               time.Duration(1000) * time.Millisecond,  // 1s
@@ -60,6 +63,7 @@ func NewDefaultClientConfig() *ClientConfig {
 		RsListHttpGetTimeout:             time.Duration(1000) * time.Millisecond, // 1s
 		RsListHttpGetRetryTimes:          3,
 		RsListHttpGetRetryInterval:       time.Duration(100) * time.Millisecond, // 100ms,
+		TimeZone:                         localTimeZone,
 	}
 }
 
