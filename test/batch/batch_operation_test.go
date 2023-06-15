@@ -60,9 +60,7 @@ func TestBatch_MultiInsert(t *testing.T) {
 	assert.Equal(t, nil, err)
 
 	assert.EqualValues(t, recordCount, res.Size())
-	assert.EqualValues(t, recordCount, res.CorrectCount())
-	assert.EqualValues(t, 0, res.WrongCount())
-	for i := 0; i < res.CorrectCount(); i++ {
+	for i := 0; i < res.Size(); i++ {
 		assert.EqualValues(t, 1, res.GetResults()[i].AffectedRows())
 	}
 }
@@ -84,7 +82,6 @@ func TestBatch_MultiGet(t *testing.T) {
 
 	res, err := batchExecutor.Execute(context.TODO())
 	assert.Equal(t, nil, err)
-	assert.EqualValues(t, recordCount, res.CorrectCount())
 	assert.EqualValues(t, recordCount, res.Size())
 	for i := 0; i < res.Size(); i++ {
 		assert.EqualValues(t, i, res.GetResults()[i].Entity().GetProperty("c1").Value())
@@ -110,7 +107,6 @@ func TestBatch_MultiDelete(t *testing.T) {
 	res, err := batchExecutor.Execute(context.TODO())
 	assert.Equal(t, nil, err)
 	assert.EqualValues(t, recordCount, res.Size())
-	assert.EqualValues(t, recordCount, res.CorrectCount())
 }
 
 func TestBatch_MultiUpdate(t *testing.T) {
@@ -133,9 +129,7 @@ func TestBatch_MultiUpdate(t *testing.T) {
 	assert.Equal(t, nil, err)
 
 	assert.EqualValues(t, recordCount, res.Size())
-	assert.EqualValues(t, recordCount, res.CorrectCount())
-	assert.EqualValues(t, 0, res.WrongCount())
-	for i := 0; i < res.CorrectCount(); i++ {
+	for i := 0; i < res.Size(); i++ {
 		assert.EqualValues(t, 1, res.GetResults()[i].AffectedRows())
 	}
 }
@@ -160,9 +154,7 @@ func TestBatch_MultiReplace(t *testing.T) {
 	assert.Equal(t, nil, err)
 
 	assert.EqualValues(t, recordCount, res.Size())
-	assert.EqualValues(t, recordCount, res.CorrectCount())
-	assert.EqualValues(t, 0, res.WrongCount())
-	for i := 0; i < res.CorrectCount(); i++ {
+	for i := 0; i < res.Size(); i++ {
 		assert.EqualValues(t, 2, res.GetResults()[i].AffectedRows())
 	}
 }
@@ -187,9 +179,7 @@ func TestBatch_MultiInsertOrUpdate(t *testing.T) {
 	assert.Equal(t, nil, err)
 
 	assert.EqualValues(t, recordCount, res.Size())
-	assert.EqualValues(t, recordCount, res.CorrectCount())
-	assert.EqualValues(t, 0, res.WrongCount())
-	for i := 0; i < res.CorrectCount(); i++ {
+	for i := 0; i < res.Size(); i++ {
 		assert.EqualValues(t, 1, res.GetResults()[i].AffectedRows())
 	}
 }
@@ -214,9 +204,7 @@ func TestBatch_MultiIncrement(t *testing.T) {
 	assert.Equal(t, nil, err)
 
 	assert.EqualValues(t, recordCount, res.Size())
-	assert.EqualValues(t, recordCount, res.CorrectCount())
-	assert.EqualValues(t, 0, res.WrongCount())
-	for i := 0; i < res.CorrectCount(); i++ {
+	for i := 0; i < res.Size(); i++ {
 		assert.EqualValues(t, 1, res.GetResults()[i].AffectedRows())
 	}
 }
@@ -241,9 +229,7 @@ func TestBatch_MultiAppend(t *testing.T) {
 	assert.Equal(t, nil, err)
 
 	assert.EqualValues(t, recordCount, res.Size())
-	assert.EqualValues(t, recordCount, res.CorrectCount())
-	assert.EqualValues(t, 0, res.WrongCount())
-	for i := 0; i < res.CorrectCount(); i++ {
+	for i := 0; i < res.Size(); i++ {
 		assert.EqualValues(t, 1, res.GetResults()[i].AffectedRows())
 	}
 }

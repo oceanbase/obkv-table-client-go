@@ -28,17 +28,16 @@ import (
 
 func TestObBatchExecutor_String(t *testing.T) {
 	executor := &obBatchExecutor{}
-	assert.Equal(t, "obBatchExecutor{tableName:, rowKeyName:[], isAtomic:false}", executor.String())
+	assert.Equal(t, "obBatchExecutor{tableName:, rowKeyName:[]}", executor.String())
 
 	executor = newObBatchExecutor("test", nil)
-	assert.Equal(t, "obBatchExecutor{tableName:test, rowKeyName:[], isAtomic:true}", executor.String())
+	assert.Equal(t, "obBatchExecutor{tableName:test, rowKeyName:[]}", executor.String())
 
-	executor.SetIsAtomic(false)
 	rowKey := []*table.Column{table.NewColumn("c1", int64(1))}
 	mutateColumns := []*table.Column{table.NewColumn("c2", int64(1))}
 	err := executor.AddInsertOp(rowKey, mutateColumns)
 	assert.Equal(t, nil, err)
-	assert.Equal(t, "obBatchExecutor{tableName:test, rowKeyName:[c1], isAtomic:false}", executor.String())
+	assert.Equal(t, "obBatchExecutor{tableName:test, rowKeyName:[c1]}", executor.String())
 }
 
 func TestObBatchExecutor_AddInsertOp(t *testing.T) {
