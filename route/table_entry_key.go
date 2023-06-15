@@ -36,7 +36,7 @@ func NewObTableEntryKey(
 func (k *ObTableEntryKey) String() string {
 	return "ObTableEntryKey{" +
 		"clusterName:" + k.clusterName + ", " +
-		"tenantNane:" + k.databaseName + ", " +
+		"tenantName:" + k.tenantName + ", " +
 		"databaseName:" + k.databaseName + ", " +
 		"tableName:" + k.tableName +
 		"}"
