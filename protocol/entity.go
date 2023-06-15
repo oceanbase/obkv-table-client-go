@@ -23,14 +23,6 @@ import (
 	"github.com/oceanbase/obkv-table-client-go/util"
 )
 
-type ObTableEntityType uint8
-
-const (
-	ObTableEntityTypeDynamic ObTableEntityType = iota
-	ObTableEntityTypeKV
-	ObTableEntityTypeHKV
-)
-
 type ObTableEntity struct {
 	ObUniVersionHeader
 	rowKey     []*ObObject
