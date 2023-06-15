@@ -19,7 +19,6 @@ package main
 
 import (
 	"context"
-	"fmt"
 	"time"
 
 	"github.com/oceanbase/obkv-table-client-go/client"
@@ -64,7 +63,6 @@ func main() {
 		panic(err)
 	}
 
-	fmt.Printf("size:%d, success:%d, fail:%d", res.Size(), res.CorrectCount(), res.WrongCount())
 	println(res.GetResults()[0].Entity().GetProperty("c1"))
 	println(res.GetResults()[1].Entity().GetProperty("c2"))
 }

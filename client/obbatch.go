@@ -37,7 +37,6 @@ func newObBatchExecutor(tableName string, cli *obClient) *obBatchExecutor {
 		batchOps:   protocol.NewObTableBatchOperation(),
 		cli:        cli,
 		rowKeyName: nil,
-		isAtomic:   true,
 	}
 }
 
@@ -46,7 +45,6 @@ type obBatchExecutor struct {
 	batchOps   *protocol.ObTableBatchOperation
 	cli        *obClient
 	rowKeyName []string
-	isAtomic   bool
 }
 
 func (b *obBatchExecutor) String() string {
@@ -61,13 +59,8 @@ func (b *obBatchExecutor) String() string {
 	rowKeyNameStr += "]"
 	return "obBatchExecutor{" +
 		"tableName:" + b.tableName + ", " +
-		"rowKeyName:" + rowKeyNameStr + ", " +
-		"isAtomic:" + strconv.FormatBool(b.isAtomic) +
+		"rowKeyName:" + rowKeyNameStr +
 		"}"
-}
-
-func (b *obBatchExecutor) SetIsAtomic(isAtomic bool) {
-	b.isAtomic = isAtomic
 }
 
 // addDmlOp add dml operation witch include insert/update/insertOrUpdate/replace/increment/append
@@ -233,7 +226,6 @@ func (b *obBatchExecutor) partitionExecute(
 		partOp.tableParam.tableId,
 		partOp.tableParam.partitionId,
 		batchOp,
-		b.isAtomic,
 		b.cli.config.OperationTimeOut,
 		b.cli.config.LogLevel,
 	)

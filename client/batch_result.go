@@ -18,17 +18,12 @@
 package client
 
 import (
-	oberror "github.com/oceanbase/obkv-table-client-go/error"
 	"github.com/oceanbase/obkv-table-client-go/protocol"
 )
 
 type BatchOperationResult interface {
 	GetResults() []*protocol.ObTableOperationResponse
 	Size() int
-	WrongCount() int
-	CorrectCount() int
-	WrongIndexes() []int
-	CorrectIndexes() []int
 }
 
 type obBatchOperationResult struct {
@@ -45,44 +40,4 @@ func (r *obBatchOperationResult) GetResults() []*protocol.ObTableOperationRespon
 
 func (r *obBatchOperationResult) Size() int {
 	return len(r.results)
-}
-
-func (r *obBatchOperationResult) WrongCount() int {
-	var count = 0
-	for _, result := range r.results {
-		if oberror.ObErrorCode(result.Header().ErrorNo()) != oberror.ObSuccess {
-			count++
-		}
-	}
-	return count
-}
-
-func (r *obBatchOperationResult) CorrectCount() int {
-	var count = 0
-	for _, result := range r.results {
-		if oberror.ObErrorCode(result.Header().ErrorNo()) == oberror.ObSuccess {
-			count++
-		}
-	}
-	return count
-}
-
-func (r *obBatchOperationResult) WrongIndexes() []int {
-	var indexes []int
-	for i, result := range r.results {
-		if oberror.ObErrorCode(result.Header().ErrorNo()) != oberror.ObSuccess {
-			indexes = append(indexes, i)
-		}
-	}
-	return indexes
-}
-
-func (r *obBatchOperationResult) CorrectIndexes() []int {
-	var indexes = make([]int, 0, len(r.results))
-	for i, result := range r.results {
-		if oberror.ObErrorCode(result.Header().ErrorNo()) == oberror.ObSuccess {
-			indexes = append(indexes, i)
-		}
-	}
-	return indexes
 }
