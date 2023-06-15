@@ -409,7 +409,7 @@ func (t ObTinyIntType) Encode(buffer *bytes.Buffer, value interface{}) {
 }
 
 func (t ObTinyIntType) Decode(buffer *bytes.Buffer, obCollationType ObCollationType) interface{} {
-	return util.Uint8(buffer)
+	return int8(util.Uint8(buffer))
 }
 
 func (t ObTinyIntType) EncodedLength(value interface{}) int {
@@ -448,7 +448,7 @@ func (t ObSmallIntType) Encode(buffer *bytes.Buffer, value interface{}) {
 }
 
 func (t ObSmallIntType) Decode(buffer *bytes.Buffer, obCollationType ObCollationType) interface{} {
-	return util.DecodeVi32(buffer)
+	return int16(util.DecodeVi32(buffer))
 }
 
 func (t ObSmallIntType) EncodedLength(value interface{}) int {
@@ -624,7 +624,7 @@ func (t ObUSmallIntType) Encode(buffer *bytes.Buffer, value interface{}) {
 }
 
 func (t ObUSmallIntType) Decode(buffer *bytes.Buffer, obCollationType ObCollationType) interface{} {
-	return util.DecodeVi32(buffer)
+	return uint16(util.DecodeVi32(buffer))
 }
 
 func (t ObUSmallIntType) EncodedLength(value interface{}) int {
@@ -692,7 +692,7 @@ func (t ObUInt32Type) Encode(buffer *bytes.Buffer, value interface{}) {
 }
 
 func (t ObUInt32Type) Decode(buffer *bytes.Buffer, obCollationType ObCollationType) interface{} {
-	return util.DecodeVi32(buffer)
+	return uint32(util.DecodeVi32(buffer))
 }
 
 func (t ObUInt32Type) EncodedLength(value interface{}) int {
@@ -728,7 +728,7 @@ func (t ObUInt64Type) Encode(buffer *bytes.Buffer, value interface{}) {
 }
 
 func (t ObUInt64Type) Decode(buffer *bytes.Buffer, obCollationType ObCollationType) interface{} {
-	return util.DecodeVi64(buffer)
+	return uint64(util.DecodeVi64(buffer))
 }
 
 func (t ObUInt64Type) EncodedLength(value interface{}) int {
