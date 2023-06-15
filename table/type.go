@@ -21,18 +21,10 @@ import (
 	"time"
 )
 
-type Date struct {
-	Value time.Time
-}
+type Date time.Time
 
-type DateTime struct {
-	Value time.Time
-}
+type DateTime time.Time
 
-type TimeStamp struct {
-	Value time.Time
-}
+type TimeStamp time.Time
 
-type Year struct {
-	Value uint16 // 1901 - 2155
-}
+type Year uint16
