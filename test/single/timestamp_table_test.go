@@ -37,8 +37,8 @@ func TestInsertTimestamp(t *testing.T) {
 	tableName := testTimestampTableName
 	defer test.DeleteTable(tableName)
 
-	rowKey := []*table.Column{table.NewColumn("c1", table.TimeStamp{Value: time.Date(1990, 5, 25, 1, 1, 1, 12323, time.Local)})}
-	mutateColumns := []*table.Column{table.NewColumn("c2", table.TimeStamp{Value: time.Date(1990, 5, 25, 1, 1, 1, 12323, time.Local)})}
+	rowKey := []*table.Column{table.NewColumn("c1", table.TimeStamp(time.Date(1990, 5, 25, 1, 1, 1, 12323, time.Local)))}
+	mutateColumns := []*table.Column{table.NewColumn("c2", table.TimeStamp(time.Date(1990, 5, 25, 1, 1, 1, 12323, time.Local)))}
 	affectRows, err := cli.Insert(
 		context.TODO(),
 		tableName,
@@ -64,8 +64,8 @@ func TestUpdateTimestamp(t *testing.T) {
 	tableName := testTimestampTableName
 	defer test.DeleteTable(tableName)
 
-	rowKey := []*table.Column{table.NewColumn("c1", table.TimeStamp{Value: time.Date(1990, 5, 25, 1, 1, 1, 123, time.Local)})}
-	mutateColumns := []*table.Column{table.NewColumn("c2", table.TimeStamp{Value: time.Date(1990, 5, 25, 1, 1, 1, 123, time.Local)})}
+	rowKey := []*table.Column{table.NewColumn("c1", table.TimeStamp(time.Date(1990, 5, 25, 1, 1, 1, 123, time.Local)))}
+	mutateColumns := []*table.Column{table.NewColumn("c2", table.TimeStamp(time.Date(1990, 5, 25, 1, 1, 1, 123, time.Local)))}
 	affectRows, err := cli.Insert(
 		context.TODO(),
 		tableName,
@@ -75,7 +75,7 @@ func TestUpdateTimestamp(t *testing.T) {
 	assert.Equal(t, nil, err)
 	assert.EqualValues(t, 1, affectRows)
 
-	updateColumns := []*table.Column{table.NewColumn("c2", table.TimeStamp{Value: time.Date(1990, 5, 25, 1, 1, 1, 123, time.Local)})}
+	updateColumns := []*table.Column{table.NewColumn("c2", table.TimeStamp(time.Date(1990, 5, 25, 1, 1, 1, 123, time.Local)))}
 	affectRows, err = cli.Update(
 		context.TODO(),
 		tableName,
@@ -101,8 +101,8 @@ func TestInsertOrUpdateTimestamp(t *testing.T) {
 	tableName := testTimestampTableName
 	defer test.DeleteTable(tableName)
 
-	rowKey := []*table.Column{table.NewColumn("c1", table.TimeStamp{Value: time.Date(1990, 5, 25, 1, 1, 1, 123, time.Local)})}
-	mutateColumns := []*table.Column{table.NewColumn("c2", table.TimeStamp{Value: time.Date(1990, 5, 25, 1, 1, 1, 123, time.Local)})}
+	rowKey := []*table.Column{table.NewColumn("c1", table.TimeStamp(time.Date(1990, 5, 25, 1, 1, 1, 123, time.Local)))}
+	mutateColumns := []*table.Column{table.NewColumn("c2", table.TimeStamp(time.Date(1990, 5, 25, 1, 1, 1, 123, time.Local)))}
 	affectRows, err := cli.InsertOrUpdate(
 		context.TODO(),
 		tableName,
@@ -149,8 +149,8 @@ func TestDeleteTimestamp(t *testing.T) {
 	tableName := testTimestampTableName
 	defer test.DeleteTable(tableName)
 
-	rowKey := []*table.Column{table.NewColumn("c1", table.TimeStamp{Value: time.Date(1990, 5, 25, 1, 1, 1, 123, time.Local)})}
-	mutateColumns := []*table.Column{table.NewColumn("c2", table.TimeStamp{Value: time.Date(1990, 5, 25, 1, 1, 1, 123, time.Local)})}
+	rowKey := []*table.Column{table.NewColumn("c1", table.TimeStamp(time.Date(1990, 5, 25, 1, 1, 1, 123, time.Local)))}
+	mutateColumns := []*table.Column{table.NewColumn("c2", table.TimeStamp(time.Date(1990, 5, 25, 1, 1, 1, 123, time.Local)))}
 	affectRows, err := cli.Insert(
 		context.TODO(),
 		tableName,
@@ -181,8 +181,8 @@ func TestGetTimestamp(t *testing.T) {
 	tableName := testTimestampTableName
 	defer test.DeleteTable(tableName)
 
-	rowKey := []*table.Column{table.NewColumn("c1", table.TimeStamp{Value: time.Date(1990, 5, 25, 1, 1, 1, 123, time.Local)})}
-	mutateColumns := []*table.Column{table.NewColumn("c2", table.TimeStamp{Value: time.Date(1990, 5, 25, 1, 1, 1, 123, time.Local)})}
+	rowKey := []*table.Column{table.NewColumn("c1", table.TimeStamp(time.Date(1990, 5, 25, 1, 1, 1, 123, time.Local)))}
+	mutateColumns := []*table.Column{table.NewColumn("c2", table.TimeStamp(time.Date(1990, 5, 25, 1, 1, 1, 123, time.Local)))}
 	affectRows, err := cli.Insert(
 		context.TODO(),
 		tableName,

@@ -36,8 +36,8 @@ func TestInsertYear(t *testing.T) {
 	tableName := testYearTableName
 	defer test.DeleteTable(tableName)
 
-	rowKey := []*table.Column{table.NewColumn("c1", table.Year{Value: 1901})}
-	mutateColumns := []*table.Column{table.NewColumn("c2", table.Year{Value: 1901})}
+	rowKey := []*table.Column{table.NewColumn("c1", table.Year(1901))}
+	mutateColumns := []*table.Column{table.NewColumn("c2", table.Year(1901))}
 	affectRows, err := cli.Insert(
 		context.TODO(),
 		tableName,
@@ -63,8 +63,8 @@ func TestUpdateYear(t *testing.T) {
 	tableName := testYearTableName
 	defer test.DeleteTable(tableName)
 
-	rowKey := []*table.Column{table.NewColumn("c1", table.Year{Value: 1901})}
-	mutateColumns := []*table.Column{table.NewColumn("c2", table.Year{Value: 1901})}
+	rowKey := []*table.Column{table.NewColumn("c1", table.Year(1901))}
+	mutateColumns := []*table.Column{table.NewColumn("c2", table.Year(1901))}
 	affectRows, err := cli.Insert(
 		context.TODO(),
 		tableName,
@@ -74,7 +74,7 @@ func TestUpdateYear(t *testing.T) {
 	assert.Equal(t, nil, err)
 	assert.EqualValues(t, 1, affectRows)
 
-	updateColumns := []*table.Column{table.NewColumn("c2", table.Year{Value: 1})}
+	updateColumns := []*table.Column{table.NewColumn("c2", table.Year(1))}
 	affectRows, err = cli.Update(
 		context.TODO(),
 		tableName,
@@ -100,8 +100,8 @@ func TestInsertOrUpdateYear(t *testing.T) {
 	tableName := testYearTableName
 	defer test.DeleteTable(tableName)
 
-	rowKey := []*table.Column{table.NewColumn("c1", table.Year{Value: 1901})}
-	mutateColumns := []*table.Column{table.NewColumn("c2", table.Year{Value: 1901})}
+	rowKey := []*table.Column{table.NewColumn("c1", table.Year(1901))}
+	mutateColumns := []*table.Column{table.NewColumn("c2", table.Year(1901))}
 	affectRows, err := cli.InsertOrUpdate(
 		context.TODO(),
 		tableName,
@@ -122,7 +122,7 @@ func TestInsertOrUpdateYear(t *testing.T) {
 	assert.EqualValues(t, 1901, result.Value("c1"))
 	assert.EqualValues(t, 1901, result.Value("c2"))
 
-	updateColumns := []*table.Column{table.NewColumn("c2", table.Year{Value: 70})}
+	updateColumns := []*table.Column{table.NewColumn("c2", table.Year(70))}
 	affectRows, err = cli.InsertOrUpdate(
 		context.TODO(),
 		tableName,
@@ -148,8 +148,8 @@ func TestDeleteYear(t *testing.T) {
 	tableName := testYearTableName
 	defer test.DeleteTable(tableName)
 
-	rowKey := []*table.Column{table.NewColumn("c1", table.Year{Value: 1901})}
-	mutateColumns := []*table.Column{table.NewColumn("c2", table.Year{Value: 1901})}
+	rowKey := []*table.Column{table.NewColumn("c1", table.Year(1901))}
+	mutateColumns := []*table.Column{table.NewColumn("c2", table.Year(1901))}
 	affectRows, err := cli.Insert(
 		context.TODO(),
 		tableName,
@@ -180,8 +180,8 @@ func TestGetYear(t *testing.T) {
 	tableName := testYearTableName
 	defer test.DeleteTable(tableName)
 
-	rowKey := []*table.Column{table.NewColumn("c1", table.Year{Value: 1901})}
-	mutateColumns := []*table.Column{table.NewColumn("c2", table.Year{Value: 1901})}
+	rowKey := []*table.Column{table.NewColumn("c1", table.Year(1901))}
+	mutateColumns := []*table.Column{table.NewColumn("c2", table.Year(1901))}
 	affectRows, err := cli.Insert(
 		context.TODO(),
 		tableName,

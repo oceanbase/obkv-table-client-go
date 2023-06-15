@@ -37,8 +37,8 @@ func TestInsertDate(t *testing.T) {
 	tableName := testDateTableName
 	defer test.DeleteTable(tableName)
 
-	rowKey := []*table.Column{table.NewColumn("c1", table.Date{Value: time.Date(1990, 5, 25, 1, 0, 0, 0, time.Local)})}
-	mutateColumns := []*table.Column{table.NewColumn("c2", table.Date{Value: time.Date(1990, 5, 25, 0, 0, 0, 0, time.Local)})}
+	rowKey := []*table.Column{table.NewColumn("c1", table.Date(time.Date(1990, 5, 25, 1, 0, 0, 0, time.Local)))}
+	mutateColumns := []*table.Column{table.NewColumn("c2", table.Date(time.Date(1990, 5, 25, 0, 0, 0, 0, time.Local)))}
 	affectRows, err := cli.Insert(
 		context.TODO(),
 		tableName,
@@ -64,8 +64,8 @@ func TestUpdateDate(t *testing.T) {
 	tableName := testDateTableName
 	defer test.DeleteTable(tableName)
 
-	rowKey := []*table.Column{table.NewColumn("c1", table.Date{Value: time.Date(1990, 5, 25, 0, 0, 0, 0, time.Local)})}
-	mutateColumns := []*table.Column{table.NewColumn("c2", table.Date{Value: time.Date(1990, 5, 25, 0, 0, 0, 0, time.Local)})}
+	rowKey := []*table.Column{table.NewColumn("c1", table.Date(time.Date(1990, 5, 25, 0, 0, 0, 0, time.Local)))}
+	mutateColumns := []*table.Column{table.NewColumn("c2", table.Date(time.Date(1990, 5, 25, 0, 0, 0, 0, time.Local)))}
 	affectRows, err := cli.Insert(
 		context.TODO(),
 		tableName,
@@ -75,7 +75,7 @@ func TestUpdateDate(t *testing.T) {
 	assert.Equal(t, nil, err)
 	assert.EqualValues(t, 1, affectRows)
 
-	updateColumns := []*table.Column{table.NewColumn("c2", table.Date{Value: time.Date(1990, 5, 25, 0, 0, 1, 1, time.Local)})}
+	updateColumns := []*table.Column{table.NewColumn("c2", table.Date(time.Date(1990, 5, 25, 0, 0, 1, 1, time.Local)))}
 	affectRows, err = cli.Update(
 		context.TODO(),
 		tableName,
@@ -101,8 +101,8 @@ func TestInsertOrUpdateDate(t *testing.T) {
 	tableName := testDateTableName
 	defer test.DeleteTable(tableName)
 
-	rowKey := []*table.Column{table.NewColumn("c1", table.Date{Value: time.Date(1990, 5, 25, 0, 0, 0, 0, time.Local)})}
-	mutateColumns := []*table.Column{table.NewColumn("c2", table.Date{Value: time.Date(1990, 5, 25, 0, 0, 0, 0, time.Local)})}
+	rowKey := []*table.Column{table.NewColumn("c1", table.Date(time.Date(1990, 5, 25, 0, 0, 0, 0, time.Local)))}
+	mutateColumns := []*table.Column{table.NewColumn("c2", table.Date(time.Date(1990, 5, 25, 0, 0, 0, 0, time.Local)))}
 	affectRows, err := cli.InsertOrUpdate(
 		context.TODO(),
 		tableName,
@@ -149,8 +149,8 @@ func TestDeleteDate(t *testing.T) {
 	tableName := testDateTableName
 	defer test.DeleteTable(tableName)
 
-	rowKey := []*table.Column{table.NewColumn("c1", table.Date{Value: time.Date(1990, 5, 25, 0, 0, 0, 0, time.Local)})}
-	mutateColumns := []*table.Column{table.NewColumn("c2", table.Date{Value: time.Date(1990, 5, 25, 0, 0, 0, 0, time.Local)})}
+	rowKey := []*table.Column{table.NewColumn("c1", table.Date(time.Date(1990, 5, 25, 0, 0, 0, 0, time.Local)))}
+	mutateColumns := []*table.Column{table.NewColumn("c2", table.Date(time.Date(1990, 5, 25, 0, 0, 0, 0, time.Local)))}
 	affectRows, err := cli.Insert(
 		context.TODO(),
 		tableName,
@@ -181,8 +181,8 @@ func TestGetDate(t *testing.T) {
 	tableName := testDateTableName
 	defer test.DeleteTable(tableName)
 
-	rowKey := []*table.Column{table.NewColumn("c1", table.Date{Value: time.Date(1990, 5, 25, 0, 0, 0, 0, time.Local)})}
-	mutateColumns := []*table.Column{table.NewColumn("c2", table.Date{Value: time.Date(1990, 5, 25, 0, 0, 0, 0, time.Local)})}
+	rowKey := []*table.Column{table.NewColumn("c1", table.Date(time.Date(1990, 5, 25, 0, 0, 0, 0, time.Local)))}
+	mutateColumns := []*table.Column{table.NewColumn("c2", table.Date(time.Date(1990, 5, 25, 0, 0, 0, 0, time.Local)))}
 	affectRows, err := cli.Insert(
 		context.TODO(),
 		tableName,
