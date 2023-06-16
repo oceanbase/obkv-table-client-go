@@ -103,7 +103,6 @@ type ObObjType interface {
 	Decode(buffer *bytes.Buffer, obCollationType ObCollationType) interface{}
 	EncodedLength(value interface{}) int
 	DefaultObjMeta() ObObjectMeta
-	CheckTypeForValue(value interface{}, obCollationType ObCollationType) (interface{}, error)
 	Value() ObObjTypeValue
 	String() string
 }
@@ -379,10 +378,6 @@ func (t ObNullType) DefaultObjMeta() ObObjectMeta {
 	return ObObjectMeta{t, ObCollationLevelIgnorable, ObCollationTypeBinary, -1}
 }
 
-func (t ObNullType) CheckTypeForValue(value interface{}, obCollationType ObCollationType) (interface{}, error) {
-	return nil, errors.New("null type can not parse to comparable value")
-}
-
 func (t ObNullType) Value() ObObjTypeValue {
 	return ObObjTypeValue(t)
 }
@@ -420,17 +415,6 @@ func (t ObTinyIntType) DefaultObjMeta() ObObjectMeta {
 	return ObObjectMeta{t, ObCollationLevelNumeric, ObCollationTypeBinary, -1}
 }
 
-func (t ObTinyIntType) CheckTypeForValue(value interface{}, obCollationType ObCollationType) (interface{}, error) {
-	switch v := value.(type) {
-	case bool:
-		return v, nil
-	case int8:
-		return v, nil
-	default:
-		return nil, errors.Errorf("tiny int type parse to comparable failed, not match value, value: %v", v)
-	}
-}
-
 func (t ObTinyIntType) Value() ObObjTypeValue {
 	return ObObjTypeValue(t)
 }
@@ -457,14 +441,6 @@ func (t ObSmallIntType) EncodedLength(value interface{}) int {
 
 func (t ObSmallIntType) DefaultObjMeta() ObObjectMeta {
 	return ObObjectMeta{t, ObCollationLevelNumeric, ObCollationTypeBinary, -1}
-}
-
-func (t ObSmallIntType) CheckTypeForValue(value interface{}, obCollationType ObCollationType) (interface{}, error) {
-	if v, ok := value.(int16); ok {
-		return v, nil
-	} else {
-		return nil, errors.Errorf("small int type parse to comparable failed, not match value, value: %v", v)
-	}
 }
 
 func (t ObSmallIntType) Value() ObObjTypeValue {
@@ -495,10 +471,6 @@ func (t ObMediumIntType) DefaultObjMeta() ObObjectMeta {
 	return ObObjectMeta{t, ObCollationLevelNumeric, ObCollationTypeBinary, -1}
 }
 
-func (t ObMediumIntType) CheckTypeForValue(value interface{}, obCollationType ObCollationType) (interface{}, error) {
-	return nil, errors.New("medium int type is not support")
-}
-
 func (t ObMediumIntType) Value() ObObjTypeValue {
 	return ObObjTypeValue(t)
 }
@@ -525,14 +497,6 @@ func (t ObInt32Type) EncodedLength(value interface{}) int {
 
 func (t ObInt32Type) DefaultObjMeta() ObObjectMeta {
 	return ObObjectMeta{t, ObCollationLevelNumeric, ObCollationTypeBinary, -1}
-}
-
-func (t ObInt32Type) CheckTypeForValue(value interface{}, obCollationType ObCollationType) (interface{}, error) {
-	if v, ok := value.(int32); ok {
-		return v, nil
-	} else {
-		return nil, errors.Errorf("int32 type parse to comparable failed, not match value, value: %v", v)
-	}
 }
 
 func (t ObInt32Type) Value() ObObjTypeValue {
@@ -563,14 +527,6 @@ func (t ObInt64Type) DefaultObjMeta() ObObjectMeta {
 	return ObObjectMeta{t, ObCollationLevelNumeric, ObCollationTypeBinary, -1}
 }
 
-func (t ObInt64Type) CheckTypeForValue(value interface{}, obCollationType ObCollationType) (interface{}, error) {
-	if v, ok := value.(int64); ok {
-		return v, nil
-	} else {
-		return nil, errors.Errorf("int64 type parse to comparable failed, not match value, value: %v", v)
-	}
-}
-
 func (t ObInt64Type) Value() ObObjTypeValue {
 	return ObObjTypeValue(t)
 }
@@ -597,14 +553,6 @@ func (t ObUTinyIntType) EncodedLength(value interface{}) int {
 
 func (t ObUTinyIntType) DefaultObjMeta() ObObjectMeta {
 	return ObObjectMeta{t, ObCollationLevelNumeric, ObCollationTypeBinary, -1}
-}
-
-func (t ObUTinyIntType) CheckTypeForValue(value interface{}, obCollationType ObCollationType) (interface{}, error) {
-	if v, ok := value.(uint8); ok {
-		return v, nil
-	} else {
-		return nil, errors.Errorf("uTiny int type parse to comparable failed, not match value, value: %v", v)
-	}
 }
 
 func (t ObUTinyIntType) Value() ObObjTypeValue {
@@ -635,14 +583,6 @@ func (t ObUSmallIntType) DefaultObjMeta() ObObjectMeta {
 	return ObObjectMeta{t, ObCollationLevelNumeric, ObCollationTypeBinary, -1}
 }
 
-func (t ObUSmallIntType) CheckTypeForValue(value interface{}, obCollationType ObCollationType) (interface{}, error) {
-	if v, ok := value.(uint16); ok {
-		return v, nil
-	} else {
-		return nil, errors.Errorf("uSmall int type parse to comparable failed, not match value, value: %v", v)
-	}
-}
-
 func (t ObUSmallIntType) Value() ObObjTypeValue {
 	return ObObjTypeValue(t)
 }
@@ -669,10 +609,6 @@ func (t ObUMediumIntType) EncodedLength(value interface{}) int {
 
 func (t ObUMediumIntType) DefaultObjMeta() ObObjectMeta {
 	return ObObjectMeta{t, ObCollationLevelNumeric, ObCollationTypeBinary, -1}
-}
-
-func (t ObUMediumIntType) CheckTypeForValue(value interface{}, obCollationType ObCollationType) (interface{}, error) {
-	return nil, errors.New("uMedium int type is not support")
 }
 
 func (t ObUMediumIntType) Value() ObObjTypeValue {
@@ -703,14 +639,6 @@ func (t ObUInt32Type) DefaultObjMeta() ObObjectMeta {
 	return ObObjectMeta{t, ObCollationLevelNumeric, ObCollationTypeBinary, -1}
 }
 
-func (t ObUInt32Type) CheckTypeForValue(value interface{}, obCollationType ObCollationType) (interface{}, error) {
-	if v, ok := value.(uint32); ok {
-		return v, nil
-	} else {
-		return nil, errors.Errorf("uInt int type parse to comparable failed, not match value, value: %v", v)
-	}
-}
-
 func (t ObUInt32Type) Value() ObObjTypeValue {
 	return ObObjTypeValue(t)
 }
@@ -737,14 +665,6 @@ func (t ObUInt64Type) EncodedLength(value interface{}) int {
 
 func (t ObUInt64Type) DefaultObjMeta() ObObjectMeta {
 	return ObObjectMeta{t, ObCollationLevelNumeric, ObCollationTypeBinary, -1}
-}
-
-func (t ObUInt64Type) CheckTypeForValue(value interface{}, obCollationType ObCollationType) (interface{}, error) {
-	if v, ok := value.(uint64); ok {
-		return v, nil
-	} else {
-		return nil, errors.Errorf("uInt64 type parse to comparable failed, not match value, value: %v", v)
-	}
 }
 
 func (t ObUInt64Type) Value() ObObjTypeValue {
@@ -775,14 +695,6 @@ func (t ObFloatType) DefaultObjMeta() ObObjectMeta {
 	return ObObjectMeta{t, ObCollationLevelNumeric, ObCollationTypeBinary, -1}
 }
 
-func (t ObFloatType) CheckTypeForValue(value interface{}, obCollationType ObCollationType) (interface{}, error) {
-	if v, ok := value.(float32); ok {
-		return v, nil
-	} else {
-		return nil, errors.Errorf("float type parse to comparable failed, not match value, value: %v", v)
-	}
-}
-
 func (t ObFloatType) Value() ObObjTypeValue {
 	return ObObjTypeValue(t)
 }
@@ -809,14 +721,6 @@ func (t ObDoubleType) EncodedLength(value interface{}) int {
 
 func (t ObDoubleType) DefaultObjMeta() ObObjectMeta {
 	return ObObjectMeta{t, ObCollationLevelNumeric, ObCollationTypeBinary, -1}
-}
-
-func (t ObDoubleType) CheckTypeForValue(value interface{}, obCollationType ObCollationType) (interface{}, error) {
-	if v, ok := value.(float64); ok {
-		return v, nil
-	} else {
-		return nil, errors.Errorf("double type parse to comparable failed, not match value, value: %v", v)
-	}
 }
 
 func (t ObDoubleType) Value() ObObjTypeValue {
@@ -847,10 +751,6 @@ func (t ObUFloatType) DefaultObjMeta() ObObjectMeta {
 	return ObObjectMeta{t, ObCollationLevelNumeric, ObCollationTypeBinary, -1}
 }
 
-func (t ObUFloatType) CheckTypeForValue(value interface{}, obCollationType ObCollationType) (interface{}, error) {
-	return nil, errors.New("uFloat type is not support")
-}
-
 func (t ObUFloatType) Value() ObObjTypeValue {
 	return ObObjTypeValue(t)
 }
@@ -877,10 +777,6 @@ func (t ObUDoubleType) EncodedLength(value interface{}) int {
 
 func (t ObUDoubleType) DefaultObjMeta() ObObjectMeta {
 	return ObObjectMeta{t, ObCollationLevelNumeric, ObCollationTypeBinary, -1}
-}
-
-func (t ObUDoubleType) CheckTypeForValue(value interface{}, obCollationType ObCollationType) (interface{}, error) {
-	return nil, errors.New("uDouble type is not support")
 }
 
 func (t ObUDoubleType) Value() ObObjTypeValue {
@@ -911,10 +807,6 @@ func (t ObNumberType) DefaultObjMeta() ObObjectMeta {
 	return ObObjectMeta{t, ObCollationLevelNumeric, ObCollationTypeBinary, -1}
 }
 
-func (t ObNumberType) CheckTypeForValue(value interface{}, obCollationType ObCollationType) (interface{}, error) {
-	return nil, errors.New("number type is not support")
-}
-
 func (t ObNumberType) Value() ObObjTypeValue {
 	return ObObjTypeValue(t)
 }
@@ -941,10 +833,6 @@ func (t ObUNumberType) EncodedLength(value interface{}) int {
 
 func (t ObUNumberType) DefaultObjMeta() ObObjectMeta {
 	return ObObjectMeta{t, ObCollationLevelNumeric, ObCollationTypeBinary, -1}
-}
-
-func (t ObUNumberType) CheckTypeForValue(value interface{}, obCollationType ObCollationType) (interface{}, error) {
-	return nil, errors.New("uNumber type is not support")
 }
 
 func (t ObUNumberType) Value() ObObjTypeValue {
@@ -975,14 +863,6 @@ func (t ObDateTimeType) EncodedLength(value interface{}) int {
 
 func (t ObDateTimeType) DefaultObjMeta() ObObjectMeta {
 	return ObObjectMeta{t, ObCollationLevelNumeric, ObCollationTypeBinary, -1}
-}
-
-func (t ObDateTimeType) CheckTypeForValue(value interface{}, obCollationType ObCollationType) (interface{}, error) {
-	if v, ok := value.(table.DateTime); ok {
-		return v, nil
-	} else {
-		return nil, errors.Errorf("date time type parse to comparable failed, not match value, value: %v", v)
-	}
 }
 
 func (t ObDateTimeType) Value() ObObjTypeValue {
@@ -1019,14 +899,6 @@ func (t ObTimestampType) DefaultObjMeta() ObObjectMeta {
 	return ObObjectMeta{t, ObCollationLevelNumeric, ObCollationTypeBinary, -1}
 }
 
-func (t ObTimestampType) CheckTypeForValue(value interface{}, obCollationType ObCollationType) (interface{}, error) {
-	if v, ok := value.(table.TimeStamp); ok {
-		return v, nil
-	} else {
-		return nil, errors.Errorf("time stamp type parse to comparable failed, not match value, value: %v", v)
-	}
-}
-
 func (t ObTimestampType) Value() ObObjTypeValue {
 	return ObObjTypeValue(t)
 }
@@ -1057,14 +929,6 @@ func (t ObDateType) DefaultObjMeta() ObObjectMeta {
 	return ObObjectMeta{t, ObCollationLevelNumeric, ObCollationTypeBinary, -1}
 }
 
-func (t ObDateType) CheckTypeForValue(value interface{}, obCollationType ObCollationType) (interface{}, error) {
-	if v, ok := value.(table.Date); ok {
-		return v, nil
-	} else {
-		return nil, errors.Errorf("data type parse to comparable failed, not match value, value: %v", v)
-	}
-}
-
 func (t ObDateType) Value() ObObjTypeValue {
 	return ObObjTypeValue(t)
 }
@@ -1091,14 +955,6 @@ func (t ObTimeType) EncodedLength(value interface{}) int {
 
 func (t ObTimeType) DefaultObjMeta() ObObjectMeta {
 	return ObObjectMeta{t, ObCollationLevelNumeric, ObCollationTypeBinary, -1}
-}
-
-func (t ObTimeType) CheckTypeForValue(value interface{}, obCollationType ObCollationType) (interface{}, error) {
-	if v, ok := value.(time.Duration); ok {
-		return v, nil
-	} else {
-		return nil, errors.Errorf("time type parse to comparable failed, not match value, value: %v", v)
-	}
 }
 
 func (t ObTimeType) Value() ObObjTypeValue {
@@ -1139,14 +995,6 @@ func (t ObYearType) DefaultObjMeta() ObObjectMeta {
 	return ObObjectMeta{t, ObCollationLevelNumeric, ObCollationTypeBinary, -1}
 }
 
-func (t ObYearType) CheckTypeForValue(value interface{}, obCollationType ObCollationType) (interface{}, error) {
-	if v, ok := value.(table.Year); !ok {
-		return nil, errors.Errorf("invalid type:%v for year type", value)
-	} else {
-		return v, nil
-	}
-}
-
 func (t ObYearType) Value() ObObjTypeValue {
 	return ObObjTypeValue(t)
 }
@@ -1173,22 +1021,6 @@ func (t ObVarcharType) EncodedLength(value interface{}) int {
 
 func (t ObVarcharType) DefaultObjMeta() ObObjectMeta {
 	return ObObjectMeta{t, ObCollationLevelExplicit, ObCollationTypeUtf8mb4GeneralCi, -1}
-}
-
-func (t ObVarcharType) CheckTypeForValue(value interface{}, obCollationType ObCollationType) (interface{}, error) {
-	if ObCollationTypeBinary == obCollationType {
-		if v, ok := value.([]byte); ok {
-			return v, nil
-		} else {
-			return nil, errors.Errorf("varchar type parse to comparable failed, not match value, value: %v", v)
-		}
-	} else {
-		if v, ok := value.(string); ok {
-			return v, nil
-		} else {
-			return nil, errors.Errorf("varchar type parse to comparable failed, not match value, value: %v", v)
-		}
-	}
 }
 
 func (t ObVarcharType) Value() ObObjTypeValue {
@@ -1219,22 +1051,6 @@ func (t ObCharType) DefaultObjMeta() ObObjectMeta {
 	return ObObjectMeta{t, ObCollationLevelExplicit, ObCollationTypeUtf8mb4GeneralCi, -1}
 }
 
-func (t ObCharType) CheckTypeForValue(value interface{}, obCollationType ObCollationType) (interface{}, error) {
-	if ObCollationTypeBinary == obCollationType {
-		if v, ok := value.([]byte); ok {
-			return v, nil
-		} else {
-			return nil, errors.Errorf("char type parse to comparable failed, not match value, value: %v", v)
-		}
-	} else {
-		if v, ok := value.(string); ok {
-			return v, nil
-		} else {
-			return nil, errors.Errorf("char type parse to comparable failed, not match value, value: %v", v)
-		}
-	}
-}
-
 func (t ObCharType) Value() ObObjTypeValue {
 	return ObObjTypeValue(t)
 }
@@ -1261,10 +1077,6 @@ func (t ObHexStringType) EncodedLength(value interface{}) int {
 
 func (t ObHexStringType) DefaultObjMeta() ObObjectMeta {
 	return ObObjectMeta{t, ObCollationLevelNumeric, ObCollationTypeBinary, -1}
-}
-
-func (t ObHexStringType) CheckTypeForValue(value interface{}, obCollationType ObCollationType) (interface{}, error) {
-	return nil, errors.New("hex string type is not support")
 }
 
 func (t ObHexStringType) Value() ObObjTypeValue {
@@ -1295,10 +1107,6 @@ func (t ObExtendType) DefaultObjMeta() ObObjectMeta {
 	return ObObjectMeta{t, ObCollationLevelNumeric, ObCollationTypeBinary, -1}
 }
 
-func (t ObExtendType) CheckTypeForValue(value interface{}, obCollationType ObCollationType) (interface{}, error) {
-	return nil, errors.New("extend type is not support")
-}
-
 func (t ObExtendType) Value() ObObjTypeValue {
 	return ObObjTypeValue(t)
 }
@@ -1325,10 +1133,6 @@ func (t ObUnknownType) EncodedLength(value interface{}) int {
 
 func (t ObUnknownType) DefaultObjMeta() ObObjectMeta {
 	return ObObjectMeta{t, ObCollationLevelNumeric, ObCollationTypeBinary, -1}
-}
-
-func (t ObUnknownType) CheckTypeForValue(value interface{}, obCollationType ObCollationType) (interface{}, error) {
-	return nil, errors.New("unknown type is not support")
 }
 
 func (t ObUnknownType) Value() ObObjTypeValue {
@@ -1359,22 +1163,6 @@ func (t ObTinyTextType) DefaultObjMeta() ObObjectMeta {
 	return ObObjectMeta{t, ObCollationLevelNumeric, ObCollationTypeBinary, -1}
 }
 
-func (t ObTinyTextType) CheckTypeForValue(value interface{}, obCollationType ObCollationType) (interface{}, error) {
-	if ObCollationTypeBinary == obCollationType {
-		if v, ok := value.([]byte); ok {
-			return v, nil
-		} else {
-			return nil, errors.Errorf("tiny text type parse to comparable failed, not match value, value: %v", v)
-		}
-	} else {
-		if v, ok := value.(string); ok {
-			return v, nil
-		} else {
-			return nil, errors.Errorf("tiny text type parse to comparable failed, not match value, value: %v", v)
-		}
-	}
-}
-
 func (t ObTinyTextType) Value() ObObjTypeValue {
 	return ObObjTypeValue(t)
 }
@@ -1401,22 +1189,6 @@ func (t ObTextType) EncodedLength(value interface{}) int {
 
 func (t ObTextType) DefaultObjMeta() ObObjectMeta {
 	return ObObjectMeta{t, ObCollationLevelNumeric, ObCollationTypeBinary, -1}
-}
-
-func (t ObTextType) CheckTypeForValue(value interface{}, obCollationType ObCollationType) (interface{}, error) {
-	if ObCollationTypeBinary == obCollationType {
-		if v, ok := value.([]byte); ok {
-			return v, nil
-		} else {
-			return nil, errors.Errorf("text type parse to comparable failed, not match value, value: %v", v)
-		}
-	} else {
-		if v, ok := value.(string); ok {
-			return v, nil
-		} else {
-			return nil, errors.Errorf("text type parse to comparable failed, not match value, value: %v", v)
-		}
-	}
 }
 
 func (t ObTextType) Value() ObObjTypeValue {
@@ -1447,22 +1219,6 @@ func (t ObMediumTextType) DefaultObjMeta() ObObjectMeta {
 	return ObObjectMeta{t, ObCollationLevelNumeric, ObCollationTypeBinary, -1}
 }
 
-func (t ObMediumTextType) CheckTypeForValue(value interface{}, obCollationType ObCollationType) (interface{}, error) {
-	if ObCollationTypeBinary == obCollationType {
-		if v, ok := value.([]byte); ok {
-			return v, nil
-		} else {
-			return nil, errors.Errorf("medium text type parse to comparable failed, not match value, value: %v", v)
-		}
-	} else {
-		if v, ok := value.(string); ok {
-			return v, nil
-		} else {
-			return nil, errors.Errorf("medium text type parse to comparable failed, not match value, value: %v", v)
-		}
-	}
-}
-
 func (t ObMediumTextType) Value() ObObjTypeValue {
 	return ObObjTypeValue(t)
 }
@@ -1491,22 +1247,6 @@ func (t ObLongTextType) DefaultObjMeta() ObObjectMeta {
 	return ObObjectMeta{t, ObCollationLevelNumeric, ObCollationTypeBinary, -1}
 }
 
-func (t ObLongTextType) CheckTypeForValue(value interface{}, obCollationType ObCollationType) (interface{}, error) {
-	if ObCollationTypeBinary == obCollationType {
-		if v, ok := value.([]byte); ok {
-			return v, nil
-		} else {
-			return nil, errors.Errorf("long text type parse to comparable failed, not match value, value: %v", v)
-		}
-	} else {
-		if v, ok := value.(string); ok {
-			return v, nil
-		} else {
-			return nil, errors.Errorf("long text type parse to comparable failed, not match value, value: %v", v)
-		}
-	}
-}
-
 func (t ObLongTextType) Value() ObObjTypeValue {
 	return ObObjTypeValue(t)
 }
@@ -1533,10 +1273,6 @@ func (t ObBitType) EncodedLength(value interface{}) int {
 
 func (t ObBitType) DefaultObjMeta() ObObjectMeta {
 	return ObObjectMeta{t, ObCollationLevelNumeric, ObCollationTypeBinary, -1}
-}
-
-func (t ObBitType) CheckTypeForValue(value interface{}, obCollationType ObCollationType) (interface{}, error) {
-	return nil, errors.New("bit type is not support")
 }
 
 func (t ObBitType) Value() ObObjTypeValue {
