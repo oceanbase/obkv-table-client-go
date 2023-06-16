@@ -41,11 +41,6 @@ type BatchExecutor interface {
 	AddDeleteOp(rowKey []*table.Column, opts ...ObkvOption) error
 	// AddGetOp add a get operation to the batch executor.
 	AddGetOp(rowKey []*table.Column, getColumns []string, opts ...ObkvOption) error
-	// SetIsAtomic Set batch operation atomicity.
-	// isAtomic is default true.
-	// When isAtomic is set to true, all batch operations fail if only one operation fails.
-	// Batch operations here refer to batch operations on a single partition.
-	SetIsAtomic(isAtomic bool)
 	// Execute a batch operation.
 	// batch operation only ensures atomicity of a single partition.
 	// BatchOperationResult contains the results of all operations.

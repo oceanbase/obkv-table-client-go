@@ -43,5 +43,5 @@ func TestObTableEntry(t *testing.T) {
 	assert.EqualValues(t, 500021, entry.TableId())
 	assert.Equal(t, info, entry.PartitionInfo())
 	assert.Equal(t, true, entry.IsPartitionTable())
-	assert.Equal(t, "ObTableEntry{tableId:500021, partNum:10, replicaNum:16, refreshTimeMills:0, tableEntryKey:ObTableEntryKey{clusterName:cluster, tenantNane:database, databaseName:database, tableName:table}, partitionInfo:obPartitionInfo{level:2, firstPartDesc:nil, subPartDesc:nil, partTabletIdMap:{}}, tableLocation:nil}", entry.String())
+	assert.Equal(t, "ObTableEntry{tableId:500021, partNum:10, replicaNum:16, refreshTimeMills:0, tableEntryKey:ObTableEntryKey{clusterName:cluster, tenantName:tenant, databaseName:database, tableName:table}, partitionInfo:obPartitionInfo{level:2, firstPartDesc:nil, subPartDesc:nil, partTabletIdMap:{}}, tableLocation:nil}", entry.String())
 }

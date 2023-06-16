@@ -73,7 +73,6 @@ func NewObTableBatchOperationRequestWithParams(
 	tableId uint64,
 	partitionId uint64,
 	obTableBatchOperation *ObTableBatchOperation,
-	atomicOperation bool,
 	timeout time.Duration,
 	flag uint16) *ObTableBatchOperationRequest {
 
@@ -100,7 +99,7 @@ func NewObTableBatchOperationRequestWithParams(
 		returnAffectedEntity:    false,
 		returnAffectedRows:      false,
 		partitionId:             partitionId,
-		atomicOperation:         atomicOperation,
+		atomicOperation:         true,
 	}
 }
 

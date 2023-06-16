@@ -409,7 +409,7 @@ func (t ObTinyIntType) Encode(buffer *bytes.Buffer, value interface{}) {
 }
 
 func (t ObTinyIntType) Decode(buffer *bytes.Buffer, obCollationType ObCollationType) interface{} {
-	return util.Uint8(buffer)
+	return int8(util.Uint8(buffer))
 }
 
 func (t ObTinyIntType) EncodedLength(value interface{}) int {
@@ -448,7 +448,7 @@ func (t ObSmallIntType) Encode(buffer *bytes.Buffer, value interface{}) {
 }
 
 func (t ObSmallIntType) Decode(buffer *bytes.Buffer, obCollationType ObCollationType) interface{} {
-	return util.DecodeVi32(buffer)
+	return int16(util.DecodeVi32(buffer))
 }
 
 func (t ObSmallIntType) EncodedLength(value interface{}) int {
@@ -624,7 +624,7 @@ func (t ObUSmallIntType) Encode(buffer *bytes.Buffer, value interface{}) {
 }
 
 func (t ObUSmallIntType) Decode(buffer *bytes.Buffer, obCollationType ObCollationType) interface{} {
-	return util.DecodeVi32(buffer)
+	return uint16(util.DecodeVi32(buffer))
 }
 
 func (t ObUSmallIntType) EncodedLength(value interface{}) int {
@@ -692,7 +692,7 @@ func (t ObUInt32Type) Encode(buffer *bytes.Buffer, value interface{}) {
 }
 
 func (t ObUInt32Type) Decode(buffer *bytes.Buffer, obCollationType ObCollationType) interface{} {
-	return util.DecodeVi32(buffer)
+	return uint32(util.DecodeVi32(buffer))
 }
 
 func (t ObUInt32Type) EncodedLength(value interface{}) int {
@@ -728,7 +728,7 @@ func (t ObUInt64Type) Encode(buffer *bytes.Buffer, value interface{}) {
 }
 
 func (t ObUInt64Type) Decode(buffer *bytes.Buffer, obCollationType ObCollationType) interface{} {
-	return util.DecodeVi64(buffer)
+	return uint64(util.DecodeVi64(buffer))
 }
 
 func (t ObUInt64Type) EncodedLength(value interface{}) int {
@@ -960,7 +960,7 @@ func (t ObUNumberType) String() string {
 type ObDateTimeType ObObjTypeValue
 
 func (t ObDateTimeType) Encode(buffer *bytes.Buffer, value interface{}) {
-	v := value.(table.DateTime).Value
+	v := time.Time(value.(table.DateTime))
 	util.EncodeVi64(buffer, v.Unix())
 }
 
@@ -970,7 +970,7 @@ func (t ObDateTimeType) Decode(buffer *bytes.Buffer, obCollationType ObCollation
 }
 
 func (t ObDateTimeType) EncodedLength(value interface{}) int {
-	return util.EncodedLengthByVi64(value.(table.DateTime).Value.Unix())
+	return util.EncodedLengthByVi64(time.Time(value.(table.DateTime)).Unix())
 }
 
 func (t ObDateTimeType) DefaultObjMeta() ObObjectMeta {
@@ -998,7 +998,7 @@ func (t ObDateTimeType) String() string {
 type ObTimestampType ObObjTypeValue
 
 func (t ObTimestampType) Encode(buffer *bytes.Buffer, value interface{}) {
-	v := value.(table.TimeStamp).Value
+	v := time.Time(value.(table.TimeStamp))
 	util.EncodeVi64(buffer, v.UnixNano())
 }
 
@@ -1012,7 +1012,7 @@ func (t ObTimestampType) Decode(buffer *bytes.Buffer, obCollationType ObCollatio
 }
 
 func (t ObTimestampType) EncodedLength(value interface{}) int {
-	return util.EncodedLengthByVi64(value.(table.TimeStamp).Value.UnixNano())
+	return util.EncodedLengthByVi64(time.Time(value.(table.TimeStamp)).UnixNano())
 }
 
 func (t ObTimestampType) DefaultObjMeta() ObObjectMeta {
@@ -1040,7 +1040,7 @@ func (t ObTimestampType) String() string {
 type ObDateType ObObjTypeValue
 
 func (t ObDateType) Encode(buffer *bytes.Buffer, value interface{}) {
-	v := value.(table.Date).Value
+	v := time.Time(value.(table.Date))
 	util.EncodeVi64(buffer, v.Unix())
 }
 
@@ -1050,7 +1050,7 @@ func (t ObDateType) Decode(buffer *bytes.Buffer, obCollationType ObCollationType
 }
 
 func (t ObDateType) EncodedLength(value interface{}) int {
-	return util.EncodedLengthByVi64(value.(table.Date).Value.Unix())
+	return util.EncodedLengthByVi64(time.Time(value.(table.Date)).Unix())
 }
 
 func (t ObDateType) DefaultObjMeta() ObObjectMeta {
@@ -1115,7 +1115,7 @@ type ObYearType ObObjTypeValue
 
 func (t ObYearType) Encode(buffer *bytes.Buffer, value interface{}) {
 	// range [1901 - 2155]
-	year := value.(table.Year).Value
+	year := uint16(value.(table.Year))
 	var fullYear uint16
 	if year > 0 && year <= 69 {
 		fullYear = year + 2000
