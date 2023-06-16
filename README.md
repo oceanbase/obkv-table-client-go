@@ -65,6 +65,11 @@ The code demo:
 4. sysUserName: `root` or `proxy`, which have privileges to access routing system view
 5. sysPassWord: the password of sys user in sysUserName.
 
+## Documentation
+- English [Coming soon]
+- [Simplified Chinese (简体中文)](https://github.com/oceanbase/obkv-table-client-go/wiki/obkv-table-client-go-%E6%8E%A5%E5%8F%A3%E8%AF%B4%E6%98%8E%E4%B8%8E%E4%BD%BF%E7%94%A8)
+
+
 ## Licencing
 
 obkv-table-client-go is under [MulanPSL - 2.0](http://license.coscl.org.cn/MulanPSL2) licence. You can freely copy and use the source code. When you modify or distribute the source code, please obey the MulanPSL - 2.0 licence.
