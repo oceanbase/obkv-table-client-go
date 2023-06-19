@@ -142,4 +142,5 @@ func TestObTableQueryAndMutateEncodeDecode(t *testing.T) {
 	assert.EqualValues(t, obTableQueryAndMutate.TableQuery(), newObTableQueryAndMutate.TableQuery())
 	assert.EqualValues(t, obTableQueryAndMutate.Mutations(), newObTableQueryAndMutate.Mutations())
 	assert.EqualValues(t, obTableQueryAndMutate.ReturnAffectedEntity(), newObTableQueryAndMutate.ReturnAffectedEntity())
+	assert.EqualValues(t, obTableQueryAndMutate, newObTableQueryAndMutate)
 }
