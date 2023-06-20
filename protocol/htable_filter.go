@@ -35,6 +35,23 @@ type ObHTableFilter struct {
 	filterString          string
 }
 
+func NewObHTableFilter() *ObHTableFilter {
+	return &ObHTableFilter{
+		ObUniVersionHeader: ObUniVersionHeader{
+			version:       1,
+			contentLength: 0,
+		},
+		isValid:               false,
+		selectColumnQualifier: nil,
+		minStamp:              0,
+		maxStamp:              0,
+		maxVersions:           0,
+		limitPerRowPerCf:      0,
+		offsetPerRowPerCf:     0,
+		filterString:          "",
+	}
+}
+
 func (f *ObHTableFilter) IsValid() bool {
 	return f.isValid
 }
@@ -141,4 +158,23 @@ func (f *ObHTableFilter) Encode(buffer *bytes.Buffer) {
 }
 
 func (f *ObHTableFilter) Decode(buffer *bytes.Buffer) {
+	f.ObUniVersionHeader.Decode(buffer)
+
+	f.isValid = util.ByteToBool(util.Uint8(buffer))
+
+	selectColumnQualifierLen := util.DecodeVi64(buffer)
+	f.selectColumnQualifier = make([][]byte, 0, selectColumnQualifierLen)
+	var i int64
+	for i = 0; i < selectColumnQualifierLen; i++ {
+		f.selectColumnQualifier = append(f.selectColumnQualifier, util.DecodeBytesString(buffer))
+	}
+
+	f.minStamp = util.DecodeVi64(buffer)
+	f.maxStamp = util.DecodeVi64(buffer)
+
+	f.maxVersions = util.DecodeVi32(buffer)
+	f.limitPerRowPerCf = util.DecodeVi32(buffer)
+	f.offsetPerRowPerCf = util.DecodeVi32(buffer)
+
+	f.filterString = util.DecodeVString(buffer)
 }

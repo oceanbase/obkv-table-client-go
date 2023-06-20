@@ -70,6 +70,5 @@ func (r *ObTableStreamRequest) Encode(buffer *bytes.Buffer) {
 }
 
 func (r *ObTableStreamRequest) Decode(buffer *bytes.Buffer) {
-	// TODO implement me
-	panic("implement me")
+	r.ObUniVersionHeader.Decode(buffer)
 }

@@ -19,6 +19,7 @@ package protocol
 
 import (
 	"bytes"
+	"time"
 
 	"github.com/oceanbase/obkv-table-client-go/util"
 )
@@ -29,6 +30,26 @@ type ObTableQueryResponse struct {
 	propertiesNames []string
 	rowCount        int64
 	propertiesRows  [][]*ObObject
+}
+
+func NewObTableQueryResponse() *ObTableQueryResponse {
+	return &ObTableQueryResponse{
+		ObUniVersionHeader: ObUniVersionHeader{
+			version:       1,
+			contentLength: 0,
+		},
+		ObPayloadBase: ObPayloadBase{
+			uniqueId:  0,
+			sequence:  0,
+			tenantId:  1,
+			sessionId: 0,
+			flag:      7,
+			timeout:   10 * 1000 * time.Millisecond,
+		},
+		propertiesNames: nil,
+		rowCount:        0,
+		propertiesRows:  nil,
+	}
 }
 
 func (r *ObTableQueryResponse) PropertiesNames() []string {
@@ -60,13 +81,25 @@ func (r *ObTableQueryResponse) PCode() ObTablePacketCode {
 }
 
 func (r *ObTableQueryResponse) PayloadLen() int {
-	// TODO implement me
-	panic("implement me")
+	return r.PayloadContentLen() + r.ObUniVersionHeader.UniVersionHeaderLen() // Do not change the order
 }
 
 func (r *ObTableQueryResponse) PayloadContentLen() int {
-	// TODO implement me
-	panic("implement me")
+	totalLen := 0
+	totalLen += util.EncodedLengthByVi64(int64(len(r.propertiesNames)))
+	for _, propertiesName := range r.propertiesNames {
+		totalLen += util.EncodedLengthByVString(propertiesName)
+	}
+
+	totalLen += util.EncodedLengthByVi64(r.rowCount)
+	totalLen += util.EncodedLengthByVi64(int64(len(r.propertiesRows)))
+	for _, propertiesRow := range r.propertiesRows {
+		for _, obObject := range propertiesRow {
+			totalLen += obObject.EncodedLength()
+		}
+	}
+	r.ObUniVersionHeader.SetContentLength(totalLen)
+	return r.ObUniVersionHeader.ContentLength()
 }
 
 func (r *ObTableQueryResponse) Credential() []byte {
@@ -78,8 +111,23 @@ func (r *ObTableQueryResponse) SetCredential(credential []byte) {
 }
 
 func (r *ObTableQueryResponse) Encode(buffer *bytes.Buffer) {
-	// TODO implement me
-	panic("implement me")
+	r.ObUniVersionHeader.Encode(buffer)
+
+	util.EncodeVi64(buffer, int64(len(r.propertiesNames)))
+
+	for _, propertiesName := range r.propertiesNames {
+		util.EncodeVString(buffer, propertiesName)
+	}
+
+	util.EncodeVi64(buffer, r.rowCount)
+
+	util.EncodeVi64(buffer, int64(len(r.propertiesRows)))
+
+	for _, propertiesRow := range r.propertiesRows {
+		for _, obObject := range propertiesRow {
+			obObject.Encode(buffer)
+		}
+	}
 }
 
 func (r *ObTableQueryResponse) Decode(buffer *bytes.Buffer) {

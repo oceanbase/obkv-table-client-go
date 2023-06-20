@@ -24,20 +24,19 @@ import (
 	"github.com/oceanbase/obkv-table-client-go/util"
 )
 
-type ObTableQueryRequest struct {
+type ObTableQueryAndMutateRequest struct {
 	ObUniVersionHeader
 	ObPayloadBase
-	credential       []byte
-	tableName        string
-	tableId          uint64
-	partitionId      uint64
-	entityType       ObTableEntityType
-	consistencyLevel ObTableConsistencyLevel
-	tableQuery       *ObTableQuery
+	credential          []byte
+	tableName           string
+	tableId             uint64
+	partitionId         uint64
+	entityType          ObTableEntityType
+	tableQueryAndMutate *ObTableQueryAndMutate
 }
 
-func NewObTableQueryRequest() *ObTableQueryRequest {
-	return &ObTableQueryRequest{
+func NewObTableQueryAndMutateRequest() *ObTableQueryAndMutateRequest {
+	return &ObTableQueryAndMutateRequest{
 		ObUniVersionHeader: ObUniVersionHeader{
 			version:       1,
 			contentLength: 0,
@@ -50,73 +49,64 @@ func NewObTableQueryRequest() *ObTableQueryRequest {
 			flag:      7,
 			timeout:   10 * 1000 * time.Millisecond,
 		},
-		credential:       nil,
-		tableName:        "",
-		tableId:          0,
-		partitionId:      0,
-		entityType:       0,
-		consistencyLevel: 0,
-		tableQuery:       NewObTableQuery(),
+		credential:          nil,
+		tableName:           "",
+		tableId:             0,
+		partitionId:         0,
+		entityType:          0,
+		tableQueryAndMutate: NewObTableQueryAndMutate(),
 	}
 }
 
-func (r *ObTableQueryRequest) TableName() string {
+func (r *ObTableQueryAndMutateRequest) TableName() string {
 	return r.tableName
 }
 
-func (r *ObTableQueryRequest) SetTableName(tableName string) {
+func (r *ObTableQueryAndMutateRequest) SetTableName(tableName string) {
 	r.tableName = tableName
 }
 
-func (r *ObTableQueryRequest) TableId() uint64 {
+func (r *ObTableQueryAndMutateRequest) TableId() uint64 {
 	return r.tableId
 }
 
-func (r *ObTableQueryRequest) SetTableId(tableId uint64) {
+func (r *ObTableQueryAndMutateRequest) SetTableId(tableId uint64) {
 	r.tableId = tableId
 }
 
-func (r *ObTableQueryRequest) PartitionId() uint64 {
+func (r *ObTableQueryAndMutateRequest) PartitionId() uint64 {
 	return r.partitionId
 }
 
-func (r *ObTableQueryRequest) SetPartitionId(partitionId uint64) {
+func (r *ObTableQueryAndMutateRequest) SetPartitionId(partitionId uint64) {
 	r.partitionId = partitionId
 }
 
-func (r *ObTableQueryRequest) EntityType() ObTableEntityType {
+func (r *ObTableQueryAndMutateRequest) EntityType() ObTableEntityType {
 	return r.entityType
 }
 
-func (r *ObTableQueryRequest) SetEntityType(entityType ObTableEntityType) {
+func (r *ObTableQueryAndMutateRequest) SetEntityType(entityType ObTableEntityType) {
 	r.entityType = entityType
 }
 
-func (r *ObTableQueryRequest) ConsistencyLevel() ObTableConsistencyLevel {
-	return r.consistencyLevel
+func (r *ObTableQueryAndMutateRequest) TableQueryAndMutate() *ObTableQueryAndMutate {
+	return r.tableQueryAndMutate
 }
 
-func (r *ObTableQueryRequest) SetConsistencyLevel(consistencyLevel ObTableConsistencyLevel) {
-	r.consistencyLevel = consistencyLevel
+func (r *ObTableQueryAndMutateRequest) SetTableQueryAndMutate(tableQueryAndMutate *ObTableQueryAndMutate) {
+	r.tableQueryAndMutate = tableQueryAndMutate
 }
 
-func (r *ObTableQueryRequest) TableQuery() *ObTableQuery {
-	return r.tableQuery
+func (r *ObTableQueryAndMutateRequest) PCode() ObTablePacketCode {
+	return ObTableApiQueryAndMute
 }
 
-func (r *ObTableQueryRequest) SetTableQuery(tableQuery *ObTableQuery) {
-	r.tableQuery = tableQuery
-}
-
-func (r *ObTableQueryRequest) PCode() ObTablePacketCode {
-	return ObTableApiExecuteQuery
-}
-
-func (r *ObTableQueryRequest) PayloadLen() int {
+func (r *ObTableQueryAndMutateRequest) PayloadLen() int {
 	return r.PayloadContentLen() + r.ObUniVersionHeader.UniVersionHeaderLen() // Do not change the order
 }
 
-func (r *ObTableQueryRequest) PayloadContentLen() int {
+func (r *ObTableQueryAndMutateRequest) PayloadContentLen() int {
 	totalLen := 0
 	if util.ObVersion() >= 4 {
 		totalLen +=
@@ -124,30 +114,30 @@ func (r *ObTableQueryRequest) PayloadContentLen() int {
 				util.EncodedLengthByVString(r.tableName) +
 				util.EncodedLengthByVi64(int64(r.tableId)) +
 				8 + // partitionId
-				2 + // entityType consistencyLevel
-				r.tableQuery.PayloadLen()
+				1 + // entityType
+				r.tableQueryAndMutate.PayloadLen()
 	} else {
 		totalLen +=
 			util.EncodedLengthByBytesString(r.credential) +
 				util.EncodedLengthByVString(r.tableName) +
 				util.EncodedLengthByVi64(int64(r.tableId)) +
 				util.EncodedLengthByVi64(int64(r.partitionId)) + // partitionId
-				2 + // entityType consistencyLevel
-				r.tableQuery.PayloadLen()
+				1 + // entityType
+				r.tableQueryAndMutate.PayloadLen()
 	}
 	r.ObUniVersionHeader.SetContentLength(totalLen)
 	return r.ObUniVersionHeader.ContentLength()
 }
 
-func (r *ObTableQueryRequest) Credential() []byte {
+func (r *ObTableQueryAndMutateRequest) Credential() []byte {
 	return r.credential
 }
 
-func (r *ObTableQueryRequest) SetCredential(credential []byte) {
+func (r *ObTableQueryAndMutateRequest) SetCredential(credential []byte) {
 	r.credential = credential
 }
 
-func (r *ObTableQueryRequest) Encode(buffer *bytes.Buffer) {
+func (r *ObTableQueryAndMutateRequest) Encode(buffer *bytes.Buffer) {
 	r.ObUniVersionHeader.Encode(buffer)
 
 	util.EncodeBytesString(buffer, r.credential)
@@ -164,13 +154,10 @@ func (r *ObTableQueryRequest) Encode(buffer *bytes.Buffer) {
 
 	util.PutUint8(buffer, uint8(r.entityType))
 
-	util.PutUint8(buffer, uint8(r.consistencyLevel))
-
-	r.tableQuery.Encode(buffer)
-
+	r.tableQueryAndMutate.Encode(buffer)
 }
 
-func (r *ObTableQueryRequest) Decode(buffer *bytes.Buffer) {
+func (r *ObTableQueryAndMutateRequest) Decode(buffer *bytes.Buffer) {
 	r.ObUniVersionHeader.Decode(buffer)
 
 	r.credential = util.DecodeBytesString(buffer)
@@ -187,7 +174,5 @@ func (r *ObTableQueryRequest) Decode(buffer *bytes.Buffer) {
 
 	r.entityType = ObTableEntityType(util.Uint8(buffer))
 
-	r.consistencyLevel = ObTableConsistencyLevel(util.Uint8(buffer))
-
-	r.tableQuery.Decode(buffer)
+	r.tableQueryAndMutate.Decode(buffer)
 }
