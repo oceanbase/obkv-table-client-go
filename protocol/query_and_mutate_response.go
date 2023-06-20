@@ -27,8 +27,8 @@ import (
 type ObTableQueryAndMutateResponse struct {
 	ObUniVersionHeader
 	ObPayloadBase
-	affectedRows   int64
-	affectedEntity *ObTableQueryResponse
+	affectedRows int64
+	queryResult  *ObTableQueryResponse
 }
 
 func NewObTableQueryAndMutateResponse() *ObTableQueryAndMutateResponse {
@@ -45,8 +45,8 @@ func NewObTableQueryAndMutateResponse() *ObTableQueryAndMutateResponse {
 			flag:      7,
 			timeout:   10 * 1000 * time.Millisecond,
 		},
-		affectedRows:   0,
-		affectedEntity: NewObTableQueryResponse(),
+		affectedRows: 0,
+		queryResult:  NewObTableQueryResponse(),
 	}
 }
 
@@ -58,12 +58,12 @@ func (r *ObTableQueryAndMutateResponse) SetAffectedRows(affectedRows int64) {
 	r.affectedRows = affectedRows
 }
 
-func (r *ObTableQueryAndMutateResponse) AffectedEntity() *ObTableQueryResponse {
-	return r.affectedEntity
+func (r *ObTableQueryAndMutateResponse) QueryResult() *ObTableQueryResponse {
+	return r.queryResult
 }
 
-func (r *ObTableQueryAndMutateResponse) SetAffectedEntity(affectedEntity *ObTableQueryResponse) {
-	r.affectedEntity = affectedEntity
+func (r *ObTableQueryAndMutateResponse) SetQueryResult(queryResult *ObTableQueryResponse) {
+	r.queryResult = queryResult
 }
 
 func (r *ObTableQueryAndMutateResponse) PCode() ObTablePacketCode {
@@ -78,7 +78,7 @@ func (r *ObTableQueryAndMutateResponse) PayloadContentLen() int {
 	totalLen := 0
 	totalLen +=
 		util.EncodedLengthByVi64(r.affectedRows) +
-			r.affectedEntity.PayloadLen()
+			r.queryResult.PayloadLen()
 
 	r.ObUniVersionHeader.SetContentLength(totalLen)
 	return r.ObUniVersionHeader.ContentLength()
@@ -97,7 +97,7 @@ func (r *ObTableQueryAndMutateResponse) Encode(buffer *bytes.Buffer) {
 
 	util.EncodeVi64(buffer, r.affectedRows)
 
-	r.affectedEntity.Encode(buffer)
+	r.queryResult.Encode(buffer)
 }
 
 func (r *ObTableQueryAndMutateResponse) Decode(buffer *bytes.Buffer) {
@@ -105,5 +105,5 @@ func (r *ObTableQueryAndMutateResponse) Decode(buffer *bytes.Buffer) {
 
 	r.affectedRows = util.DecodeVi64(buffer)
 
-	r.affectedEntity.Decode(buffer)
+	r.queryResult.Decode(buffer)
 }

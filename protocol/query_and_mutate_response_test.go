@@ -51,7 +51,7 @@ func TestObTableQueryAndMutateResponseEncodeDecode(t *testing.T) {
 		propertiesRows = append(propertiesRows, obObjects)
 	}
 	obTableQueryResponse.SetPropertiesRows(propertiesRows)
-	obTableQueryAndMutateResponse.SetAffectedEntity(obTableQueryResponse)
+	obTableQueryAndMutateResponse.SetQueryResult(obTableQueryResponse)
 
 	payloadLen := obTableQueryAndMutateResponse.PayloadLen()
 	buf := make([]byte, payloadLen)
@@ -63,6 +63,6 @@ func TestObTableQueryAndMutateResponseEncodeDecode(t *testing.T) {
 	newObTableQueryAndMutateResponse.Decode(newBuffer)
 
 	assert.EqualValues(t, obTableQueryAndMutateResponse.AffectedRows(), newObTableQueryAndMutateResponse.AffectedRows())
-	assert.EqualValues(t, obTableQueryAndMutateResponse.AffectedEntity(), newObTableQueryAndMutateResponse.AffectedEntity())
+	assert.EqualValues(t, obTableQueryAndMutateResponse.QueryResult(), newObTableQueryAndMutateResponse.QueryResult())
 	assert.EqualValues(t, obTableQueryAndMutateResponse, newObTableQueryAndMutateResponse)
 }
