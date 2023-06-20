@@ -38,6 +38,7 @@ func TestObTableFilterListString(t *testing.T) {
 	filterList = append(filterList, CompareVal(NotEqual, testColumnName, value))
 	filterList = append(filterList, CompareVal(Equal, testColumnName, value))
 	filterList = append(filterList, CompareVal(IsNull, testColumnName, value))
+	filterList = append(filterList, CompareVal(IsNotNull, testColumnName, value))
 
 	obTableFilterList := NewObTableFilterListWithOperatorAndTableFilter(OperatorAnd)
 	obTableFilterList.AddFilter(filterList...)
