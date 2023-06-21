@@ -31,6 +31,14 @@ type ObTableQueryResponse struct {
 	propertiesRows  [][]*ObObject
 }
 
+func NewObTableQueryResponse() *ObTableQueryResponse {
+	return &ObTableQueryResponse{
+		propertiesNames: nil,
+		rowCount:        0,
+		propertiesRows:  nil,
+	}
+}
+
 func (r *ObTableQueryResponse) PropertiesNames() []string {
 	return r.propertiesNames
 }

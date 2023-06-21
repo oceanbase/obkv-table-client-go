@@ -2,7 +2,7 @@
  * #%L
  * OBKV Table Client Framework
  * %%
- * Copyright (C) 2021 OceanBase
+ * Copyright (C) 2023 OceanBase
  * %%
  * OBKV Table Client Framework is licensed under Mulan PSL v2.
  * You can use this software according to the terms and conditions of the Mulan PSL v2.
@@ -17,30 +17,11 @@
 
 package table
 
-// ColumnsToString converts a column to a string
-func ColumnsToString(columns []*Column) string {
-	var str string
-	str = str + "["
-	for i := 0; i < len(columns); i++ {
-		if i > 0 {
-			str += ", "
-		}
-		str += columns[i].String()
-	}
-	str += "]"
-	return str
-}
+type ScanOrder uint8
 
-// RangePairsToString converts a ranges pair to a string
-func RangePairsToString(rangesPairs []*RangePair) string {
-	var str string
-	str = str + "["
-	for i := 0; i < len(rangesPairs); i++ {
-		if i > 0 {
-			str += ", "
-		}
-		str += rangesPairs[i].String()
-	}
-	str += "]"
-	return str
-}
+const (
+	ImplementedOrder ScanOrder = iota
+	Forward
+	Reverse
+	KeepOrder
+)

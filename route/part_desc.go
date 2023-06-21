@@ -39,6 +39,7 @@ type obPartDesc interface {
 	PartNum() int
 	SetPartNum(partNum int)
 	GetPartId(rowKey []*table.Column) (uint64, error)
+	GetPartIds(rowKeyPair *table.RangePair) ([]uint64, error)
 }
 
 // evalPartKeyValues calculate the value of the partition key

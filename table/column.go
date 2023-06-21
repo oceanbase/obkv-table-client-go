@@ -17,7 +17,10 @@
 
 package table
 
-import "github.com/oceanbase/obkv-table-client-go/util"
+import (
+	"github.com/oceanbase/obkv-table-client-go/util"
+	"reflect"
+)
 
 // Column represents a column in a table,
 // consisting of a column name and a column value.
@@ -44,6 +47,16 @@ func (c *Column) Value() interface{} {
 
 func (c *Column) SetValue(value interface{}) {
 	c.value = value
+}
+
+func (c *Column) IsEqual(another *Column) bool {
+	if c.name != another.name {
+		return false
+	}
+	if !reflect.DeepEqual(c.value, another.value) {
+		return false
+	}
+	return true
 }
 
 func (c *Column) String() string {

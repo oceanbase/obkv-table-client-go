@@ -29,45 +29,50 @@ const (
 	ObTableApiBatchExecute
 	ObTableApiExecuteQuery
 	ObTableApiQueryAndMute
+	ObTableApiExecuteAsyncQuery
 	ObTableApiErrorPacket
 
 	ObTableApiNoSuch = -1
 )
 
 const (
-	obTableApiLoginStr        string = "ob table login"
-	obTableApiExecuteStr      string = "ob table execute"
-	obTableApiBatchExecuteStr string = "ob table batch execute"
-	obTableApiExecuteQueryStr string = "ob table execute query"
-	obTableApiQueryAndMuteStr string = "ob table query and mute"
-	obTableApiErrorPacketStr  string = "ob table error"
+	obTableApiLoginStr             string = "ob table login"
+	obTableApiExecuteStr           string = "ob table execute"
+	obTableApiBatchExecuteStr      string = "ob table batch execute"
+	obTableApiExecuteQueryStr      string = "ob table execute query"
+	obTableApiQueryAndMuteStr      string = "ob table query and mute"
+	obTableApiExecuteAsyncQueryStr string = "ob table execute async query"
+	obTableApiErrorPacketStr       string = "ob table error"
 )
 
 const (
-	obTableApiPCodeLogin        uint32 = 0x1101
-	obTableApiPCodeExecute      uint32 = 0x1102
-	obTableApiPCodeBatchExecute uint32 = 0x1103
-	obTableApiPCodeExecuteQuery uint32 = 0x1104
-	obTableApiPCodeQueryAndMute uint32 = 0x1105
-	obTableApiPCodeErrorPacket  uint32 = 0x010
+	obTableApiPCodeLogin             uint32 = 0x1101
+	obTableApiPCodeExecute           uint32 = 0x1102
+	obTableApiPCodeBatchExecute      uint32 = 0x1103
+	obTableApiPCodeExecuteQuery      uint32 = 0x1104
+	obTableApiPCodeQueryAndMute      uint32 = 0x1105
+	obTableApiPCodeExecuteAsyncQuery uint32 = 0x1106
+	obTableApiPCodeErrorPacket       uint32 = 0x010
 )
 
 var obTablePacketCodeStrings = []string{
-	ObTableApiLogin:        obTableApiLoginStr,
-	ObTableApiExecute:      obTableApiExecuteStr,
-	ObTableApiBatchExecute: obTableApiBatchExecuteStr,
-	ObTableApiExecuteQuery: obTableApiExecuteQueryStr,
-	ObTableApiQueryAndMute: obTableApiQueryAndMuteStr,
-	ObTableApiErrorPacket:  obTableApiErrorPacketStr,
+	ObTableApiLogin:             obTableApiLoginStr,
+	ObTableApiExecute:           obTableApiExecuteStr,
+	ObTableApiBatchExecute:      obTableApiBatchExecuteStr,
+	ObTableApiExecuteQuery:      obTableApiExecuteQueryStr,
+	ObTableApiQueryAndMute:      obTableApiQueryAndMuteStr,
+	ObTableApiExecuteAsyncQuery: obTableApiExecuteAsyncQueryStr,
+	ObTableApiErrorPacket:       obTableApiErrorPacketStr,
 }
 
 var obTablePacketCodePCodes = []uint32{
-	ObTableApiLogin:        obTableApiPCodeLogin,
-	ObTableApiExecute:      obTableApiPCodeExecute,
-	ObTableApiBatchExecute: obTableApiPCodeBatchExecute,
-	ObTableApiExecuteQuery: obTableApiPCodeExecuteQuery,
-	ObTableApiQueryAndMute: obTableApiPCodeQueryAndMute,
-	ObTableApiErrorPacket:  obTableApiPCodeErrorPacket,
+	ObTableApiLogin:             obTableApiPCodeLogin,
+	ObTableApiExecute:           obTableApiPCodeExecute,
+	ObTableApiBatchExecute:      obTableApiPCodeBatchExecute,
+	ObTableApiExecuteQuery:      obTableApiPCodeExecuteQuery,
+	ObTableApiQueryAndMute:      obTableApiPCodeQueryAndMute,
+	ObTableApiExecuteAsyncQuery: obTableApiPCodeExecuteAsyncQuery,
+	ObTableApiErrorPacket:       obTableApiPCodeErrorPacket,
 }
 
 func (c ObTablePacketCode) Value() uint32 {
@@ -86,6 +91,8 @@ func (c ObTablePacketCode) ValueOf(pCode uint32) (ObTablePacketCode, error) { //
 		return ObTableApiExecuteQuery, nil
 	case obTableApiPCodeQueryAndMute:
 		return ObTableApiQueryAndMute, nil
+	case obTableApiPCodeExecuteAsyncQuery:
+		return ObTableApiExecuteAsyncQuery, nil
 	case obTableApiPCodeErrorPacket:
 		return ObTableApiErrorPacket, nil
 	}

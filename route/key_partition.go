@@ -95,6 +95,31 @@ func (d *obKeyPartDesc) GetPartId(rowKey []*table.Column) (uint64, error) {
 	return uint64((int64(d.partSpace) << ObPartIdBitNum) | (hashValue % int64(d.partNum))), nil
 }
 
+// GetPartIds get partition ids.
+func (d *obKeyPartDesc) GetPartIds(rowKeyPair *table.RangePair) ([]uint64, error) {
+	if rowKeyPair == nil {
+		return nil, errors.New("rowKeyPair is nil")
+	}
+	if rowKeyPair.Start() == nil || rowKeyPair.End() == nil {
+		return nil, errors.New("startKeys or endKeys in rangePair is nil")
+	}
+	if rowKeyPair.IsStartEqEnd() {
+		// startKey == endKey means that the range is equal to a column
+		partId, err := d.GetPartId(rowKeyPair.Start())
+		if err != nil {
+			return []uint64{ObInvalidPartId}, errors.WithMessagef(err, "get part id, part desc:%s", d.String())
+		}
+		return []uint64{partId}, nil
+	} else {
+		// if startKey != endKey, add all partitions to the partition list
+		partIds := make([]uint64, 0, d.partNum)
+		for i := 0; i < d.partNum; i++ {
+			partIds = append(partIds, uint64(i))
+		}
+		return partIds, nil
+	}
+}
+
 func intToInt64(value interface{}) (int64, error) {
 	switch v := value.(type) {
 	case bool:

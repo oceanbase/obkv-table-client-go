@@ -19,7 +19,6 @@ package protocol
 
 import (
 	"bytes"
-
 	"github.com/oceanbase/obkv-table-client-go/util"
 )
 
@@ -70,6 +69,18 @@ func (o *ObObject) Decode(buffer *bytes.Buffer) {
 
 func (o *ObObject) EncodedLength() int {
 	return o.meta.EncodedLength() + o.meta.ObjType().EncodedLength(o.value)
+}
+
+func GetMin() *ObObject {
+	objType, _ := NewObjType(ObObjTypeExtendTypeValue)
+	// -3 = -1 -2 = MaxUint64 - 2
+	return NewObObjectWithParams(objType.DefaultObjMeta(), int64(-3))
+}
+
+func GetMax() *ObObject {
+	objType, _ := NewObjType(ObObjTypeExtendTypeValue)
+	// -2 = -1 -1 = MaxUint64 - 1
+	return NewObObjectWithParams(objType.DefaultObjMeta(), int64(-2))
 }
 
 func (o *ObObject) String() string {
