@@ -62,6 +62,29 @@ func NewObTableQuery() *ObTableQuery {
 	}
 }
 
+// NewObTableQueryWithParams creates a new ObTableQuery with parameters.
+func NewObTableQueryWithParams(batchSize int32) *ObTableQuery {
+	return &ObTableQuery{
+		ObUniVersionHeader: ObUniVersionHeader{
+			version:       1,
+			contentLength: 0,
+		},
+		keyRanges:        nil,
+		selectColumns:    nil,
+		filterString:     "",
+		limit:            -1,
+		offset:           0,
+		scanOrder:        ObScanOrderForward,
+		indexName:        "",
+		batchSize:        batchSize,
+		maxResultSize:    -1,
+		isHbaseQuery:     false,
+		hTableFilter:     nil,
+		scanRangeColumns: nil,
+		aggregations:     nil,
+	}
+}
+
 var hTableFilterDummyBytes = []byte{0x01, 0x00}
 
 func (q *ObTableQuery) KeyRanges() []*ObNewRange {
