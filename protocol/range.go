@@ -31,6 +31,16 @@ type ObNewRange struct {
 	flag       int64
 }
 
+func NewObNewRange() *ObNewRange {
+	return &ObNewRange{
+		tableId:    0,
+		borderFlag: 0,
+		startKey:   nil,
+		endKey:     nil,
+		flag:       0,
+	}
+}
+
 // NewObNewRangeWithParams creates a new ObNewRange.
 func NewObNewRangeWithParams(startKey []*ObObject, endKey []*ObObject, borderFlag ObBorderFlag) *ObNewRange {
 	return &ObNewRange{
@@ -124,6 +134,28 @@ func (r *ObNewRange) Encode(buffer *bytes.Buffer) {
 }
 
 func (r *ObNewRange) Decode(buffer *bytes.Buffer) {
-	// TODO implement me
-	panic("implement me")
+	r.tableId = uint64(util.DecodeVi64(buffer))
+
+	r.borderFlag = ObBorderFlag(util.Uint8(buffer))
+
+	startKeyLen := util.DecodeVi64(buffer)
+	r.startKey = make([]*ObObject, 0, startKeyLen)
+	var i int64
+	for i = 0; i < startKeyLen; i++ {
+		obObject := NewObObject()
+		obObject.Decode(buffer)
+		r.startKey = append(r.startKey, obObject)
+	}
+
+	endKeyLen := util.DecodeVi64(buffer)
+	r.endKey = make([]*ObObject, 0, startKeyLen)
+	for i = 0; i < endKeyLen; i++ {
+		obObject := NewObObject()
+		obObject.Decode(buffer)
+		r.endKey = append(r.endKey, obObject)
+	}
+
+	if util.ObVersion() >= 4 {
+		r.flag = util.DecodeVi64(buffer)
+	}
 }

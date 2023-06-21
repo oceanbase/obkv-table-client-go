@@ -40,8 +40,7 @@ type ObTableQuery struct {
 	aggregations     []*ObTableAggregationSingle
 }
 
-// NewObTableQueryWithParams creates a new ObTableQuery with parameters.
-func NewObTableQueryWithParams(batchSize int32) *ObTableQuery {
+func NewObTableQuery() *ObTableQuery {
 	return &ObTableQuery{
 		ObUniVersionHeader: ObUniVersionHeader{
 			version:       1,
@@ -50,14 +49,14 @@ func NewObTableQueryWithParams(batchSize int32) *ObTableQuery {
 		keyRanges:        nil,
 		selectColumns:    nil,
 		filterString:     "",
-		limit:            -1,
+		limit:            0,
 		offset:           0,
-		scanOrder:        ObScanOrderForward,
+		scanOrder:        0,
 		indexName:        "",
-		batchSize:        batchSize,
-		maxResultSize:    -1,
+		batchSize:        0,
+		maxResultSize:    0,
 		isHbaseQuery:     false,
-		hTableFilter:     nil,
+		hTableFilter:     NewObHTableFilter(),
 		scanRangeColumns: nil,
 		aggregations:     nil,
 	}
@@ -201,12 +200,12 @@ func (q *ObTableQuery) PayloadContentLen() int {
 
 	totalLen += util.EncodedLengthByVi64(int64(len(q.scanRangeColumns)))
 	for _, column := range q.scanRangeColumns {
-		util.EncodedLengthByVString(column)
+		totalLen += util.EncodedLengthByVString(column)
 	}
 
 	totalLen += util.EncodedLengthByVi64(int64(len(q.aggregations)))
 	for _, tableAggregationSingle := range q.aggregations {
-		tableAggregationSingle.PayloadLen()
+		totalLen += tableAggregationSingle.PayloadLen()
 	}
 
 	q.ObUniVersionHeader.SetContentLength(totalLen)
@@ -257,4 +256,56 @@ func (q *ObTableQuery) Encode(buffer *bytes.Buffer) {
 }
 
 func (q *ObTableQuery) Decode(buffer *bytes.Buffer) {
+	q.ObUniVersionHeader.Decode(buffer)
+
+	keyRangesLen := util.DecodeVi64(buffer)
+	q.keyRanges = make([]*ObNewRange, 0, keyRangesLen)
+	var i int64
+	for i = 0; i < keyRangesLen; i++ {
+		obNewRange := NewObNewRange()
+		obNewRange.Decode(buffer)
+		q.keyRanges = append(q.keyRanges, obNewRange)
+	}
+
+	selectColumnsLen := util.DecodeVi64(buffer)
+	q.selectColumns = make([]string, 0, selectColumnsLen)
+	for i = 0; i < selectColumnsLen; i++ {
+		selectColumn := util.DecodeVString(buffer)
+		q.selectColumns = append(q.selectColumns, selectColumn)
+	}
+
+	q.filterString = util.DecodeVString(buffer)
+
+	q.limit = util.DecodeVi32(buffer)
+	q.offset = util.DecodeVi32(buffer)
+
+	q.scanOrder = ObScanOrder(util.Uint8(buffer))
+
+	q.indexName = util.DecodeVString(buffer)
+
+	q.batchSize = util.DecodeVi32(buffer)
+
+	q.maxResultSize = util.DecodeVi64(buffer)
+
+	if q.isHbaseQuery {
+		q.hTableFilter = NewObHTableFilter()
+		q.hTableFilter.Decode(buffer)
+	} else {
+		copy(buffer.Next(len(hTableFilterDummyBytes)), hTableFilterDummyBytes)
+	}
+
+	scanRangeColumnsLen := util.DecodeVi64(buffer)
+	q.scanRangeColumns = make([]string, 0, scanRangeColumnsLen)
+	for i = 0; i < scanRangeColumnsLen; i++ {
+		scanRangeColumn := util.DecodeVString(buffer)
+		q.scanRangeColumns = append(q.scanRangeColumns, scanRangeColumn)
+	}
+
+	aggregationsLen := util.DecodeVi64(buffer)
+	q.aggregations = make([]*ObTableAggregationSingle, 0, aggregationsLen)
+	for i = 0; i < aggregationsLen; i++ {
+		obTableAggregationSingle := NewObTableAggregationSingle()
+		obTableAggregationSingle.Decode(buffer)
+		q.aggregations = append(q.aggregations, obTableAggregationSingle)
+	}
 }

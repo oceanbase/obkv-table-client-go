@@ -19,6 +19,7 @@ package protocol
 
 import (
 	"bytes"
+	"time"
 
 	"github.com/oceanbase/obkv-table-client-go/util"
 )
@@ -33,6 +34,30 @@ type ObTableQueryRequest struct {
 	entityType       ObTableEntityType
 	consistencyLevel ObTableConsistencyLevel
 	tableQuery       *ObTableQuery
+}
+
+func NewObTableQueryRequest() *ObTableQueryRequest {
+	return &ObTableQueryRequest{
+		ObUniVersionHeader: ObUniVersionHeader{
+			version:       1,
+			contentLength: 0,
+		},
+		ObPayloadBase: ObPayloadBase{
+			uniqueId:  0,
+			sequence:  0,
+			tenantId:  1,
+			sessionId: 0,
+			flag:      7,
+			timeout:   10 * 1000 * time.Millisecond,
+		},
+		credential:       nil,
+		tableName:        "",
+		tableId:          0,
+		partitionId:      0,
+		entityType:       0,
+		consistencyLevel: 0,
+		tableQuery:       NewObTableQuery(),
+	}
 }
 
 // NewObTableQueryRequestWithParams creates a new ObTableQueryRequest.
@@ -111,7 +136,7 @@ func (r *ObTableQueryRequest) PayloadLen() int {
 func (r *ObTableQueryRequest) PayloadContentLen() int {
 	totalLen := 0
 	if util.ObVersion() >= 4 {
-		totalLen =
+		totalLen +=
 			util.EncodedLengthByBytesString(r.credential) +
 				util.EncodedLengthByVString(r.tableName) +
 				util.EncodedLengthByVi64(int64(r.tableId)) +
@@ -119,7 +144,7 @@ func (r *ObTableQueryRequest) PayloadContentLen() int {
 				2 + // entityType consistencyLevel
 				r.tableQuery.PayloadLen()
 	} else {
-		totalLen =
+		totalLen +=
 			util.EncodedLengthByBytesString(r.credential) +
 				util.EncodedLengthByVString(r.tableName) +
 				util.EncodedLengthByVi64(int64(r.tableId)) +

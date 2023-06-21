@@ -29,6 +29,17 @@ type ObTableAggregationSingle struct {
 	aggColumn string
 }
 
+func NewObTableAggregationSingle() *ObTableAggregationSingle {
+	return &ObTableAggregationSingle{
+		ObUniVersionHeader: ObUniVersionHeader{
+			version:       1,
+			contentLength: 0,
+		},
+		aggType:   0,
+		aggColumn: "",
+	}
+}
+
 type ObTableAggregationType uint8
 
 const (
@@ -64,7 +75,9 @@ func (s *ObTableAggregationSingle) PayloadContentLen() int {
 	totalLen := 0
 	totalLen += 1 // aggType
 	totalLen += util.EncodedLengthByVString(s.aggColumn)
-	return totalLen
+
+	s.ObUniVersionHeader.SetContentLength(totalLen)
+	return s.ObUniVersionHeader.ContentLength()
 }
 
 func (s *ObTableAggregationSingle) Encode(buffer *bytes.Buffer) {
@@ -76,4 +89,9 @@ func (s *ObTableAggregationSingle) Encode(buffer *bytes.Buffer) {
 }
 
 func (s *ObTableAggregationSingle) Decode(buffer *bytes.Buffer) {
+	s.ObUniVersionHeader.Decode(buffer)
+
+	s.aggType = ObTableAggregationType(util.Uint8(buffer))
+
+	s.aggColumn = util.DecodeVString(buffer)
 }
