@@ -17,37 +17,37 @@
 
 package client
 
-type ObkvOption interface {
-	apply(opts *ObkvOptions)
+type OperationOption interface {
+	apply(operationOpts *OperationOptions)
 }
-type ObkvOptionFunc func(opts *ObkvOptions)
+type OperationOptionFunc func(operationOpts *OperationOptions)
 
-func NewObkvOption() *ObkvOptions {
-	return &ObkvOptions{
+func NewOperationOptions() *OperationOptions {
+	return &OperationOptions{
 		returnRowKey:         false,
 		returnAffectedEntity: false,
 	}
 }
 
-type ObkvOptions struct {
+type OperationOptions struct {
 	returnRowKey         bool
 	returnAffectedEntity bool
 }
 
-func (f ObkvOptionFunc) apply(opts *ObkvOptions) {
-	f(opts)
+func (f OperationOptionFunc) apply(operationOpts *OperationOptions) {
+	f(operationOpts)
 }
 
 // WithReturnRowKey only work in increment and append operation
-func WithReturnRowKey(returnRowKey bool) ObkvOption {
-	return ObkvOptionFunc(func(opts *ObkvOptions) {
-		opts.returnRowKey = returnRowKey
+func WithReturnRowKey(returnRowKey bool) OperationOption {
+	return OperationOptionFunc(func(operationOpts *OperationOptions) {
+		operationOpts.returnRowKey = returnRowKey
 	})
 }
 
 // WithReturnAffectedEntity only work in increment and append operation
-func WithReturnAffectedEntity(returnAffectedEntity bool) ObkvOption {
-	return ObkvOptionFunc(func(opts *ObkvOptions) {
-		opts.returnAffectedEntity = returnAffectedEntity
+func WithReturnAffectedEntity(returnAffectedEntity bool) OperationOption {
+	return OperationOptionFunc(func(operationOpts *OperationOptions) {
+		operationOpts.returnAffectedEntity = returnAffectedEntity
 	})
 }

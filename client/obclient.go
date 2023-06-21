@@ -156,14 +156,14 @@ func (c *obClient) Insert(
 	tableName string,
 	rowKey []*table.Column,
 	mutateColumns []*table.Column,
-	opts ...ObkvOption) (int64, error) {
+	operationOpts ...OperationOption) (int64, error) {
 	res, err := c.execute(
 		ctx,
 		tableName,
 		protocol.ObTableOperationInsert,
 		rowKey,
 		mutateColumns,
-		opts...)
+		operationOpts...)
 	if err != nil {
 		return -1, errors.WithMessagef(err, "execute insert, tableName:%s, rowKey:%s, mutateColumns:%s",
 			tableName, table.ColumnsToString(rowKey), table.ColumnsToString(mutateColumns))
@@ -176,14 +176,14 @@ func (c *obClient) Update(
 	tableName string,
 	rowKey []*table.Column,
 	mutateColumns []*table.Column,
-	opts ...ObkvOption) (int64, error) {
+	operationOpts ...OperationOption) (int64, error) {
 	res, err := c.execute(
 		ctx,
 		tableName,
 		protocol.ObTableOperationUpdate,
 		rowKey,
 		mutateColumns,
-		opts...)
+		operationOpts...)
 	if err != nil {
 		return -1, errors.WithMessagef(err, "execute update, tableName:%s, rowKey:%s, mutateColumns:%s",
 			tableName, table.ColumnsToString(rowKey), table.ColumnsToString(mutateColumns))
@@ -196,14 +196,14 @@ func (c *obClient) InsertOrUpdate(
 	tableName string,
 	rowKey []*table.Column,
 	mutateColumns []*table.Column,
-	opts ...ObkvOption) (int64, error) {
+	operationOpts ...OperationOption) (int64, error) {
 	res, err := c.execute(
 		ctx,
 		tableName,
 		protocol.ObTableOperationInsertOrUpdate,
 		rowKey,
 		mutateColumns,
-		opts...)
+		operationOpts...)
 	if err != nil {
 		return -1, errors.WithMessagef(err, "execute insert or update, tableName:%s, rowKey:%s, mutateColumns:%s",
 			tableName, table.ColumnsToString(rowKey), table.ColumnsToString(mutateColumns))
@@ -216,14 +216,14 @@ func (c *obClient) Replace(
 	tableName string,
 	rowKey []*table.Column,
 	mutateColumns []*table.Column,
-	opts ...ObkvOption) (int64, error) {
+	operationOpts ...OperationOption) (int64, error) {
 	res, err := c.execute(
 		ctx,
 		tableName,
 		protocol.ObTableOperationReplace,
 		rowKey,
 		mutateColumns,
-		opts...)
+		operationOpts...)
 	if err != nil {
 		return -1, errors.WithMessagef(err, "execute replace, tableName:%s, rowKey:%s, mutateColumns:%s",
 			tableName, table.ColumnsToString(rowKey), table.ColumnsToString(mutateColumns))
@@ -236,14 +236,14 @@ func (c *obClient) Increment(
 	tableName string,
 	rowKey []*table.Column,
 	mutateColumns []*table.Column,
-	opts ...ObkvOption) (SingleResult, error) {
+	operationOpts ...OperationOption) (SingleResult, error) {
 	res, err := c.execute(
 		ctx,
 		tableName,
 		protocol.ObTableOperationIncrement,
 		rowKey,
 		mutateColumns,
-		opts...)
+		operationOpts...)
 	if err != nil {
 		return nil, errors.WithMessagef(err, "execute increment, tableName:%s, rowKey:%s, mutateColumns:%s",
 			tableName, table.ColumnsToString(rowKey), table.ColumnsToString(mutateColumns))
@@ -256,14 +256,14 @@ func (c *obClient) Append(
 	tableName string,
 	rowKey []*table.Column,
 	mutateColumns []*table.Column,
-	opts ...ObkvOption) (SingleResult, error) {
+	operationOpts ...OperationOption) (SingleResult, error) {
 	res, err := c.execute(
 		ctx,
 		tableName,
 		protocol.ObTableOperationAppend,
 		rowKey,
 		mutateColumns,
-		opts...)
+		operationOpts...)
 	if err != nil {
 		return nil, errors.WithMessagef(err, "execute append, tableName:%s, rowKey:%s, mutateColumns:%s",
 			tableName, table.ColumnsToString(rowKey), table.ColumnsToString(mutateColumns))
@@ -275,14 +275,14 @@ func (c *obClient) Delete(
 	ctx context.Context,
 	tableName string,
 	rowKey []*table.Column,
-	opts ...ObkvOption) (int64, error) {
+	operationOpts ...OperationOption) (int64, error) {
 	res, err := c.execute(
 		ctx,
 		tableName,
 		protocol.ObTableOperationDel,
 		rowKey,
 		nil,
-		opts...)
+		operationOpts...)
 	if err != nil {
 		return -1, errors.WithMessagef(err, "execute delete, tableName:%s, rowKey:%s",
 			tableName, table.ColumnsToString(rowKey))
@@ -295,7 +295,7 @@ func (c *obClient) Get(
 	tableName string,
 	rowKey []*table.Column,
 	getColumns []string,
-	opts ...ObkvOption) (SingleResult, error) {
+	operationOpts ...OperationOption) (SingleResult, error) {
 	var columns = make([]*table.Column, 0, len(getColumns))
 	for _, columnName := range getColumns {
 		columns = append(columns, table.NewColumn(columnName, nil))
@@ -306,7 +306,7 @@ func (c *obClient) Get(
 		protocol.ObTableOperationGet,
 		rowKey,
 		columns,
-		opts...)
+		operationOpts...)
 	if err != nil {
 		return nil, errors.WithMessagef(err, "execute get, tableName:%s, rowKey:%s, getColumns:%s",
 			tableName, table.ColumnsToString(rowKey), util.StringArrayToString(getColumns))
@@ -327,12 +327,12 @@ func (c *obClient) Close() {
 	})
 }
 
-func (c *obClient) getObkvOptions(options ...ObkvOption) *ObkvOptions {
-	opts := NewObkvOption()
-	for _, op := range options {
-		op.apply(opts)
+func (c *obClient) getOperationOptions(operationOpts ...OperationOption) *OperationOptions {
+	operationOptions := NewOperationOptions()
+	for _, opt := range operationOpts {
+		opt.apply(operationOptions)
 	}
-	return opts
+	return operationOptions
 }
 
 func (c *obClient) execute(
@@ -341,13 +341,13 @@ func (c *obClient) execute(
 	opType protocol.ObTableOperationType,
 	rowKey []*table.Column,
 	columns []*table.Column,
-	opts ...ObkvOption) (*protocol.ObTableOperationResponse, error) {
+	operationOpts ...OperationOption) (*protocol.ObTableOperationResponse, error) {
 
 	if _, ok := ctx.Deadline(); !ok {
 		ctx, _ = context.WithTimeout(ctx, c.config.OperationTimeOut) // default timeout operation timeout
 	}
 
-	kvOpts := c.getObkvOptions(opts...)
+	operationOptions := c.getOperationOptions(operationOpts...)
 
 	// 1. Get table route
 	tableParam, err := c.getTableParam(ctx, tableName, rowKey, false /* refresh */)
@@ -363,8 +363,8 @@ func (c *obClient) execute(
 		opType,
 		rowKey,
 		columns,
-		kvOpts.returnRowKey,
-		kvOpts.returnAffectedEntity,
+		operationOptions.returnRowKey,
+		operationOptions.returnAffectedEntity,
 		c.config.OperationTimeOut,
 		c.config.LogLevel,
 	)
