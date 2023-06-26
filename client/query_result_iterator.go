@@ -138,10 +138,10 @@ func (q *ObQueryResultIterator) fetchNext(hasPrev bool) error {
 		queryRequest := protocol.NewObTableQueryRequestWithParams(q.tableName, nextParam.tableId, nextParam.partitionId, q.entityType, q.tableQuery)
 		asyncQueryRequest := protocol.NewObTableAsyncQueryRequestWithParams(queryRequest, q.cli.config.OperationTimeOut, q.cli.config.LogLevel)
 		if hasPrev {
-			asyncQueryRequest.SetQueryType(protocol.QUERY_NEXT)
+			asyncQueryRequest.SetQueryType(protocol.QueryNext)
 			asyncQueryRequest.SetQuerySessionId(q.prevSessionId)
 		} else {
-			asyncQueryRequest.SetQueryType(protocol.QUERY_START)
+			asyncQueryRequest.SetQueryType(protocol.QueryStart)
 		}
 		// execute
 		err = nextParam.table.execute(*q.ctx, asyncQueryRequest, result)

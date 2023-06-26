@@ -51,7 +51,7 @@ func NewObTableAsyncQueryRequestWithParams(
 		},
 		tableQueryRequest: tableQueryRequest,
 		querySessionId:    0,
-		queryType:         QUERY_START,
+		queryType:         QueryStart,
 	}
 }
 

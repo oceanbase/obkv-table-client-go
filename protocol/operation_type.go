@@ -20,8 +20,8 @@ package protocol
 type ObQueryOperationType int32
 
 const (
-	QUERY_START ObQueryOperationType = iota
-	QUERY_NEXT
+	QueryStart ObQueryOperationType = iota
+	QueryNext
 
-	QUERY_MAX
+	QueryMax
 )
