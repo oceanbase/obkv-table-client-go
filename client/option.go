@@ -120,30 +120,30 @@ func SetIndexName(indexName string) ObkvQueryOption {
 }
 
 // SetBatchSize set batch size
-func SetBatchSize(batchSize int32) ObkvQueryOption {
+func SetBatchSize(batchSize int) ObkvQueryOption {
 	return ObkvQueryOptionFunc(func(opts *ObkvQueryOptions) {
-		opts.batchSize = batchSize
+		opts.batchSize = int32(batchSize)
 	})
 }
 
 // SetMaxResultSize set max result size
-func SetMaxResultSize(maxResultSize int64) ObkvQueryOption {
+func SetMaxResultSize(maxResultSize int) ObkvQueryOption {
 	return ObkvQueryOptionFunc(func(opts *ObkvQueryOptions) {
-		opts.maxResultSize = maxResultSize
+		opts.maxResultSize = int64(maxResultSize)
 	})
 }
 
 // SetLimit set limit
-func SetLimit(limit int32) ObkvQueryOption {
+func SetLimit(limit int) ObkvQueryOption {
 	return ObkvQueryOptionFunc(func(opts *ObkvQueryOptions) {
-		opts.limit = limit
+		opts.limit = int32(limit)
 	})
 }
 
 // SetOffset set offset
-func SetOffset(offset int32) ObkvQueryOption {
+func SetOffset(offset int) ObkvQueryOption {
 	return ObkvQueryOptionFunc(func(opts *ObkvQueryOptions) {
-		opts.offset = offset
+		opts.offset = int32(offset)
 	})
 }
 

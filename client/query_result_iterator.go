@@ -171,9 +171,7 @@ func (q *ObQueryResultIterator) fetchNext(hasPrev bool) error {
 			// remove current server
 			q.expectant = q.expectant[1:]
 			q.prevSessionId = 0
-			if hasPrev {
-				return errors.Errorf("fetch next row from previous server failed, request:%s", queryRequest.String())
-			}
+			hasPrev = false
 		}
 	}
 

@@ -97,6 +97,12 @@ func (d *obHashPartDesc) GetPartIds(rowKeyPair *table.RangePair) ([]uint64, erro
 		return nil, errors.New("startKeys or endKeys in rangePair is nil")
 	}
 	if rowKeyPair.IsStartEqEnd() {
+		// check if startKey or endKey is extremum
+		for i := 0; i < len(rowKeyPair.Start()); i++ {
+			if _, ok := rowKeyPair.Start()[i].Value().(table.Entend); ok {
+				return nil, errors.New("one of startKey or endKey is extremum")
+			}
+		}
 		// startKey == endKey means that the range is equal to a column
 		partId, err := d.GetPartId(rowKeyPair.Start())
 		if err != nil {
