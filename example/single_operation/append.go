@@ -45,7 +45,7 @@ func main() {
 	}
 
 	// insert
-	ctx, _ := context.WithTimeout(context.Background(), time.Duration(1000)*time.Millisecond) // 1000ms
+	ctx, _ := context.WithTimeout(context.Background(), 10*time.Second) // 10s
 	rowKey := []*table.Column{table.NewColumn("c1", int64(1))}
 	insertColumns := []*table.Column{table.NewColumn("c2", "hello")}
 	affectRows, err := cli.Insert(
@@ -60,6 +60,7 @@ func main() {
 	fmt.Println(affectRows)
 
 	// append c2(2) -> c2("hello") + (" oceanbase") = c2("hello oceanbase")
+	ctx, _ = context.WithTimeout(context.Background(), 10*time.Second) // 10s
 	appendColumns := []*table.Column{table.NewColumn("c2", " oceanbase")}
 	res, err := cli.Append(
 		ctx,
