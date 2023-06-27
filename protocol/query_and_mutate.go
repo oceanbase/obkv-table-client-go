@@ -20,6 +20,9 @@ package protocol
 import (
 	"bytes"
 
+	"github.com/pkg/errors"
+
+	"github.com/oceanbase/obkv-table-client-go/table"
 	"github.com/oceanbase/obkv-table-client-go/util"
 )
 
@@ -40,6 +43,31 @@ func NewObTableQueryAndMutate() *ObTableQueryAndMutate {
 		mutations:            NewObTableBatchOperation(),
 		returnAffectedEntity: false,
 	}
+}
+
+func NewObTableQueryAndMutateWithParams(tableOperationType ObTableOperationType, rowKey []*table.Column, columns []*table.Column) (*ObTableQueryAndMutate, error) {
+	obTableBatchOperation := NewObTableBatchOperation()
+	obTableOperation, err := NewObTableOperationWithParams(tableOperationType, nil, columns)
+	if err != nil {
+		return nil, errors.WithMessage(err, "create table operation")
+	}
+
+	obTableBatchOperation.SetObTableOperations([]*ObTableOperation{obTableOperation})
+
+	obTableQuery, err := NewObTableQueryWithKeyRanges(rowKey, rowKey)
+	if err != nil {
+		return nil, errors.WithMessagef(err, "create table query")
+	}
+
+	return &ObTableQueryAndMutate{
+		ObUniVersionHeader: ObUniVersionHeader{
+			version:       1,
+			contentLength: 0,
+		},
+		tableQuery:           obTableQuery,
+		mutations:            obTableBatchOperation,
+		returnAffectedEntity: false,
+	}, nil
 }
 
 func (q *ObTableQueryAndMutate) TableQuery() *ObTableQuery {

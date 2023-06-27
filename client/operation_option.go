@@ -17,6 +17,10 @@
 
 package client
 
+import (
+	"github.com/oceanbase/obkv-table-client-go/client/filter"
+)
+
 type OperationOption interface {
 	apply(operationOpts *OperationOptions)
 }
@@ -26,12 +30,14 @@ func NewOperationOptions() *OperationOptions {
 	return &OperationOptions{
 		returnRowKey:         false,
 		returnAffectedEntity: false,
+		tableFilter:          nil,
 	}
 }
 
 type OperationOptions struct {
 	returnRowKey         bool
 	returnAffectedEntity bool
+	tableFilter          filter.ObTableFilter
 }
 
 func (f OperationOptionFunc) apply(operationOpts *OperationOptions) {
@@ -49,5 +55,12 @@ func WithReturnRowKey(returnRowKey bool) OperationOption {
 func WithReturnAffectedEntity(returnAffectedEntity bool) OperationOption {
 	return OperationOptionFunc(func(operationOpts *OperationOptions) {
 		operationOpts.returnAffectedEntity = returnAffectedEntity
+	})
+}
+
+// WithFilter only work in increment append update and delete operation
+func WithFilter(tableFilter filter.ObTableFilter) OperationOption {
+	return OperationOptionFunc(func(operationOpts *OperationOptions) {
+		operationOpts.tableFilter = tableFilter
 	})
 }

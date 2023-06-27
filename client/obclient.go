@@ -157,13 +157,14 @@ func (c *obClient) Insert(
 	rowKey []*table.Column,
 	mutateColumns []*table.Column,
 	operationOpts ...OperationOption) (int64, error) {
+	operationOptions := c.getOperationOptions(operationOpts...)
 	res, err := c.execute(
 		ctx,
 		tableName,
 		protocol.ObTableOperationInsert,
 		rowKey,
 		mutateColumns,
-		operationOpts...)
+		operationOptions)
 	if err != nil {
 		return -1, errors.WithMessagef(err, "execute insert, tableName:%s, rowKey:%s, mutateColumns:%s",
 			tableName, table.ColumnsToString(rowKey), table.ColumnsToString(mutateColumns))
@@ -177,18 +178,34 @@ func (c *obClient) Update(
 	rowKey []*table.Column,
 	mutateColumns []*table.Column,
 	operationOpts ...OperationOption) (int64, error) {
-	res, err := c.execute(
-		ctx,
-		tableName,
-		protocol.ObTableOperationUpdate,
-		rowKey,
-		mutateColumns,
-		operationOpts...)
-	if err != nil {
-		return -1, errors.WithMessagef(err, "execute update, tableName:%s, rowKey:%s, mutateColumns:%s",
-			tableName, table.ColumnsToString(rowKey), table.ColumnsToString(mutateColumns))
+	operationOptions := c.getOperationOptions(operationOpts...)
+	if operationOptions.tableFilter == nil {
+		res, err := c.execute(
+			ctx,
+			tableName,
+			protocol.ObTableOperationUpdate,
+			rowKey,
+			mutateColumns,
+			operationOptions)
+		if err != nil {
+			return -1, errors.WithMessagef(err, "execute update, tableName:%s, rowKey:%s, mutateColumns:%s",
+				tableName, table.ColumnsToString(rowKey), table.ColumnsToString(mutateColumns))
+		}
+		return res.AffectedRows(), nil
+	} else {
+		res, err := c.executeWithFilter(
+			ctx,
+			tableName,
+			protocol.ObTableOperationUpdate,
+			rowKey,
+			mutateColumns,
+			operationOptions)
+		if err != nil {
+			return -1, errors.WithMessagef(err, "execute update, tableName:%s, rowKey:%s, mutateColumns:%s",
+				tableName, table.ColumnsToString(rowKey), table.ColumnsToString(mutateColumns))
+		}
+		return res.AffectedRows(), nil
 	}
-	return res.AffectedRows(), nil
 }
 
 func (c *obClient) InsertOrUpdate(
@@ -197,13 +214,14 @@ func (c *obClient) InsertOrUpdate(
 	rowKey []*table.Column,
 	mutateColumns []*table.Column,
 	operationOpts ...OperationOption) (int64, error) {
+	operationOptions := c.getOperationOptions(operationOpts...)
 	res, err := c.execute(
 		ctx,
 		tableName,
 		protocol.ObTableOperationInsertOrUpdate,
 		rowKey,
 		mutateColumns,
-		operationOpts...)
+		operationOptions)
 	if err != nil {
 		return -1, errors.WithMessagef(err, "execute insert or update, tableName:%s, rowKey:%s, mutateColumns:%s",
 			tableName, table.ColumnsToString(rowKey), table.ColumnsToString(mutateColumns))
@@ -217,13 +235,14 @@ func (c *obClient) Replace(
 	rowKey []*table.Column,
 	mutateColumns []*table.Column,
 	operationOpts ...OperationOption) (int64, error) {
+	operationOptions := c.getOperationOptions(operationOpts...)
 	res, err := c.execute(
 		ctx,
 		tableName,
 		protocol.ObTableOperationReplace,
 		rowKey,
 		mutateColumns,
-		operationOpts...)
+		operationOptions)
 	if err != nil {
 		return -1, errors.WithMessagef(err, "execute replace, tableName:%s, rowKey:%s, mutateColumns:%s",
 			tableName, table.ColumnsToString(rowKey), table.ColumnsToString(mutateColumns))
@@ -237,18 +256,34 @@ func (c *obClient) Increment(
 	rowKey []*table.Column,
 	mutateColumns []*table.Column,
 	operationOpts ...OperationOption) (SingleResult, error) {
-	res, err := c.execute(
-		ctx,
-		tableName,
-		protocol.ObTableOperationIncrement,
-		rowKey,
-		mutateColumns,
-		operationOpts...)
-	if err != nil {
-		return nil, errors.WithMessagef(err, "execute increment, tableName:%s, rowKey:%s, mutateColumns:%s",
-			tableName, table.ColumnsToString(rowKey), table.ColumnsToString(mutateColumns))
+	operationOptions := c.getOperationOptions(operationOpts...)
+	if operationOptions.tableFilter == nil {
+		res, err := c.execute(
+			ctx,
+			tableName,
+			protocol.ObTableOperationIncrement,
+			rowKey,
+			mutateColumns,
+			operationOptions)
+		if err != nil {
+			return nil, errors.WithMessagef(err, "execute increment, tableName:%s, rowKey:%s, mutateColumns:%s",
+				tableName, table.ColumnsToString(rowKey), table.ColumnsToString(mutateColumns))
+		}
+		return newObSingleResult(res.AffectedRows(), res.Entity()), nil
+	} else {
+		res, err := c.executeWithFilter(
+			ctx,
+			tableName,
+			protocol.ObTableOperationIncrement,
+			rowKey,
+			mutateColumns,
+			operationOptions)
+		if err != nil {
+			return nil, errors.WithMessagef(err, "execute increment, tableName:%s, rowKey:%s, mutateColumns:%s",
+				tableName, table.ColumnsToString(rowKey), table.ColumnsToString(mutateColumns))
+		}
+		return newObSingleResult(res.AffectedRows(), nil), nil
 	}
-	return newObSingleResult(res.AffectedRows(), res.Entity()), nil
 }
 
 func (c *obClient) Append(
@@ -257,18 +292,34 @@ func (c *obClient) Append(
 	rowKey []*table.Column,
 	mutateColumns []*table.Column,
 	operationOpts ...OperationOption) (SingleResult, error) {
-	res, err := c.execute(
-		ctx,
-		tableName,
-		protocol.ObTableOperationAppend,
-		rowKey,
-		mutateColumns,
-		operationOpts...)
-	if err != nil {
-		return nil, errors.WithMessagef(err, "execute append, tableName:%s, rowKey:%s, mutateColumns:%s",
-			tableName, table.ColumnsToString(rowKey), table.ColumnsToString(mutateColumns))
+	operationOptions := c.getOperationOptions(operationOpts...)
+	if operationOptions.tableFilter == nil {
+		res, err := c.execute(
+			ctx,
+			tableName,
+			protocol.ObTableOperationAppend,
+			rowKey,
+			mutateColumns,
+			operationOptions)
+		if err != nil {
+			return nil, errors.WithMessagef(err, "execute increment, tableName:%s, rowKey:%s, mutateColumns:%s",
+				tableName, table.ColumnsToString(rowKey), table.ColumnsToString(mutateColumns))
+		}
+		return newObSingleResult(res.AffectedRows(), res.Entity()), nil
+	} else {
+		res, err := c.executeWithFilter(
+			ctx,
+			tableName,
+			protocol.ObTableOperationAppend,
+			rowKey,
+			mutateColumns,
+			operationOptions)
+		if err != nil {
+			return nil, errors.WithMessagef(err, "execute append, tableName:%s, rowKey:%s, mutateColumns:%s",
+				tableName, table.ColumnsToString(rowKey), table.ColumnsToString(mutateColumns))
+		}
+		return newObSingleResult(res.AffectedRows(), nil), nil
 	}
-	return newObSingleResult(res.AffectedRows(), res.Entity()), nil
 }
 
 func (c *obClient) Delete(
@@ -276,18 +327,34 @@ func (c *obClient) Delete(
 	tableName string,
 	rowKey []*table.Column,
 	operationOpts ...OperationOption) (int64, error) {
-	res, err := c.execute(
-		ctx,
-		tableName,
-		protocol.ObTableOperationDel,
-		rowKey,
-		nil,
-		operationOpts...)
-	if err != nil {
-		return -1, errors.WithMessagef(err, "execute delete, tableName:%s, rowKey:%s",
-			tableName, table.ColumnsToString(rowKey))
+	operationOptions := c.getOperationOptions(operationOpts...)
+	if operationOptions.tableFilter == nil {
+		res, err := c.execute(
+			ctx,
+			tableName,
+			protocol.ObTableOperationDel,
+			rowKey,
+			nil,
+			operationOptions)
+		if err != nil {
+			return -1, errors.WithMessagef(err, "execute delete, tableName:%s, rowKey:%s",
+				tableName, table.ColumnsToString(rowKey))
+		}
+		return res.AffectedRows(), nil
+	} else {
+		res, err := c.executeWithFilter(
+			ctx,
+			tableName,
+			protocol.ObTableOperationDel,
+			rowKey,
+			nil,
+			operationOptions)
+		if err != nil {
+			return -1, errors.WithMessagef(err, "execute delete, tableName:%s, rowKey:%s",
+				tableName, table.ColumnsToString(rowKey))
+		}
+		return res.AffectedRows(), nil
 	}
-	return res.AffectedRows(), nil
 }
 
 func (c *obClient) Get(
@@ -300,13 +367,14 @@ func (c *obClient) Get(
 	for _, columnName := range getColumns {
 		columns = append(columns, table.NewColumn(columnName, nil))
 	}
+	operationOptions := c.getOperationOptions(operationOpts...)
 	res, err := c.execute(
 		ctx,
 		tableName,
 		protocol.ObTableOperationGet,
 		rowKey,
 		columns,
-		operationOpts...)
+		operationOptions)
 	if err != nil {
 		return nil, errors.WithMessagef(err, "execute get, tableName:%s, rowKey:%s, getColumns:%s",
 			tableName, table.ColumnsToString(rowKey), util.StringArrayToString(getColumns))
@@ -341,13 +409,11 @@ func (c *obClient) execute(
 	opType protocol.ObTableOperationType,
 	rowKey []*table.Column,
 	columns []*table.Column,
-	operationOpts ...OperationOption) (*protocol.ObTableOperationResponse, error) {
+	operationOptions *OperationOptions) (*protocol.ObTableOperationResponse, error) {
 
 	if _, ok := ctx.Deadline(); !ok {
 		ctx, _ = context.WithTimeout(ctx, c.config.OperationTimeOut) // default timeout operation timeout
 	}
-
-	operationOptions := c.getOperationOptions(operationOpts...)
 
 	// 1. Get table route
 	tableParam, err := c.getTableParam(ctx, tableName, rowKey, false /* refresh */)
@@ -389,6 +455,52 @@ func (c *obClient) execute(
 			result.UniqueId(),
 			tableName,
 		)
+	}
+
+	return result, nil
+}
+
+func (c *obClient) executeWithFilter(
+	ctx context.Context,
+	tableName string,
+	opType protocol.ObTableOperationType,
+	rowKey []*table.Column,
+	columns []*table.Column,
+	operationOptions *OperationOptions) (*protocol.ObTableQueryAndMutateResponse, error) {
+
+	if _, ok := ctx.Deadline(); !ok {
+		ctx, _ = context.WithTimeout(ctx, c.config.OperationTimeOut) // default timeout operation timeout
+	}
+
+	// 1. Get table route
+	tableParam, err := c.getTableParam(ctx, tableName, rowKey, false /* refresh */)
+	if err != nil {
+		return nil, errors.WithMessagef(err, "get table param, tableName:%s, opType:%d", tableName, opType)
+	}
+
+	// 2. Construct request.
+	request, err := protocol.NewObTableQueryAndMutateRequestWithParams(
+		tableName,
+		tableParam.tableId,
+		tableParam.partitionId,
+		opType,
+		rowKey,
+		columns,
+		c.config.OperationTimeOut,
+		c.config.LogLevel,
+	)
+	if err != nil {
+		return nil, errors.WithMessagef(err, "new operation request, tableName:%s, tableParam:%s, opType:%d",
+			tableName, tableParam.String(), opType)
+	}
+
+	request.TableQueryAndMutate().TableQuery().SetFilterString(operationOptions.tableFilter.String())
+
+	// 3. execute
+	result := protocol.NewObTableQueryAndMutateResponse()
+	err = tableParam.table.execute(ctx, request, result)
+	if err != nil {
+		return nil, errors.WithMessagef(err, "execute request, request:%s", request.String())
 	}
 
 	return result, nil
