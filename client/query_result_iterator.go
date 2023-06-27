@@ -65,9 +65,16 @@ func newObQueryResultIteratorWithParams(ctx *context.Context,
 	}
 }
 
-// Closed returns true if the query result is closed.
-func (q *ObQueryResultIterator) Closed() bool {
+// IsClosed returns true if the query result is closed.
+func (q *ObQueryResultIterator) IsClosed() bool {
 	return q.closed
+}
+
+// Close closes the query result iterator.
+func (q *ObQueryResultIterator) Close() error {
+	// TODO: Send a close request to the server
+	q.closed = true
+	return nil
 }
 
 // Next returns nil if there is no more row.
