@@ -62,8 +62,8 @@ func (q *ObQueryExecutor) AddKeyRanges(keyRanges []*table.RangePair) {
 	q.keyRanges = append(q.keyRanges, keyRanges...)
 }
 
-// SetEntityTypes sets the entity type.
-func (q *ObQueryExecutor) SetEntityTypes(entityType protocol.ObTableEntityType) {
+// SetEntityType sets the entity type.
+func (q *ObQueryExecutor) SetEntityType(entityType protocol.ObTableEntityType) {
 	q.entityType = entityType
 }
 
@@ -213,7 +213,8 @@ func (q *ObQueryExecutor) init(ctx context.Context) (*ObQueryResultIterator, err
 	}
 
 	// set query range into table query
-	if nil != q.transferQueryRange() {
+	err = q.transferQueryRange()
+	if err != nil {
 		return nil, errors.WithMessage(err, "transfer query range")
 	}
 

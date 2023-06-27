@@ -146,7 +146,7 @@ func DefaultObjMeta(value interface{}) (ObObjectMeta, error) {
 		return ObObjTypes[ObObjTypeDateTimeTypeValue].DefaultObjMeta(), nil
 	case table.TimeStamp:
 		return ObObjTypes[ObObjTypeTimestampTypeValue].DefaultObjMeta(), nil
-	case table.Extend:
+	case table.Extremum:
 		return ObObjTypes[ObObjTypeExtendTypeValue].DefaultObjMeta(), nil
 	default:
 		return ObObjectMeta{}, errors.Errorf("not match objmeta, value: %v", value)
@@ -1091,10 +1091,10 @@ func (t ObHexStringType) String() string {
 		"}"
 }
 
-type ObExtendType ObObjTypeValue // TODO not support
+type ObExtendType ObObjTypeValue // TODO: Only Extremum use ExtendType now
 
 func (t ObExtendType) Encode(buffer *bytes.Buffer, value interface{}) {
-	util.EncodeVi64(buffer, int64(value.(table.Extend)))
+	util.EncodeVi64(buffer, int64(value.(table.Extremum)))
 }
 
 func (t ObExtendType) Decode(buffer *bytes.Buffer, obCollationType ObCollationType) interface{} {
@@ -1102,7 +1102,7 @@ func (t ObExtendType) Decode(buffer *bytes.Buffer, obCollationType ObCollationTy
 }
 
 func (t ObExtendType) EncodedLength(value interface{}) int {
-	return util.EncodedLengthByVi64(int64(value.(table.Extend)))
+	return util.EncodedLengthByVi64(int64(value.(table.Extremum)))
 }
 
 func (t ObExtendType) DefaultObjMeta() ObObjectMeta {

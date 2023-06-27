@@ -106,7 +106,7 @@ func (d *obKeyPartDesc) GetPartIds(rowKeyPair *table.RangePair) ([]uint64, error
 	if rowKeyPair.IsStartEqEnd() {
 		// check if startKey or endKey is extremum
 		for i := 0; i < len(rowKeyPair.Start()); i++ {
-			if _, ok := rowKeyPair.Start()[i].Value().(table.Extend); ok {
+			if _, ok := rowKeyPair.Start()[i].Value().(table.Extremum); ok {
 				return nil, errors.New("one of startKey or endKey is extremum")
 			}
 		}

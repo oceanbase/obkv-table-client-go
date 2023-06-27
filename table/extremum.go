@@ -17,17 +17,17 @@
 
 package table
 
-// Extend to represent the minimum and maximum values of the key now.
-type Extend int64
+// Extremum to represent the minimum and maximum values of the key.
+type Extremum int64
 
 const (
 	// Min -> -3 = -1 - 2 = MaxUint64 - 2
-	Min Extend = -3
+	Min Extremum = -3
 	// Max -> -2 = -1 - 1 = MaxUint64 - 1
-	Max Extend = -2
+	Max Extremum = -2
 )
 
-func (e Extend) String() string {
+func (e Extremum) String() string {
 	switch e {
 	case Min:
 		return "Min"

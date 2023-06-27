@@ -24,6 +24,12 @@ import (
 	"sync"
 )
 
+type QueryResultIterator interface {
+	IsClosed() bool
+	Close() error
+	Next() (QueryResult, error)
+}
+
 type ObQueryResultIterator struct {
 	ctx                   *context.Context
 	cli                   *obClient

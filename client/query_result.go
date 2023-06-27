@@ -24,6 +24,7 @@ import (
 
 type QueryResult interface {
 	Value(columnName string) interface{}
+	Values() []interface{}
 }
 
 func newObQueryResult(columnNames []string, values []*protocol.ObObject) *obQueryResult {
@@ -35,6 +36,7 @@ type obQueryResult struct {
 	values      []*protocol.ObObject
 }
 
+// Value returns the value of the specified column.
 func (r *obQueryResult) Value(columnName string) interface{} {
 	if r.columnNames == nil {
 		return nil
@@ -49,4 +51,17 @@ func (r *obQueryResult) Value(columnName string) interface{} {
 		}
 	}
 	return nil
+}
+
+// Values returns all values in the query result.
+func (r *obQueryResult) Values() []interface{} {
+	if r.values == nil {
+		return nil
+	}
+
+	values := make([]interface{}, len(r.values))
+	for i, obObject := range r.values {
+		values[i] = obObject.Value()
+	}
+	return values
 }

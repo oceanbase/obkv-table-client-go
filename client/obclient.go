@@ -314,11 +314,11 @@ func (c *obClient) Get(
 	return newObSingleResult(res.AffectedRows(), res.Entity()), nil
 }
 
-func (c *obClient) Query(ctx context.Context, tableName string, rangePairs []*table.RangePair, opts ...ObkvQueryOption) (*ObQueryResultIterator, error) {
-	Opts := c.getObkvQueryOptions(opts...)
+func (c *obClient) Query(ctx context.Context, tableName string, rangePairs []*table.RangePair, opts ...ObkvQueryOption) (QueryResultIterator, error) {
+	queryOpts := c.getObkvQueryOptions(opts...)
 	queryExecutor := NewObQueryExecutorWithParams(tableName, c)
 	queryExecutor.AddKeyRanges(rangePairs)
-	queryExecutor.setQueryOptions(Opts)
+	queryExecutor.setQueryOptions(queryOpts)
 	res, err := queryExecutor.init(ctx)
 	if err != nil {
 		return nil, errors.WithMessagef(err, "execute query, tableName:%s, keyRanges:%s",
@@ -774,12 +774,12 @@ func (c *obClient) getPartitionIds(entry *route.ObTableEntry, rowKeyPair *table.
 	if entry.PartitionInfo().Level() == route.PartLevelTwo {
 		partIds1, err := entry.PartitionInfo().FirstPartDesc().GetPartIds(rowKeyPair)
 		if err != nil {
-			return []uint64{route.ObInvalidPartId}, errors.WithMessagef(err, "get part id from first part desc, firstDesc:%s",
+			return nil, errors.WithMessagef(err, "get part id from first part desc, firstDesc:%s",
 				entry.PartitionInfo().FirstPartDesc().String())
 		}
 		partIds2, err := entry.PartitionInfo().SubPartDesc().GetPartIds(rowKeyPair)
 		if err != nil {
-			return []uint64{route.ObInvalidPartId}, errors.WithMessagef(err, "get part id from sub part desc, firstDesc:%s",
+			return nil, errors.WithMessagef(err, "get part id from sub part desc, firstDesc:%s",
 				entry.PartitionInfo().SubPartDesc().String())
 		}
 		// do cartesian product
@@ -791,7 +791,7 @@ func (c *obClient) getPartitionIds(entry *route.ObTableEntry, rowKeyPair *table.
 		}
 		return partIds, nil
 	}
-	return []uint64{route.ObInvalidPartId}, errors.Errorf("unknown partition level, partInfo:%s", entry.PartitionInfo().String())
+	return nil, errors.Errorf("unknown partition level, partInfo:%s", entry.PartitionInfo().String())
 }
 
 func (c *obClient) getTable(entry *route.ObTableEntry, partId uint64) (*ObTable, error) {
