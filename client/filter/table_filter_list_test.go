@@ -49,4 +49,8 @@ func TestObTableFilterListString(t *testing.T) {
 	assert.EqualValues(t, tableFilterList.Size(), obTableFilterList.Size())
 	assert.EqualValues(t, tableFilterList.String(), obTableFilterList.String())
 	assert.EqualValues(t, tableFilterList, obTableFilterList)
+
+	obTableFilterList = NewObTableFilterListWithOperatorAndTableFilter(OperatorAnd)
+	assert.EqualValues(t, 0, obTableFilterList.Size())
+	assert.EqualValues(t, "", obTableFilterList.String())
 }

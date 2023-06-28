@@ -65,6 +65,9 @@ func (l *ObTableFilterList) Get(pos int) (ObTableFilter, error) {
 }
 
 func (l *ObTableFilterList) String() string {
+	if len(l.filters) == 0 {
+		return ""
+	}
 	var builder strings.Builder
 	var stringOperator string
 
