@@ -39,7 +39,7 @@ func TestObTableQueryAndMutateRequestEncodeDecode(t *testing.T) {
 	obNewRanges := make([]*ObNewRange, 0, randomLen)
 	for i := 0; i < randomLen; i++ {
 		obNewRange := NewObNewRange()
-		obNewRange.SetTableId(int64(rand.Uint64()))
+		obNewRange.SetTableId(rand.Uint64())
 		obNewRange.SetBorderFlag(ObBorderFlag(rand.Intn(255)))
 		randomLen = rand.Intn(100)
 		startKey := make([]*ObObject, 0, randomLen)

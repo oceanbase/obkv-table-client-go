@@ -31,7 +31,7 @@ import (
 func TestObNewRangeEncodeDecode(t *testing.T) {
 	util.SetObVersion(4)
 	obNewRange := NewObNewRange()
-	obNewRange.SetTableId(int64(rand.Uint64()))
+	obNewRange.SetTableId(rand.Uint64())
 	obNewRange.SetBorderFlag(ObBorderFlag(rand.Intn(255)))
 
 	randomLen := rand.Intn(100)

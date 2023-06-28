@@ -27,7 +27,7 @@ import (
 )
 
 type ObNewRange struct {
-	tableId    int64
+	tableId    uint64
 	borderFlag ObBorderFlag
 	startKey   []*ObObject
 	endKey     []*ObObject
@@ -44,7 +44,7 @@ func NewObNewRange() *ObNewRange {
 	}
 }
 
-func NewObNewRangeWithParams(startKeyColumns []*table.Column, endKeyColumns []*table.Column) (*ObNewRange, error) {
+func NewObNewRangeWithColumns(startKeyColumns []*table.Column, endKeyColumns []*table.Column) (*ObNewRange, error) {
 	startKey := make([]*ObObject, 0, len(startKeyColumns))
 	endKey := make([]*ObObject, 0, len(endKeyColumns))
 
@@ -71,7 +71,7 @@ func NewObNewRangeWithParams(startKeyColumns []*table.Column, endKeyColumns []*t
 	obBorderFlag := NewObBorderFlag()
 
 	return &ObNewRange{
-		tableId:    -1,
+		tableId:    0,
 		borderFlag: obBorderFlag,
 		startKey:   startKey,
 		endKey:     endKey,
@@ -94,7 +94,7 @@ func (r *ObNewRange) TableId() uint64 {
 	return r.tableId
 }
 
-func (r *ObNewRange) SetTableId(tableId int64) {
+func (r *ObNewRange) SetTableId(tableId uint64) {
 	r.tableId = tableId
 }
 

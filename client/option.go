@@ -17,32 +17,60 @@
 
 package client
 
-import "github.com/oceanbase/obkv-table-client-go/table"
+import (
+	"github.com/oceanbase/obkv-table-client-go/client/filter"
+	"github.com/oceanbase/obkv-table-client-go/table"
+)
 
-type ObkvOption interface {
-	apply(opts *ObkvOptions)
+type OperationOption interface {
+	apply(operationOpts *OperationOptions)
 }
-type ObkvOptionFunc func(opts *ObkvOptions)
 
-func NewObkvOption() *ObkvOptions {
-	return &ObkvOptions{
+type OperationOptionFunc func(operationOpts *OperationOptions)
+
+func NewOperationOptions() *OperationOptions {
+	return &OperationOptions{
 		returnRowKey:         false,
 		returnAffectedEntity: false,
+		tableFilter:          nil,
 	}
 }
 
-type ObkvOptions struct {
+type OperationOptions struct {
 	returnRowKey         bool
 	returnAffectedEntity bool
+	tableFilter          filter.ObTableFilter
 }
 
-func (f ObkvOptionFunc) apply(opts *ObkvOptions) {
-	f(opts)
+func (f OperationOptionFunc) apply(operationOpts *OperationOptions) {
+	f(operationOpts)
+}
+
+// WithReturnRowKey only work in increment and append operation
+func WithReturnRowKey(returnRowKey bool) OperationOption {
+	return OperationOptionFunc(func(operationOpts *OperationOptions) {
+		operationOpts.returnRowKey = returnRowKey
+	})
+}
+
+// WithReturnAffectedEntity only work in increment and append operation
+func WithReturnAffectedEntity(returnAffectedEntity bool) OperationOption {
+	return OperationOptionFunc(func(operationOpts *OperationOptions) {
+		operationOpts.returnAffectedEntity = returnAffectedEntity
+	})
+}
+
+// WithFilter only work in increment append update and delete operation
+func WithFilter(tableFilter filter.ObTableFilter) OperationOption {
+	return OperationOptionFunc(func(operationOpts *OperationOptions) {
+		operationOpts.tableFilter = tableFilter
+	})
 }
 
 type ObkvQueryOption interface {
 	apply(opts *ObkvQueryOptions)
 }
+
 type ObkvQueryOptionFunc func(opts *ObkvQueryOptions)
 
 func NewObkvQueryOption() *ObkvQueryOptions {
@@ -75,20 +103,6 @@ type ObkvQueryOptions struct {
 
 func (f ObkvQueryOptionFunc) apply(opts *ObkvQueryOptions) {
 	f(opts)
-}
-
-// WithReturnRowKey only work in increment and append operation
-func WithReturnRowKey(returnRowKey bool) ObkvOption {
-	return ObkvOptionFunc(func(opts *ObkvOptions) {
-		opts.returnRowKey = returnRowKey
-	})
-}
-
-// WithReturnAffectedEntity only work in increment and append operation
-func WithReturnAffectedEntity(returnAffectedEntity bool) ObkvOption {
-	return ObkvOptionFunc(func(opts *ObkvOptions) {
-		opts.returnAffectedEntity = returnAffectedEntity
-	})
 }
 
 // SetQueryFilter set query filter
