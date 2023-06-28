@@ -22,48 +22,48 @@ import (
 	"github.com/oceanbase/obkv-table-client-go/table"
 )
 
-type OperationOption interface {
-	apply(operationOpts *OperationOptions)
+type ObkvOperationOption interface {
+	apply(opts *ObkvOperationOptions)
 }
 
-type OperationOptionFunc func(operationOpts *OperationOptions)
+type ObkvOperationOptionFunc func(opts *ObkvOperationOptions)
 
-func NewOperationOptions() *OperationOptions {
-	return &OperationOptions{
+func NewOperationOptions() *ObkvOperationOptions {
+	return &ObkvOperationOptions{
 		returnRowKey:         false,
 		returnAffectedEntity: false,
 		tableFilter:          nil,
 	}
 }
 
-type OperationOptions struct {
+type ObkvOperationOptions struct {
 	returnRowKey         bool
 	returnAffectedEntity bool
 	tableFilter          filter.ObTableFilter
 }
 
-func (f OperationOptionFunc) apply(operationOpts *OperationOptions) {
-	f(operationOpts)
+func (f ObkvOperationOptionFunc) apply(opts *ObkvOperationOptions) {
+	f(opts)
 }
 
 // WithReturnRowKey only work in increment and append operation
-func WithReturnRowKey(returnRowKey bool) OperationOption {
-	return OperationOptionFunc(func(operationOpts *OperationOptions) {
-		operationOpts.returnRowKey = returnRowKey
+func WithReturnRowKey(returnRowKey bool) ObkvOperationOption {
+	return ObkvOperationOptionFunc(func(opts *ObkvOperationOptions) {
+		opts.returnRowKey = returnRowKey
 	})
 }
 
 // WithReturnAffectedEntity only work in increment and append operation
-func WithReturnAffectedEntity(returnAffectedEntity bool) OperationOption {
-	return OperationOptionFunc(func(operationOpts *OperationOptions) {
-		operationOpts.returnAffectedEntity = returnAffectedEntity
+func WithReturnAffectedEntity(returnAffectedEntity bool) ObkvOperationOption {
+	return ObkvOperationOptionFunc(func(opts *ObkvOperationOptions) {
+		opts.returnAffectedEntity = returnAffectedEntity
 	})
 }
 
 // WithFilter only work in increment append update and delete operation
-func WithFilter(tableFilter filter.ObTableFilter) OperationOption {
-	return OperationOptionFunc(func(operationOpts *OperationOptions) {
-		operationOpts.tableFilter = tableFilter
+func WithFilter(tableFilter filter.ObTableFilter) ObkvOperationOption {
+	return ObkvOperationOptionFunc(func(opts *ObkvOperationOptions) {
+		opts.tableFilter = tableFilter
 	})
 }
 

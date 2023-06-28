@@ -69,7 +69,7 @@ func (b *obBatchExecutor) addDmlOp(
 	opType protocol.ObTableOperationType,
 	rowKey []*table.Column,
 	mutateValues []*table.Column,
-	operationOpts ...OperationOption) error {
+	opts ...ObkvOperationOption) error {
 
 	if rowKey == nil {
 		return errors.New("rowKey is nil")
@@ -99,37 +99,37 @@ func (b *obBatchExecutor) addDmlOp(
 }
 
 // AddInsertOp add an insert operation to the batch executor.
-func (b *obBatchExecutor) AddInsertOp(rowKey []*table.Column, mutateValues []*table.Column, operationOpts ...OperationOption) error {
-	return b.addDmlOp(protocol.ObTableOperationInsert, rowKey, mutateValues, operationOpts...)
+func (b *obBatchExecutor) AddInsertOp(rowKey []*table.Column, mutateValues []*table.Column, opts ...ObkvOperationOption) error {
+	return b.addDmlOp(protocol.ObTableOperationInsert, rowKey, mutateValues, opts...)
 }
 
 // AddUpdateOp add an update operation to the batch executor.
-func (b *obBatchExecutor) AddUpdateOp(rowKey []*table.Column, mutateValues []*table.Column, operationOpts ...OperationOption) error {
-	return b.addDmlOp(protocol.ObTableOperationUpdate, rowKey, mutateValues, operationOpts...)
+func (b *obBatchExecutor) AddUpdateOp(rowKey []*table.Column, mutateValues []*table.Column, opts ...ObkvOperationOption) error {
+	return b.addDmlOp(protocol.ObTableOperationUpdate, rowKey, mutateValues, opts...)
 }
 
 // AddInsertOrUpdateOp add an insertOrUpdate operation to the batch executor
-func (b *obBatchExecutor) AddInsertOrUpdateOp(rowKey []*table.Column, mutateValues []*table.Column, operationOpts ...OperationOption) error {
-	return b.addDmlOp(protocol.ObTableOperationInsertOrUpdate, rowKey, mutateValues, operationOpts...)
+func (b *obBatchExecutor) AddInsertOrUpdateOp(rowKey []*table.Column, mutateValues []*table.Column, opts ...ObkvOperationOption) error {
+	return b.addDmlOp(protocol.ObTableOperationInsertOrUpdate, rowKey, mutateValues, opts...)
 }
 
 // AddReplaceOp add a replace operation to the batch executor
-func (b *obBatchExecutor) AddReplaceOp(rowKey []*table.Column, mutateValues []*table.Column, operationOpts ...OperationOption) error {
-	return b.addDmlOp(protocol.ObTableOperationReplace, rowKey, mutateValues, operationOpts...)
+func (b *obBatchExecutor) AddReplaceOp(rowKey []*table.Column, mutateValues []*table.Column, opts ...ObkvOperationOption) error {
+	return b.addDmlOp(protocol.ObTableOperationReplace, rowKey, mutateValues, opts...)
 }
 
 // AddIncrementOp add an increment operation to the batch executor
-func (b *obBatchExecutor) AddIncrementOp(rowKey []*table.Column, mutateValues []*table.Column, operationOpts ...OperationOption) error {
-	return b.addDmlOp(protocol.ObTableOperationIncrement, rowKey, mutateValues, operationOpts...)
+func (b *obBatchExecutor) AddIncrementOp(rowKey []*table.Column, mutateValues []*table.Column, opts ...ObkvOperationOption) error {
+	return b.addDmlOp(protocol.ObTableOperationIncrement, rowKey, mutateValues, opts...)
 }
 
 // AddAppendOp add an append operation to the batch executor
-func (b *obBatchExecutor) AddAppendOp(rowKey []*table.Column, mutateValues []*table.Column, operationOpts ...OperationOption) error {
-	return b.addDmlOp(protocol.ObTableOperationAppend, rowKey, mutateValues, operationOpts...)
+func (b *obBatchExecutor) AddAppendOp(rowKey []*table.Column, mutateValues []*table.Column, opts ...ObkvOperationOption) error {
+	return b.addDmlOp(protocol.ObTableOperationAppend, rowKey, mutateValues, opts...)
 }
 
 // AddDeleteOp add a delete operation to the batch executor
-func (b *obBatchExecutor) AddDeleteOp(rowKey []*table.Column, operationOpts ...OperationOption) error {
+func (b *obBatchExecutor) AddDeleteOp(rowKey []*table.Column, opts ...ObkvOperationOption) error {
 	if rowKey == nil {
 		return errors.New("rowKey is nil")
 	}
@@ -155,7 +155,7 @@ func (b *obBatchExecutor) AddDeleteOp(rowKey []*table.Column, operationOpts ...O
 }
 
 // AddGetOp add a get operation to the batch executor
-func (b *obBatchExecutor) AddGetOp(rowKey []*table.Column, getColumns []string, operationOpts ...OperationOption) error {
+func (b *obBatchExecutor) AddGetOp(rowKey []*table.Column, getColumns []string, opts ...ObkvOperationOption) error {
 	if rowKey == nil {
 		return errors.New("rowKey is nil")
 	}
