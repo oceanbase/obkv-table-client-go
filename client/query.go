@@ -218,5 +218,5 @@ func (q *ObQueryExecutor) init(ctx context.Context) (*ObQueryResultIterator, err
 		return nil, errors.WithMessage(err, "transfer query range")
 	}
 
-	return newObQueryResultIteratorWithParams(&ctx, q.cli, q.tableQuery, expectant, q.entityType, q.tableName), nil
+	return newObQueryResultIteratorWithParams(ctx, q.cli, q.tableQuery, expectant, q.entityType, q.tableName), nil
 }

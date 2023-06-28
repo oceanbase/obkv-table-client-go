@@ -31,7 +31,7 @@ type QueryResultIterator interface {
 }
 
 type ObQueryResultIterator struct {
-	ctx                   *context.Context
+	ctx                   context.Context
 	cli                   *obClient
 	lock                  sync.Mutex
 	tableQuery            *protocol.ObTableQuery
@@ -48,7 +48,7 @@ type ObQueryResultIterator struct {
 }
 
 // newObQueryResultWithParam creates a new ObQueryResultIterator.
-func newObQueryResultIteratorWithParams(ctx *context.Context,
+func newObQueryResultIteratorWithParams(ctx context.Context,
 	cli *obClient,
 	tableQuery *protocol.ObTableQuery,
 	expectant []*ObTableParam,
@@ -157,7 +157,7 @@ func (q *ObQueryResultIterator) fetchNext(hasPrev bool) error {
 			asyncQueryRequest.SetQueryType(protocol.QueryStart)
 		}
 		// execute
-		err = nextParam.table.execute(*q.ctx, asyncQueryRequest, result)
+		err = nextParam.table.execute(q.ctx, asyncQueryRequest, result)
 		if err != nil {
 			return errors.WithMessagef(err, "execute request, request:%s", queryRequest.String())
 		}
