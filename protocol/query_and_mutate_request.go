@@ -61,7 +61,7 @@ func NewObTableQueryAndMutateRequest() *ObTableQueryAndMutateRequest {
 	}
 }
 
-func NewObTableQueryAndMutateRequestWithParams(
+func NewObTableQueryAndMutateRequestWithRowKeyAndParams(
 	tableName string,
 	tableId uint64,
 	partitionId uint64,

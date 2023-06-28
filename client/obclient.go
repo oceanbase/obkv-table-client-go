@@ -201,7 +201,7 @@ func (c *obClient) Update(
 			mutateColumns,
 			operationOptions)
 		if err != nil {
-			return -1, errors.WithMessagef(err, "execute update, tableName:%s, rowKey:%s, mutateColumns:%s",
+			return -1, errors.WithMessagef(err, "execute update with filter, tableName:%s, rowKey:%s, mutateColumns:%s",
 				tableName, table.ColumnsToString(rowKey), table.ColumnsToString(mutateColumns))
 		}
 		return res.AffectedRows(), nil
@@ -279,7 +279,7 @@ func (c *obClient) Increment(
 			mutateColumns,
 			operationOptions)
 		if err != nil {
-			return nil, errors.WithMessagef(err, "execute increment, tableName:%s, rowKey:%s, mutateColumns:%s",
+			return nil, errors.WithMessagef(err, "execute increment with filter, tableName:%s, rowKey:%s, mutateColumns:%s",
 				tableName, table.ColumnsToString(rowKey), table.ColumnsToString(mutateColumns))
 		}
 		return newObSingleResult(res.AffectedRows(), nil), nil
@@ -315,7 +315,7 @@ func (c *obClient) Append(
 			mutateColumns,
 			operationOptions)
 		if err != nil {
-			return nil, errors.WithMessagef(err, "execute append, tableName:%s, rowKey:%s, mutateColumns:%s",
+			return nil, errors.WithMessagef(err, "execute append with filter, tableName:%s, rowKey:%s, mutateColumns:%s",
 				tableName, table.ColumnsToString(rowKey), table.ColumnsToString(mutateColumns))
 		}
 		return newObSingleResult(res.AffectedRows(), nil), nil
@@ -350,7 +350,7 @@ func (c *obClient) Delete(
 			nil,
 			operationOptions)
 		if err != nil {
-			return -1, errors.WithMessagef(err, "execute delete, tableName:%s, rowKey:%s",
+			return -1, errors.WithMessagef(err, "execute delete with filter, tableName:%s, rowKey:%s",
 				tableName, table.ColumnsToString(rowKey))
 		}
 		return res.AffectedRows(), nil
@@ -500,7 +500,7 @@ func (c *obClient) executeWithFilter(
 	}
 
 	// 2. Construct request.
-	request, err := protocol.NewObTableQueryAndMutateRequestWithParams(
+	request, err := protocol.NewObTableQueryAndMutateRequestWithRowKeyAndParams(
 		tableName,
 		tableParam.tableId,
 		tableParam.partitionId,

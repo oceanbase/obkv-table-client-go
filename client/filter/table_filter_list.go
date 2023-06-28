@@ -35,13 +35,6 @@ type ObTableFilterList struct {
 	filters []ObTableFilter
 }
 
-func NewObTableFilterList() *ObTableFilterList {
-	return &ObTableFilterList{
-		op:      OperatorAnd,
-		filters: nil,
-	}
-}
-
 func NewObTableFilterListWithOperator(op Operator) *ObTableFilterList {
 	return &ObTableFilterList{
 		op:      op,
