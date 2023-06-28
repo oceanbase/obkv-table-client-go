@@ -382,6 +382,19 @@ func (c *obClient) Get(
 	return newObSingleResult(res.AffectedRows(), res.Entity()), nil
 }
 
+func (c *obClient) Query(ctx context.Context, tableName string, rangePairs []*table.RangePair, opts ...ObkvQueryOption) (QueryResultIterator, error) {
+	queryOpts := c.getObkvQueryOptions(opts...)
+	queryExecutor := NewObQueryExecutorWithParams(tableName, c)
+	queryExecutor.AddKeyRanges(rangePairs)
+	queryExecutor.setQueryOptions(queryOpts)
+	res, err := queryExecutor.init(ctx)
+	if err != nil {
+		return nil, errors.WithMessagef(err, "execute query, tableName:%s, keyRanges:%s",
+			tableName, table.RangePairsToString(rangePairs))
+	}
+	return res, nil
+}
+
 func (c *obClient) NewBatchExecutor(tableName string) BatchExecutor {
 	return newObBatchExecutor(tableName, c)
 }
@@ -401,6 +414,14 @@ func (c *obClient) getOperationOptions(operationOpts ...OperationOption) *Operat
 		opt.apply(operationOptions)
 	}
 	return operationOptions
+}
+
+func (c *obClient) getObkvQueryOptions(options ...ObkvQueryOption) *ObkvQueryOptions {
+	opts := NewObkvQueryOption()
+	for _, op := range options {
+		op.apply(opts)
+	}
+	return opts
 }
 
 func (c *obClient) execute(
@@ -852,6 +873,37 @@ func (c *obClient) getPartitionId(entry *route.ObTableEntry, rowKeyValue []*tabl
 		return (partId1)<<route.ObPartIdShift | partId2 | route.ObMask, nil
 	}
 	return route.ObInvalidPartId, errors.Errorf("unknown partition level, partInfo:%s", entry.PartitionInfo().String())
+}
+
+// get partition id by rowKey
+func (c *obClient) getPartitionIds(entry *route.ObTableEntry, rowKeyPair *table.RangePair) ([]uint64, error) {
+	if !entry.IsPartitionTable() || entry.PartitionInfo().Level() == route.PartLevelZero {
+		return []uint64{0}, nil
+	}
+	if entry.PartitionInfo().Level() == route.PartLevelOne {
+		return entry.PartitionInfo().FirstPartDesc().GetPartIds(rowKeyPair)
+	}
+	if entry.PartitionInfo().Level() == route.PartLevelTwo {
+		partIds1, err := entry.PartitionInfo().FirstPartDesc().GetPartIds(rowKeyPair)
+		if err != nil {
+			return nil, errors.WithMessagef(err, "get part id from first part desc, firstDesc:%s",
+				entry.PartitionInfo().FirstPartDesc().String())
+		}
+		partIds2, err := entry.PartitionInfo().SubPartDesc().GetPartIds(rowKeyPair)
+		if err != nil {
+			return nil, errors.WithMessagef(err, "get part id from sub part desc, firstDesc:%s",
+				entry.PartitionInfo().SubPartDesc().String())
+		}
+		// do cartesian product
+		partIds := make([]uint64, 0, len(partIds1)*len(partIds2))
+		for _, partId1 := range partIds1 {
+			for _, partId2 := range partIds2 {
+				partIds = append(partIds, (partId1)<<route.ObPartIdShift|partId2|route.ObMask)
+			}
+		}
+		return partIds, nil
+	}
+	return nil, errors.Errorf("unknown partition level, partInfo:%s", entry.PartitionInfo().String())
 }
 
 func (c *obClient) getTable(entry *route.ObTableEntry, partId uint64) (*ObTable, error) {

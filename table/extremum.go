@@ -2,7 +2,7 @@
  * #%L
  * OBKV Table Client Framework
  * %%
- * Copyright (C) 2021 OceanBase
+ * Copyright (C) 2023 OceanBase
  * %%
  * OBKV Table Client Framework is licensed under Mulan PSL v2.
  * You can use this software according to the terms and conditions of the Mulan PSL v2.
@@ -17,30 +17,23 @@
 
 package table
 
-// ColumnsToString converts a column to a string
-func ColumnsToString(columns []*Column) string {
-	var str string
-	str = str + "["
-	for i := 0; i < len(columns); i++ {
-		if i > 0 {
-			str += ", "
-		}
-		str += columns[i].String()
-	}
-	str += "]"
-	return str
-}
+// Extremum to represent the minimum and maximum values of the key.
+type Extremum int64
 
-// RangePairsToString converts a ranges pair to a string
-func RangePairsToString(rangesPairs []*RangePair) string {
-	var str string
-	str = str + "["
-	for i := 0; i < len(rangesPairs); i++ {
-		if i > 0 {
-			str += ", "
-		}
-		str += rangesPairs[i].String()
+const (
+	// Min -> -3 = -1 - 2 = MaxUint64 - 2
+	Min Extremum = -3
+	// Max -> -2 = -1 - 1 = MaxUint64 - 1
+	Max Extremum = -2
+)
+
+func (e Extremum) String() string {
+	switch e {
+	case Min:
+		return "Min"
+	case Max:
+		return "Max"
+	default:
+		return "unknown"
 	}
-	str += "]"
-	return str
 }

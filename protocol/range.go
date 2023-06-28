@@ -79,7 +79,18 @@ func NewObNewRangeWithParams(startKeyColumns []*table.Column, endKeyColumns []*t
 	}, nil
 }
 
-func (r *ObNewRange) TableId() int64 {
+// NewObNewRangeWithParams creates a new ObNewRange.
+func NewObNewRangeWithParams(startKey []*ObObject, endKey []*ObObject, borderFlag ObBorderFlag) *ObNewRange {
+	return &ObNewRange{
+		tableId:    0,
+		borderFlag: borderFlag,
+		startKey:   startKey,
+		endKey:     endKey,
+		flag:       0,
+	}
+}
+
+func (r *ObNewRange) TableId() uint64 {
 	return r.tableId
 }
 
@@ -161,7 +172,7 @@ func (r *ObNewRange) Encode(buffer *bytes.Buffer) {
 }
 
 func (r *ObNewRange) Decode(buffer *bytes.Buffer) {
-	r.tableId = util.DecodeVi64(buffer)
+	r.tableId = uint64(util.DecodeVi64(buffer))
 
 	r.borderFlag = ObBorderFlag(util.Uint8(buffer))
 

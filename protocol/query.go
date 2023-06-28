@@ -20,9 +20,6 @@ package protocol
 import (
 	"bytes"
 
-	"github.com/pkg/errors"
-
-	"github.com/oceanbase/obkv-table-client-go/table"
 	"github.com/oceanbase/obkv-table-client-go/util"
 )
 
@@ -60,6 +57,29 @@ func NewObTableQuery() *ObTableQuery {
 		maxResultSize:    0,
 		isHbaseQuery:     false,
 		hTableFilter:     NewObHTableFilter(),
+		scanRangeColumns: nil,
+		aggregations:     nil,
+	}
+}
+
+// NewObTableQueryWithParams creates a new ObTableQuery with parameters.
+func NewObTableQueryWithParams(batchSize int32) *ObTableQuery {
+	return &ObTableQuery{
+		ObUniVersionHeader: ObUniVersionHeader{
+			version:       1,
+			contentLength: 0,
+		},
+		keyRanges:        nil,
+		selectColumns:    nil,
+		filterString:     "",
+		limit:            -1,
+		offset:           0,
+		scanOrder:        ObScanOrderForward,
+		indexName:        "",
+		batchSize:        batchSize,
+		maxResultSize:    -1,
+		isHbaseQuery:     false,
+		hTableFilter:     nil,
 		scanRangeColumns: nil,
 		aggregations:     nil,
 	}
