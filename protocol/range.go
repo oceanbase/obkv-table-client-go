@@ -41,6 +41,17 @@ func NewObNewRange() *ObNewRange {
 	}
 }
 
+// NewObNewRangeWithParams creates a new ObNewRange.
+func NewObNewRangeWithParams(startKey []*ObObject, endKey []*ObObject, borderFlag ObBorderFlag) *ObNewRange {
+	return &ObNewRange{
+		tableId:    0,
+		borderFlag: borderFlag,
+		startKey:   startKey,
+		endKey:     endKey,
+		flag:       0,
+	}
+}
+
 func (r *ObNewRange) TableId() uint64 {
 	return r.tableId
 }

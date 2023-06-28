@@ -73,6 +73,12 @@ func (d *obRangePartDesc) GetPartId(rowKey []*table.Column) (uint64, error) {
 	return ObInvalidPartId, errors.New("not support range partition now")
 }
 
+// GetPartIds get partition ids by rowKeyPair
+// Not support range partition now.
+func (d *obRangePartDesc) GetPartIds(rowKeyPair *table.RangePair) ([]uint64, error) {
+	return []uint64{ObInvalidPartId}, errors.New("not support range partition now")
+}
+
 func (d *obRangePartDesc) String() string {
 	// partColumns to string
 	var partColumnsStr string

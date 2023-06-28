@@ -84,6 +84,8 @@ type Client interface {
 	Delete(ctx context.Context, tableName string, rowKey []*table.Column, opts ...ObkvOption) (int64, error)
 	// Get a record by rowKey.
 	Get(ctx context.Context, tableName string, rowKey []*table.Column, getColumns []string, opts ...ObkvOption) (SingleResult, error)
+	// Query records by rangePairs.
+	Query(ctx context.Context, tableName string, rangePairs []*table.RangePair, opts ...ObkvQueryOption) (QueryResultIterator, error)
 	// NewBatchExecutor create a batch executor.
 	NewBatchExecutor(tableName string) BatchExecutor
 	// Close closes the client.

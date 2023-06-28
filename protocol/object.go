@@ -19,7 +19,6 @@ package protocol
 
 import (
 	"bytes"
-
 	"github.com/oceanbase/obkv-table-client-go/util"
 )
 

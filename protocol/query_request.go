@@ -60,6 +60,23 @@ func NewObTableQueryRequest() *ObTableQueryRequest {
 	}
 }
 
+// NewObTableQueryRequestWithParams creates a new ObTableQueryRequest.
+func NewObTableQueryRequestWithParams(tableName string, tableId uint64, partitionId uint64, entityType ObTableEntityType, tableQuery *ObTableQuery) *ObTableQueryRequest {
+	return &ObTableQueryRequest{
+		ObUniVersionHeader: ObUniVersionHeader{
+			version:       1,
+			contentLength: 0,
+		},
+		credential:       nil,
+		tableName:        tableName,
+		tableId:          tableId,
+		partitionId:      partitionId,
+		entityType:       entityType,
+		consistencyLevel: ObTableConsistencyLevelStrong,
+		tableQuery:       tableQuery,
+	}
+}
+
 func (r *ObTableQueryRequest) TableName() string {
 	return r.tableName
 }
