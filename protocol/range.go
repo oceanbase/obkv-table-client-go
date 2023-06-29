@@ -20,6 +20,9 @@ package protocol
 import (
 	"bytes"
 
+	"github.com/pkg/errors"
+
+	"github.com/oceanbase/obkv-table-client-go/table"
 	"github.com/oceanbase/obkv-table-client-go/util"
 )
 
@@ -39,6 +42,41 @@ func NewObNewRange() *ObNewRange {
 		endKey:     nil,
 		flag:       0,
 	}
+}
+
+func NewObNewRangeWithColumns(startKeyColumns []*table.Column, endKeyColumns []*table.Column) (*ObNewRange, error) {
+	startKey := make([]*ObObject, 0, len(startKeyColumns))
+	endKey := make([]*ObObject, 0, len(endKeyColumns))
+
+	// add start key columns
+	for _, column := range startKeyColumns {
+		objMeta, err := DefaultObjMeta(column.Value())
+		if err != nil {
+			return nil, errors.WithMessage(err, "create obj meta by start key")
+		}
+		object := NewObObjectWithParams(objMeta, column.Value())
+		startKey = append(startKey, object)
+	}
+
+	// add end key columns
+	for _, column := range endKeyColumns {
+		objMeta, err := DefaultObjMeta(column.Value())
+		if err != nil {
+			return nil, errors.WithMessage(err, "create obj meta by end key")
+		}
+		object := NewObObjectWithParams(objMeta, column.Value())
+		endKey = append(endKey, object)
+	}
+
+	obBorderFlag := NewObBorderFlag()
+
+	return &ObNewRange{
+		tableId:    0,
+		borderFlag: obBorderFlag,
+		startKey:   startKey,
+		endKey:     endKey,
+		flag:       0,
+	}, nil
 }
 
 // NewObNewRangeWithParams creates a new ObNewRange.

@@ -21,6 +21,9 @@ import (
 	"bytes"
 	"time"
 
+	"github.com/pkg/errors"
+
+	"github.com/oceanbase/obkv-table-client-go/table"
 	"github.com/oceanbase/obkv-table-client-go/util"
 )
 
@@ -56,6 +59,42 @@ func NewObTableQueryAndMutateRequest() *ObTableQueryAndMutateRequest {
 		entityType:          0,
 		tableQueryAndMutate: NewObTableQueryAndMutate(),
 	}
+}
+
+func NewObTableQueryAndMutateRequestWithRowKeyAndParams(
+	tableName string,
+	tableId uint64,
+	partitionId uint64,
+	tableOperationType ObTableOperationType,
+	rowKey []*table.Column,
+	columns []*table.Column,
+	timeout time.Duration,
+	flag uint16) (*ObTableQueryAndMutateRequest, error) {
+	obTableQueryAndMutate, err := NewObTableQueryAndMutateWithParams(tableOperationType, rowKey, columns)
+	if err != nil {
+		return nil, errors.WithMessage(err, "create table query and mutate")
+	}
+
+	return &ObTableQueryAndMutateRequest{
+		ObUniVersionHeader: ObUniVersionHeader{
+			version:       1,
+			contentLength: 0,
+		},
+		ObPayloadBase: ObPayloadBase{
+			uniqueId:  0,
+			sequence:  0,
+			tenantId:  1,
+			sessionId: 0,
+			flag:      flag,
+			timeout:   timeout,
+		},
+		credential:          nil, // when execute set
+		tableName:           tableName,
+		tableId:             tableId,
+		partitionId:         partitionId,
+		entityType:          ObTableEntityTypeKV,
+		tableQueryAndMutate: obTableQueryAndMutate,
+	}, nil
 }
 
 func (r *ObTableQueryAndMutateRequest) TableName() string {

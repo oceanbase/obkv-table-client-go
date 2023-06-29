@@ -57,7 +57,7 @@ func main() {
 		panic(err)
 	}
 
-	ctx, _ := context.WithTimeout(context.Background(), time.Duration(1000)*time.Millisecond) // 1000ms
+	ctx, _ := context.WithTimeout(context.Background(), 10*time.Second) // 10s
 	res, err := batchExecutor.Execute(ctx)
 	if err != nil {
 		panic(err)

@@ -20,10 +20,10 @@ package protocol
 type ObBorderFlag int8
 
 const (
-	InclusiveStart     ObBorderFlag = 0x1
-	InclusiveEnd       ObBorderFlag = 0x2
-	BorderFlagMinValue ObBorderFlag = 0x3
-	BorderFlagMaxValue ObBorderFlag = 0x8
+	inclusiveStart     ObBorderFlag = 0x1
+	inclusiveEnd       ObBorderFlag = 0x2
+	borderFlagMinValue ObBorderFlag = 0x3
+	borderFlagMaxValue ObBorderFlag = 0x8
 )
 
 // NewObBorderFlag creates a new ObBorderFlag.
@@ -34,76 +34,76 @@ func NewObBorderFlag() ObBorderFlag {
 	return borderFlag
 }
 
-// SetInclusiveStart sets the InclusiveStart flag.
+// SetInclusiveStart sets the inclusiveStart flag.
 func (bf *ObBorderFlag) SetInclusiveStart() {
-	*bf |= InclusiveStart
+	*bf |= inclusiveStart
 }
 
-// UnSetInclusiveStart unsets the InclusiveStart flag.
+// UnSetInclusiveStart unsets the inclusiveStart flag.
 func (bf *ObBorderFlag) UnSetInclusiveStart() {
-	*bf &= ^InclusiveStart
+	*bf &= ^inclusiveStart
 }
 
-// IsInclusiveStart returns true if the InclusiveStart flag is set.
+// IsInclusiveStart returns true if the inclusiveStart flag is set.
 func (bf *ObBorderFlag) IsInclusiveStart() bool {
-	return *bf&InclusiveStart == InclusiveStart
+	return *bf&inclusiveStart == inclusiveStart
 }
 
-// SetInclusiveEnd sets the InclusiveEnd flag.
+// SetInclusiveEnd sets the inclusiveEnd flag.
 func (bf *ObBorderFlag) SetInclusiveEnd() {
-	*bf |= InclusiveEnd
+	*bf |= inclusiveEnd
 }
 
-// UnSetInclusiveEnd unsets the InclusiveEnd flag.
+// UnSetInclusiveEnd unsets the inclusiveEnd flag.
 func (bf *ObBorderFlag) UnSetInclusiveEnd() {
-	*bf &= ^InclusiveEnd
+	*bf &= ^inclusiveEnd
 }
 
-// IsInclusiveEnd returns true if the InclusiveEnd flag is set.
+// IsInclusiveEnd returns true if the inclusiveEnd flag is set.
 func (bf *ObBorderFlag) IsInclusiveEnd() bool {
-	return *bf&InclusiveEnd == InclusiveEnd
+	return *bf&inclusiveEnd == inclusiveEnd
 }
 
-// SetMinValue sets the BorderFlagMinValue flag.
+// SetMinValue sets the borderFlagMinValue flag.
 func (bf *ObBorderFlag) SetMinValue() {
-	*bf |= BorderFlagMinValue
+	*bf |= borderFlagMinValue
 }
 
-// UnSetMinValue unsets the BorderFlagMinValue flag.
+// UnSetMinValue unsets the borderFlagMinValue flag.
 func (bf *ObBorderFlag) UnSetMinValue() {
-	*bf &= ^BorderFlagMinValue
+	*bf &= ^borderFlagMinValue
 }
 
-// IsMinValue returns true if the BorderFlagMinValue flag is set.
+// IsMinValue returns true if the borderFlagMinValue flag is set.
 func (bf *ObBorderFlag) IsMinValue() bool {
-	return *bf&BorderFlagMinValue == BorderFlagMinValue
+	return *bf&borderFlagMinValue == borderFlagMinValue
 }
 
-// SetMaxValue sets the BorderFlagMaxValue flag.
+// SetMaxValue sets the borderFlagMaxValue flag.
 func (bf *ObBorderFlag) SetMaxValue() {
-	*bf |= BorderFlagMaxValue
+	*bf |= borderFlagMaxValue
 }
 
-// UnSetMaxValue unsets the BorderFlagMaxValue flag.
+// UnSetMaxValue unsets the borderFlagMaxValue flag.
 func (bf *ObBorderFlag) UnSetMaxValue() {
-	*bf &= ^BorderFlagMaxValue
+	*bf &= ^borderFlagMaxValue
 }
 
-// IsMaxValue returns true if the BorderFlagMaxValue flag is set.
+// IsMaxValue returns true if the borderFlagMaxValue flag is set.
 func (bf *ObBorderFlag) IsMaxValue() bool {
-	return *bf&BorderFlagMaxValue == BorderFlagMaxValue
+	return *bf&borderFlagMaxValue == borderFlagMaxValue
 }
 
 func (bf *ObBorderFlag) String() string {
 	switch *bf {
-	case InclusiveStart:
-		return "InclusiveStart"
-	case InclusiveEnd:
-		return "InclusiveEnd"
-	case BorderFlagMinValue:
-		return "BorderFlagMinValue"
-	case BorderFlagMaxValue:
-		return "BorderFlagMaxValue"
+	case inclusiveStart:
+		return "inclusiveStart"
+	case inclusiveEnd:
+		return "inclusiveEnd"
+	case borderFlagMinValue:
+		return "borderFlagMinValue"
+	case borderFlagMaxValue:
+		return "borderFlagMaxValue"
 	default:
 		return "unknown"
 	}

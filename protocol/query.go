@@ -20,6 +20,9 @@ package protocol
 import (
 	"bytes"
 
+	"github.com/pkg/errors"
+
+	"github.com/oceanbase/obkv-table-client-go/table"
 	"github.com/oceanbase/obkv-table-client-go/util"
 )
 
@@ -83,6 +86,33 @@ func NewObTableQueryWithParams(batchSize int32) *ObTableQuery {
 		scanRangeColumns: nil,
 		aggregations:     nil,
 	}
+}
+
+func NewObTableQueryWithKeyRanges(startKeyColumns []*table.Column, endKeyColumns []*table.Column) (*ObTableQuery, error) {
+	obNewRange, err := NewObNewRangeWithColumns(startKeyColumns, endKeyColumns)
+	if err != nil {
+		return nil, errors.WithMessage(err, "create ob new range")
+	}
+
+	return &ObTableQuery{
+		ObUniVersionHeader: ObUniVersionHeader{
+			version:       1,
+			contentLength: 0,
+		},
+		keyRanges:        []*ObNewRange{obNewRange},
+		selectColumns:    nil,
+		filterString:     "",
+		limit:            -1,
+		offset:           0,
+		scanOrder:        ObScanOrderForward,
+		indexName:        "",
+		batchSize:        -1,
+		maxResultSize:    -1,
+		isHbaseQuery:     false,
+		hTableFilter:     nil,
+		scanRangeColumns: nil,
+		aggregations:     nil,
+	}, nil
 }
 
 var hTableFilterDummyBytes = []byte{0x01, 0x00}

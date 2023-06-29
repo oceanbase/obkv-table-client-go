@@ -19,8 +19,9 @@ package protocol
 
 import (
 	"bytes"
-	"github.com/oceanbase/obkv-table-client-go/util"
 	"time"
+
+	"github.com/oceanbase/obkv-table-client-go/util"
 )
 
 type ObTableAsyncQueryResponse struct {

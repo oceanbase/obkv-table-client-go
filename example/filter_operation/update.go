@@ -23,6 +23,7 @@ import (
 	"time"
 
 	"github.com/oceanbase/obkv-table-client-go/client"
+	"github.com/oceanbase/obkv-table-client-go/client/filter"
 	"github.com/oceanbase/obkv-table-client-go/config"
 	"github.com/oceanbase/obkv-table-client-go/table"
 )
@@ -48,7 +49,7 @@ func main() {
 	ctx, _ := context.WithTimeout(context.Background(), 10*time.Second) // 10s
 	rowKey := []*table.Column{table.NewColumn("c1", int64(1))}
 	insertColumns := []*table.Column{table.NewColumn("c2", int64(2))}
-	affectRows, err := cli.Insert(
+	affectRows, err := cli.InsertOrUpdate(
 		ctx,
 		tableName,
 		rowKey,
@@ -59,14 +60,15 @@ func main() {
 	}
 	fmt.Println(affectRows)
 
-	// replace c2(2) -> c2(3)
+	// update c2(2) -> c2(3)
 	ctx, _ = context.WithTimeout(context.Background(), 10*time.Second) // 10s
-	replaceColumns := []*table.Column{table.NewColumn("c2", int64(3))}
-	affectRows, err = cli.Replace(
+	updateColumns := []*table.Column{table.NewColumn("c2", int64(3))}
+	affectRows, err = cli.Update(
 		ctx,
 		tableName,
 		rowKey,
-		replaceColumns,
+		updateColumns,
+		client.WithFilter(filter.CompareVal(filter.Equal, "c2", int64(2))), // where c2 = 2
 	)
 	if err != nil {
 		panic(err)
