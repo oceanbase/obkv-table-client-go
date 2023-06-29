@@ -20,11 +20,12 @@ package query
 import (
 	"context"
 	"fmt"
-	"github.com/oceanbase/obkv-table-client-go/client"
-	"github.com/oceanbase/obkv-table-client-go/table"
-	"github.com/stretchr/testify/assert"
 	"testing"
 
+	"github.com/stretchr/testify/assert"
+
+	"github.com/oceanbase/obkv-table-client-go/client"
+	"github.com/oceanbase/obkv-table-client-go/table"
 	"github.com/oceanbase/obkv-table-client-go/test"
 )
 
@@ -40,7 +41,7 @@ func prepareHashRecord(recordCount int) {
 	}
 }
 
-func TestQuery_Hash_Simple(t *testing.T) {
+func TestQueryHashSimple(t *testing.T) {
 	tableName := queryHashTableName
 	defer test.DeleteTable(tableName)
 
@@ -54,7 +55,7 @@ func TestQuery_Hash_Simple(t *testing.T) {
 		context.TODO(),
 		tableName,
 		keyRanges,
-		client.SetSelectColumns([]string{"c1", "c2", "c3"}),
+		client.WithSelectColumns([]string{"c1", "c2", "c3"}),
 	)
 	assert.Equal(t, nil, err)
 	for i := 0; i < recordCount; i++ {
@@ -71,7 +72,7 @@ func TestQuery_Hash_Simple(t *testing.T) {
 		context.TODO(),
 		tableName,
 		keyRanges,
-		client.SetSelectColumns([]string{"c1", "c2", "c3"}),
+		client.WithSelectColumns([]string{"c1", "c2", "c3"}),
 	)
 	assert.Equal(t, nil, err)
 	for i := 0; i < 5; i++ {
@@ -82,7 +83,7 @@ func TestQuery_Hash_Simple(t *testing.T) {
 	}
 }
 
-func TestQuery_Hash_Batchsize(t *testing.T) {
+func TestQueryHashBatchSize(t *testing.T) {
 	tableName := queryHashTableName
 	defer test.DeleteTable(tableName)
 
@@ -97,8 +98,8 @@ func TestQuery_Hash_Batchsize(t *testing.T) {
 		context.TODO(),
 		tableName,
 		keyRanges,
-		client.SetSelectColumns([]string{"c1", "c2", "c3"}),
-		client.SetBatchSize(batchSize),
+		client.WithSelectColumns([]string{"c1", "c2", "c3"}),
+		client.WithBatchSize(batchSize),
 	)
 	assert.Equal(t, nil, err)
 	for i := 0; i < recordCount; i++ {
@@ -109,7 +110,7 @@ func TestQuery_Hash_Batchsize(t *testing.T) {
 	}
 }
 
-func TestQuery_Hash_Index(t *testing.T) {
+func TestQueryHashIndex(t *testing.T) {
 	tableName := queryHashTableName
 	defer test.DeleteTable(tableName)
 
@@ -124,9 +125,9 @@ func TestQuery_Hash_Index(t *testing.T) {
 		context.TODO(),
 		tableName,
 		keyRanges,
-		client.SetSelectColumns([]string{"c1", "c2", "c3"}),
-		client.SetBatchSize(batchSize),
-		client.SetIndexName("i1"),
+		client.WithSelectColumns([]string{"c1", "c2", "c3"}),
+		client.WithBatchSize(batchSize),
+		client.WithIndexName("i1"),
 	)
 	assert.Equal(t, nil, err)
 	for i := 0; i < recordCount; i++ {
@@ -143,9 +144,9 @@ func TestQuery_Hash_Index(t *testing.T) {
 		context.TODO(),
 		tableName,
 		keyRanges,
-		client.SetSelectColumns([]string{"c1", "c2", "c3"}),
-		client.SetBatchSize(batchSize),
-		client.SetIndexName("i1"),
+		client.WithSelectColumns([]string{"c1", "c2", "c3"}),
+		client.WithBatchSize(batchSize),
+		client.WithIndexName("i1"),
 	)
 	assert.Equal(t, nil, err)
 	res, err := resSet.Next()

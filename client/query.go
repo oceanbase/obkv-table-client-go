@@ -19,10 +19,12 @@ package client
 
 import (
 	"context"
+
+	"github.com/pkg/errors"
+
 	"github.com/oceanbase/obkv-table-client-go/protocol"
 	"github.com/oceanbase/obkv-table-client-go/table"
 	"github.com/oceanbase/obkv-table-client-go/util"
-	"github.com/pkg/errors"
 )
 
 type ObQueryExecutor struct {

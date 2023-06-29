@@ -20,11 +20,12 @@ package query
 import (
 	"context"
 	"fmt"
-	"github.com/oceanbase/obkv-table-client-go/client"
-	"github.com/oceanbase/obkv-table-client-go/table"
-	"github.com/stretchr/testify/assert"
 	"testing"
 
+	"github.com/stretchr/testify/assert"
+
+	"github.com/oceanbase/obkv-table-client-go/client"
+	"github.com/oceanbase/obkv-table-client-go/table"
 	"github.com/oceanbase/obkv-table-client-go/test"
 )
 
@@ -40,7 +41,7 @@ func prepareZeroRecord(recordCount int) {
 	}
 }
 
-func TestQuery_Zero_Simple(t *testing.T) {
+func TestQueryZeroSimple(t *testing.T) {
 	tableName := queryZeroTableName
 	defer test.DeleteTable(tableName)
 
@@ -54,7 +55,7 @@ func TestQuery_Zero_Simple(t *testing.T) {
 		context.TODO(),
 		tableName,
 		keyRanges,
-		client.SetSelectColumns([]string{"c1", "c2", "c3"}),
+		client.WithSelectColumns([]string{"c1", "c2", "c3"}),
 	)
 	assert.Equal(t, nil, err)
 	for i := 0; i < recordCount; i++ {
@@ -71,7 +72,7 @@ func TestQuery_Zero_Simple(t *testing.T) {
 		context.TODO(),
 		tableName,
 		keyRanges,
-		client.SetSelectColumns([]string{"c1", "c2", "c3"}),
+		client.WithSelectColumns([]string{"c1", "c2", "c3"}),
 	)
 	assert.Equal(t, nil, err)
 	for i := 0; i < 5; i++ {
@@ -82,7 +83,7 @@ func TestQuery_Zero_Simple(t *testing.T) {
 	}
 }
 
-func TestQuery_Zero_Batchsize(t *testing.T) {
+func TestQueryZeroBatchSize(t *testing.T) {
 	tableName := queryZeroTableName
 	defer test.DeleteTable(tableName)
 
@@ -97,8 +98,8 @@ func TestQuery_Zero_Batchsize(t *testing.T) {
 		context.TODO(),
 		tableName,
 		keyRanges,
-		client.SetSelectColumns([]string{"c1", "c2", "c3"}),
-		client.SetBatchSize(batchSize),
+		client.WithSelectColumns([]string{"c1", "c2", "c3"}),
+		client.WithBatchSize(batchSize),
 	)
 	assert.Equal(t, nil, err)
 	for i := 0; i < recordCount; i++ {
@@ -109,7 +110,7 @@ func TestQuery_Zero_Batchsize(t *testing.T) {
 	}
 }
 
-func TestQuery_Zero_Index(t *testing.T) {
+func TestQueryZeroIndex(t *testing.T) {
 	tableName := queryZeroTableName
 	defer test.DeleteTable(tableName)
 
@@ -124,9 +125,9 @@ func TestQuery_Zero_Index(t *testing.T) {
 		context.TODO(),
 		tableName,
 		keyRanges,
-		client.SetSelectColumns([]string{"c1", "c2", "c3"}),
-		client.SetBatchSize(batchSize),
-		client.SetIndexName("i1"),
+		client.WithSelectColumns([]string{"c1", "c2", "c3"}),
+		client.WithBatchSize(batchSize),
+		client.WithIndexName("i1"),
 	)
 	assert.Equal(t, nil, err)
 	for i := 0; i < recordCount; i++ {
@@ -143,9 +144,9 @@ func TestQuery_Zero_Index(t *testing.T) {
 		context.TODO(),
 		tableName,
 		keyRanges,
-		client.SetSelectColumns([]string{"c1", "c2", "c3"}),
-		client.SetBatchSize(batchSize),
-		client.SetIndexName("i1"),
+		client.WithSelectColumns([]string{"c1", "c2", "c3"}),
+		client.WithBatchSize(batchSize),
+		client.WithIndexName("i1"),
 	)
 	assert.Equal(t, nil, err)
 	res, err := resSet.Next()
@@ -153,7 +154,7 @@ func TestQuery_Zero_Index(t *testing.T) {
 	assert.Equal(t, nil, res)
 }
 
-func TestQuery_Zero_Mixture(t *testing.T) {
+func TestQueryZeroMixture(t *testing.T) {
 	tableName := queryZeroTableName
 	defer test.DeleteTable(tableName)
 
@@ -171,11 +172,11 @@ func TestQuery_Zero_Mixture(t *testing.T) {
 		context.TODO(),
 		tableName,
 		keyRanges,
-		client.SetSelectColumns([]string{"c1", "c2", "c3"}),
-		client.SetBatchSize(batchSize),
-		client.SetLimit(limit),
-		client.SetScanOrder(scanOrder),
-		client.SetOffset(offset),
+		client.WithSelectColumns([]string{"c1", "c2", "c3"}),
+		client.WithBatchSize(batchSize),
+		client.WithLimit(limit),
+		client.WithScanOrder(scanOrder),
+		client.WithOffset(offset),
 	)
 	assert.Equal(t, nil, err)
 	for i := 0; i < limit; i++ {

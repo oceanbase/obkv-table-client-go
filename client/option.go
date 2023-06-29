@@ -105,71 +105,71 @@ func (f ObkvQueryOptionFunc) apply(opts *ObkvQueryOptions) {
 	f(opts)
 }
 
-// SetQueryFilter set query filter
-func SetQueryFilter(queryFilter interface{}) ObkvQueryOption {
+// WithQueryFilter set query filter
+func WithQueryFilter(queryFilter interface{}) ObkvQueryOption {
 	return ObkvQueryOptionFunc(func(opts *ObkvQueryOptions) {
 		opts.queryFilter = queryFilter
 	})
 }
 
-// SetHTableFilter set htable filter
-func SetHTableFilter(hTableFilter interface{}) ObkvQueryOption {
+// WithHTableFilter set htable filter
+func WithHTableFilter(hTableFilter interface{}) ObkvQueryOption {
 	return ObkvQueryOptionFunc(func(opts *ObkvQueryOptions) {
 		opts.hTableFilter = hTableFilter
 	})
 }
 
-// SetSelectColumns set select columns
-func SetSelectColumns(selectColumns []string) ObkvQueryOption {
+// WithSelectColumns set select columns
+func WithSelectColumns(selectColumns []string) ObkvQueryOption {
 	return ObkvQueryOptionFunc(func(opts *ObkvQueryOptions) {
 		opts.selectColumns = selectColumns
 	})
 }
 
-// SetIndexName set index name
-func SetIndexName(indexName string) ObkvQueryOption {
+// WithIndexName set index name
+func WithIndexName(indexName string) ObkvQueryOption {
 	return ObkvQueryOptionFunc(func(opts *ObkvQueryOptions) {
 		opts.indexName = indexName
 	})
 }
 
-// SetBatchSize set batch size
-func SetBatchSize(batchSize int) ObkvQueryOption {
+// WithBatchSize set batch size
+func WithBatchSize(batchSize int) ObkvQueryOption {
 	return ObkvQueryOptionFunc(func(opts *ObkvQueryOptions) {
 		opts.batchSize = int32(batchSize)
 	})
 }
 
-// SetMaxResultSize set max result size
-func SetMaxResultSize(maxResultSize int) ObkvQueryOption {
+// WithMaxResultSize set max result size
+func WithMaxResultSize(maxResultSize int) ObkvQueryOption {
 	return ObkvQueryOptionFunc(func(opts *ObkvQueryOptions) {
 		opts.maxResultSize = int64(maxResultSize)
 	})
 }
 
-// SetLimit set limit
-func SetLimit(limit int) ObkvQueryOption {
+// WithLimit set limit
+func WithLimit(limit int) ObkvQueryOption {
 	return ObkvQueryOptionFunc(func(opts *ObkvQueryOptions) {
 		opts.limit = int32(limit)
 	})
 }
 
-// SetOffset set offset
-func SetOffset(offset int) ObkvQueryOption {
+// WithOffset set offset
+func WithOffset(offset int) ObkvQueryOption {
 	return ObkvQueryOptionFunc(func(opts *ObkvQueryOptions) {
 		opts.offset = int32(offset)
 	})
 }
 
-// SetScanOrder set scan order
-func SetScanOrder(scanOrder table.ScanOrder) ObkvQueryOption {
+// WithScanOrder set scan order
+func WithScanOrder(scanOrder table.ScanOrder) ObkvQueryOption {
 	return ObkvQueryOptionFunc(func(opts *ObkvQueryOptions) {
 		opts.scanOrder = scanOrder
 	})
 }
 
-// SetIsHbaseQuery set is hbase query
-func SetIsHbaseQuery(isHbaseQuery bool) ObkvQueryOption {
+// WithIsHbaseQuery set is hbase query
+func WithIsHbaseQuery(isHbaseQuery bool) ObkvQueryOption {
 	return ObkvQueryOptionFunc(func(opts *ObkvQueryOptions) {
 		opts.isHbaseQuery = isHbaseQuery
 	})
