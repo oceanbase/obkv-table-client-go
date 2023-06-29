@@ -19,9 +19,11 @@ package client
 
 import (
 	"context"
-	"github.com/oceanbase/obkv-table-client-go/protocol"
-	"github.com/pkg/errors"
 	"sync"
+
+	"github.com/pkg/errors"
+
+	"github.com/oceanbase/obkv-table-client-go/protocol"
 )
 
 type QueryResultIterator interface {

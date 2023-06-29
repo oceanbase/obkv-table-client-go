@@ -18,8 +18,9 @@
 package client
 
 import (
-	"github.com/oceanbase/obkv-table-client-go/protocol"
 	"strings"
+
+	"github.com/oceanbase/obkv-table-client-go/protocol"
 )
 
 type QueryResult interface {

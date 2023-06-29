@@ -26,7 +26,6 @@ import (
 
 	"github.com/oceanbase/obkv-table-client-go/client"
 	"github.com/oceanbase/obkv-table-client-go/table"
-
 	"github.com/oceanbase/obkv-table-client-go/test"
 )
 
