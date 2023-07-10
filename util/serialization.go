@@ -36,42 +36,44 @@ const (
 	end byte = 0
 )
 
-var obMax = []uint64{
-	obMaxV1b,
-	obMaxV2b,
-	obMaxV3b,
-	obMaxV4b,
-	obMaxV5b,
-	obMaxV6b,
-	obMaxV7b,
-	obMaxV8b,
-	obMaxV9b,
-}
-
 func EncodedLengthByVi32(value int32) (encodedLength int) {
-	if value < 0 {
-		return 5
-	}
 	var unsignedValue = uint64(value)
-	for _, max := range obMax {
-		encodedLength++
-		if unsignedValue <= max {
-			break
-		}
+	if unsignedValue <= obMaxV1b {
+		encodedLength = 1
+	} else if unsignedValue <= obMaxV2b {
+		encodedLength = 2
+	} else if unsignedValue <= obMaxV3b {
+		encodedLength = 3
+	} else if unsignedValue <= obMaxV4b {
+		encodedLength = 4
+	} else {
+		encodedLength = 5
 	}
 	return encodedLength
 }
 
 func EncodedLengthByVi64(value int64) (encodedLength int) {
-	if value < 0 {
-		return 10
-	}
 	var unsignedValue = uint64(value)
-	for _, max := range obMax {
-		encodedLength++
-		if unsignedValue <= max {
-			break
-		}
+	if unsignedValue <= obMaxV1b {
+		encodedLength = 1
+	} else if unsignedValue <= obMaxV2b {
+		encodedLength = 2
+	} else if unsignedValue <= obMaxV3b {
+		encodedLength = 3
+	} else if unsignedValue <= obMaxV4b {
+		encodedLength = 4
+	} else if unsignedValue <= obMaxV5b {
+		encodedLength = 5
+	} else if unsignedValue <= obMaxV6b {
+		encodedLength = 6
+	} else if unsignedValue <= obMaxV7b {
+		encodedLength = 7
+	} else if unsignedValue <= obMaxV8b {
+		encodedLength = 8
+	} else if unsignedValue <= obMaxV9b {
+		encodedLength = 9
+	} else {
+		encodedLength = 10
 	}
 	return encodedLength
 }
@@ -204,11 +206,10 @@ func DecodeVString(buffer *bytes.Buffer) string {
 	// decode string header
 	strLen := DecodeVi32(buffer)
 	// copy str body
-	strBodyBuf := make([]byte, strLen)
-	copy(strBodyBuf, buffer.Next(int(strLen)))
+	str := string(buffer.Next(int(strLen)))
 	// skip the end byte '0'
 	SkipBytes(buffer, 1)
-	return BytesToString(strBodyBuf)
+	return str
 }
 
 func DecodeBytesString(buffer *bytes.Buffer) []byte {

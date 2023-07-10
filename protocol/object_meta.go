@@ -109,45 +109,45 @@ type ObObjType interface {
 
 func DefaultObjMeta(value interface{}) (ObObjectMeta, error) {
 	if value == nil {
-		return ObObjTypes[ObObjTypeNullTypeValue].DefaultObjMeta(), nil
+		return ObObjTypeNull.DefaultObjMeta(), nil
 	}
 	switch value.(type) {
 	case bool:
-		return ObObjTypes[ObObjTypeTinyIntTypeValue].DefaultObjMeta(), nil
+		return ObObjTypeTinyInt.DefaultObjMeta(), nil
 	case int8:
-		return ObObjTypes[ObObjTypeTinyIntTypeValue].DefaultObjMeta(), nil
+		return ObObjTypeTinyInt.DefaultObjMeta(), nil
 	case uint8:
-		return ObObjTypes[ObObjTypeUTinyIntTypeValue].DefaultObjMeta(), nil
+		return ObObjTypeUTinyInt.DefaultObjMeta(), nil
 	case int16:
-		return ObObjTypes[ObObjTypeSmallIntTypeValue].DefaultObjMeta(), nil
+		return ObObjTypeSmallInt.DefaultObjMeta(), nil
 	case uint16:
-		return ObObjTypes[ObObjTypeUSmallIntTypeValue].DefaultObjMeta(), nil
+		return ObObjTypeUSmallInt.DefaultObjMeta(), nil
 	case int32:
-		return ObObjTypes[ObObjTypeInt32TypeValue].DefaultObjMeta(), nil
+		return ObObjTypeInt32.DefaultObjMeta(), nil
 	case uint32:
-		return ObObjTypes[ObObjTypeUInt32TypeValue].DefaultObjMeta(), nil
+		return ObObjTypeUInt32.DefaultObjMeta(), nil
 	case int64:
-		return ObObjTypes[ObObjTypeInt64TypeValue].DefaultObjMeta(), nil
+		return ObObjTypeInt64.DefaultObjMeta(), nil
 	case uint64:
-		return ObObjTypes[ObObjTypeUInt64TypeValue].DefaultObjMeta(), nil
+		return ObObjTypeUInt64.DefaultObjMeta(), nil
 	case float32:
-		return ObObjTypes[ObObjTypeFloatTypeValue].DefaultObjMeta(), nil
+		return ObObjTypeFloat.DefaultObjMeta(), nil
 	case float64:
-		return ObObjTypes[ObObjTypeDoubleTypeValue].DefaultObjMeta(), nil
+		return ObObjTypeDouble.DefaultObjMeta(), nil
 	case string:
-		return ObObjTypes[ObObjTypeVarcharTypeValue].DefaultObjMeta(), nil
+		return ObObjTypeVarchar.DefaultObjMeta(), nil
 	case []byte:
-		return ObObjTypes[ObObjTypeVarcharTypeValue].DefaultObjMeta(), nil
+		return ObObjTypeVarchar.DefaultObjMeta(), nil
 	case table.Year:
-		return ObObjTypes[ObObjTypeYearTypeValue].DefaultObjMeta(), nil
+		return ObObjTypeYear.DefaultObjMeta(), nil
 	case table.Date:
-		return ObObjTypes[ObObjTypeDateTypeValue].DefaultObjMeta(), nil
+		return ObObjTypeDate.DefaultObjMeta(), nil
 	case table.DateTime:
-		return ObObjTypes[ObObjTypeDateTimeTypeValue].DefaultObjMeta(), nil
+		return ObObjTypeDateTime.DefaultObjMeta(), nil
 	case table.TimeStamp:
-		return ObObjTypes[ObObjTypeTimestampTypeValue].DefaultObjMeta(), nil
+		return ObObjTypeTimestamp.DefaultObjMeta(), nil
 	case table.Extremum:
-		return ObObjTypes[ObObjTypeExtendTypeValue].DefaultObjMeta(), nil
+		return ObObjTypeExtend.DefaultObjMeta(), nil
 	default:
 		return ObObjectMeta{}, errors.Errorf("not match objmeta, value: %v", value)
 	}
@@ -226,39 +226,74 @@ func NewObjType(value ObObjTypeValue) (ObObjType, error) {
 
 type ObObjTypeValue uint8
 
+var (
+	ObObjTypeNull       = ObNullType(ObObjTypeNullTypeValue)
+	ObObjTypeTinyInt    = ObTinyIntType(ObObjTypeTinyIntTypeValue)
+	ObObjTypeSmallInt   = ObSmallIntType(ObObjTypeSmallIntTypeValue)
+	ObObjTypeMediumInt  = ObMediumIntType(ObObjTypeMediumIntTypeValue)
+	ObObjTypeInt32      = ObInt32Type(ObObjTypeInt32TypeValue)
+	ObObjTypeInt64      = ObInt64Type(ObObjTypeInt64TypeValue)
+	ObObjTypeUTinyInt   = ObUTinyIntType(ObObjTypeUTinyIntTypeValue)
+	ObObjTypeUSmallInt  = ObUSmallIntType(ObObjTypeUSmallIntTypeValue)
+	ObObjTypeUMediumInt = ObUMediumIntType(ObObjTypeUMediumIntTypeValue)
+	ObObjTypeUInt32     = ObUInt32Type(ObObjTypeUInt32TypeValue)
+	ObObjTypeUInt64     = ObUInt64Type(ObObjTypeUInt64TypeValue)
+	ObObjTypeFloat      = ObFloatType(ObObjTypeFloatTypeValue)
+	ObObjTypeDouble     = ObDoubleType(ObObjTypeDoubleTypeValue)
+	ObObjTypeUFloat     = ObUFloatType(ObObjTypeUFloatTypeValue)
+	ObObjTypeUDouble    = ObUDoubleType(ObObjTypeUDoubleTypeValue)
+	ObObjTypeNumber     = ObNumberType(ObObjTypeNumberTypeValue)
+	ObObjTypeUNumber    = ObUNumberType(ObObjTypeUNumberTypeValue)
+	ObObjTypeDateTime   = ObDateTimeType(ObObjTypeDateTimeTypeValue)
+	ObObjTypeTimestamp  = ObTimestampType(ObObjTypeTimestampTypeValue)
+	ObObjTypeDate       = ObDateType(ObObjTypeDateTypeValue)
+	ObObjTypeTime       = ObTimeType(ObObjTypeTimeTypeValue)
+	ObObjTypeYear       = ObYearType(ObObjTypeYearTypeValue)
+	ObObjTypeVarchar    = ObVarcharType(ObObjTypeVarcharTypeValue)
+	ObObjTypeChar       = ObCharType(ObObjTypeCharTypeValue)
+	ObObjTypeHexString  = ObHexStringType(ObObjTypeHexStringTypeValue)
+	ObObjTypeExtend     = ObExtendType(ObObjTypeExtendTypeValue)
+	ObObjTypeUnknown    = ObUnknownType(ObObjTypeUnknownTypeValue)
+	ObObjTypeTinyText   = ObTinyTextType(ObObjTypeTinyTextTypeValue)
+	ObObjTypeText       = ObTextType(ObObjTypeTextTypeValue)
+	ObObjTypeMediumText = ObMediumTextType(ObObjTypeMediumTextTypeValue)
+	ObObjTypeLongText   = ObLongTextType(ObObjTypeLongTextTypeValue)
+	ObObjTypeBit        = ObBitType(ObObjTypeBitTypeValue)
+)
+
 var ObObjTypes = []ObObjType{
-	ObObjTypeNullTypeValue:       ObNullType(ObObjTypeNullTypeValue),
-	ObObjTypeTinyIntTypeValue:    ObTinyIntType(ObObjTypeTinyIntTypeValue),
-	ObObjTypeSmallIntTypeValue:   ObSmallIntType(ObObjTypeSmallIntTypeValue),
-	ObObjTypeMediumIntTypeValue:  ObMediumIntType(ObObjTypeMediumIntTypeValue),
-	ObObjTypeInt32TypeValue:      ObInt32Type(ObObjTypeInt32TypeValue),
-	ObObjTypeInt64TypeValue:      ObInt64Type(ObObjTypeInt64TypeValue),
-	ObObjTypeUTinyIntTypeValue:   ObUTinyIntType(ObObjTypeUTinyIntTypeValue),
-	ObObjTypeUSmallIntTypeValue:  ObUSmallIntType(ObObjTypeUSmallIntTypeValue),
-	ObObjTypeUMediumIntTypeValue: ObUMediumIntType(ObObjTypeUMediumIntTypeValue),
-	ObObjTypeUInt32TypeValue:     ObUInt32Type(ObObjTypeUInt32TypeValue),
-	ObObjTypeUInt64TypeValue:     ObUInt64Type(ObObjTypeUInt64TypeValue),
-	ObObjTypeFloatTypeValue:      ObFloatType(ObObjTypeFloatTypeValue),
-	ObObjTypeDoubleTypeValue:     ObDoubleType(ObObjTypeDoubleTypeValue),
-	ObObjTypeUFloatTypeValue:     ObUFloatType(ObObjTypeUFloatTypeValue),
-	ObObjTypeUDoubleTypeValue:    ObUDoubleType(ObObjTypeUDoubleTypeValue),
-	ObObjTypeNumberTypeValue:     ObNumberType(ObObjTypeNumberTypeValue),
-	ObObjTypeUNumberTypeValue:    ObUNumberType(ObObjTypeUNumberTypeValue),
-	ObObjTypeDateTimeTypeValue:   ObDateTimeType(ObObjTypeDateTimeTypeValue),
-	ObObjTypeTimestampTypeValue:  ObTimestampType(ObObjTypeTimestampTypeValue),
-	ObObjTypeDateTypeValue:       ObDateType(ObObjTypeDateTypeValue),
-	ObObjTypeTimeTypeValue:       ObTimeType(ObObjTypeTimeTypeValue),
-	ObObjTypeYearTypeValue:       ObYearType(ObObjTypeYearTypeValue),
-	ObObjTypeVarcharTypeValue:    ObVarcharType(ObObjTypeVarcharTypeValue),
-	ObObjTypeCharTypeValue:       ObCharType(ObObjTypeCharTypeValue),
-	ObObjTypeHexStringTypeValue:  ObHexStringType(ObObjTypeHexStringTypeValue),
-	ObObjTypeExtendTypeValue:     ObExtendType(ObObjTypeExtendTypeValue),
-	ObObjTypeUnknownTypeValue:    ObUnknownType(ObObjTypeUnknownTypeValue),
-	ObObjTypeTinyTextTypeValue:   ObTinyTextType(ObObjTypeTinyTextTypeValue),
-	ObObjTypeTextTypeValue:       ObTextType(ObObjTypeTextTypeValue),
-	ObObjTypeMediumTextTypeValue: ObMediumTextType(ObObjTypeMediumTextTypeValue),
-	ObObjTypeLongTextTypeValue:   ObLongTextType(ObObjTypeLongTextTypeValue),
-	ObObjTypeBitTypeValue:        ObBitType(ObObjTypeBitTypeValue),
+	ObObjTypeNullTypeValue:       ObObjTypeNull,
+	ObObjTypeTinyIntTypeValue:    ObObjTypeTinyInt,
+	ObObjTypeSmallIntTypeValue:   ObObjTypeSmallInt,
+	ObObjTypeMediumIntTypeValue:  ObObjTypeMediumInt,
+	ObObjTypeInt32TypeValue:      ObObjTypeInt32,
+	ObObjTypeInt64TypeValue:      ObObjTypeInt64,
+	ObObjTypeUTinyIntTypeValue:   ObObjTypeUTinyInt,
+	ObObjTypeUSmallIntTypeValue:  ObObjTypeUSmallInt,
+	ObObjTypeUMediumIntTypeValue: ObObjTypeUMediumInt,
+	ObObjTypeUInt32TypeValue:     ObObjTypeUInt32,
+	ObObjTypeUInt64TypeValue:     ObObjTypeUInt64,
+	ObObjTypeFloatTypeValue:      ObObjTypeFloat,
+	ObObjTypeDoubleTypeValue:     ObObjTypeDouble,
+	ObObjTypeUFloatTypeValue:     ObObjTypeUFloat,
+	ObObjTypeUDoubleTypeValue:    ObObjTypeUDouble,
+	ObObjTypeNumberTypeValue:     ObObjTypeNumber,
+	ObObjTypeUNumberTypeValue:    ObObjTypeUNumber,
+	ObObjTypeDateTimeTypeValue:   ObObjTypeDateTime,
+	ObObjTypeTimestampTypeValue:  ObObjTypeTimestamp,
+	ObObjTypeDateTypeValue:       ObObjTypeDate,
+	ObObjTypeTimeTypeValue:       ObObjTypeTime,
+	ObObjTypeYearTypeValue:       ObObjTypeYear,
+	ObObjTypeVarcharTypeValue:    ObObjTypeVarchar,
+	ObObjTypeCharTypeValue:       ObObjTypeChar,
+	ObObjTypeHexStringTypeValue:  ObObjTypeHexString,
+	ObObjTypeExtendTypeValue:     ObObjTypeExtend,
+	ObObjTypeUnknownTypeValue:    ObObjTypeUnknown,
+	ObObjTypeTinyTextTypeValue:   ObObjTypeTinyText,
+	ObObjTypeTextTypeValue:       ObObjTypeText,
+	ObObjTypeMediumTextTypeValue: ObObjTypeMediumText,
+	ObObjTypeLongTextTypeValue:   ObObjTypeLongText,
+	ObObjTypeBitTypeValue:        ObObjTypeBit,
 }
 
 func (v ObObjTypeValue) ValueOf() ObObjType {
