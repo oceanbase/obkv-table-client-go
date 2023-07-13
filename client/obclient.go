@@ -384,8 +384,8 @@ func (c *obClient) Get(
 
 func (c *obClient) Query(ctx context.Context, tableName string, rangePairs []*table.RangePair, opts ...ObkvQueryOption) (QueryResultIterator, error) {
 	queryOpts := c.getObkvQueryOptions(opts...)
-	queryExecutor := NewObQueryExecutorWithParams(tableName, c)
-	queryExecutor.AddKeyRanges(rangePairs)
+	queryExecutor := newObQueryExecutorWithParams(tableName, c)
+	queryExecutor.addKeyRanges(rangePairs)
 	queryExecutor.setQueryOptions(queryOpts)
 	res, err := queryExecutor.init(ctx)
 	if err != nil {
