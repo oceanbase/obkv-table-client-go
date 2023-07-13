@@ -27,7 +27,7 @@ import (
 	"github.com/oceanbase/obkv-table-client-go/util"
 )
 
-type ObQueryExecutor struct {
+type obQueryExecutor struct {
 	tableName  string
 	cli        *obClient
 	keyRanges  []*table.RangePair
@@ -35,9 +35,9 @@ type ObQueryExecutor struct {
 	entityType protocol.ObTableEntityType
 }
 
-// NewObQueryExecutorWithParams creates a new ObQueryExecutor.
-func NewObQueryExecutorWithParams(tableName string, cli *obClient) *ObQueryExecutor {
-	return &ObQueryExecutor{
+// newObQueryExecutorWithParams creates a new obQueryExecutor.
+func newObQueryExecutorWithParams(tableName string, cli *obClient) *obQueryExecutor {
+	return &obQueryExecutor{
 		tableName:  tableName,
 		cli:        cli,
 		keyRanges:  nil,
@@ -46,31 +46,31 @@ func NewObQueryExecutorWithParams(tableName string, cli *obClient) *ObQueryExecu
 	}
 }
 
-// setTableName returns the table name.
-func (q *ObQueryExecutor) setTableName() string {
-	return q.tableName
+// setTableName sets the table name.
+func (q *obQueryExecutor) setTableName(tableName string) {
+	q.tableName = tableName
 }
 
-// setClient returns the client.
-func (q *ObQueryExecutor) setClient() *obClient {
-	return q.cli
+// setClient sets the client.
+func (q *obQueryExecutor) setClient(cli *obClient) {
+	q.cli = cli
 }
 
-// AddKeyRanges adds key ranges.
-func (q *ObQueryExecutor) AddKeyRanges(keyRanges []*table.RangePair) {
+// addKeyRanges adds key ranges.
+func (q *obQueryExecutor) addKeyRanges(keyRanges []*table.RangePair) {
 	if q.keyRanges == nil {
 		q.keyRanges = make([]*table.RangePair, 0, len(keyRanges))
 	}
 	q.keyRanges = append(q.keyRanges, keyRanges...)
 }
 
-// SetEntityType sets the entity type.
-func (q *ObQueryExecutor) SetEntityType(entityType protocol.ObTableEntityType) {
+// setEntityType sets the entity type.
+func (q *obQueryExecutor) setEntityType(entityType protocol.ObTableEntityType) {
 	q.entityType = entityType
 }
 
 // setQueryOptions sets the query option.
-func (q *ObQueryExecutor) setQueryOptions(queryOptions *ObkvQueryOptions) {
+func (q *obQueryExecutor) setQueryOptions(queryOptions *ObkvQueryOptions) {
 	// TODO: modify queryFilter and set it to tableQuery.
 	q.tableQuery.SetFilterString("")
 	// TODO: modify hTableFilter and set it to tableQuery.
@@ -89,7 +89,7 @@ func (q *ObQueryExecutor) setQueryOptions(queryOptions *ObkvQueryOptions) {
 }
 
 // getTableParams returns the table params.
-func (q *ObQueryExecutor) getTableParams(
+func (q *obQueryExecutor) getTableParams(
 	ctx context.Context,
 	tableName string,
 	keyRanges []*table.RangePair,
@@ -148,7 +148,7 @@ func removeDuplicates(nums []uint64) []uint64 {
 }
 
 // checkQueryParams checks the query params.
-func (q *ObQueryExecutor) checkQueryParams() error {
+func (q *obQueryExecutor) checkQueryParams() error {
 	if q.tableName == "" {
 		return errors.New("table name is empty")
 	}
@@ -165,7 +165,7 @@ func (q *ObQueryExecutor) checkQueryParams() error {
 }
 
 // transferQueryRange sets the query range into tableQuery.
-func (q *ObQueryExecutor) transferQueryRange() error {
+func (q *obQueryExecutor) transferQueryRange() error {
 	queryRanges := make([]*protocol.ObNewRange, 0, len(q.keyRanges))
 	for _, rangePair := range q.keyRanges {
 		if len(rangePair.Start()) != len(rangePair.End()) {
@@ -202,7 +202,7 @@ func (q *ObQueryExecutor) transferQueryRange() error {
 }
 
 // init calculate the expectant and construct the query result.
-func (q *ObQueryExecutor) init(ctx context.Context) (*ObQueryResultIterator, error) {
+func (q *obQueryExecutor) init(ctx context.Context) (*ObQueryResultIterator, error) {
 	err := q.checkQueryParams()
 	if err != nil {
 		return nil, errors.WithMessage(err, "check query params")
