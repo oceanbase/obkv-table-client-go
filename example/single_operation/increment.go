@@ -20,6 +20,7 @@ package main
 import (
 	"context"
 	"fmt"
+	"github.com/oceanbase/obkv-table-client-go/client/option"
 	"time"
 
 	"github.com/oceanbase/obkv-table-client-go/client"
@@ -67,8 +68,8 @@ func main() {
 		tableName,
 		rowKey,
 		incrementColumns,
-		client.WithReturnRowKey(true),         // return rowKey if you need
-		client.WithReturnAffectedEntity(true), // return result entity if you need
+		option.WithReturnRowKey(true),         // return rowKey if you need
+		option.WithReturnAffectedEntity(true), // return result entity if you need
 	)
 	if err != nil {
 		panic(err)

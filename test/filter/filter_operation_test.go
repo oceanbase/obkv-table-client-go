@@ -19,11 +19,11 @@ package filter
 
 import (
 	"context"
+	"github.com/oceanbase/obkv-table-client-go/client/option"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
 
-	"github.com/oceanbase/obkv-table-client-go/client"
 	"github.com/oceanbase/obkv-table-client-go/client/filter"
 	"github.com/oceanbase/obkv-table-client-go/table"
 	"github.com/oceanbase/obkv-table-client-go/test"
@@ -56,7 +56,7 @@ func TestAppend(t *testing.T) {
 		tableName,
 		rowKey,
 		appendColumns,
-		client.WithFilter(filter.CompareVal(filter.Equal, "c3", "hello")), // where c2 = hello
+		option.WithFilter(filter.CompareVal(filter.Equal, "c3", "hello")), // where c2 = hello
 	)
 	if err != nil {
 		panic(err)
@@ -87,7 +87,7 @@ func TestIncrement(t *testing.T) {
 		tableName,
 		rowKey,
 		appendColumns,
-		client.WithFilter(filter.CompareVal(filter.Equal, "c3", "hello")), // where c2 = hello
+		option.WithFilter(filter.CompareVal(filter.Equal, "c3", "hello")), // where c2 = hello
 	)
 	if err != nil {
 		panic(err)
@@ -118,7 +118,7 @@ func TestUpdate(t *testing.T) {
 		tableName,
 		rowKey,
 		appendColumns,
-		client.WithFilter(filter.CompareVal(filter.Equal, "c3", "hello")), // where c2 = hello
+		option.WithFilter(filter.CompareVal(filter.Equal, "c3", "hello")), // where c2 = hello
 	)
 	if err != nil {
 		panic(err)
@@ -147,7 +147,7 @@ func TestDelete(t *testing.T) {
 		context.TODO(),
 		tableName,
 		rowKey,
-		client.WithFilter(filter.CompareVal(filter.Equal, "c3", "hello")), // where c2 = hello
+		option.WithFilter(filter.CompareVal(filter.Equal, "c3", "hello")), // where c2 = hello
 	)
 	if err != nil {
 		panic(err)
@@ -178,7 +178,7 @@ func TestFilter(t *testing.T) {
 		tableName,
 		rowKey,
 		updateColumns,
-		client.WithFilter(filter.CompareVal(filter.LessThan, "c2", int64(2))),
+		option.WithFilter(filter.CompareVal(filter.LessThan, "c2", int64(2))),
 	)
 	if err != nil {
 		panic(err)
@@ -192,7 +192,7 @@ func TestFilter(t *testing.T) {
 		tableName,
 		rowKey,
 		updateColumns,
-		client.WithFilter(filter.CompareVal(filter.GreaterThan, "c2", int64(1))),
+		option.WithFilter(filter.CompareVal(filter.GreaterThan, "c2", int64(1))),
 	)
 	if err != nil {
 		panic(err)
@@ -206,7 +206,7 @@ func TestFilter(t *testing.T) {
 		tableName,
 		rowKey,
 		updateColumns,
-		client.WithFilter(filter.CompareVal(filter.LessOrEqualThan, "c2", int64(3))),
+		option.WithFilter(filter.CompareVal(filter.LessOrEqualThan, "c2", int64(3))),
 	)
 	if err != nil {
 		panic(err)
@@ -220,7 +220,7 @@ func TestFilter(t *testing.T) {
 		tableName,
 		rowKey,
 		updateColumns,
-		client.WithFilter(filter.CompareVal(filter.GreaterOrEqualThan, "c2", int64(4))),
+		option.WithFilter(filter.CompareVal(filter.GreaterOrEqualThan, "c2", int64(4))),
 	)
 	if err != nil {
 		panic(err)
@@ -234,7 +234,7 @@ func TestFilter(t *testing.T) {
 		tableName,
 		rowKey,
 		updateColumns,
-		client.WithFilter(filter.CompareVal(filter.NotEqual, "c2", int64(0))),
+		option.WithFilter(filter.CompareVal(filter.NotEqual, "c2", int64(0))),
 	)
 	if err != nil {
 		panic(err)
@@ -248,7 +248,7 @@ func TestFilter(t *testing.T) {
 		tableName,
 		rowKey,
 		updateColumns,
-		client.WithFilter(filter.CompareVal(filter.Equal, "c2", int64(6))),
+		option.WithFilter(filter.CompareVal(filter.Equal, "c2", int64(6))),
 	)
 	if err != nil {
 		panic(err)
@@ -275,7 +275,7 @@ func TestFilter(t *testing.T) {
 		tableName,
 		rowKey,
 		updateColumns,
-		client.WithFilter(filter.CompareVal(filter.IsNull, "c2", nil)),
+		option.WithFilter(filter.CompareVal(filter.IsNull, "c2", nil)),
 	)
 	if err != nil {
 		panic(err)
@@ -289,7 +289,7 @@ func TestFilter(t *testing.T) {
 		tableName,
 		rowKey,
 		updateColumns,
-		client.WithFilter(filter.CompareVal(filter.IsNotNull, "c2", nil)),
+		option.WithFilter(filter.CompareVal(filter.IsNotNull, "c2", nil)),
 	)
 	if err != nil {
 		panic(err)
@@ -312,7 +312,7 @@ func TestFilter(t *testing.T) {
 		tableName,
 		rowKey,
 		updateColumns,
-		client.WithFilter(andList),
+		option.WithFilter(andList),
 	)
 	if err != nil {
 		panic(err)
@@ -335,7 +335,7 @@ func TestFilter(t *testing.T) {
 		tableName,
 		rowKey,
 		updateColumns,
-		client.WithFilter(orList),
+		option.WithFilter(orList),
 	)
 	if err != nil {
 		panic(err)

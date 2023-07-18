@@ -19,6 +19,7 @@ package main
 
 import (
 	"context"
+	"github.com/oceanbase/obkv-table-client-go/client/option"
 
 	"github.com/oceanbase/obkv-table-client-go/client"
 	"github.com/oceanbase/obkv-table-client-go/config"
@@ -57,11 +58,11 @@ func main() {
 		context.TODO(),
 		tableName,
 		keyRanges,
-		client.WithSelectColumns([]string{"c1", "c2"}),
-		client.WithBatchSize(batchSize),
-		client.WithLimit(limit),
-		client.WithScanOrder(scanOrder),
-		client.WithOffset(offset),
+		option.WithSelectColumns([]string{"c1", "c2"}),
+		option.WithBatchSize(batchSize),
+		option.WithLimit(limit),
+		option.WithScanOrder(scanOrder),
+		option.WithOffset(offset),
 	)
 	for res, err := resSet.Next(); res != nil && err == nil; res, err = resSet.Next() {
 		if err != nil {

@@ -19,6 +19,7 @@ package client
 
 import (
 	"context"
+	"github.com/oceanbase/obkv-table-client-go/client/option"
 
 	"github.com/pkg/errors"
 
@@ -70,20 +71,20 @@ func (q *obQueryExecutor) setEntityType(entityType protocol.ObTableEntityType) {
 }
 
 // setQueryOptions sets the query option.
-func (q *obQueryExecutor) setQueryOptions(queryOptions *ObkvQueryOptions) {
+func (q *obQueryExecutor) setQueryOptions(queryOptions *option.ObQueryOptions) {
 	// TODO: modify queryFilter and set it to tableQuery.
 	q.tableQuery.SetFilterString("")
 	// TODO: modify hTableFilter and set it to tableQuery.
 	q.tableQuery.SetHTableFilter(nil)
-	q.tableQuery.SetSelectColumns(queryOptions.selectColumns)
-	q.tableQuery.SetIndexName(queryOptions.indexName)
-	q.tableQuery.SetBatchSize(queryOptions.batchSize)
-	q.tableQuery.SetMaxResultSize(queryOptions.maxResultSize)
-	q.tableQuery.SetLimit(queryOptions.limit)
-	q.tableQuery.SetOffset(queryOptions.offset)
-	q.tableQuery.SetScanOrder(protocol.ObScanOrder(queryOptions.scanOrder))
-	q.tableQuery.SetIsHbaseQuery(queryOptions.isHbaseQuery)
-	if queryOptions.isHbaseQuery {
+	q.tableQuery.SetSelectColumns(queryOptions.SelectColumns)
+	q.tableQuery.SetIndexName(queryOptions.IndexName)
+	q.tableQuery.SetBatchSize(queryOptions.BatchSize)
+	q.tableQuery.SetMaxResultSize(queryOptions.MaxResultSize)
+	q.tableQuery.SetLimit(queryOptions.Limit)
+	q.tableQuery.SetOffset(queryOptions.Offset)
+	q.tableQuery.SetScanOrder(protocol.ObScanOrder(queryOptions.ScanOrder))
+	q.tableQuery.SetIsHbaseQuery(queryOptions.IsHbaseQuery)
+	if queryOptions.IsHbaseQuery {
 		q.entityType = protocol.ObTableEntityTypeHKV
 	}
 }

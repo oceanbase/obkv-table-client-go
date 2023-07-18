@@ -19,6 +19,7 @@ package client
 
 import (
 	"context"
+	"github.com/oceanbase/obkv-table-client-go/client/option"
 
 	"github.com/pkg/errors"
 
@@ -68,24 +69,24 @@ func NewClient(
 
 type Client interface {
 	// Insert a record by rowKey.
-	Insert(ctx context.Context, tableName string, rowKey []*table.Column, mutateColumns []*table.Column, opts ...ObkvOperationOption) (int64, error)
+	Insert(ctx context.Context, tableName string, rowKey []*table.Column, mutateColumns []*table.Column, opts ...option.ObOperationOption) (int64, error)
 	// Update a record by rowKey.
-	Update(ctx context.Context, tableName string, rowKey []*table.Column, mutateColumns []*table.Column, opts ...ObkvOperationOption) (int64, error)
+	Update(ctx context.Context, tableName string, rowKey []*table.Column, mutateColumns []*table.Column, opts ...option.ObOperationOption) (int64, error)
 	// InsertOrUpdate insert or update a record by rowKey.
 	// insert if the primary key does not exist, update if it does.
-	InsertOrUpdate(ctx context.Context, tableName string, rowKey []*table.Column, mutateColumns []*table.Column, opts ...ObkvOperationOption) (int64, error)
+	InsertOrUpdate(ctx context.Context, tableName string, rowKey []*table.Column, mutateColumns []*table.Column, opts ...option.ObOperationOption) (int64, error)
 	// Replace a record by rowKey.
-	Replace(ctx context.Context, tableName string, rowKey []*table.Column, mutateColumns []*table.Column, opts ...ObkvOperationOption) (int64, error)
+	Replace(ctx context.Context, tableName string, rowKey []*table.Column, mutateColumns []*table.Column, opts ...option.ObOperationOption) (int64, error)
 	// Increment a record by rowKey.
-	Increment(ctx context.Context, tableName string, rowKey []*table.Column, mutateColumns []*table.Column, opts ...ObkvOperationOption) (SingleResult, error)
+	Increment(ctx context.Context, tableName string, rowKey []*table.Column, mutateColumns []*table.Column, opts ...option.ObOperationOption) (SingleResult, error)
 	// Append a record by rowKey.
-	Append(ctx context.Context, tableName string, rowKey []*table.Column, mutateColumns []*table.Column, opts ...ObkvOperationOption) (SingleResult, error)
+	Append(ctx context.Context, tableName string, rowKey []*table.Column, mutateColumns []*table.Column, opts ...option.ObOperationOption) (SingleResult, error)
 	// Delete a record by rowKey.
-	Delete(ctx context.Context, tableName string, rowKey []*table.Column, opts ...ObkvOperationOption) (int64, error)
+	Delete(ctx context.Context, tableName string, rowKey []*table.Column, opts ...option.ObOperationOption) (int64, error)
 	// Get a record by rowKey.
-	Get(ctx context.Context, tableName string, rowKey []*table.Column, getColumns []string, opts ...ObkvOperationOption) (SingleResult, error)
+	Get(ctx context.Context, tableName string, rowKey []*table.Column, getColumns []string, opts ...option.ObOperationOption) (SingleResult, error)
 	// Query records by rangePairs.
-	Query(ctx context.Context, tableName string, rangePairs []*table.RangePair, opts ...ObkvQueryOption) (QueryResultIterator, error)
+	Query(ctx context.Context, tableName string, rangePairs []*table.RangePair, opts ...option.ObQueryOption) (QueryResultIterator, error)
 	// NewBatchExecutor create a batch executor.
 	NewBatchExecutor(tableName string) BatchExecutor
 	// Close closes the client.

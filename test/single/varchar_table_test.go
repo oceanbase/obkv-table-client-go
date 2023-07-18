@@ -19,11 +19,11 @@ package single
 
 import (
 	"context"
+	"github.com/oceanbase/obkv-table-client-go/client/option"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
 
-	"github.com/oceanbase/obkv-table-client-go/client"
 	"github.com/oceanbase/obkv-table-client-go/table"
 	"github.com/oceanbase/obkv-table-client-go/test"
 )
@@ -258,8 +258,8 @@ func TestAppendVarchar(t *testing.T) {
 		tableName,
 		rowKey,
 		appendColumns,
-		client.WithReturnRowKey(true),
-		client.WithReturnAffectedEntity(true), // return affected entity
+		option.WithReturnRowKey(true),
+		option.WithReturnAffectedEntity(true), // return affected entity
 	)
 	assert.Equal(t, nil, err)
 	assert.EqualValues(t, 1, res.AffectedRows())
