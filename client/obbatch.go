@@ -48,6 +48,14 @@ type obBatchExecutor struct {
 	rowKeyName []string
 }
 
+func (c *obBatchExecutor) getOperationOptions(opts ...option.ObOperationOption) *option.ObOperationOptions {
+	operationOptions := option.NewOperationOptions()
+	for _, opt := range opts {
+		opt.Apply(operationOptions)
+	}
+	return operationOptions
+}
+
 func (b *obBatchExecutor) String() string {
 	var rowKeyNameStr string
 	rowKeyNameStr = rowKeyNameStr + "["
@@ -212,7 +220,7 @@ func (b *obBatchExecutor) constructPartOpMap(ctx context.Context) (map[uint64]*o
 func (b *obBatchExecutor) partitionExecute(
 	ctx context.Context,
 	partOp *obPartOp,
-	res []*protocol.ObTableOperationResponse) error {
+	res []SingleResult) error {
 	// 1. Construct batch operation request
 	// 1.1 Construct batch operation
 	batchOp := protocol.NewObTableBatchOperation()
@@ -246,7 +254,7 @@ func (b *obBatchExecutor) partitionExecute(
 		// only one result when hkv puts
 		if len(partRes.ObTableOperationResponses()) == 1 {
 			for _, op := range partOp.ops {
-				res[op.indexOfBatch] = partRes.ObTableOperationResponses()[0]
+				res[op.indexOfBatch] = operationResponse2SingleResult(partRes.ObTableOperationResponses()[0])
 			}
 		} else {
 			return errors.Errorf("unexpected batch result size, subResSize:%d", subResSize)
@@ -256,7 +264,7 @@ func (b *obBatchExecutor) partitionExecute(
 			return errors.Errorf("unexpected batch result size, subResSize:%d, subOpSize:%d", subResSize, subOpSize)
 		}
 		for i, op := range partOp.ops {
-			res[op.indexOfBatch] = partRes.ObTableOperationResponses()[i]
+			res[op.indexOfBatch] = operationResponse2SingleResult(partRes.ObTableOperationResponses()[i])
 		}
 	}
 
@@ -278,7 +286,7 @@ func (b *obBatchExecutor) Execute(ctx context.Context) (BatchOperationResult, er
 		ctx, _ = context.WithTimeout(ctx, b.cli.config.OperationTimeOut) // default timeout operation timeout
 	}
 
-	res := make([]*protocol.ObTableOperationResponse, len(b.batchOps.ObTableOperations()))
+	res := make([]SingleResult, len(b.batchOps.ObTableOperations()))
 	// 1. construct partition operation map
 	partOpMap, err := b.constructPartOpMap(ctx)
 	if err != nil {
@@ -296,7 +304,7 @@ func (b *obBatchExecutor) Execute(ctx context.Context) (BatchOperationResult, er
 				defer wg.Done()
 				err := b.partitionExecute(ctx, partOp, res)
 				if err != nil {
-					log.Warn("failed to execute partition operations", log.String("partOp", partOp.String()))
+					log.Warn("failed to execute partition operations", log.String("partOp", partOp.String()), log.String("err", err.Error()))
 					errArrLock.Lock()
 					errArr = append(errArr, err)
 					errArrLock.Unlock()
@@ -306,18 +314,23 @@ func (b *obBatchExecutor) Execute(ctx context.Context) (BatchOperationResult, er
 		wg.Wait()
 		if len(errArr) != 0 {
 			log.Warn("error occur when execute partition operations")
-			return nil, errArr[0]
+			return newObBatchOperationResult(res), errArr[0]
 		}
 	} else {
 		for _, partOp := range partOpMap {
 			err := b.partitionExecute(ctx, partOp, res)
 			if err != nil {
-				return nil, errors.WithMessagef(err, "execute partition operations, partOp:%s", partOp.String())
+				return newObBatchOperationResult(res), errors.WithMessagef(err, "execute partition operations, partOp:%s", partOp.String())
 			}
 		}
 	}
 
 	return newObBatchOperationResult(res), nil
+}
+
+// operationResponse2SingleResult convert operation response to single result.
+func operationResponse2SingleResult(res *protocol.ObTableOperationResponse) SingleResult {
+	return newObSingleResult(res.AffectedRows(), res.Entity())
 }
 
 type obPartOp struct {
