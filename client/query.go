@@ -71,7 +71,7 @@ func (q *obQueryExecutor) setEntityType(entityType protocol.ObTableEntityType) {
 }
 
 // setQueryOptions sets the query option.
-func (q *obQueryExecutor) setQueryOptions(queryOptions *option.ObkvQueryOptions) {
+func (q *obQueryExecutor) setQueryOptions(queryOptions *option.ObQueryOptions) {
 	// TODO: modify queryFilter and set it to tableQuery.
 	q.tableQuery.SetFilterString("")
 	// TODO: modify hTableFilter and set it to tableQuery.

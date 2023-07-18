@@ -19,14 +19,14 @@ package option
 
 import "github.com/oceanbase/obkv-table-client-go/table"
 
-type ObkvQueryOption interface {
-	Apply(opts *ObkvQueryOptions)
+type ObQueryOption interface {
+	Apply(opts *ObQueryOptions)
 }
 
-type ObkvQueryOptionFunc func(opts *ObkvQueryOptions)
+type ObQueryOptionFunc func(opts *ObQueryOptions)
 
-func NewObkvQueryOption() *ObkvQueryOptions {
-	return &ObkvQueryOptions{
+func NewObQueryOption() *ObQueryOptions {
+	return &ObQueryOptions{
 		QueryFilter:   nil,
 		HTableFilter:  nil,
 		SelectColumns: nil,
@@ -40,7 +40,7 @@ func NewObkvQueryOption() *ObkvQueryOptions {
 	}
 }
 
-type ObkvQueryOptions struct {
+type ObQueryOptions struct {
 	QueryFilter   interface{}
 	HTableFilter  interface{}
 	SelectColumns []string
@@ -53,76 +53,76 @@ type ObkvQueryOptions struct {
 	IsHbaseQuery  bool
 }
 
-func (f ObkvQueryOptionFunc) Apply(opts *ObkvQueryOptions) {
+func (f ObQueryOptionFunc) Apply(opts *ObQueryOptions) {
 	f(opts)
 }
 
 // WithQueryFilter set query filter
-func WithQueryFilter(QueryFilter interface{}) ObkvQueryOption {
-	return ObkvQueryOptionFunc(func(opts *ObkvQueryOptions) {
+func WithQueryFilter(QueryFilter interface{}) ObQueryOption {
+	return ObQueryOptionFunc(func(opts *ObQueryOptions) {
 		opts.QueryFilter = QueryFilter
 	})
 }
 
 // WithHTableFilter set htable filter
-func WithHTableFilter(HTableFilter interface{}) ObkvQueryOption {
-	return ObkvQueryOptionFunc(func(opts *ObkvQueryOptions) {
+func WithHTableFilter(HTableFilter interface{}) ObQueryOption {
+	return ObQueryOptionFunc(func(opts *ObQueryOptions) {
 		opts.HTableFilter = HTableFilter
 	})
 }
 
 // WithSelectColumns set select columns
-func WithSelectColumns(SelectColumns []string) ObkvQueryOption {
-	return ObkvQueryOptionFunc(func(opts *ObkvQueryOptions) {
+func WithSelectColumns(SelectColumns []string) ObQueryOption {
+	return ObQueryOptionFunc(func(opts *ObQueryOptions) {
 		opts.SelectColumns = SelectColumns
 	})
 }
 
 // WithIndexName set index name
-func WithIndexName(IndexName string) ObkvQueryOption {
-	return ObkvQueryOptionFunc(func(opts *ObkvQueryOptions) {
+func WithIndexName(IndexName string) ObQueryOption {
+	return ObQueryOptionFunc(func(opts *ObQueryOptions) {
 		opts.IndexName = IndexName
 	})
 }
 
 // WithBatchSize set batch size
-func WithBatchSize(BatchSize int) ObkvQueryOption {
-	return ObkvQueryOptionFunc(func(opts *ObkvQueryOptions) {
+func WithBatchSize(BatchSize int) ObQueryOption {
+	return ObQueryOptionFunc(func(opts *ObQueryOptions) {
 		opts.BatchSize = int32(BatchSize)
 	})
 }
 
 // WithMaxResultSize set max result size
-func WithMaxResultSize(MaxResultSize int) ObkvQueryOption {
-	return ObkvQueryOptionFunc(func(opts *ObkvQueryOptions) {
+func WithMaxResultSize(MaxResultSize int) ObQueryOption {
+	return ObQueryOptionFunc(func(opts *ObQueryOptions) {
 		opts.MaxResultSize = int64(MaxResultSize)
 	})
 }
 
 // WithLimit set Limit
-func WithLimit(Limit int) ObkvQueryOption {
-	return ObkvQueryOptionFunc(func(opts *ObkvQueryOptions) {
+func WithLimit(Limit int) ObQueryOption {
+	return ObQueryOptionFunc(func(opts *ObQueryOptions) {
 		opts.Limit = int32(Limit)
 	})
 }
 
 // WithOffset set Offset
-func WithOffset(Offset int) ObkvQueryOption {
-	return ObkvQueryOptionFunc(func(opts *ObkvQueryOptions) {
+func WithOffset(Offset int) ObQueryOption {
+	return ObQueryOptionFunc(func(opts *ObQueryOptions) {
 		opts.Offset = int32(Offset)
 	})
 }
 
 // WithScanOrder set scan order
-func WithScanOrder(ScanOrder table.ScanOrder) ObkvQueryOption {
-	return ObkvQueryOptionFunc(func(opts *ObkvQueryOptions) {
+func WithScanOrder(ScanOrder table.ScanOrder) ObQueryOption {
+	return ObQueryOptionFunc(func(opts *ObQueryOptions) {
 		opts.ScanOrder = ScanOrder
 	})
 }
 
 // WithIsHbaseQuery set is hbase query
-func WithIsHbaseQuery(IsHbaseQuery bool) ObkvQueryOption {
-	return ObkvQueryOptionFunc(func(opts *ObkvQueryOptions) {
+func WithIsHbaseQuery(IsHbaseQuery bool) ObQueryOption {
+	return ObQueryOptionFunc(func(opts *ObQueryOptions) {
 		opts.IsHbaseQuery = IsHbaseQuery
 	})
 }

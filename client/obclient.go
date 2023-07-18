@@ -157,7 +157,7 @@ func (c *obClient) Insert(
 	tableName string,
 	rowKey []*table.Column,
 	mutateColumns []*table.Column,
-	opts ...option.ObkvOperationOption) (int64, error) {
+	opts ...option.ObOperationOption) (int64, error) {
 	operationOptions := c.getOperationOptions(opts...)
 	res, err := c.execute(
 		ctx,
@@ -178,7 +178,7 @@ func (c *obClient) Update(
 	tableName string,
 	rowKey []*table.Column,
 	mutateColumns []*table.Column,
-	opts ...option.ObkvOperationOption) (int64, error) {
+	opts ...option.ObOperationOption) (int64, error) {
 	operationOptions := c.getOperationOptions(opts...)
 	if operationOptions.TableFilter == nil {
 		res, err := c.execute(
@@ -214,7 +214,7 @@ func (c *obClient) InsertOrUpdate(
 	tableName string,
 	rowKey []*table.Column,
 	mutateColumns []*table.Column,
-	opts ...option.ObkvOperationOption) (int64, error) {
+	opts ...option.ObOperationOption) (int64, error) {
 	operationOptions := c.getOperationOptions(opts...)
 	res, err := c.execute(
 		ctx,
@@ -235,7 +235,7 @@ func (c *obClient) Replace(
 	tableName string,
 	rowKey []*table.Column,
 	mutateColumns []*table.Column,
-	opts ...option.ObkvOperationOption) (int64, error) {
+	opts ...option.ObOperationOption) (int64, error) {
 	operationOptions := c.getOperationOptions(opts...)
 	res, err := c.execute(
 		ctx,
@@ -256,7 +256,7 @@ func (c *obClient) Increment(
 	tableName string,
 	rowKey []*table.Column,
 	mutateColumns []*table.Column,
-	opts ...option.ObkvOperationOption) (SingleResult, error) {
+	opts ...option.ObOperationOption) (SingleResult, error) {
 	operationOptions := c.getOperationOptions(opts...)
 	if operationOptions.TableFilter == nil {
 		res, err := c.execute(
@@ -292,7 +292,7 @@ func (c *obClient) Append(
 	tableName string,
 	rowKey []*table.Column,
 	mutateColumns []*table.Column,
-	opts ...option.ObkvOperationOption) (SingleResult, error) {
+	opts ...option.ObOperationOption) (SingleResult, error) {
 	operationOptions := c.getOperationOptions(opts...)
 	if operationOptions.TableFilter == nil {
 		res, err := c.execute(
@@ -327,7 +327,7 @@ func (c *obClient) Delete(
 	ctx context.Context,
 	tableName string,
 	rowKey []*table.Column,
-	opts ...option.ObkvOperationOption) (int64, error) {
+	opts ...option.ObOperationOption) (int64, error) {
 	operationOptions := c.getOperationOptions(opts...)
 	if operationOptions.TableFilter == nil {
 		res, err := c.execute(
@@ -363,7 +363,7 @@ func (c *obClient) Get(
 	tableName string,
 	rowKey []*table.Column,
 	getColumns []string,
-	opts ...option.ObkvOperationOption) (SingleResult, error) {
+	opts ...option.ObOperationOption) (SingleResult, error) {
 	var columns = make([]*table.Column, 0, len(getColumns))
 	for _, columnName := range getColumns {
 		columns = append(columns, table.NewColumn(columnName, nil))
@@ -383,8 +383,8 @@ func (c *obClient) Get(
 	return newObSingleResult(res.AffectedRows(), res.Entity()), nil
 }
 
-func (c *obClient) Query(ctx context.Context, tableName string, rangePairs []*table.RangePair, opts ...option.ObkvQueryOption) (QueryResultIterator, error) {
-	queryOpts := c.getObkvQueryOptions(opts...)
+func (c *obClient) Query(ctx context.Context, tableName string, rangePairs []*table.RangePair, opts ...option.ObQueryOption) (QueryResultIterator, error) {
+	queryOpts := c.getObQueryOptions(opts...)
 	queryExecutor := newObQueryExecutorWithParams(tableName, c)
 	queryExecutor.addKeyRanges(rangePairs)
 	queryExecutor.setQueryOptions(queryOpts)
@@ -409,7 +409,7 @@ func (c *obClient) Close() {
 	})
 }
 
-func (c *obClient) getOperationOptions(opts ...option.ObkvOperationOption) *option.ObkvOperationOptions {
+func (c *obClient) getOperationOptions(opts ...option.ObOperationOption) *option.ObOperationOptions {
 	operationOptions := option.NewOperationOptions()
 	for _, opt := range opts {
 		opt.Apply(operationOptions)
@@ -417,8 +417,8 @@ func (c *obClient) getOperationOptions(opts ...option.ObkvOperationOption) *opti
 	return operationOptions
 }
 
-func (c *obClient) getObkvQueryOptions(options ...option.ObkvQueryOption) *option.ObkvQueryOptions {
-	opts := option.NewObkvQueryOption()
+func (c *obClient) getObQueryOptions(options ...option.ObQueryOption) *option.ObQueryOptions {
+	opts := option.NewObQueryOption()
 	for _, op := range options {
 		op.Apply(opts)
 	}
@@ -431,7 +431,7 @@ func (c *obClient) execute(
 	opType protocol.ObTableOperationType,
 	rowKey []*table.Column,
 	columns []*table.Column,
-	operationOptions *option.ObkvOperationOptions) (*protocol.ObTableOperationResponse, error) {
+	operationOptions *option.ObOperationOptions) (*protocol.ObTableOperationResponse, error) {
 
 	if _, ok := ctx.Deadline(); !ok {
 		ctx, _ = context.WithTimeout(ctx, c.config.OperationTimeOut) // default timeout operation timeout
@@ -488,7 +488,7 @@ func (c *obClient) executeWithFilter(
 	opType protocol.ObTableOperationType,
 	rowKey []*table.Column,
 	columns []*table.Column,
-	operationOptions *option.ObkvOperationOptions) (*protocol.ObTableQueryAndMutateResponse, error) {
+	operationOptions *option.ObOperationOptions) (*protocol.ObTableQueryAndMutateResponse, error) {
 
 	if _, ok := ctx.Deadline(); !ok {
 		ctx, _ = context.WithTimeout(ctx, c.config.OperationTimeOut) // default timeout operation timeout

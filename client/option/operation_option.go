@@ -21,47 +21,47 @@ import (
 	"github.com/oceanbase/obkv-table-client-go/client/filter"
 )
 
-type ObkvOperationOption interface {
-	Apply(opts *ObkvOperationOptions)
+type ObOperationOption interface {
+	Apply(opts *ObOperationOptions)
 }
 
-type ObkvOperationOptionFunc func(opts *ObkvOperationOptions)
+type ObOperationOptionFunc func(opts *ObOperationOptions)
 
-func NewOperationOptions() *ObkvOperationOptions {
-	return &ObkvOperationOptions{
+func NewOperationOptions() *ObOperationOptions {
+	return &ObOperationOptions{
 		ReturnRowKey:         false,
 		ReturnAffectedEntity: false,
 		TableFilter:          nil,
 	}
 }
 
-type ObkvOperationOptions struct {
+type ObOperationOptions struct {
 	ReturnRowKey         bool
 	ReturnAffectedEntity bool
 	TableFilter          filter.ObTableFilter
 }
 
-func (f ObkvOperationOptionFunc) Apply(opts *ObkvOperationOptions) {
+func (f ObOperationOptionFunc) Apply(opts *ObOperationOptions) {
 	f(opts)
 }
 
 // WithReturnRowKey only work in increment and append operation
-func WithReturnRowKey(ReturnRowKey bool) ObkvOperationOption {
-	return ObkvOperationOptionFunc(func(opts *ObkvOperationOptions) {
+func WithReturnRowKey(ReturnRowKey bool) ObOperationOption {
+	return ObOperationOptionFunc(func(opts *ObOperationOptions) {
 		opts.ReturnRowKey = ReturnRowKey
 	})
 }
 
 // WithReturnAffectedEntity only work in increment and append operation
-func WithReturnAffectedEntity(ReturnAffectedEntity bool) ObkvOperationOption {
-	return ObkvOperationOptionFunc(func(opts *ObkvOperationOptions) {
+func WithReturnAffectedEntity(ReturnAffectedEntity bool) ObOperationOption {
+	return ObOperationOptionFunc(func(opts *ObOperationOptions) {
 		opts.ReturnAffectedEntity = ReturnAffectedEntity
 	})
 }
 
 // WithFilter only work in increment append update and delete operation
-func WithFilter(TableFilter filter.ObTableFilter) ObkvOperationOption {
-	return ObkvOperationOptionFunc(func(opts *ObkvOperationOptions) {
+func WithFilter(TableFilter filter.ObTableFilter) ObOperationOption {
+	return ObOperationOptionFunc(func(opts *ObOperationOptions) {
 		opts.TableFilter = TableFilter
 	})
 }
