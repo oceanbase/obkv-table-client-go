@@ -17,27 +17,45 @@
 
 package client
 
-import (
-	"github.com/oceanbase/obkv-table-client-go/protocol"
-)
-
 type BatchOperationResult interface {
-	GetResults() []*protocol.ObTableOperationResponse
+	GetResults() []SingleResult
 	Size() int
+	SuccessIdx() []int
+	ErrorIdx() []int
 }
 
 type obBatchOperationResult struct {
-	results []*protocol.ObTableOperationResponse
+	results []SingleResult
 }
 
-func newObBatchOperationResult(results []*protocol.ObTableOperationResponse) *obBatchOperationResult {
+func newObBatchOperationResult(results []SingleResult) *obBatchOperationResult {
 	return &obBatchOperationResult{results}
 }
 
-func (r *obBatchOperationResult) GetResults() []*protocol.ObTableOperationResponse {
+func (r *obBatchOperationResult) GetResults() []SingleResult {
 	return r.results
 }
 
 func (r *obBatchOperationResult) Size() int {
 	return len(r.results)
+}
+
+func (r *obBatchOperationResult) SuccessIdx() []int {
+	var successIdx []int
+	for i, result := range r.results {
+		if result != nil {
+			successIdx = append(successIdx, i)
+		}
+	}
+	return successIdx
+}
+
+func (r *obBatchOperationResult) ErrorIdx() []int {
+	var errorIdx []int
+	for i, result := range r.results {
+		if result == nil {
+			errorIdx = append(errorIdx, i)
+		}
+	}
+	return errorIdx
 }

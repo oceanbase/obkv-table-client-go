@@ -65,6 +65,77 @@ func TestBatch_MultiInsert(t *testing.T) {
 	}
 }
 
+func TestBatch_MultiInsert_Fail(t *testing.T) {
+	tableName := batchOpTableTableName
+	defer test.DeleteTable(tableName)
+
+	recordCount := 100
+
+	// 1. insert 100 records 0-99
+	batchExecutor := cli.NewBatchExecutor(tableName)
+	for i := 0; i < recordCount; i++ {
+		rowKey := []*table.Column{table.NewColumn("c1", int64(i))}
+		mutateColumns := []*table.Column{table.NewColumn("c2", int64(i))}
+		err := batchExecutor.AddInsertOp(rowKey, mutateColumns)
+		assert.Equal(t, nil, err)
+	}
+
+	res, err := batchExecutor.Execute(context.TODO())
+	assert.Equal(t, nil, err)
+
+	assert.EqualValues(t, recordCount, res.Size())
+	for i := 0; i < res.Size(); i++ {
+		assert.EqualValues(t, 1, res.GetResults()[i].AffectedRows())
+	}
+
+	// 2. insert 17 records 104-88
+	batchExecutor = cli.NewBatchExecutor(tableName)
+	for i := 104; i > 87; i-- {
+		rowKey := []*table.Column{table.NewColumn("c1", int64(i))}
+		mutateColumns := []*table.Column{table.NewColumn("c2", int64(i))}
+		err := batchExecutor.AddInsertOp(rowKey, mutateColumns)
+		assert.Equal(t, nil, err)
+	}
+
+	res, err = batchExecutor.Execute(context.TODO())
+	assert.NotEqual(t, nil, err)
+
+	// number 2 - 4 which is 102-100 should be success
+	assert.EqualValues(t, []int{2, 3, 4}, res.SuccessIdx())
+	failedIdx := []int{0, 1}
+	for i := 5; i < 17; i++ {
+		failedIdx = append(failedIdx, i)
+	}
+	// operation with fail will return nil
+	assert.EqualValues(t, failedIdx, res.ErrorIdx())
+	assert.EqualValues(t, nil, res.GetResults()[0])
+	assert.EqualValues(t, nil, res.GetResults()[1])
+	assert.EqualValues(t, 1, res.GetResults()[2].AffectedRows())
+	assert.EqualValues(t, 1, res.GetResults()[3].AffectedRows())
+	assert.EqualValues(t, 1, res.GetResults()[4].AffectedRows())
+
+	// try to get 100-104, 103-104 should be empty
+	batchExecutor = cli.NewBatchExecutor(tableName)
+	for i := 100; i < 105; i++ {
+		rowKey := []*table.Column{table.NewColumn("c1", int64(i))}
+		err := batchExecutor.AddGetOp(rowKey, getColumns)
+		assert.Equal(t, nil, err)
+	}
+	res, err = batchExecutor.Execute(context.TODO())
+	assert.Equal(t, nil, err)
+
+	assert.EqualValues(t, 0, res.GetResults()[0].AffectedRows())
+	assert.EqualValues(t, 100, res.GetResults()[0].Value("c1"))
+	assert.EqualValues(t, 0, res.GetResults()[1].AffectedRows())
+	assert.EqualValues(t, 101, res.GetResults()[1].Value("c1"))
+	assert.EqualValues(t, 0, res.GetResults()[2].AffectedRows())
+	assert.EqualValues(t, 102, res.GetResults()[2].Value("c1"))
+	assert.EqualValues(t, 0, res.GetResults()[3].AffectedRows())
+	assert.EqualValues(t, nil, res.GetResults()[3].Value("c1"))
+	assert.EqualValues(t, 0, res.GetResults()[4].AffectedRows())
+	assert.EqualValues(t, nil, res.GetResults()[4].Value("c1"))
+}
+
 func TestBatch_MultiGet(t *testing.T) {
 	tableName := batchOpTableTableName
 	defer test.DeleteTable(tableName)
@@ -84,8 +155,8 @@ func TestBatch_MultiGet(t *testing.T) {
 	assert.Equal(t, nil, err)
 	assert.EqualValues(t, recordCount, res.Size())
 	for i := 0; i < res.Size(); i++ {
-		assert.EqualValues(t, i, res.GetResults()[i].Entity().GetProperty("c1").Value())
-		assert.EqualValues(t, i, res.GetResults()[i].Entity().GetProperty("c2").Value())
+		assert.EqualValues(t, i, res.GetResults()[i].Value("c1"))
+		assert.EqualValues(t, i, res.GetResults()[i].Value("c2"))
 	}
 }
 
