@@ -20,6 +20,7 @@ package main
 import (
 	"context"
 	"fmt"
+	"github.com/oceanbase/obkv-table-client-go/client/option"
 	"time"
 
 	"github.com/oceanbase/obkv-table-client-go/client"
@@ -68,7 +69,7 @@ func main() {
 		tableName,
 		rowKey,
 		appendColumns,
-		client.WithFilter(filter.CompareVal(filter.Equal, "c2", "hello")), // where c2 = hello
+		option.WithFilter(filter.CompareVal(filter.Equal, "c2", "hello")), // where c2 = hello
 	)
 	if err != nil {
 		panic(err)

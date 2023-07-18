@@ -20,6 +20,7 @@ package main
 import (
 	"context"
 	"fmt"
+	"github.com/oceanbase/obkv-table-client-go/client/option"
 	"time"
 
 	"github.com/oceanbase/obkv-table-client-go/client"
@@ -68,7 +69,7 @@ func main() {
 		tableName,
 		rowKey,
 		updateColumns,
-		client.WithFilter(filter.CompareVal(filter.LessThan, "c2", int64(3))), // where c2 < 3
+		option.WithFilter(filter.CompareVal(filter.LessThan, "c2", int64(3))), // where c2 < 3
 	)
 	if err != nil {
 		panic(err)
@@ -83,7 +84,7 @@ func main() {
 		tableName,
 		rowKey,
 		updateColumns,
-		client.WithFilter(filter.CompareVal(filter.GreaterThan, "c2", int64(2))), // where c2 > 2
+		option.WithFilter(filter.CompareVal(filter.GreaterThan, "c2", int64(2))), // where c2 > 2
 	)
 	if err != nil {
 		panic(err)
@@ -98,7 +99,7 @@ func main() {
 		tableName,
 		rowKey,
 		updateColumns,
-		client.WithFilter(filter.CompareVal(filter.LessOrEqualThan, "c2", int64(4))), // where c2 <= 4
+		option.WithFilter(filter.CompareVal(filter.LessOrEqualThan, "c2", int64(4))), // where c2 <= 4
 	)
 	if err != nil {
 		panic(err)
@@ -113,7 +114,7 @@ func main() {
 		tableName,
 		rowKey,
 		updateColumns,
-		client.WithFilter(filter.CompareVal(filter.GreaterOrEqualThan, "c2", int64(5))), // where c2 >= 5
+		option.WithFilter(filter.CompareVal(filter.GreaterOrEqualThan, "c2", int64(5))), // where c2 >= 5
 	)
 	if err != nil {
 		panic(err)
@@ -128,7 +129,7 @@ func main() {
 		tableName,
 		rowKey,
 		updateColumns,
-		client.WithFilter(filter.CompareVal(filter.NotEqual, "c2", int64(7))), // where c2 != 7
+		option.WithFilter(filter.CompareVal(filter.NotEqual, "c2", int64(7))), // where c2 != 7
 	)
 	if err != nil {
 		panic(err)
@@ -143,7 +144,7 @@ func main() {
 		tableName,
 		rowKey,
 		updateColumns,
-		client.WithFilter(filter.CompareVal(filter.Equal, "c2", int64(7))), // where c2 = 7
+		option.WithFilter(filter.CompareVal(filter.Equal, "c2", int64(7))), // where c2 = 7
 	)
 	if err != nil {
 		panic(err)
@@ -167,7 +168,7 @@ func main() {
 		tableName,
 		rowKey,
 		updateColumns,
-		client.WithFilter(andList), // where c2 < 10 and c2 > 8 and c2 <= 9 and c2 >= 9 and c2 != 0 and c2 = 9
+		option.WithFilter(andList), // where c2 < 10 and c2 > 8 and c2 <= 9 and c2 >= 9 and c2 != 0 and c2 = 9
 	)
 	if err != nil {
 		panic(err)

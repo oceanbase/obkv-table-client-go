@@ -19,11 +19,11 @@ package single
 
 import (
 	"context"
+	"github.com/oceanbase/obkv-table-client-go/client/option"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
 
-	"github.com/oceanbase/obkv-table-client-go/client"
 	"github.com/oceanbase/obkv-table-client-go/table"
 	"github.com/oceanbase/obkv-table-client-go/test"
 )
@@ -257,8 +257,8 @@ func TestIncrementTinyint(t *testing.T) {
 		tableName,
 		rowKey,
 		incrementColumns,
-		client.WithReturnRowKey(true),
-		client.WithReturnAffectedEntity(true),
+		option.WithReturnRowKey(true),
+		option.WithReturnAffectedEntity(true),
 	)
 	assert.Equal(t, nil, err)
 	assert.EqualValues(t, 1, res.AffectedRows())

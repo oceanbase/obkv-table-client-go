@@ -19,6 +19,7 @@ package client
 
 import (
 	"context"
+	"github.com/oceanbase/obkv-table-client-go/client/option"
 
 	"github.com/oceanbase/obkv-table-client-go/table"
 )
@@ -26,21 +27,21 @@ import (
 // BatchExecutor is for batch operation.
 type BatchExecutor interface {
 	// AddInsertOp add an insert operation to the batch executor.
-	AddInsertOp(rowKey []*table.Column, mutateValues []*table.Column, opts ...ObkvOperationOption) error
+	AddInsertOp(rowKey []*table.Column, mutateValues []*table.Column, opts ...option.ObkvOperationOption) error
 	// AddUpdateOp add an update operation to the batch executor.
-	AddUpdateOp(rowKey []*table.Column, mutateValues []*table.Column, opts ...ObkvOperationOption) error
+	AddUpdateOp(rowKey []*table.Column, mutateValues []*table.Column, opts ...option.ObkvOperationOption) error
 	// AddInsertOrUpdateOp add an insertOrUpdate operation to the batch executor
-	AddInsertOrUpdateOp(rowKey []*table.Column, mutateValues []*table.Column, opts ...ObkvOperationOption) error
+	AddInsertOrUpdateOp(rowKey []*table.Column, mutateValues []*table.Column, opts ...option.ObkvOperationOption) error
 	// AddReplaceOp add a replace operation to the batch executor
-	AddReplaceOp(rowKey []*table.Column, mutateValues []*table.Column, opts ...ObkvOperationOption) error
+	AddReplaceOp(rowKey []*table.Column, mutateValues []*table.Column, opts ...option.ObkvOperationOption) error
 	// AddIncrementOp add an increment operation to the batch executor
-	AddIncrementOp(rowKey []*table.Column, mutateValues []*table.Column, opts ...ObkvOperationOption) error
+	AddIncrementOp(rowKey []*table.Column, mutateValues []*table.Column, opts ...option.ObkvOperationOption) error
 	// AddAppendOp add an append operation to the batch executor
-	AddAppendOp(rowKey []*table.Column, mutateValues []*table.Column, opts ...ObkvOperationOption) error
+	AddAppendOp(rowKey []*table.Column, mutateValues []*table.Column, opts ...option.ObkvOperationOption) error
 	// AddDeleteOp add a delete operation to the batch executor
-	AddDeleteOp(rowKey []*table.Column, opts ...ObkvOperationOption) error
+	AddDeleteOp(rowKey []*table.Column, opts ...option.ObkvOperationOption) error
 	// AddGetOp add a get operation to the batch executor.
-	AddGetOp(rowKey []*table.Column, getColumns []string, opts ...ObkvOperationOption) error
+	AddGetOp(rowKey []*table.Column, getColumns []string, opts ...option.ObkvOperationOption) error
 	// Execute a batch operation.
 	// batch operation only ensures atomicity of a single partition.
 	// BatchOperationResult contains the results of all operations.

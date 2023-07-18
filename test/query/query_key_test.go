@@ -20,11 +20,11 @@ package query
 import (
 	"context"
 	"fmt"
+	"github.com/oceanbase/obkv-table-client-go/client/option"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
 
-	"github.com/oceanbase/obkv-table-client-go/client"
 	"github.com/oceanbase/obkv-table-client-go/table"
 	"github.com/oceanbase/obkv-table-client-go/test"
 )
@@ -55,7 +55,7 @@ func TestQueryKeySimple(t *testing.T) {
 		context.TODO(),
 		tableName,
 		keyRanges,
-		client.WithSelectColumns([]string{"c1", "c2", "c3"}),
+		option.WithSelectColumns([]string{"c1", "c2", "c3"}),
 	)
 	assert.Equal(t, nil, err)
 	for i := 0; i < recordCount; i++ {
@@ -72,7 +72,7 @@ func TestQueryKeySimple(t *testing.T) {
 		context.TODO(),
 		tableName,
 		keyRanges,
-		client.WithSelectColumns([]string{"c1", "c2", "c3"}),
+		option.WithSelectColumns([]string{"c1", "c2", "c3"}),
 	)
 	assert.Equal(t, nil, err)
 	for i := 0; i < 5; i++ {
@@ -98,8 +98,8 @@ func TestQueryKeyBatchSize(t *testing.T) {
 		context.TODO(),
 		tableName,
 		keyRanges,
-		client.WithSelectColumns([]string{"c1", "c2", "c3"}),
-		client.WithBatchSize(batchSize),
+		option.WithSelectColumns([]string{"c1", "c2", "c3"}),
+		option.WithBatchSize(batchSize),
 	)
 	assert.Equal(t, nil, err)
 	for i := 0; i < recordCount; i++ {
@@ -125,9 +125,9 @@ func TestQueryKeyIndex(t *testing.T) {
 		context.TODO(),
 		tableName,
 		keyRanges,
-		client.WithSelectColumns([]string{"c1", "c2", "c3"}),
-		client.WithBatchSize(batchSize),
-		client.WithIndexName("i1"),
+		option.WithSelectColumns([]string{"c1", "c2", "c3"}),
+		option.WithBatchSize(batchSize),
+		option.WithIndexName("i1"),
 	)
 	assert.Equal(t, nil, err)
 	for i := 0; i < recordCount; i++ {
@@ -144,9 +144,9 @@ func TestQueryKeyIndex(t *testing.T) {
 		context.TODO(),
 		tableName,
 		keyRanges,
-		client.WithSelectColumns([]string{"c1", "c2", "c3"}),
-		client.WithBatchSize(batchSize),
-		client.WithIndexName("i1"),
+		option.WithSelectColumns([]string{"c1", "c2", "c3"}),
+		option.WithBatchSize(batchSize),
+		option.WithIndexName("i1"),
 	)
 	assert.Equal(t, nil, err)
 	res, err := resSet.Next()
