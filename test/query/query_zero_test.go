@@ -87,7 +87,7 @@ func TestQueryZeroBatchSize(t *testing.T) {
 	tableName := queryZeroTableName
 	defer test.DeleteTable(tableName)
 
-	recordCount := 10
+	recordCount := 50
 	batchSize := 1
 	prepareZeroRecord(recordCount)
 
@@ -107,6 +107,30 @@ func TestQueryZeroBatchSize(t *testing.T) {
 		assert.Equal(t, nil, err)
 		assert.EqualValues(t, res.Value("c1"), res.Value("c2"))
 		assert.EqualValues(t, "hello", res.Value("c3"))
+	}
+
+	// test NextBatch
+	startRowKey = []*table.Column{table.NewColumn("c1", int64(0)), table.NewColumn("c2", table.Min)}
+	endRowKey = []*table.Column{table.NewColumn("c1", int64(100)), table.NewColumn("c2", table.Max)}
+	keyRanges = []*table.RangePair{table.NewRangePair(startRowKey, endRowKey)}
+	resSet, err = cli.Query(
+		context.TODO(),
+		tableName,
+		keyRanges,
+		option.WithSelectColumns([]string{"c1", "c2", "c3"}),
+		option.WithBatchSize(batchSize),
+	)
+	assert.Equal(t, nil, err)
+	for res, err := resSet.NextBatch(); err == nil; res, err = resSet.NextBatch() {
+		if res == nil {
+			break
+		}
+		assert.Equal(t, nil, err)
+		for i := 0; i < len(res); i++ {
+			assert.EqualValues(t, res[i].Value("c1"), res[i].Value("c2"))
+			assert.EqualValues(t, "hello", res[i].Value("c3"))
+			assert.EqualValues(t, res[i].Values(), []interface{}{res[i].Value("c1"), res[i].Value("c1"), "hello"})
+		}
 	}
 }
 
