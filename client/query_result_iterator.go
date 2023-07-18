@@ -30,6 +30,7 @@ type QueryResultIterator interface {
 	IsClosed() bool
 	Close() error
 	Next() (QueryResult, error)
+	NextBatch() ([]QueryResult, error)
 }
 
 type ObQueryResultIterator struct {
@@ -86,6 +87,8 @@ func (q *ObQueryResultIterator) Close() error {
 }
 
 // Next returns nil if there is no more row.
+// Notes: Next() could not be called with NextBatch() at the same time.
+// We strongly recommend you to call Next().
 func (q *ObQueryResultIterator) Next() (QueryResult, error) {
 	// check status
 	err := q.checkStatus()
@@ -133,6 +136,38 @@ func (q *ObQueryResultIterator) Next() (QueryResult, error) {
 	return newObQueryResult(q.cachedPropertiesNames, row), nil
 }
 
+// NextBatch returns nil if there is no more row.
+// Notes: NextBatch() could not be called with Next() at the same time.
+// Number of reuturned rows is less than or equal to the batch size.
+// Batch size, limit, amount of data will affect the number of returned rows.
+func (q *ObQueryResultIterator) NextBatch() ([]QueryResult, error) {
+	// check status
+	err := q.checkStatus()
+	if err != nil {
+		return nil, err
+	}
+
+	// lock
+	q.lock.Lock()
+	defer q.lock.Unlock()
+
+	// get next row from previous server
+	// if prevSessionId != 0, it means that the previous server has not been read completely
+	err = q.fetchNext(q.prevSessionId != 0)
+	if err != nil {
+		return nil, err
+	}
+	if !q.hasNext {
+		// no more row
+		return nil, nil
+	}
+	result := make([]QueryResult, 0, len(q.cachedPropertiesRows))
+	for _, row := range q.cachedPropertiesRows {
+		result = append(result, newObQueryResult(q.cachedPropertiesNames, row))
+	}
+	return result, nil
+}
+
 // fetchNext fetches the next batch from the server.
 func (q *ObQueryResultIterator) fetchNext(hasPrev bool) error {
 	// check status
@@ -163,9 +198,6 @@ func (q *ObQueryResultIterator) fetchNext(hasPrev bool) error {
 		if err != nil {
 			return errors.WithMessagef(err, "execute request, request:%s", queryRequest.String())
 		}
-		// DEBUG print result
-		// trace := fmt.Sprintf("Y%X-%016X", result.ObPayloadBase.UniqueId(), result.ObPayloadBase.Sequence())
-		// println(trace)
 		// deal with result, update status
 		cacheRows = result.ResultRowCount()
 		if cacheRows > 0 {
