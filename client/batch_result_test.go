@@ -21,14 +21,13 @@ import (
 	"testing"
 
 	"github.com/stretchr/testify/assert"
-
-	"github.com/oceanbase/obkv-table-client-go/protocol"
 )
 
 func TestObBatchOperationResult_Size(t *testing.T) {
-	result := protocol.NewObTableOperationResponse()
-	batchResult := newObBatchOperationResult([]*protocol.ObTableOperationResponse{})
+	result := newObSingleResult(1, nil)
+	emptyResult := make([]SingleResult, 0)
+	batchResult := newObBatchOperationResult(emptyResult)
 	assert.EqualValues(t, 0, batchResult.Size())
-	batchResult = newObBatchOperationResult([]*protocol.ObTableOperationResponse{result})
+	batchResult = newObBatchOperationResult([]SingleResult{result})
 	assert.EqualValues(t, 1, batchResult.Size())
 }

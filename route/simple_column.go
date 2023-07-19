@@ -63,6 +63,17 @@ func (c *obSimpleColumn) eval(rowKey []*table.Column) (interface{}, error) {
 	return nil, errors.Errorf("partition column not match, column:%s", c.String())
 }
 
+// extractColumn extract the same column from obSimpleColumn
+func (c *obSimpleColumn) extractColumn(rowKey []*table.Column) (*table.Column, error) {
+	for _, column := range rowKey {
+		if strings.EqualFold(column.Name(), c.columnName) {
+			return column, nil
+		}
+	}
+
+	return nil, nil
+}
+
 func (c *obSimpleColumn) String() string {
 	var objTypeStr = "nil"
 	if c.objType != nil {

@@ -18,7 +18,8 @@
 package route
 
 import (
-	"errors"
+	"github.com/oceanbase/obkv-table-client-go/table"
+	"github.com/pkg/errors"
 	"strconv"
 )
 
@@ -109,4 +110,68 @@ func parseToNumber(value interface{}) (interface{}, error) {
 	} else {
 		return nil, errors.New("invalid type to convert to number")
 	}
+}
+
+// extractRangePairPartKeyColumns extract part key columns from range pair.
+// Notes: if some partition key is missing in startPartColumns or endPartColumns, it will be nil in that position.
+func extractRangePairPartKeyColumns(d obPartDesc, rowKeyPair *table.RangePair) ([]*table.Column, []*table.Column, error) {
+	if d == nil {
+		return nil, nil, errors.New("part desc is nil")
+	}
+	startPartColumns := make([]*table.Column, 0, len(d.PartColumns()))
+	endPartColumns := make([]*table.Column, 0, len(d.PartColumns()))
+	for _, column := range d.PartColumns() {
+		startPartColumn, err := column.extractColumn(rowKeyPair.Start())
+		if err != nil {
+			return nil, nil, errors.WithMessagef(err, "extract start part column, column:%s", column.String())
+		}
+		startPartColumns = append(startPartColumns, startPartColumn)
+
+		endPartColumn, err := column.extractColumn(rowKeyPair.End())
+		if err != nil {
+			return nil, nil, errors.WithMessagef(err, "extract end part column, column:%s", column.String())
+		}
+		endPartColumns = append(endPartColumns, endPartColumn)
+	}
+	return startPartColumns, endPartColumns, nil
+}
+
+// isQuerySendAll check if a pair of Partition columns from RangePair need send to all partitions.
+// Notes: this function will not check if some partition key is missing in startPartColumns and endPartColumns
+func checkQueryPkSendAll(startPartColumns []*table.Column, endPartColumns []*table.Column) bool {
+	// If startPartColumns and endPartColumns is nil, it means something wrong o.O
+	if startPartColumns == nil || endPartColumns == nil {
+		return true
+	}
+	// If startPartColumns and endPartColumns is empty, it also means something wrong O.o
+	if len(startPartColumns) == 0 && len(endPartColumns) == 0 {
+		return true
+	}
+	// If startPartColumns and endPartColumns is not empty, but length not equal, it means send to all partitions.
+	if len(startPartColumns) != len(endPartColumns) {
+		return true
+	}
+
+	// check part columns
+	for i := 0; i < len(startPartColumns); i++ {
+		// if startPartColumn or endPartColumn is nil, it means send to all partitions.
+		if startPartColumns[i] == nil || endPartColumns[i] == nil {
+			return true
+		}
+		// if any part column is extremum, it means send to all partitions.
+		if _, ok := startPartColumns[i].Value().(table.Extremum); ok {
+			return true
+		}
+		if _, ok := endPartColumns[i].Value().(table.Extremum); ok {
+			return true
+		}
+		// if startPartColumn and endPartColumn is not equal, it means send to all partitions.
+		// Notes: we assume that the startPartColumn and endPartColumn is "ordered" (ordered like obPartDesc.PartColumns),
+		//        if you generate key by extractRangePairPartKeyColumns() function, it will be fine.
+		if !startPartColumns[i].IsEqual(endPartColumns[i]) {
+			return true
+		}
+	}
+
+	return false
 }

@@ -71,6 +71,10 @@ func (c *obGeneratedColumn) eval(rowKey []*table.Column) (interface{}, error) {
 	return nil, errors.New("not support generated column now")
 }
 
+func (c *obGeneratedColumn) extractColumn(rowKey []*table.Column) (*table.Column, error) {
+	return nil, errors.New("not support generated column now")
+}
+
 func (c *obGeneratedColumn) String() string {
 	var objTypeStr = "nil"
 	if c.objType != nil {

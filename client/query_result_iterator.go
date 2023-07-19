@@ -40,7 +40,7 @@ type ObQueryResultIterator struct {
 	tableQuery            *protocol.ObTableQuery
 	cachedPropertiesRows  [][]*protocol.ObObject
 	cachedPropertiesNames []string
-	expectant             []*ObTableParam
+	targetParts           []*ObTableParam
 	entityType            protocol.ObTableEntityType
 	readConsistency       protocol.ObTableConsistencyLevel
 	tableName             string
@@ -54,7 +54,7 @@ type ObQueryResultIterator struct {
 func newObQueryResultIteratorWithParams(ctx context.Context,
 	cli *obClient,
 	tableQuery *protocol.ObTableQuery,
-	expectant []*ObTableParam,
+	targetParts []*ObTableParam,
 	entityType protocol.ObTableEntityType,
 	tableName string) *ObQueryResultIterator {
 	return &ObQueryResultIterator{
@@ -63,7 +63,7 @@ func newObQueryResultIteratorWithParams(ctx context.Context,
 		tableQuery:            tableQuery,
 		cachedPropertiesRows:  nil,
 		cachedPropertiesNames: nil,
-		expectant:             expectant,
+		targetParts:           targetParts,
 		entityType:            entityType,
 		readConsistency:       protocol.ObTableConsistencyLevelStrong,
 		tableName:             tableName,
@@ -180,10 +180,10 @@ func (q *ObQueryResultIterator) fetchNext(hasPrev bool) error {
 	cacheRows := int64(0)
 	result := protocol.NewObTableAsyncQueryResponse()
 	for cacheRows == 0 {
-		if len(q.expectant) == 0 {
+		if len(q.targetParts) == 0 {
 			break
 		}
-		nextParam := q.expectant[0]
+		nextParam := q.targetParts[0]
 		// prepare request
 		queryRequest := protocol.NewObTableQueryRequestWithParams(q.tableName, nextParam.tableId, nextParam.partitionId, q.entityType, q.tableQuery)
 		asyncQueryRequest := protocol.NewObTableAsyncQueryRequestWithParams(queryRequest, q.cli.config.OperationTimeOut, q.cli.config.LogLevel)
@@ -209,14 +209,14 @@ func (q *ObQueryResultIterator) fetchNext(hasPrev bool) error {
 			if result.IsEnd() {
 				// remove current server that has been read completely
 				q.prevSessionId = 0
-				q.expectant = q.expectant[1:]
+				q.targetParts = q.targetParts[1:]
 			} else {
 				// current server has not been read completely
 				q.prevSessionId = result.QuerySessionId()
 			}
 		} else {
 			// remove current server
-			q.expectant = q.expectant[1:]
+			q.targetParts = q.targetParts[1:]
 			q.prevSessionId = 0
 			hasPrev = false
 		}
