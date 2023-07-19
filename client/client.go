@@ -87,6 +87,8 @@ type Client interface {
 	Get(ctx context.Context, tableName string, rowKey []*table.Column, getColumns []string, opts ...option.ObOperationOption) (SingleResult, error)
 	// Query records by rangePairs.
 	Query(ctx context.Context, tableName string, rangePairs []*table.RangePair, opts ...option.ObQueryOption) (QueryResultIterator, error)
+	// Aggregate records by rangePairs.
+	Aggregate(ctx context.Context, tableName string, rangePairs []*table.RangePair, opts ...option.ObQueryOption) (AggregateResult, error)
 	// NewBatchExecutor create a batch executor.
 	NewBatchExecutor(tableName string) BatchExecutor
 	// Close closes the client.

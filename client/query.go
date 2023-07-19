@@ -87,6 +87,7 @@ func (q *obQueryExecutor) setQueryOptions(queryOptions *option.ObQueryOptions) {
 	if queryOptions.IsHbaseQuery {
 		q.entityType = protocol.ObTableEntityTypeHKV
 	}
+	q.tableQuery.SetAggregations(queryOptions.Aggregations)
 }
 
 // getTableParams returns the table params.
@@ -112,6 +113,14 @@ func (q *obQueryExecutor) getTableParams(
 
 	// remove duplicate partIds
 	partIds := removeDuplicates(partIdList)
+
+	// defense for aggregate of multiple parts
+	partSize := len(partIds)
+	if partSize > 1 {
+		if q.tableQuery.IsAggregations() {
+			return nil, errors.New("aggregate multiple parts")
+		}
+	}
 
 	// construct table params
 	tableParams := make([]*ObTableParam, 0, len(partIds))

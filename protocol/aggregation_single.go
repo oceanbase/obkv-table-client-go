@@ -40,6 +40,17 @@ func NewObTableAggregationSingle() *ObTableAggregationSingle {
 	}
 }
 
+func NewObTableAggregationSingleWithParams(aggregationType ObTableAggregationType, aggregationColumn string) *ObTableAggregationSingle {
+	return &ObTableAggregationSingle{
+		ObUniVersionHeader: ObUniVersionHeader{
+			version:       1,
+			contentLength: 0,
+		},
+		aggType:   aggregationType,
+		aggColumn: aggregationColumn,
+	}
+}
+
 type ObTableAggregationType uint8
 
 const (
@@ -50,6 +61,22 @@ const (
 	ObTableAggregationTypeSum
 	ObTableAggregationTypeAvg
 )
+
+func (s *ObTableAggregationSingle) AggOperation() string {
+	switch s.aggType {
+	case ObTableAggregationTypeMax:
+		return "max(" + s.aggColumn + ")"
+	case ObTableAggregationTypeMin:
+		return "min(" + s.aggColumn + ")"
+	case ObTableAggregationTypeCount:
+		return "count(" + s.aggColumn + ")"
+	case ObTableAggregationTypeSum:
+		return "sum(" + s.aggColumn + ")"
+	case ObTableAggregationTypeAvg:
+		return "avg(" + s.aggColumn + ")"
+	}
+	return "invalid"
+}
 
 func (s *ObTableAggregationSingle) AggType() ObTableAggregationType {
 	return s.aggType

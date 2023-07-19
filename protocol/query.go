@@ -221,6 +221,51 @@ func (q *ObTableQuery) SetAggregations(aggregations []*ObTableAggregationSingle)
 	q.aggregations = aggregations
 }
 
+func (q *ObTableQuery) IsAggregations() bool {
+	if q.aggregations == nil {
+		return false
+	} else {
+		return true
+	}
+}
+
+// TransferQueryRange sets the query range into tableQuery.
+func (q *ObTableQuery) TransferQueryRange(rangePair []*table.RangePair) error {
+	queryRanges := make([]*ObNewRange, 0, len(rangePair))
+	for _, rangePair := range rangePair {
+		if len(rangePair.Start()) != len(rangePair.End()) {
+			return errors.New("startRange and endRange key length is not equal")
+		}
+		startObjs := make([]*ObObject, 0, len(rangePair.Start()))
+		endObjs := make([]*ObObject, 0, len(rangePair.End()))
+		for i := 0; i < len(rangePair.Start()); i++ {
+			// append start obj
+			objMeta, err := DefaultObjMeta(rangePair.Start()[i].Value())
+			if err != nil {
+				return errors.WithMessage(err, "create obj meta by Range key")
+			}
+			startObjs = append(startObjs, NewObObjectWithParams(objMeta, rangePair.Start()[i].Value()))
+
+			// append end obj
+			objMeta, err = DefaultObjMeta(rangePair.End()[i].Value())
+			if err != nil {
+				return errors.WithMessage(err, "create obj meta by Range key")
+			}
+			endObjs = append(endObjs, NewObObjectWithParams(objMeta, rangePair.End()[i].Value()))
+		}
+		borderFlag := NewObBorderFlag()
+		if rangePair.IncludeStart() {
+			borderFlag.SetInclusiveStart()
+		}
+		if rangePair.IncludeEnd() {
+			borderFlag.SetInclusiveEnd()
+		}
+		queryRanges = append(queryRanges, NewObNewRangeWithParams(startObjs, endObjs, borderFlag))
+	}
+	q.SetKeyRanges(queryRanges)
+	return nil
+}
+
 func (q *ObTableQuery) PayloadLen() int {
 	return q.PayloadContentLen() + q.ObUniVersionHeader.UniVersionHeaderLen() // Do not change the order
 }

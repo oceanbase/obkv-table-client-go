@@ -17,7 +17,10 @@
 
 package option
 
-import "github.com/oceanbase/obkv-table-client-go/table"
+import (
+	"github.com/oceanbase/obkv-table-client-go/protocol"
+	"github.com/oceanbase/obkv-table-client-go/table"
+)
 
 type ObQueryOption interface {
 	Apply(opts *ObQueryOptions)
@@ -37,6 +40,7 @@ func NewObQueryOption() *ObQueryOptions {
 		Offset:        0,
 		ScanOrder:     table.Forward,
 		IsHbaseQuery:  false,
+		Aggregations:  nil,
 	}
 }
 
@@ -51,6 +55,7 @@ type ObQueryOptions struct {
 	Offset        int32
 	ScanOrder     table.ScanOrder
 	IsHbaseQuery  bool
+	Aggregations  []*protocol.ObTableAggregationSingle
 }
 
 func (f ObQueryOptionFunc) Apply(opts *ObQueryOptions) {
@@ -75,6 +80,18 @@ func WithHTableFilter(HTableFilter interface{}) ObQueryOption {
 func WithSelectColumns(SelectColumns []string) ObQueryOption {
 	return ObQueryOptionFunc(func(opts *ObQueryOptions) {
 		opts.SelectColumns = SelectColumns
+	})
+}
+
+// WithAggColumns set agg operations
+func WithAggParams(aggOperations []*protocol.ObTableAggregationSingle) ObQueryOption {
+	aggColumn := make([]string, 0, len(aggOperations))
+	for _, aggOperation := range aggOperations {
+		aggColumn = append(aggColumn, aggOperation.AggOperation())
+	}
+	return ObQueryOptionFunc(func(opts *ObQueryOptions) {
+		opts.Aggregations = aggOperations
+		opts.SelectColumns = aggColumn
 	})
 }
 

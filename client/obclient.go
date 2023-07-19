@@ -159,18 +159,33 @@ func (c *obClient) Insert(
 	mutateColumns []*table.Column,
 	opts ...option.ObOperationOption) (int64, error) {
 	operationOptions := c.getOperationOptions(opts...)
-	res, err := c.execute(
-		ctx,
-		tableName,
-		protocol.ObTableOperationInsert,
-		rowKey,
-		mutateColumns,
-		operationOptions)
-	if err != nil {
-		return -1, errors.WithMessagef(err, "execute insert, tableName:%s, rowKey:%s, mutateColumns:%s",
-			tableName, table.ColumnsToString(rowKey), table.ColumnsToString(mutateColumns))
+	if operationOptions.TableFilter == nil {
+		res, err := c.execute(
+			ctx,
+			tableName,
+			protocol.ObTableOperationInsert,
+			rowKey,
+			mutateColumns,
+			operationOptions)
+		if err != nil {
+			return -1, errors.WithMessagef(err, "execute insert, tableName:%s, rowKey:%s, mutateColumns:%s",
+				tableName, table.ColumnsToString(rowKey), table.ColumnsToString(mutateColumns))
+		}
+		return res.AffectedRows(), nil
+	} else {
+		res, err := c.executeWithFilter(
+			ctx,
+			tableName,
+			protocol.ObTableOperationInsert,
+			rowKey,
+			mutateColumns,
+			operationOptions)
+		if err != nil {
+			return -1, errors.WithMessagef(err, "execute insert with filter, tableName:%s, rowKey:%s, mutateColumns:%s",
+				tableName, table.ColumnsToString(rowKey), table.ColumnsToString(mutateColumns))
+		}
+		return res.AffectedRows(), nil
 	}
-	return res.AffectedRows(), nil
 }
 
 func (c *obClient) Update(
@@ -396,6 +411,24 @@ func (c *obClient) Query(ctx context.Context, tableName string, rangePairs []*ta
 	return res, nil
 }
 
+func (c *obClient) Aggregate(ctx context.Context, tableName string, rangePairs []*table.RangePair, opts ...option.ObQueryOption) (AggregateResult, error) {
+	queryOpts := c.getObQueryOptions(opts...)
+	queryExecutor := newObQueryExecutorWithParams(tableName, c)
+	queryExecutor.addKeyRanges(rangePairs)
+	queryExecutor.setQueryOptions(queryOpts)
+	resSet, err := queryExecutor.init(ctx)
+	if err != nil {
+		return nil, errors.WithMessagef(err, "execute aggregate, tableName:%s, keyRanges:%s",
+			tableName, table.RangePairsToString(rangePairs))
+	}
+	res, err := resSet.Next()
+	if err != nil {
+		return nil, errors.WithMessagef(err, "execute aggregate, tableName:%s, keyRanges:%s",
+			tableName, table.RangePairsToString(rangePairs))
+	}
+	return newObAggregateResult(res), nil
+}
+
 func (c *obClient) NewBatchExecutor(tableName string) BatchExecutor {
 	return newObBatchExecutor(tableName, c)
 }
@@ -517,6 +550,14 @@ func (c *obClient) executeWithFilter(
 	}
 
 	request.TableQueryAndMutate().TableQuery().SetFilterString(operationOptions.TableFilter.String())
+
+	if opType == protocol.ObTableOperationInsert {
+		// set query range into table query
+		err = request.TableQueryAndMutate().TableQuery().TransferQueryRange(operationOptions.ScanRange)
+		if err != nil {
+			return nil, errors.WithMessage(err, "transfer query range")
+		}
+	}
 
 	// 3. execute
 	result := protocol.NewObTableQueryAndMutateResponse()

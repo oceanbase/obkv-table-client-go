@@ -34,6 +34,65 @@ const (
 	testFilterOpCreateStatement = "create table if not exists `test_filter_operation`(`c1` varchar(20) not null,`c2` bigint(20) default null,`c3` varchar(20) default null,primary key (`c1`));"
 )
 
+func TestInsert(t *testing.T) {
+	tableName := testFilterOpTableName
+	defer test.DeleteTable(tableName)
+
+	rowKey := []*table.Column{table.NewColumn("c1", "1")}
+
+	insertColumns := []*table.Column{table.NewColumn("c2", int64(1)), table.NewColumn("c3", "hello")}
+	affectRows, err := cli.Insert(
+		context.TODO(),
+		tableName,
+		rowKey,
+		insertColumns,
+	)
+	assert.Equal(t, nil, err)
+	assert.EqualValues(t, 1, affectRows)
+
+	rowKey = []*table.Column{table.NewColumn("c1", "2")}
+	affectRows, err = cli.Insert(
+		context.TODO(),
+		tableName,
+		rowKey,
+		insertColumns,
+	)
+	assert.Equal(t, nil, err)
+	assert.EqualValues(t, 1, affectRows)
+
+	startRowKey := []*table.Column{table.NewColumn("c1", "1")}
+	endRowKey := []*table.Column{table.NewColumn("c1", "10")}
+	keyRanges := []*table.RangePair{table.NewRangePair(startRowKey, endRowKey)}
+
+	rowKey = []*table.Column{table.NewColumn("c1", "4")}
+	mutationColumns := []*table.Column{table.NewColumn("c2", int64(3))}
+
+	affectRows, err = cli.Insert(
+		context.TODO(),
+		tableName,
+		rowKey,
+		mutationColumns,
+		option.WithFilter(filter.CompareVal(filter.Equal, "c2", int64(1))), // where c2 = 1
+		option.WithScanRange(keyRanges),
+	)
+	assert.Equal(t, nil, err)
+	assert.EqualValues(t, 1, affectRows)
+
+	rowKey = []*table.Column{table.NewColumn("c1", "6")}
+	mutationColumns = []*table.Column{table.NewColumn("c2", int64(3))}
+
+	affectRows, err = cli.Insert(
+		context.TODO(),
+		tableName,
+		rowKey,
+		mutationColumns,
+		option.WithFilter(filter.CompareVal(filter.Equal, "c2", int64(10))), // where c2 = 10, not exist
+		option.WithScanRange(keyRanges),
+	)
+	assert.Equal(t, nil, err)
+	assert.EqualValues(t, 0, affectRows)
+}
+
 func TestAppend(t *testing.T) {
 	tableName := testFilterOpTableName
 	defer test.DeleteTable(tableName)

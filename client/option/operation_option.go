@@ -19,6 +19,7 @@ package option
 
 import (
 	"github.com/oceanbase/obkv-table-client-go/client/filter"
+	"github.com/oceanbase/obkv-table-client-go/table"
 )
 
 type ObOperationOption interface {
@@ -39,6 +40,7 @@ type ObOperationOptions struct {
 	ReturnRowKey         bool
 	ReturnAffectedEntity bool
 	TableFilter          filter.ObTableFilter
+	ScanRange            []*table.RangePair
 }
 
 func (f ObOperationOptionFunc) Apply(opts *ObOperationOptions) {
@@ -63,5 +65,12 @@ func WithReturnAffectedEntity(ReturnAffectedEntity bool) ObOperationOption {
 func WithFilter(TableFilter filter.ObTableFilter) ObOperationOption {
 	return ObOperationOptionFunc(func(opts *ObOperationOptions) {
 		opts.TableFilter = TableFilter
+	})
+}
+
+// WithScanRange set scan range for check and insert
+func WithScanRange(rangePair []*table.RangePair) ObOperationOption {
+	return ObOperationOptionFunc(func(opts *ObOperationOptions) {
+		opts.ScanRange = rangePair
 	})
 }
