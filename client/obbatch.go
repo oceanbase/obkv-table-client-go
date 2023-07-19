@@ -34,18 +34,24 @@ import (
 // newObBatchExecutor create a batch executor and bind a client.
 func newObBatchExecutor(tableName string, cli *obClient) *obBatchExecutor {
 	return &obBatchExecutor{
-		tableName:  tableName,
-		batchOps:   protocol.NewObTableBatchOperation(),
-		cli:        cli,
-		rowKeyName: nil,
+		tableName:           tableName,
+		batchOps:            protocol.NewObTableBatchOperation(),
+		cli:                 cli,
+		rowKeyName:          nil,
+		readOnly:            true,
+		sameType:            true,
+		samePropertiesNames: false,
 	}
 }
 
 type obBatchExecutor struct {
-	tableName  string
-	batchOps   *protocol.ObTableBatchOperation
-	cli        *obClient
-	rowKeyName []string
+	tableName           string
+	batchOps            *protocol.ObTableBatchOperation
+	cli                 *obClient
+	rowKeyName          []string
+	readOnly            bool
+	sameType            bool
+	samePropertiesNames bool
 }
 
 func (c *obBatchExecutor) getOperationOptions(opts ...option.ObOperationOption) *option.ObOperationOptions {
@@ -54,6 +60,24 @@ func (c *obBatchExecutor) getOperationOptions(opts ...option.ObOperationOption) 
 		opt.Apply(operationOptions)
 	}
 	return operationOptions
+}
+
+func (c *obBatchExecutor) setBatchOptions(batchOptions *option.ObBatchOptions) {
+	c.readOnly = batchOptions.ReadOnly
+	c.sameType = batchOptions.SameType
+	c.samePropertiesNames = batchOptions.SamePropertiesNames
+}
+
+func (c *obBatchExecutor) setReadonly(readOnly bool) {
+	c.readOnly = readOnly
+}
+
+func (c *obBatchExecutor) setSameType(sameType bool) {
+	c.sameType = sameType
+}
+
+func (c *obBatchExecutor) setSamePropertiesNames(samePropertiesNames bool) {
+	c.samePropertiesNames = samePropertiesNames
 }
 
 func (b *obBatchExecutor) String() string {
@@ -226,6 +250,9 @@ func (b *obBatchExecutor) partitionExecute(
 	batchOp := protocol.NewObTableBatchOperation()
 	ops := make([]*protocol.ObTableOperation, 0, len(partOp.ops))
 	batchOp.SetObTableOperations(ops)
+	batchOp.SetReadOnly(b.readOnly)
+	batchOp.SetSameType(b.sameType)
+	batchOp.SetSamePropertiesNames(b.samePropertiesNames)
 	for _, op := range partOp.ops {
 		batchOp.AppendObTableOperation(op.op)
 	}

@@ -88,7 +88,7 @@ type Client interface {
 	// Query records by rangePairs.
 	Query(ctx context.Context, tableName string, rangePairs []*table.RangePair, opts ...option.ObQueryOption) (QueryResultIterator, error)
 	// NewBatchExecutor create a batch executor.
-	NewBatchExecutor(tableName string) BatchExecutor
+	NewBatchExecutor(tableName string, opts ...option.ObBatchOption) BatchExecutor
 	// Close closes the client.
 	// close will disconnect all connections and exit all goroutines.
 	Close()
