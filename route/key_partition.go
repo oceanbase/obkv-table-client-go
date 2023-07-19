@@ -103,26 +103,25 @@ func (d *obKeyPartDesc) GetPartIds(rowKeyPair *table.RangePair) ([]uint64, error
 	if rowKeyPair.Start() == nil || rowKeyPair.End() == nil {
 		return nil, errors.New("startKeys or endKeys in rangePair is nil")
 	}
-	if rowKeyPair.IsStartEqEnd() {
-		// check if startKey or endKey is extremum
-		for i := 0; i < len(rowKeyPair.Start()); i++ {
-			if _, ok := rowKeyPair.Start()[i].Value().(table.Extremum); ok {
-				return nil, errors.New("one of startKey or endKey is extremum")
-			}
-		}
-		// startKey == endKey means that the range is equal to a column
-		partId, err := d.GetPartId(rowKeyPair.Start())
-		if err != nil {
-			return []uint64{ObInvalidPartId}, errors.WithMessagef(err, "get part id, part desc:%s", d.String())
-		}
-		return []uint64{partId}, nil
-	} else {
-		// if startKey != endKey, add all partitions to the partition list
+	// extract partition key from range
+	startPk, endPk, err := extractRangePairPartKeyColumns(d, rowKeyPair)
+	if err != nil {
+		return nil, err
+	}
+	// check need to send all partitions
+	if checkQueryPkSendAll(startPk, endPk) {
 		partIds := make([]uint64, 0, d.partNum)
 		for i := 0; i < d.partNum; i++ {
 			partIds = append(partIds, uint64(i))
 		}
 		return partIds, nil
+	} else {
+		// startPk and endPk must be equal after check
+		partId, err := d.GetPartId(startPk)
+		if err != nil {
+			return []uint64{ObInvalidPartId}, errors.WithMessagef(err, "get part id, part desc:%s", d.String())
+		}
+		return []uint64{partId}, nil
 	}
 }
 

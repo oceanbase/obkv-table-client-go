@@ -66,6 +66,91 @@ func TestQueryHashSimple(t *testing.T) {
 	}
 
 	startRowKey = []*table.Column{table.NewColumn("c1", int64(5)), table.NewColumn("c2", table.Min)}
+	endRowKey = []*table.Column{table.NewColumn("c1", int64(5)), table.NewColumn("c2", table.Max)}
+	keyRanges = []*table.RangePair{table.NewRangePair(startRowKey, endRowKey)}
+	resSet, err = cli.Query(
+		context.TODO(),
+		tableName,
+		keyRanges,
+		option.WithSelectColumns([]string{"c1", "c2", "c3"}),
+	)
+	assert.Equal(t, nil, err)
+	for res, err := resSet.Next(); err == nil; res, err = resSet.Next() {
+		if res == nil {
+			break
+		}
+		assert.Equal(t, nil, err)
+		assert.EqualValues(t, 5, res.Value("c2"))
+		assert.EqualValues(t, res.Value("c1"), res.Value("c2"))
+		assert.EqualValues(t, "hello", res.Value("c3"))
+	}
+
+	// test partition key max min
+	startRowKey = []*table.Column{table.NewColumn("c1", int64(-2)), table.NewColumn("c2", table.Min)}
+	endRowKey = []*table.Column{table.NewColumn("c1", table.Max), table.NewColumn("c2", table.Max)}
+	keyRanges = []*table.RangePair{table.NewRangePair(startRowKey, endRowKey)}
+	resSet, err = cli.Query(
+		context.TODO(),
+		tableName,
+		keyRanges,
+		option.WithSelectColumns([]string{"c1", "c2", "c3"}),
+	)
+	assert.Equal(t, nil, err)
+	for res, err := resSet.Next(); err == nil; res, err = resSet.Next() {
+		if res == nil {
+			break
+		}
+		assert.Equal(t, nil, err)
+		assert.EqualValues(t, res.Value("c1"), res.Value("c2"))
+		assert.EqualValues(t, "hello", res.Value("c3"))
+	}
+
+	startRowKey = []*table.Column{table.NewColumn("c1", table.Min), table.NewColumn("c2", table.Min)}
+	endRowKey = []*table.Column{table.NewColumn("c1", table.Max), table.NewColumn("c2", table.Max)}
+	keyRanges = []*table.RangePair{table.NewRangePair(startRowKey, endRowKey)}
+	resSet, err = cli.Query(
+		context.TODO(),
+		tableName,
+		keyRanges,
+		option.WithSelectColumns([]string{"c1", "c2", "c3"}),
+	)
+	assert.Equal(t, nil, err)
+	for res, err := resSet.Next(); res != nil && err == nil; res, err = resSet.Next() {
+		assert.Equal(t, nil, err)
+		assert.EqualValues(t, res.Value("c1"), res.Value("c2"))
+		assert.EqualValues(t, "hello", res.Value("c3"))
+	}
+
+	// wrong range
+	// Max - Min
+	startRowKey = []*table.Column{table.NewColumn("c1", table.Max), table.NewColumn("c2", table.Min)}
+	endRowKey = []*table.Column{table.NewColumn("c1", table.Min), table.NewColumn("c2", table.Max)}
+	keyRanges = []*table.RangePair{table.NewRangePair(startRowKey, endRowKey)}
+	resSet, err = cli.Query(
+		context.TODO(),
+		tableName,
+		keyRanges,
+		option.WithSelectColumns([]string{"c1", "c2", "c3"}),
+	)
+	assert.Equal(t, nil, err)
+	for res, err := resSet.Next(); res != nil && err == nil; res, err = resSet.Next() {
+		assert.Equal(t, nil, err)
+		assert.Equal(t, nil, res)
+	}
+
+	// missing partition key
+	startRowKey = []*table.Column{table.NewColumn("c2", table.Min)}
+	endRowKey = []*table.Column{table.NewColumn("c1", table.Min), table.NewColumn("c2", table.Max)}
+	keyRanges = []*table.RangePair{table.NewRangePair(startRowKey, endRowKey)}
+	resSet, err = cli.Query(
+		context.TODO(),
+		tableName,
+		keyRanges,
+		option.WithSelectColumns([]string{"c1", "c2", "c3"}),
+	)
+	assert.NotEqual(t, nil, err)
+
+	startRowKey = []*table.Column{table.NewColumn("c1", int64(5)), table.NewColumn("c2", table.Min)}
 	endRowKey = []*table.Column{table.NewColumn("c1", int64(10)), table.NewColumn("c2", table.Max)}
 	keyRanges = []*table.RangePair{table.NewRangePair(startRowKey, endRowKey)}
 	resSet, err = cli.Query(
@@ -93,10 +178,7 @@ func TestQueryHashSimple(t *testing.T) {
 		option.WithSelectColumns([]string{"c1", "c2", "c3"}),
 	)
 	assert.Equal(t, nil, err)
-	for res, err := resSet.NextBatch(); err == nil; res, err = resSet.NextBatch() {
-		if res == nil {
-			break
-		}
+	for res, err := resSet.NextBatch(); res != nil && err == nil; res, err = resSet.NextBatch() {
 		assert.Equal(t, nil, err)
 		for i := 0; i < len(res); i++ {
 			assert.EqualValues(t, res[i].Value("c1"), res[i].Value("c2"))

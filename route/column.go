@@ -30,5 +30,6 @@ type obColumn interface {
 	CollationType() protocol.ObCollationType
 	// EvalValue calculate the value of the partition column.
 	eval(rowKey []*table.Column) (interface{}, error)
+	extractColumn(rowKey []*table.Column) (*table.Column, error)
 	String() string
 }

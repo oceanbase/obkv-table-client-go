@@ -202,7 +202,7 @@ func (q *obQueryExecutor) transferQueryRange() error {
 	return nil
 }
 
-// init calculate the expectant and construct the query result.
+// init calculate the targetParts and construct the query result.
 func (q *obQueryExecutor) init(ctx context.Context) (*ObQueryResultIterator, error) {
 	err := q.checkQueryParams()
 	if err != nil {
@@ -210,7 +210,7 @@ func (q *obQueryExecutor) init(ctx context.Context) (*ObQueryResultIterator, err
 	}
 
 	// get table params
-	expectant, err := q.getTableParams(ctx, q.tableName, q.keyRanges, false)
+	targetParts, err := q.getTableParams(ctx, q.tableName, q.keyRanges, false)
 	if err != nil {
 		return nil, errors.WithMessage(err, "get table params")
 	}
@@ -221,5 +221,5 @@ func (q *obQueryExecutor) init(ctx context.Context) (*ObQueryResultIterator, err
 		return nil, errors.WithMessage(err, "transfer query range")
 	}
 
-	return newObQueryResultIteratorWithParams(ctx, q.cli, q.tableQuery, expectant, q.entityType, q.tableName), nil
+	return newObQueryResultIteratorWithParams(ctx, q.cli, q.tableQuery, targetParts, q.entityType, q.tableName), nil
 }
