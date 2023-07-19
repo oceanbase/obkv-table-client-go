@@ -63,6 +63,6 @@ func main() {
 		panic(err)
 	}
 
-	println(res.GetResults()[0].Entity().GetProperty("c1"))
-	println(res.GetResults()[1].Entity().GetProperty("c2"))
+	println(res.GetResults()[0].Value("c1"))
+	println(res.GetResults()[1].Value("c2"))
 }
