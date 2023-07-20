@@ -74,7 +74,8 @@ func NewObTableBatchOperationRequestWithParams(
 	partitionId uint64,
 	obTableBatchOperation *ObTableBatchOperation,
 	timeout time.Duration,
-	flag uint16) *ObTableBatchOperationRequest {
+	flag uint16,
+	entityType ObTableEntityType) *ObTableBatchOperationRequest {
 
 	return &ObTableBatchOperationRequest{
 		ObUniVersionHeader: ObUniVersionHeader{
@@ -92,7 +93,7 @@ func NewObTableBatchOperationRequestWithParams(
 		credential:              nil, // when execute set
 		tableName:               tableName,
 		tableId:                 tableId,
-		obTableEntityType:       ObTableEntityTypeDynamic,
+		obTableEntityType:       entityType,
 		obTableBatchOperation:   obTableBatchOperation,
 		obTableConsistencyLevel: ObTableConsistencyLevelStrong,
 		returnRowKey:            false,
