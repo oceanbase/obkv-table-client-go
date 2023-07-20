@@ -291,7 +291,7 @@ func TestAuto_IncNotRowkey(t *testing.T) {
 	// test insertup exist, update
 	rowKey = []*table.Column{table.NewColumn("c1", int64(5))}
 	mutationColumns = []*table.Column{table.NewColumn("c2", int64(20)), table.NewColumn("c3", "insertup exist")}
-	res, err = cli.Replace(
+	res, err = cli.InsertOrUpdate(
 		context.TODO(),
 		tableName,
 		rowKey,
