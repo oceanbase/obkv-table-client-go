@@ -34,26 +34,36 @@ import (
 // newObBatchExecutor create a batch executor and bind a client.
 func newObBatchExecutor(tableName string, cli *obClient) *obBatchExecutor {
 	return &obBatchExecutor{
-		tableName:  tableName,
-		batchOps:   protocol.NewObTableBatchOperation(),
-		cli:        cli,
-		rowKeyName: nil,
+		tableName:           tableName,
+		batchOps:            protocol.NewObTableBatchOperation(),
+		cli:                 cli,
+		rowKeyName:          nil,
+		samePropertiesNames: false,
+		entityType:          protocol.ObTableEntityTypeDynamic,
 	}
 }
 
 type obBatchExecutor struct {
-	tableName  string
-	batchOps   *protocol.ObTableBatchOperation
-	cli        *obClient
-	rowKeyName []string
+	tableName           string
+	batchOps            *protocol.ObTableBatchOperation
+	cli                 *obClient
+	rowKeyName          []string
+	samePropertiesNames bool
+	entityType          protocol.ObTableEntityType
 }
 
-func (c *obBatchExecutor) getOperationOptions(opts ...option.ObOperationOption) *option.ObOperationOptions {
-	operationOptions := option.NewOperationOptions()
-	for _, opt := range opts {
-		opt.Apply(operationOptions)
+func (c *obBatchExecutor) setBatchOptions(batchOptions *option.ObBatchOptions) {
+	c.samePropertiesNames = batchOptions.SamePropertiesNames
+	switch batchOptions.KeyValueMode {
+	case table.DynamicMode:
+		c.entityType = protocol.ObTableEntityTypeDynamic
+	case table.ObTableMode:
+		c.entityType = protocol.ObTableEntityTypeKV
+	case table.ObHBaseMode:
+		c.entityType = protocol.ObTableEntityTypeHKV
+	default:
+		c.entityType = protocol.ObTableEntityTypeDynamic
 	}
-	return operationOptions
 }
 
 func (b *obBatchExecutor) String() string {
@@ -226,6 +236,7 @@ func (b *obBatchExecutor) partitionExecute(
 	batchOp := protocol.NewObTableBatchOperation()
 	ops := make([]*protocol.ObTableOperation, 0, len(partOp.ops))
 	batchOp.SetObTableOperations(ops)
+	batchOp.SetSamePropertiesNames(b.samePropertiesNames)
 	for _, op := range partOp.ops {
 		batchOp.AppendObTableOperation(op.op)
 	}
@@ -237,6 +248,7 @@ func (b *obBatchExecutor) partitionExecute(
 		batchOp,
 		b.cli.config.OperationTimeOut,
 		b.cli.config.LogLevel,
+		b.entityType,
 	)
 
 	// 2. Execute
