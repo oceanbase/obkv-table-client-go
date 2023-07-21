@@ -61,6 +61,8 @@ func (c *obBatchExecutor) setBatchOptions(batchOptions *option.ObBatchOptions) {
 		c.entityType = protocol.ObTableEntityTypeKV
 	case table.ObHBaseMode:
 		c.entityType = protocol.ObTableEntityTypeHKV
+	default:
+		c.entityType = protocol.ObTableEntityTypeDynamic
 	}
 }
 
