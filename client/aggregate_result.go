@@ -18,7 +18,9 @@
 package client
 
 type AggregateResult interface {
+	// Value returns the value of the specified aggregate name, such as Value("min(c1)").
 	Value(columnName string) interface{}
+	// Values returns all aggregation values.
 	Values() []interface{}
 }
 
@@ -27,21 +29,21 @@ func newObAggregateResult(aggResultSet QueryResult) *obAggregateResult {
 }
 
 type obAggregateResult struct {
-	aggResult QueryResult
+	result QueryResult
 }
 
-// Value returns the value of the specified column.
-func (r *obAggregateResult) Value(columnName string) interface{} {
-	if r.aggResult == nil {
+// Value returns the value of the specified aggregate name, such as Value("min(c1)").
+func (r *obAggregateResult) Value(aggregateName string) interface{} {
+	if r.result == nil {
 		return nil
 	}
-	return r.aggResult.Value(columnName)
+	return r.result.Value(aggregateName)
 }
 
-// Values returns all values in the query result.
+// Values returns all aggregation values.
 func (r *obAggregateResult) Values() []interface{} {
-	if r.aggResult == nil {
+	if r.result == nil {
 		return nil
 	}
-	return r.aggResult.Values()
+	return r.result.Values()
 }

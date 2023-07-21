@@ -87,7 +87,6 @@ func (q *obQueryExecutor) setQueryOptions(queryOptions *option.ObQueryOptions) {
 	if queryOptions.IsHbaseQuery {
 		q.entityType = protocol.ObTableEntityTypeHKV
 	}
-	q.tableQuery.SetAggregations(queryOptions.Aggregations)
 }
 
 // getTableParams returns the table params.
@@ -115,10 +114,9 @@ func (q *obQueryExecutor) getTableParams(
 	partIds := removeDuplicates(partIdList)
 
 	// defense for aggregate of multiple parts
-	partSize := len(partIds)
-	if partSize > 1 {
+	if len(partIds) > 1 && q.tableQuery.IsAggregations() {
 		if q.tableQuery.IsAggregations() {
-			return nil, errors.New("aggregate multiple parts")
+			return nil, errors.New("aggregate multiple partitions")
 		}
 	}
 
@@ -174,43 +172,6 @@ func (q *obQueryExecutor) checkQueryParams() error {
 	return nil
 }
 
-// transferQueryRange sets the query range into tableQuery.
-func (q *obQueryExecutor) transferQueryRange() error {
-	queryRanges := make([]*protocol.ObNewRange, 0, len(q.keyRanges))
-	for _, rangePair := range q.keyRanges {
-		if len(rangePair.Start()) != len(rangePair.End()) {
-			return errors.New("startRange and endRange key length is not equal")
-		}
-		startObjs := make([]*protocol.ObObject, 0, len(rangePair.Start()))
-		endObjs := make([]*protocol.ObObject, 0, len(rangePair.End()))
-		for i := 0; i < len(rangePair.Start()); i++ {
-			// append start obj
-			objMeta, err := protocol.DefaultObjMeta(rangePair.Start()[i].Value())
-			if err != nil {
-				return errors.WithMessage(err, "create obj meta by Range key")
-			}
-			startObjs = append(startObjs, protocol.NewObObjectWithParams(objMeta, rangePair.Start()[i].Value()))
-
-			// append end obj
-			objMeta, err = protocol.DefaultObjMeta(rangePair.End()[i].Value())
-			if err != nil {
-				return errors.WithMessage(err, "create obj meta by Range key")
-			}
-			endObjs = append(endObjs, protocol.NewObObjectWithParams(objMeta, rangePair.End()[i].Value()))
-		}
-		borderFlag := protocol.NewObBorderFlag()
-		if rangePair.IncludeStart() {
-			borderFlag.SetInclusiveStart()
-		}
-		if rangePair.IncludeEnd() {
-			borderFlag.SetInclusiveEnd()
-		}
-		queryRanges = append(queryRanges, protocol.NewObNewRangeWithParams(startObjs, endObjs, borderFlag))
-	}
-	q.tableQuery.SetKeyRanges(queryRanges)
-	return nil
-}
-
 // init calculate the targetParts and construct the query result.
 func (q *obQueryExecutor) init(ctx context.Context) (*ObQueryResultIterator, error) {
 	err := q.checkQueryParams()
@@ -225,10 +186,11 @@ func (q *obQueryExecutor) init(ctx context.Context) (*ObQueryResultIterator, err
 	}
 
 	// set query range into table query
-	err = q.transferQueryRange()
+	keyRanges, err := transferQueryRange(q.keyRanges)
 	if err != nil {
 		return nil, errors.WithMessage(err, "transfer query range")
 	}
+	q.tableQuery.SetKeyRanges(keyRanges)
 
 	return newObQueryResultIteratorWithParams(ctx, q.cli, q.tableQuery, targetParts, q.entityType, q.tableName), nil
 }

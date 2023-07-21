@@ -20,9 +20,7 @@ package aggregate
 import (
 	"context"
 	"github.com/oceanbase/obkv-table-client-go/client"
-	"github.com/oceanbase/obkv-table-client-go/client/option"
 	"github.com/oceanbase/obkv-table-client-go/config"
-	"github.com/oceanbase/obkv-table-client-go/protocol"
 	"github.com/oceanbase/obkv-table-client-go/table"
 )
 
@@ -46,21 +44,11 @@ func main() {
 	endRowKey := []*table.Column{table.NewColumn("c1", int64(100)), table.NewColumn("c2", table.Max)}
 	keyRanges := []*table.RangePair{table.NewRangePair(startRowKey, endRowKey)}
 
-	// set agg params
-	aggs := []*protocol.ObTableAggregationSingle{
-		protocol.NewObTableAggregationSingleWithParams(protocol.ObTableAggregationTypeMin, "c2"),
-	}
+	// create agg executor
+	aggExecutor := cli.NewAggExecutor(tableName, keyRanges).Sum("c3")
 
-	// aggregate
-	res, err := cli.Aggregate(
-		context.TODO(),
-		tableName,
-		keyRanges,
-		option.WithAggParams(aggs),
-	)
-	if err != nil {
-		panic(err)
-	}
+	// get agg result
+	res, err := aggExecutor.Execute(context.TODO())
 
 	// get agg result value
 	println(res.Value("min(c2)").(int64))

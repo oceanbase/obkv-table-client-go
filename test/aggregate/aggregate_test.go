@@ -20,8 +20,6 @@ package aggregate
 import (
 	"context"
 	"fmt"
-	"github.com/oceanbase/obkv-table-client-go/client/option"
-	"github.com/oceanbase/obkv-table-client-go/protocol"
 	"github.com/oceanbase/obkv-table-client-go/table"
 	"github.com/stretchr/testify/assert"
 	"testing"
@@ -57,15 +55,10 @@ func TestAggregate(t *testing.T) {
 	endRowKey := []*table.Column{table.NewColumn("c1", int64(1)), table.NewColumn("c2", int64(9))}
 	keyRanges := []*table.RangePair{table.NewRangePair(startRowKey, endRowKey)}
 
-	aggs := []*protocol.ObTableAggregationSingle{
-		protocol.NewObTableAggregationSingleWithParams(protocol.ObTableAggregationTypeMin, "c2"),
-	}
-	res, err := cli.Aggregate(
-		context.TODO(),
-		tableName,
-		keyRanges,
-		option.WithAggParams(aggs),
-	)
+	aggExecutor := cli.NewAggExecutor(tableName, keyRanges).Min("c2")
+
+	res, err := aggExecutor.Execute(context.TODO())
+
 	assert.Equal(t, nil, err)
 	assert.Equal(t, nil, res.Value("min(c2)"))
 
@@ -77,35 +70,29 @@ func TestAggregate(t *testing.T) {
 	endRowKey = []*table.Column{table.NewColumn("c1", int64(1)), table.NewColumn("c2", int64(9))}
 	keyRanges = []*table.RangePair{table.NewRangePair(startRowKey, endRowKey)}
 
-	aggs = []*protocol.ObTableAggregationSingle{
-		protocol.NewObTableAggregationSingleWithParams(protocol.ObTableAggregationTypeMin, "c2"),
-		protocol.NewObTableAggregationSingleWithParams(protocol.ObTableAggregationTypeMax, "c2"),
-		protocol.NewObTableAggregationSingleWithParams(protocol.ObTableAggregationTypeSum, "c2"),
-		protocol.NewObTableAggregationSingleWithParams(protocol.ObTableAggregationTypeAvg, "c2"),
-		protocol.NewObTableAggregationSingleWithParams(protocol.ObTableAggregationTypeCount, "c2"),
+	aggExecutor = cli.NewAggExecutor(tableName, keyRanges).
+		Min("c2").
+		Max("c2").
+		Count().
+		Sum("c2").
+		Avg("c2").
+		Min("c4").
+		Max("c4").
+		Sum("c4").
+		Avg("c4").
+		Min("c5").
+		Max("c5").
+		Sum("c5").
+		Avg("c5")
 
-		protocol.NewObTableAggregationSingleWithParams(protocol.ObTableAggregationTypeMin, "c4"),
-		protocol.NewObTableAggregationSingleWithParams(protocol.ObTableAggregationTypeMax, "c4"),
-		protocol.NewObTableAggregationSingleWithParams(protocol.ObTableAggregationTypeSum, "c4"),
-		protocol.NewObTableAggregationSingleWithParams(protocol.ObTableAggregationTypeAvg, "c4"),
+	res, err = aggExecutor.Execute(context.TODO())
 
-		protocol.NewObTableAggregationSingleWithParams(protocol.ObTableAggregationTypeMin, "c5"),
-		protocol.NewObTableAggregationSingleWithParams(protocol.ObTableAggregationTypeMax, "c5"),
-		protocol.NewObTableAggregationSingleWithParams(protocol.ObTableAggregationTypeSum, "c5"),
-		protocol.NewObTableAggregationSingleWithParams(protocol.ObTableAggregationTypeAvg, "c5"),
-	}
-	res, err = cli.Aggregate(
-		context.TODO(),
-		tableName,
-		keyRanges,
-		option.WithAggParams(aggs),
-	)
 	assert.Equal(t, nil, err)
 	assert.Equal(t, int64(0), res.Value("min(c2)").(int64))
 	assert.Equal(t, int64(9), res.Value("max(c2)").(int64))
 	assert.Equal(t, int64(45), res.Value("sum(c2)").(int64))
 	assert.Equal(t, 4.5, res.Value("avg(c2)").(float64))
-	assert.Equal(t, int64(10), res.Value("count(c2)").(int64))
+	assert.Equal(t, int64(10), res.Value("count(*)").(int64))
 
 	assert.Equal(t, 0.0, res.Value("min(c4)").(float64))
 	assert.Equal(t, 9.0, res.Value("max(c4)").(float64))
@@ -123,12 +110,10 @@ func TestAggregate(t *testing.T) {
 	endRowKey = []*table.Column{table.NewColumn("c1", int64(2)), table.NewColumn("c2", int64(9))}
 	keyRanges = []*table.RangePair{table.NewRangePair(startRowKey, endRowKey)}
 
-	res, err = cli.Aggregate(
-		context.TODO(),
-		tableName,
-		keyRanges,
-		option.WithAggParams(aggs),
-	)
+	aggExecutor = cli.NewAggExecutor(tableName, keyRanges).Min("c2")
+
+	res, err = aggExecutor.Execute(context.TODO())
+
 	assert.Equal(t, nil, res)
 	assert.NotNil(t, err)
 
@@ -136,19 +121,16 @@ func TestAggregate(t *testing.T) {
 	addAggRecord(recordCount)
 	startRowKey = []*table.Column{table.NewColumn("c1", int64(1)), table.NewColumn("c2", int64(0))}
 	endRowKey = []*table.Column{table.NewColumn("c1", int64(1)), table.NewColumn("c2", int64(19))}
-	keyRanges = []*table.RangePair{table.NewRangePair(startRowKey, endRowKey)}
-	aggs = []*protocol.ObTableAggregationSingle{
-		protocol.NewObTableAggregationSingleWithParams(protocol.ObTableAggregationTypeMin, "c5"),
-		protocol.NewObTableAggregationSingleWithParams(protocol.ObTableAggregationTypeMax, "c5"),
-		protocol.NewObTableAggregationSingleWithParams(protocol.ObTableAggregationTypeSum, "c5"),
-		protocol.NewObTableAggregationSingleWithParams(protocol.ObTableAggregationTypeAvg, "c5"),
-	}
-	res, err = cli.Aggregate(
-		context.TODO(),
-		tableName,
-		keyRanges,
-		option.WithAggParams(aggs),
-	)
+	keyRanges = []*table.RangePair{table.NewRangePair(startRowKey, endRowKey, false, false)}
+
+	aggExecutor = cli.NewAggExecutor(tableName, keyRanges).
+		Min("c5").
+		Max("c5").
+		Sum("c5").
+		Avg("c5")
+
+	res, err = aggExecutor.Execute(context.TODO())
+
 	assert.Equal(t, nil, err)
 	assert.Equal(t, int32(0), res.Value("min(c5)").(int32))
 	assert.Equal(t, int32(9), res.Value("max(c5)").(int32))
@@ -156,28 +138,18 @@ func TestAggregate(t *testing.T) {
 	assert.Equal(t, 4.5, res.Value("avg(c5)").(float64))
 
 	// invalid aggregation
-	aggs = []*protocol.ObTableAggregationSingle{
-		protocol.NewObTableAggregationSingleWithParams(protocol.ObTableAggregationTypeSum, "c3"),
-	}
-	res, err = cli.Aggregate(
-		context.TODO(),
-		tableName,
-		keyRanges,
-		option.WithAggParams(aggs),
-	)
+	aggExecutor = cli.NewAggExecutor(tableName, keyRanges).Sum("c3")
+
+	res, err = aggExecutor.Execute(context.TODO())
+
 	assert.Equal(t, nil, res)
 	assert.NotNil(t, err)
 
 	// aggregate not exist column
-	aggs = []*protocol.ObTableAggregationSingle{
-		protocol.NewObTableAggregationSingleWithParams(protocol.ObTableAggregationTypeSum, "c9"),
-	}
-	res, err = cli.Aggregate(
-		context.TODO(),
-		tableName,
-		keyRanges,
-		option.WithAggParams(aggs),
-	)
+	aggExecutor = cli.NewAggExecutor(tableName, keyRanges).Min("c9")
+
+	res, err = aggExecutor.Execute(context.TODO())
+
 	assert.Equal(t, nil, res)
 	assert.NotNil(t, err)
 }

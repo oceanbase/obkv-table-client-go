@@ -411,26 +411,16 @@ func (c *obClient) Query(ctx context.Context, tableName string, rangePairs []*ta
 	return res, nil
 }
 
-func (c *obClient) Aggregate(ctx context.Context, tableName string, rangePairs []*table.RangePair, opts ...option.ObQueryOption) (AggregateResult, error) {
+func (c *obClient) NewBatchExecutor(tableName string) BatchExecutor {
+	return newObBatchExecutor(tableName, c)
+}
+
+func (c *obClient) NewAggExecutor(tableName string, rangePairs []*table.RangePair, opts ...option.ObQueryOption) AggExecutor {
 	queryOpts := c.getObQueryOptions(opts...)
 	queryExecutor := newObQueryExecutorWithParams(tableName, c)
 	queryExecutor.addKeyRanges(rangePairs)
 	queryExecutor.setQueryOptions(queryOpts)
-	resSet, err := queryExecutor.init(ctx)
-	if err != nil {
-		return nil, errors.WithMessagef(err, "execute aggregate, tableName:%s, keyRanges:%s",
-			tableName, table.RangePairsToString(rangePairs))
-	}
-	res, err := resSet.Next()
-	if err != nil {
-		return nil, errors.WithMessagef(err, "execute aggregate, tableName:%s, keyRanges:%s",
-			tableName, table.RangePairsToString(rangePairs))
-	}
-	return newObAggregateResult(res), nil
-}
-
-func (c *obClient) NewBatchExecutor(tableName string) BatchExecutor {
-	return newObBatchExecutor(tableName, c)
+	return newObAggExecutor(queryExecutor)
 }
 
 func (c *obClient) Close() {
@@ -553,10 +543,11 @@ func (c *obClient) executeWithFilter(
 
 	if opType == protocol.ObTableOperationInsert {
 		// set query range into table query
-		err = request.TableQueryAndMutate().TableQuery().TransferQueryRange(operationOptions.ScanRange)
+		keyRanges, err := transferQueryRange(operationOptions.ScanRange)
 		if err != nil {
 			return nil, errors.WithMessage(err, "transfer query range")
 		}
+		request.TableQueryAndMutate().TableQuery().SetKeyRanges(keyRanges)
 	}
 
 	// 3. execute

@@ -27,25 +27,25 @@ import (
 	"github.com/oceanbase/obkv-table-client-go/util"
 )
 
-func TestObTableAggregationSingleEncodeDecode(t *testing.T) {
-	obTableAggregationSingle := NewObTableAggregationSingle()
-	obTableAggregationSingle.SetVersion(1)
-	obTableAggregationSingle.SetContentLength(0)
-	obTableAggregationSingle.SetAggType(ObTableAggregationType(rand.Intn(255)))
-	obTableAggregationSingle.SetAggColumn(util.String(10))
+func TestObTableAggregationEncodeDecode(t *testing.T) {
+	ObTableAggregation := NewObTableAggregation()
+	ObTableAggregation.SetVersion(1)
+	ObTableAggregation.SetContentLength(0)
+	ObTableAggregation.SetAggType(ObTableAggregationType(rand.Intn(255)))
+	ObTableAggregation.SetAggColumn(util.String(10))
 
-	payloadLen := obTableAggregationSingle.PayloadLen()
+	payloadLen := ObTableAggregation.PayloadLen()
 	buf := make([]byte, payloadLen)
 	buffer := bytes.NewBuffer(buf)
-	obTableAggregationSingle.Encode(buffer)
+	ObTableAggregation.Encode(buffer)
 
-	newObTableAggregationSingle := NewObTableAggregationSingle()
+	newObTableAggregation := NewObTableAggregation()
 	newBuffer := bytes.NewBuffer(buf)
-	newObTableAggregationSingle.Decode(newBuffer)
+	newObTableAggregation.Decode(newBuffer)
 
-	assert.EqualValues(t, obTableAggregationSingle.Version(), newObTableAggregationSingle.Version())
-	assert.EqualValues(t, obTableAggregationSingle.ContentLength(), newObTableAggregationSingle.ContentLength())
-	assert.EqualValues(t, obTableAggregationSingle.AggType(), newObTableAggregationSingle.AggType())
-	assert.EqualValues(t, obTableAggregationSingle.AggColumn(), newObTableAggregationSingle.AggColumn())
-	assert.EqualValues(t, obTableAggregationSingle, newObTableAggregationSingle)
+	assert.EqualValues(t, ObTableAggregation.Version(), newObTableAggregation.Version())
+	assert.EqualValues(t, ObTableAggregation.ContentLength(), newObTableAggregation.ContentLength())
+	assert.EqualValues(t, ObTableAggregation.AggType(), newObTableAggregation.AggType())
+	assert.EqualValues(t, ObTableAggregation.AggColumn(), newObTableAggregation.AggColumn())
+	assert.EqualValues(t, ObTableAggregation, newObTableAggregation)
 }

@@ -40,7 +40,7 @@ type ObTableQuery struct {
 	isHbaseQuery     bool
 	hTableFilter     *ObHTableFilter
 	scanRangeColumns []string
-	aggregations     []*ObTableAggregationSingle
+	aggregations     []*ObTableAggregation
 }
 
 func NewObTableQuery() *ObTableQuery {
@@ -213,11 +213,11 @@ func (q *ObTableQuery) SetScanRangeColumns(scanRangeColumns []string) {
 	q.scanRangeColumns = scanRangeColumns
 }
 
-func (q *ObTableQuery) Aggregations() []*ObTableAggregationSingle {
+func (q *ObTableQuery) Aggregations() []*ObTableAggregation {
 	return q.aggregations
 }
 
-func (q *ObTableQuery) SetAggregations(aggregations []*ObTableAggregationSingle) {
+func (q *ObTableQuery) SetAggregations(aggregations []*ObTableAggregation) {
 	q.aggregations = aggregations
 }
 
@@ -227,43 +227,6 @@ func (q *ObTableQuery) IsAggregations() bool {
 	} else {
 		return true
 	}
-}
-
-// TransferQueryRange sets the query range into tableQuery.
-func (q *ObTableQuery) TransferQueryRange(rangePair []*table.RangePair) error {
-	queryRanges := make([]*ObNewRange, 0, len(rangePair))
-	for _, rangePair := range rangePair {
-		if len(rangePair.Start()) != len(rangePair.End()) {
-			return errors.New("startRange and endRange key length is not equal")
-		}
-		startObjs := make([]*ObObject, 0, len(rangePair.Start()))
-		endObjs := make([]*ObObject, 0, len(rangePair.End()))
-		for i := 0; i < len(rangePair.Start()); i++ {
-			// append start obj
-			objMeta, err := DefaultObjMeta(rangePair.Start()[i].Value())
-			if err != nil {
-				return errors.WithMessage(err, "create obj meta by Range key")
-			}
-			startObjs = append(startObjs, NewObObjectWithParams(objMeta, rangePair.Start()[i].Value()))
-
-			// append end obj
-			objMeta, err = DefaultObjMeta(rangePair.End()[i].Value())
-			if err != nil {
-				return errors.WithMessage(err, "create obj meta by Range key")
-			}
-			endObjs = append(endObjs, NewObObjectWithParams(objMeta, rangePair.End()[i].Value()))
-		}
-		borderFlag := NewObBorderFlag()
-		if rangePair.IncludeStart() {
-			borderFlag.SetInclusiveStart()
-		}
-		if rangePair.IncludeEnd() {
-			borderFlag.SetInclusiveEnd()
-		}
-		queryRanges = append(queryRanges, NewObNewRangeWithParams(startObjs, endObjs, borderFlag))
-	}
-	q.SetKeyRanges(queryRanges)
-	return nil
 }
 
 func (q *ObTableQuery) PayloadLen() int {
@@ -400,10 +363,10 @@ func (q *ObTableQuery) Decode(buffer *bytes.Buffer) {
 	}
 
 	aggregationsLen := util.DecodeVi64(buffer)
-	q.aggregations = make([]*ObTableAggregationSingle, 0, aggregationsLen)
+	q.aggregations = make([]*ObTableAggregation, 0, aggregationsLen)
 	for i = 0; i < aggregationsLen; i++ {
-		obTableAggregationSingle := NewObTableAggregationSingle()
-		obTableAggregationSingle.Decode(buffer)
-		q.aggregations = append(q.aggregations, obTableAggregationSingle)
+		ObTableAggregation := NewObTableAggregation()
+		ObTableAggregation.Decode(buffer)
+		q.aggregations = append(q.aggregations, ObTableAggregation)
 	}
 }
