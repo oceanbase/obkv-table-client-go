@@ -27,6 +27,7 @@ const (
 )
 
 // NewObBorderFlag creates a new ObBorderFlag.
+// The default value is inclusiveStart and inclusiveEnd.
 func NewObBorderFlag() ObBorderFlag {
 	borderFlag := ObBorderFlag(0)
 	borderFlag.SetInclusiveStart()
