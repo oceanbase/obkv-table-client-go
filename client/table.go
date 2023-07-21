@@ -19,7 +19,6 @@ package client
 
 import (
 	"context"
-	"github.com/oceanbase/obkv-table-client-go/table"
 	"strconv"
 	"sync"
 	"time"
@@ -108,40 +107,4 @@ func (t *ObTable) String() string {
 		"database:" + t.database + ", " +
 		"isClosed:" + strconv.FormatBool(t.isClosed) +
 		"}"
-}
-
-// transferQueryRange sets the query range into tableQuery.
-func transferQueryRange(rangePair []*table.RangePair) ([]*protocol.ObNewRange, error) {
-	queryRanges := make([]*protocol.ObNewRange, 0, len(rangePair))
-	for _, rangePair := range rangePair {
-		if len(rangePair.Start()) != len(rangePair.End()) {
-			return nil, errors.New("startRange and endRange key length is not equal")
-		}
-		startObjs := make([]*protocol.ObObject, 0, len(rangePair.Start()))
-		endObjs := make([]*protocol.ObObject, 0, len(rangePair.End()))
-		for i := 0; i < len(rangePair.Start()); i++ {
-			// append start obj
-			objMeta, err := protocol.DefaultObjMeta(rangePair.Start()[i].Value())
-			if err != nil {
-				return nil, errors.WithMessage(err, "create obj meta by Range key")
-			}
-			startObjs = append(startObjs, protocol.NewObObjectWithParams(objMeta, rangePair.Start()[i].Value()))
-
-			// append end obj
-			objMeta, err = protocol.DefaultObjMeta(rangePair.End()[i].Value())
-			if err != nil {
-				return nil, errors.WithMessage(err, "create obj meta by Range key")
-			}
-			endObjs = append(endObjs, protocol.NewObObjectWithParams(objMeta, rangePair.End()[i].Value()))
-		}
-		borderFlag := protocol.NewObBorderFlag()
-		if rangePair.IncludeStart() {
-			borderFlag.SetInclusiveStart()
-		}
-		if rangePair.IncludeEnd() {
-			borderFlag.SetInclusiveEnd()
-		}
-		queryRanges = append(queryRanges, protocol.NewObNewRangeWithParams(startObjs, endObjs, borderFlag))
-	}
-	return queryRanges, nil
 }

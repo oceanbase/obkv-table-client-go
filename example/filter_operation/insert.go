@@ -83,23 +83,17 @@ func main() {
 	fmt.Println(affectRows)
 
 	// get and check
-	startRowKey = []*table.Column{table.NewColumn("c1", int64(4))}
-	endRowKey = []*table.Column{table.NewColumn("c1", int64(4))}
-	keyRanges = []*table.RangePair{table.NewRangePair(startRowKey, endRowKey)}
-
-	resSet, err := cli.Query(
+	rowKey = []*table.Column{table.NewColumn("c1", int64(4))}
+	selectColumns := []string{"c1", "c2"}
+	result, err := cli.Get(
 		context.TODO(),
 		tableName,
-		keyRanges,
-		option.WithSelectColumns([]string{"c1", "c2"}),
+		rowKey,
+		selectColumns,
 	)
-
 	if err != nil {
 		panic(err)
 	}
-
-	res, err := resSet.Next()
-
-	println(res.Value("c1").(int64)) // get 4
-	println(res.Value("c2").(int64)) // get 3
+	fmt.Println(result.Value("c1").(int64)) // 4
+	fmt.Println(result.Value("c2").(int64)) // 3
 }

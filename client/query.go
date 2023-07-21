@@ -186,7 +186,7 @@ func (q *obQueryExecutor) init(ctx context.Context) (*ObQueryResultIterator, err
 	}
 
 	// set query range into table query
-	keyRanges, err := transferQueryRange(q.keyRanges)
+	keyRanges, err := TransferQueryRange(q.keyRanges)
 	if err != nil {
 		return nil, errors.WithMessage(err, "transfer query range")
 	}

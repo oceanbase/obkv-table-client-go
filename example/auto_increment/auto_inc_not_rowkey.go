@@ -21,7 +21,6 @@ import (
 	"context"
 	"fmt"
 	"github.com/oceanbase/obkv-table-client-go/client"
-	"github.com/oceanbase/obkv-table-client-go/client/option"
 	"github.com/oceanbase/obkv-table-client-go/config"
 	"github.com/oceanbase/obkv-table-client-go/table"
 	"time"
@@ -60,25 +59,19 @@ func main() {
 	fmt.Println(affectRows)
 
 	// get and check
-	startRowKey := []*table.Column{table.NewColumn("c1", int64(1))}
-	endRowKey := []*table.Column{table.NewColumn("c1", int64(1))}
-	keyRanges := []*table.RangePair{table.NewRangePair(startRowKey, endRowKey)}
-
-	resSet, err := cli.Query(
+	rowKey = []*table.Column{table.NewColumn("c1", int64(1))}
+	selectColumns := []string{"c1", "c2"}
+	result, err := cli.Get(
 		context.TODO(),
 		tableName,
-		keyRanges,
-		option.WithSelectColumns([]string{"c1", "c2", "c3"}),
+		rowKey,
+		selectColumns,
 	)
-
 	if err != nil {
 		panic(err)
 	}
-
-	res, err := resSet.Next()
-
-	println(res.Value("c1").(int64)) // get 1
-	println(res.Value("c2").(int64)) // get 1
+	fmt.Println(result.Value("c1").(int64)) // get 1
+	fmt.Println(result.Value("c2").(int64)) // get 1
 
 	// insert. set 50, use specified value
 	// insert (2, 50, hello, null)
@@ -96,23 +89,17 @@ func main() {
 	fmt.Println(affectRows)
 
 	// get and check
-	startRowKey = []*table.Column{table.NewColumn("c1", int64(2))}
-	endRowKey = []*table.Column{table.NewColumn("c1", int64(2))}
-	keyRanges = []*table.RangePair{table.NewRangePair(startRowKey, endRowKey)}
-
-	resSet, err = cli.Query(
+	rowKey = []*table.Column{table.NewColumn("c1", int64(2))}
+	selectColumns = []string{"c1", "c2", "c3"}
+	result, err = cli.Get(
 		context.TODO(),
 		tableName,
-		keyRanges,
-		option.WithSelectColumns([]string{"c1", "c2", "c3"}),
+		rowKey,
+		selectColumns,
 	)
-
 	if err != nil {
 		panic(err)
 	}
-
-	res, err = resSet.Next()
-
-	println(res.Value("c1").(int64)) // get 2
-	println(res.Value("c2").(int64)) // get 50
+	fmt.Println(result.Value("c1").(int64)) // get 2
+	fmt.Println(result.Value("c2").(int64)) // get 50
 }

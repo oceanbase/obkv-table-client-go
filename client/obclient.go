@@ -554,7 +554,7 @@ func (c *obClient) executeWithFilter(
 
 	if opType == protocol.ObTableOperationInsert {
 		// set query range into table query
-		keyRanges, err := transferQueryRange(operationOptions.ScanRange)
+		keyRanges, err := TransferQueryRange(operationOptions.ScanRange)
 		if err != nil {
 			return nil, errors.WithMessage(err, "transfer query range")
 		}

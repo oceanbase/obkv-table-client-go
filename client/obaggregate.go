@@ -38,16 +38,16 @@ type obAggExecutor struct {
 }
 
 // Min add a min operation to the agg executor.
-func (q *obAggExecutor) Min(aggColumn string) AggExecutor {
-	q.aggOperations = append(q.aggOperations, protocol.NewObTableAggregationWithParams(protocol.ObTableAggregationTypeMin, aggColumn))
-	q.aggOperationNames = append(q.aggOperationNames, "min("+aggColumn+")")
+func (q *obAggExecutor) Min(columnName string) AggExecutor {
+	q.aggOperations = append(q.aggOperations, protocol.NewObTableAggregationWithParams(protocol.ObTableAggregationTypeMin, columnName))
+	q.aggOperationNames = append(q.aggOperationNames, "min("+columnName+")")
 	return q
 }
 
 // Max add a max operation to the agg executor.
-func (q *obAggExecutor) Max(aggColumn string) AggExecutor {
-	q.aggOperations = append(q.aggOperations, protocol.NewObTableAggregationWithParams(protocol.ObTableAggregationTypeMax, aggColumn))
-	q.aggOperationNames = append(q.aggOperationNames, "max("+aggColumn+")")
+func (q *obAggExecutor) Max(columnName string) AggExecutor {
+	q.aggOperations = append(q.aggOperations, protocol.NewObTableAggregationWithParams(protocol.ObTableAggregationTypeMax, columnName))
+	q.aggOperationNames = append(q.aggOperationNames, "max("+columnName+")")
 	return q
 }
 
@@ -59,24 +59,17 @@ func (q *obAggExecutor) Count() AggExecutor {
 }
 
 // Sum add a sum operation to the agg executor.
-func (q *obAggExecutor) Sum(aggColumn string) AggExecutor {
-	q.aggOperations = append(q.aggOperations, protocol.NewObTableAggregationWithParams(protocol.ObTableAggregationTypeSum, aggColumn))
-	q.aggOperationNames = append(q.aggOperationNames, "sum("+aggColumn+")")
+func (q *obAggExecutor) Sum(columnName string) AggExecutor {
+	q.aggOperations = append(q.aggOperations, protocol.NewObTableAggregationWithParams(protocol.ObTableAggregationTypeSum, columnName))
+	q.aggOperationNames = append(q.aggOperationNames, "sum("+columnName+")")
 	return q
 }
 
 // Avg add an avg operation to the agg executor.
-func (q *obAggExecutor) Avg(aggColumn string) AggExecutor {
-	q.aggOperations = append(q.aggOperations, protocol.NewObTableAggregationWithParams(protocol.ObTableAggregationTypeAvg, aggColumn))
-	q.aggOperationNames = append(q.aggOperationNames, "avg("+aggColumn+")")
+func (q *obAggExecutor) Avg(columnName string) AggExecutor {
+	q.aggOperations = append(q.aggOperations, protocol.NewObTableAggregationWithParams(protocol.ObTableAggregationTypeAvg, columnName))
+	q.aggOperationNames = append(q.aggOperationNames, "avg("+columnName+")")
 	return q
-}
-
-// setParams set param to the agg executor.
-func (q *obAggExecutor) setParams() {
-	q.queryExecutor.tableQuery.SetSelectColumns(q.aggOperationNames)
-	q.queryExecutor.tableQuery.SetAggregations(q.aggOperations)
-	return
 }
 
 // Execute an agg operation.
@@ -85,7 +78,8 @@ func (q *obAggExecutor) Execute(ctx context.Context) (AggregateResult, error) {
 	if len(q.aggOperations) == 0 {
 		return nil, errors.New("empty aggregation operations")
 	}
-	q.setParams()
+	q.queryExecutor.tableQuery.SetSelectColumns(q.aggOperationNames)
+	q.queryExecutor.tableQuery.SetAggregations(q.aggOperations)
 	resSet, err := q.queryExecutor.init(ctx)
 	if err != nil {
 		return nil, errors.WithMessagef(err, "init query executor failed")

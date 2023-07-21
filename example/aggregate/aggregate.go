@@ -45,11 +45,14 @@ func main() {
 	keyRanges := []*table.RangePair{table.NewRangePair(startRowKey, endRowKey)}
 
 	// create agg executor
-	aggExecutor := cli.NewAggExecutor(tableName, keyRanges).Sum("c3")
+	aggExecutor := cli.NewAggExecutor(tableName, keyRanges).Sum("c3").Min("c2").Max("c1").Count()
 
 	// get agg result
 	res, err := aggExecutor.Execute(context.TODO())
 
 	// get agg result value
+	println(res.Value("sum(c3)").(int64))
 	println(res.Value("min(c2)").(int64))
+	println(res.Value("max(c1)").(int64))
+	println(res.Value("count(*)").(int64))
 }

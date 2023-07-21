@@ -50,24 +50,19 @@ func TestAuto_IncNotRowkey(t *testing.T) {
 	assert.Equal(t, nil, err)
 	assert.Equal(t, int64(1), res)
 
-	startRowKey := []*table.Column{table.NewColumn("c1", int64(1))}
-	endRowKey := []*table.Column{table.NewColumn("c1", int64(1))}
-	keyRanges := []*table.RangePair{table.NewRangePair(startRowKey, endRowKey)}
-
-	resSet, err := cli.Query(
+	rowKey = []*table.Column{table.NewColumn("c1", int64(1))}
+	selectColumns := []string{"c1", "c2", "c3", "c4"}
+	result, err := cli.Get(
 		context.TODO(),
 		tableName,
-		keyRanges,
-		option.WithSelectColumns([]string{"c1", "c2", "c3"}),
+		rowKey,
+		selectColumns,
 	)
+
 	assert.Equal(t, nil, err)
-	for i := 0; i < 1; i++ {
-		res, err := resSet.Next()
-		assert.Equal(t, nil, err)
-		assert.EqualValues(t, int64(1), res.Value("c1"))
-		assert.EqualValues(t, int64(1), res.Value("c2"))
-		assert.EqualValues(t, "hello", res.Value("c3"))
-	}
+	assert.EqualValues(t, int64(1), result.Value("c1"))
+	assert.EqualValues(t, int64(1), result.Value("c2"))
+	assert.EqualValues(t, "hello", result.Value("c3"))
 
 	// test assign value.
 	rowKey = []*table.Column{table.NewColumn("c1", int64(2))}
@@ -83,24 +78,18 @@ func TestAuto_IncNotRowkey(t *testing.T) {
 	assert.Equal(t, nil, err)
 	assert.Equal(t, int64(1), res)
 
-	startRowKey = []*table.Column{table.NewColumn("c1", int64(2))}
-	endRowKey = []*table.Column{table.NewColumn("c1", int64(2))}
-	keyRanges = []*table.RangePair{table.NewRangePair(startRowKey, endRowKey)}
-
-	resSet, err = cli.Query(
+	rowKey = []*table.Column{table.NewColumn("c1", int64(2))}
+	result, err = cli.Get(
 		context.TODO(),
 		tableName,
-		keyRanges,
-		option.WithSelectColumns([]string{"c1", "c2", "c3"}),
+		rowKey,
+		selectColumns,
 	)
+
 	assert.Equal(t, nil, err)
-	for i := 0; i < 1; i++ {
-		res, err := resSet.Next()
-		assert.Equal(t, nil, err)
-		assert.EqualValues(t, int64(2), res.Value("c1"))
-		assert.EqualValues(t, int64(50), res.Value("c2"))
-		assert.EqualValues(t, "hello", res.Value("c3"))
-	}
+	assert.EqualValues(t, int64(2), result.Value("c1"))
+	assert.EqualValues(t, int64(50), result.Value("c2"))
+	assert.EqualValues(t, "hello", result.Value("c3"))
 
 	// test update auto inc value.
 	rowKey = []*table.Column{table.NewColumn("c1", int64(3))}
@@ -115,24 +104,18 @@ func TestAuto_IncNotRowkey(t *testing.T) {
 	assert.Equal(t, nil, err)
 	assert.Equal(t, int64(1), res)
 
-	startRowKey = []*table.Column{table.NewColumn("c1", int64(3))}
-	endRowKey = []*table.Column{table.NewColumn("c1", int64(3))}
-	keyRanges = []*table.RangePair{table.NewRangePair(startRowKey, endRowKey)}
-
-	resSet, err = cli.Query(
+	rowKey = []*table.Column{table.NewColumn("c1", int64(3))}
+	result, err = cli.Get(
 		context.TODO(),
 		tableName,
-		keyRanges,
-		option.WithSelectColumns([]string{"c1", "c2", "c3"}),
+		rowKey,
+		selectColumns,
 	)
+
 	assert.Equal(t, nil, err)
-	for i := 0; i < 1; i++ {
-		res, err := resSet.Next()
-		assert.Equal(t, nil, err)
-		assert.EqualValues(t, int64(3), res.Value("c1"))
-		assert.EqualValues(t, int64(51), res.Value("c2"))
-		assert.EqualValues(t, "hello", res.Value("c3"))
-	}
+	assert.EqualValues(t, int64(3), result.Value("c1"))
+	assert.EqualValues(t, int64(51), result.Value("c2"))
+	assert.EqualValues(t, "hello", result.Value("c3"))
 
 	// test delete.
 	rowKey = []*table.Column{table.NewColumn("c1", int64(1))}
@@ -144,24 +127,16 @@ func TestAuto_IncNotRowkey(t *testing.T) {
 
 	assert.Equal(t, nil, err)
 
-	startRowKey = []*table.Column{table.NewColumn("c1", int64(1))}
-	endRowKey = []*table.Column{table.NewColumn("c1", int64(2))}
-	keyRanges = []*table.RangePair{table.NewRangePair(startRowKey, endRowKey)}
-
-	resSet, err = cli.Query(
+	rowKey = []*table.Column{table.NewColumn("c1", int64(1))}
+	result, err = cli.Get(
 		context.TODO(),
 		tableName,
-		keyRanges,
-		option.WithSelectColumns([]string{"c1", "c2", "c3"}),
+		rowKey,
+		selectColumns,
 	)
+
 	assert.Equal(t, nil, err)
-	for i := 0; i < 1; i++ {
-		res, err := resSet.Next()
-		assert.Equal(t, nil, err)
-		assert.EqualValues(t, int64(2), res.Value("c1"))
-		assert.EqualValues(t, int64(50), res.Value("c2"))
-		assert.EqualValues(t, "hello", res.Value("c3"))
-	}
+	assert.Equal(t, nil, result.Value("c1"))
 
 	// test update.
 	rowKey = []*table.Column{table.NewColumn("c1", int64(2))}
@@ -176,24 +151,18 @@ func TestAuto_IncNotRowkey(t *testing.T) {
 
 	assert.Equal(t, nil, err)
 
-	startRowKey = []*table.Column{table.NewColumn("c1", int64(2))}
-	endRowKey = []*table.Column{table.NewColumn("c1", int64(2))}
-	keyRanges = []*table.RangePair{table.NewRangePair(startRowKey, endRowKey)}
-
-	resSet, err = cli.Query(
+	rowKey = []*table.Column{table.NewColumn("c1", int64(2))}
+	result, err = cli.Get(
 		context.TODO(),
 		tableName,
-		keyRanges,
-		option.WithSelectColumns([]string{"c1", "c2", "c3"}),
+		rowKey,
+		selectColumns,
 	)
+
 	assert.Equal(t, nil, err)
-	for i := 0; i < 1; i++ {
-		res, err := resSet.Next()
-		assert.Equal(t, nil, err)
-		assert.EqualValues(t, int64(2), res.Value("c1"))
-		assert.EqualValues(t, int64(50), res.Value("c2"))
-		assert.EqualValues(t, "update", res.Value("c3"))
-	}
+	assert.EqualValues(t, int64(2), result.Value("c1"))
+	assert.EqualValues(t, int64(50), result.Value("c2"))
+	assert.EqualValues(t, "update", result.Value("c3"))
 
 	// test replace not exist, insert
 	rowKey = []*table.Column{table.NewColumn("c1", int64(4))}
@@ -207,24 +176,18 @@ func TestAuto_IncNotRowkey(t *testing.T) {
 
 	assert.Equal(t, nil, err)
 
-	startRowKey = []*table.Column{table.NewColumn("c1", int64(4))}
-	endRowKey = []*table.Column{table.NewColumn("c1", int64(4))}
-	keyRanges = []*table.RangePair{table.NewRangePair(startRowKey, endRowKey)}
-
-	resSet, err = cli.Query(
+	rowKey = []*table.Column{table.NewColumn("c1", int64(4))}
+	result, err = cli.Get(
 		context.TODO(),
 		tableName,
-		keyRanges,
-		option.WithSelectColumns([]string{"c1", "c2", "c3"}),
+		rowKey,
+		selectColumns,
 	)
+
 	assert.Equal(t, nil, err)
-	for i := 0; i < 1; i++ {
-		res, err := resSet.Next()
-		assert.Equal(t, nil, err)
-		assert.EqualValues(t, int64(4), res.Value("c1"))
-		assert.EqualValues(t, int64(52), res.Value("c2"))
-		assert.EqualValues(t, "replace", res.Value("c3"))
-	}
+	assert.EqualValues(t, int64(4), result.Value("c1"))
+	assert.EqualValues(t, int64(52), result.Value("c2"))
+	assert.EqualValues(t, "replace", result.Value("c3"))
 
 	// test replace exist, replace
 	rowKey = []*table.Column{table.NewColumn("c1", int64(4))}
@@ -238,24 +201,18 @@ func TestAuto_IncNotRowkey(t *testing.T) {
 
 	assert.Equal(t, nil, err)
 
-	startRowKey = []*table.Column{table.NewColumn("c1", int64(4))}
-	endRowKey = []*table.Column{table.NewColumn("c1", int64(4))}
-	keyRanges = []*table.RangePair{table.NewRangePair(startRowKey, endRowKey)}
-
-	resSet, err = cli.Query(
+	rowKey = []*table.Column{table.NewColumn("c1", int64(4))}
+	result, err = cli.Get(
 		context.TODO(),
 		tableName,
-		keyRanges,
-		option.WithSelectColumns([]string{"c1", "c2", "c3"}),
+		rowKey,
+		selectColumns,
 	)
+
 	assert.Equal(t, nil, err)
-	for i := 0; i < 1; i++ {
-		res, err := resSet.Next()
-		assert.Equal(t, nil, err)
-		assert.EqualValues(t, int64(4), res.Value("c1"))
-		assert.EqualValues(t, int64(20), res.Value("c2"))
-		assert.EqualValues(t, "replace exist", res.Value("c3"))
-	}
+	assert.EqualValues(t, int64(4), result.Value("c1"))
+	assert.EqualValues(t, int64(20), result.Value("c2"))
+	assert.EqualValues(t, "replace exist", result.Value("c3"))
 
 	// test insertup not exist, insert
 	rowKey = []*table.Column{table.NewColumn("c1", int64(5))}
@@ -269,24 +226,18 @@ func TestAuto_IncNotRowkey(t *testing.T) {
 
 	assert.Equal(t, nil, err)
 
-	startRowKey = []*table.Column{table.NewColumn("c1", int64(5))}
-	endRowKey = []*table.Column{table.NewColumn("c1", int64(5))}
-	keyRanges = []*table.RangePair{table.NewRangePair(startRowKey, endRowKey)}
-
-	resSet, err = cli.Query(
+	rowKey = []*table.Column{table.NewColumn("c1", int64(5))}
+	result, err = cli.Get(
 		context.TODO(),
 		tableName,
-		keyRanges,
-		option.WithSelectColumns([]string{"c1", "c2", "c3"}),
+		rowKey,
+		selectColumns,
 	)
+
 	assert.Equal(t, nil, err)
-	for i := 0; i < 1; i++ {
-		res, err := resSet.Next()
-		assert.Equal(t, nil, err)
-		assert.EqualValues(t, int64(5), res.Value("c1"))
-		assert.EqualValues(t, int64(53), res.Value("c2"))
-		assert.EqualValues(t, "insertup", res.Value("c3"))
-	}
+	assert.EqualValues(t, int64(5), result.Value("c1"))
+	assert.EqualValues(t, int64(53), result.Value("c2"))
+	assert.EqualValues(t, "insertup", result.Value("c3"))
 
 	// test insertup exist, update
 	rowKey = []*table.Column{table.NewColumn("c1", int64(5))}
@@ -300,24 +251,18 @@ func TestAuto_IncNotRowkey(t *testing.T) {
 
 	assert.Equal(t, nil, err)
 
-	startRowKey = []*table.Column{table.NewColumn("c1", int64(5))}
-	endRowKey = []*table.Column{table.NewColumn("c1", int64(5))}
-	keyRanges = []*table.RangePair{table.NewRangePair(startRowKey, endRowKey)}
-
-	resSet, err = cli.Query(
+	rowKey = []*table.Column{table.NewColumn("c1", int64(5))}
+	result, err = cli.Get(
 		context.TODO(),
 		tableName,
-		keyRanges,
-		option.WithSelectColumns([]string{"c1", "c2", "c3"}),
+		rowKey,
+		selectColumns,
 	)
+
 	assert.Equal(t, nil, err)
-	for i := 0; i < 1; i++ {
-		res, err := resSet.Next()
-		assert.Equal(t, nil, err)
-		assert.EqualValues(t, int64(5), res.Value("c1"))
-		assert.EqualValues(t, int64(20), res.Value("c2"))
-		assert.EqualValues(t, "insertup exist", res.Value("c3"))
-	}
+	assert.EqualValues(t, int64(5), result.Value("c1"))
+	assert.EqualValues(t, int64(20), result.Value("c2"))
+	assert.EqualValues(t, "insertup exist", result.Value("c3"))
 
 	// test increment not exist, insert
 	rowKey = []*table.Column{table.NewColumn("c1", int64(6))}
@@ -332,24 +277,18 @@ func TestAuto_IncNotRowkey(t *testing.T) {
 	assert.Equal(t, nil, err)
 	assert.Equal(t, int64(1), resultSet.AffectedRows())
 
-	startRowKey = []*table.Column{table.NewColumn("c1", int64(6))}
-	endRowKey = []*table.Column{table.NewColumn("c1", int64(6))}
-	keyRanges = []*table.RangePair{table.NewRangePair(startRowKey, endRowKey)}
-
-	resSet, err = cli.Query(
+	rowKey = []*table.Column{table.NewColumn("c1", int64(6))}
+	result, err = cli.Get(
 		context.TODO(),
 		tableName,
-		keyRanges,
-		option.WithSelectColumns([]string{"c1", "c2", "c3", "c4"}),
+		rowKey,
+		selectColumns,
 	)
+
 	assert.Equal(t, nil, err)
-	for i := 0; i < 1; i++ {
-		res, err := resSet.Next()
-		assert.Equal(t, nil, err)
-		assert.EqualValues(t, int64(6), res.Value("c1"))
-		assert.EqualValues(t, int64(54), res.Value("c2"))
-		assert.EqualValues(t, int64(10), res.Value("c4"))
-	}
+	assert.EqualValues(t, int64(6), result.Value("c1"))
+	assert.EqualValues(t, int64(54), result.Value("c2"))
+	assert.EqualValues(t, int64(10), result.Value("c4"))
 
 	// test increment exist, increment
 	rowKey = []*table.Column{table.NewColumn("c1", int64(6))}
@@ -364,24 +303,18 @@ func TestAuto_IncNotRowkey(t *testing.T) {
 	assert.Equal(t, nil, err)
 	assert.Equal(t, int64(1), resultSet.AffectedRows())
 
-	startRowKey = []*table.Column{table.NewColumn("c1", int64(6))}
-	endRowKey = []*table.Column{table.NewColumn("c1", int64(6))}
-	keyRanges = []*table.RangePair{table.NewRangePair(startRowKey, endRowKey)}
-
-	resSet, err = cli.Query(
+	rowKey = []*table.Column{table.NewColumn("c1", int64(6))}
+	result, err = cli.Get(
 		context.TODO(),
 		tableName,
-		keyRanges,
-		option.WithSelectColumns([]string{"c1", "c2", "c3", "c4"}),
+		rowKey,
+		selectColumns,
 	)
+
 	assert.Equal(t, nil, err)
-	for i := 0; i < 1; i++ {
-		res, err := resSet.Next()
-		assert.Equal(t, nil, err)
-		assert.EqualValues(t, int64(6), res.Value("c1"))
-		assert.EqualValues(t, int64(54), res.Value("c2"))
-		assert.EqualValues(t, int64(20), res.Value("c4"))
-	}
+	assert.EqualValues(t, int64(6), result.Value("c1"))
+	assert.EqualValues(t, int64(54), result.Value("c2"))
+	assert.EqualValues(t, int64(20), result.Value("c4"))
 
 	// test append not exist, insert
 	rowKey = []*table.Column{table.NewColumn("c1", int64(7))}
@@ -396,24 +329,18 @@ func TestAuto_IncNotRowkey(t *testing.T) {
 	assert.Equal(t, nil, err)
 	assert.Equal(t, int64(1), resultSet.AffectedRows())
 
-	startRowKey = []*table.Column{table.NewColumn("c1", int64(7))}
-	endRowKey = []*table.Column{table.NewColumn("c1", int64(7))}
-	keyRanges = []*table.RangePair{table.NewRangePair(startRowKey, endRowKey)}
-
-	resSet, err = cli.Query(
+	rowKey = []*table.Column{table.NewColumn("c1", int64(7))}
+	result, err = cli.Get(
 		context.TODO(),
 		tableName,
-		keyRanges,
-		option.WithSelectColumns([]string{"c1", "c2", "c3", "c4"}),
+		rowKey,
+		selectColumns,
 	)
+
 	assert.Equal(t, nil, err)
-	for i := 0; i < 1; i++ {
-		res, err := resSet.Next()
-		assert.Equal(t, nil, err)
-		assert.EqualValues(t, int64(7), res.Value("c1"))
-		assert.EqualValues(t, int64(56), res.Value("c2"))
-		assert.EqualValues(t, "append", res.Value("c3"))
-	}
+	assert.EqualValues(t, int64(7), result.Value("c1"))
+	assert.EqualValues(t, int64(56), result.Value("c2"))
+	assert.EqualValues(t, "append", result.Value("c3"))
 
 	// test append exist, append
 	rowKey = []*table.Column{table.NewColumn("c1", int64(7))}
@@ -428,22 +355,16 @@ func TestAuto_IncNotRowkey(t *testing.T) {
 	assert.Equal(t, nil, err)
 	assert.Equal(t, int64(1), resultSet.AffectedRows())
 
-	startRowKey = []*table.Column{table.NewColumn("c1", int64(7))}
-	endRowKey = []*table.Column{table.NewColumn("c1", int64(7))}
-	keyRanges = []*table.RangePair{table.NewRangePair(startRowKey, endRowKey)}
-
-	resSet, err = cli.Query(
+	rowKey = []*table.Column{table.NewColumn("c1", int64(7))}
+	result, err = cli.Get(
 		context.TODO(),
 		tableName,
-		keyRanges,
-		option.WithSelectColumns([]string{"c1", "c2", "c3", "c4"}),
+		rowKey,
+		selectColumns,
 	)
+
 	assert.Equal(t, nil, err)
-	for i := 0; i < 1; i++ {
-		res, err := resSet.Next()
-		assert.Equal(t, nil, err)
-		assert.EqualValues(t, int64(7), res.Value("c1"))
-		assert.EqualValues(t, int64(56), res.Value("c2"))
-		assert.EqualValues(t, "append exist", res.Value("c3"))
-	}
+	assert.EqualValues(t, int64(7), result.Value("c1"))
+	assert.EqualValues(t, int64(56), result.Value("c2"))
+	assert.EqualValues(t, "append exist", result.Value("c3"))
 }

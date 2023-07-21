@@ -78,6 +78,19 @@ func TestInsert(t *testing.T) {
 	assert.Equal(t, nil, err)
 	assert.EqualValues(t, 1, affectRows)
 
+	rowKey = []*table.Column{table.NewColumn("c1", "4")}
+	selectColumns := []string{"c1", "c2", "c3"}
+	result, err := cli.Get(
+		context.TODO(),
+		tableName,
+		rowKey,
+		selectColumns,
+	)
+
+	assert.Equal(t, nil, err)
+	assert.EqualValues(t, "4", result.Value("c1"))
+	assert.EqualValues(t, int64(3), result.Value("c2"))
+
 	rowKey = []*table.Column{table.NewColumn("c1", "6")}
 	mutationColumns = []*table.Column{table.NewColumn("c2", int64(3))}
 
@@ -91,6 +104,18 @@ func TestInsert(t *testing.T) {
 	)
 	assert.Equal(t, nil, err)
 	assert.EqualValues(t, 0, affectRows)
+
+	rowKey = []*table.Column{table.NewColumn("c1", "6")}
+	selectColumns = []string{"c1", "c2", "c3"}
+	result, err = cli.Get(
+		context.TODO(),
+		tableName,
+		rowKey,
+		selectColumns,
+	)
+
+	assert.Equal(t, nil, err)
+	assert.Equal(t, nil, result.Value("c1"))
 }
 
 func TestAppend(t *testing.T) {

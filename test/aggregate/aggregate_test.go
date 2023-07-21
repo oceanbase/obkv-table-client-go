@@ -121,7 +121,7 @@ func TestAggregate(t *testing.T) {
 	addAggRecord(recordCount)
 	startRowKey = []*table.Column{table.NewColumn("c1", int64(1)), table.NewColumn("c2", int64(0))}
 	endRowKey = []*table.Column{table.NewColumn("c1", int64(1)), table.NewColumn("c2", int64(19))}
-	keyRanges = []*table.RangePair{table.NewRangePair(startRowKey, endRowKey, false, false)}
+	keyRanges = []*table.RangePair{table.NewRangePair(startRowKey, endRowKey)}
 
 	aggExecutor = cli.NewAggExecutor(tableName, keyRanges).
 		Min("c5").
