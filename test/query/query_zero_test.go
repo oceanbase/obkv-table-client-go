@@ -81,6 +81,39 @@ func TestQueryZeroSimple(t *testing.T) {
 		assert.EqualValues(t, res.Value("c1"), res.Value("c2"))
 		assert.EqualValues(t, "hello", res.Value("c3"))
 	}
+
+	// test range pair inclusive
+	startRowKey = []*table.Column{table.NewColumn("c1", int64(9)), table.NewColumn("c2", table.Min)}
+	endRowKey = []*table.Column{table.NewColumn("c1", int64(11)), table.NewColumn("c2", table.Max)}
+	keyRanges = []*table.RangePair{table.NewRangePair(startRowKey, endRowKey, false)}
+	resSet, err = cli.Query(
+		context.TODO(),
+		tableName,
+		keyRanges,
+		option.WithSelectColumns([]string{"c1", "c2", "c3"}),
+	)
+	assert.Equal(t, nil, err)
+	for res, err := resSet.Next(); res != nil && err == nil; res, err = resSet.Next() {
+		assert.Equal(t, nil, err)
+		assert.Equal(t, nil, res)
+	}
+
+	startRowKey = []*table.Column{table.NewColumn("c1", int64(8)), table.NewColumn("c2", table.Min)}
+	endRowKey = []*table.Column{table.NewColumn("c1", int64(9)), table.NewColumn("c2", table.Max)}
+	keyRanges = []*table.RangePair{table.NewRangePair(startRowKey, endRowKey, true, false)}
+	resSet, err = cli.Query(
+		context.TODO(),
+		tableName,
+		keyRanges,
+		option.WithSelectColumns([]string{"c1", "c2", "c3"}),
+	)
+	assert.Equal(t, nil, err)
+	for res, err := resSet.Next(); res != nil && err == nil; res, err = resSet.Next() {
+		assert.Equal(t, nil, err)
+		assert.EqualValues(t, 8, res.Value("c1"))
+		assert.EqualValues(t, res.Value("c1"), res.Value("c2"))
+		assert.EqualValues(t, "hello", res.Value("c3"))
+	}
 }
 
 func TestQueryZeroBatchSize(t *testing.T) {

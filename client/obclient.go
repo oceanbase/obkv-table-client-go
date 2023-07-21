@@ -411,8 +411,11 @@ func (c *obClient) Query(ctx context.Context, tableName string, rangePairs []*ta
 	return res, nil
 }
 
-func (c *obClient) NewBatchExecutor(tableName string) BatchExecutor {
-	return newObBatchExecutor(tableName, c)
+func (c *obClient) NewBatchExecutor(tableName string, opts ...option.ObBatchOption) BatchExecutor {
+	batchOpts := c.getObBatchOptions(opts...)
+	batchExecutor := newObBatchExecutor(tableName, c)
+	batchExecutor.setBatchOptions(batchOpts)
+	return batchExecutor
 }
 
 func (c *obClient) NewAggExecutor(tableName string, rangePairs []*table.RangePair, opts ...option.ObQueryOption) AggExecutor {
@@ -442,6 +445,14 @@ func (c *obClient) getOperationOptions(opts ...option.ObOperationOption) *option
 
 func (c *obClient) getObQueryOptions(options ...option.ObQueryOption) *option.ObQueryOptions {
 	opts := option.NewObQueryOption()
+	for _, op := range options {
+		op.Apply(opts)
+	}
+	return opts
+}
+
+func (c *obClient) getObBatchOptions(options ...option.ObBatchOption) *option.ObBatchOptions {
+	opts := option.NewObBatchOption()
 	for _, op := range options {
 		op.Apply(opts)
 	}
