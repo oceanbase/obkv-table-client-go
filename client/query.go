@@ -190,11 +190,11 @@ func (q *obQueryExecutor) transferQueryRange() error {
 			endObjs = append(endObjs, protocol.NewObObjectWithParams(objMeta, rangePair.End()[i].Value()))
 		}
 		borderFlag := protocol.NewObBorderFlag()
-		if rangePair.IncludeStart() {
-			borderFlag.SetInclusiveStart()
+		if !rangePair.IncludeStart() {
+			borderFlag.UnSetInclusiveStart()
 		}
-		if rangePair.IncludeEnd() {
-			borderFlag.SetInclusiveEnd()
+		if !rangePair.IncludeEnd() {
+			borderFlag.UnSetInclusiveEnd()
 		}
 		queryRanges = append(queryRanges, protocol.NewObNewRangeWithParams(startObjs, endObjs, borderFlag))
 	}
