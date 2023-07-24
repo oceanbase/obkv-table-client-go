@@ -19,6 +19,7 @@ package main
 
 import (
 	"context"
+	"github.com/oceanbase/obkv-table-client-go/client/filter"
 	"github.com/oceanbase/obkv-table-client-go/client/option"
 
 	"github.com/oceanbase/obkv-table-client-go/client"
@@ -51,6 +52,11 @@ func main() {
 	// offset of partition result
 	offset := 3
 
+	// filter c2 < 100 and c2 > 50
+	lt100 := filter.CompareVal(filter.LessThan, "c2", int64(100))
+	gt50 := filter.CompareVal(filter.GreaterThan, "c2", int64(50))
+	filterList := filter.AndList(lt100, gt50)
+
 	startRowKey := []*table.Column{table.NewColumn("c1", int64(0)), table.NewColumn("c2", table.Min)}
 	endRowKey := []*table.Column{table.NewColumn("c1", int64(100)), table.NewColumn("c2", table.Max)}
 	keyRanges := []*table.RangePair{table.NewRangePair(startRowKey, endRowKey)}
@@ -63,6 +69,7 @@ func main() {
 		option.WithLimit(limit),
 		option.WithScanOrder(scanOrder),
 		option.WithOffset(offset),
+		option.WithQueryFilter(filterList),
 	)
 	for res, err := resSet.Next(); res != nil && err == nil; res, err = resSet.Next() {
 		if err != nil {

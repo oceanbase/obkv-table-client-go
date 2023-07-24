@@ -72,8 +72,9 @@ func (q *obQueryExecutor) setEntityType(entityType protocol.ObTableEntityType) {
 
 // setQueryOptions sets the query option.
 func (q *obQueryExecutor) setQueryOptions(queryOptions *option.ObQueryOptions) {
-	// TODO: modify queryFilter and set it to tableQuery.
-	q.tableQuery.SetFilterString("")
+	if queryOptions.QueryFilter != nil {
+		q.tableQuery.SetFilterString(queryOptions.QueryFilter.String())
+	}
 	// TODO: modify hTableFilter and set it to tableQuery.
 	q.tableQuery.SetHTableFilter(nil)
 	q.tableQuery.SetSelectColumns(queryOptions.SelectColumns)

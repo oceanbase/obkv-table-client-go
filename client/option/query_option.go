@@ -18,6 +18,7 @@
 package option
 
 import (
+	"github.com/oceanbase/obkv-table-client-go/client/filter"
 	"github.com/oceanbase/obkv-table-client-go/table"
 )
 
@@ -43,7 +44,7 @@ func NewObQueryOption() *ObQueryOptions {
 }
 
 type ObQueryOptions struct {
-	QueryFilter   interface{}
+	QueryFilter   filter.ObTableFilter
 	HTableFilter  interface{}
 	SelectColumns []string
 	IndexName     string
@@ -60,7 +61,7 @@ func (f ObQueryOptionFunc) Apply(opts *ObQueryOptions) {
 }
 
 // WithQueryFilter set query filter
-func WithQueryFilter(QueryFilter interface{}) ObQueryOption {
+func WithQueryFilter(QueryFilter filter.ObTableFilter) ObQueryOption {
 	return ObQueryOptionFunc(func(opts *ObQueryOptions) {
 		opts.QueryFilter = QueryFilter
 	})
