@@ -19,6 +19,7 @@ package protocol
 
 import (
 	"bytes"
+	"math"
 
 	"github.com/oceanbase/obkv-table-client-go/util"
 )
@@ -44,9 +45,9 @@ func NewObHTableFilter() *ObHTableFilter {
 		isValid:               false,
 		selectColumnQualifier: nil,
 		minStamp:              0,
-		maxStamp:              0,
-		maxVersions:           0,
-		limitPerRowPerCf:      0,
+		maxStamp:              math.MaxInt64,
+		maxVersions:           1,
+		limitPerRowPerCf:      -1,
 		offsetPerRowPerCf:     0,
 		filterString:          "",
 	}
