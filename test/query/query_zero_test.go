@@ -83,8 +83,8 @@ func TestQueryZeroSimple(t *testing.T) {
 	}
 
 	// test range pair inclusive
-	startRowKey = []*table.Column{table.NewColumn("c1", int64(9)), table.NewColumn("c2", table.Min)}
-	endRowKey = []*table.Column{table.NewColumn("c1", int64(11)), table.NewColumn("c2", table.Max)}
+	startRowKey = []*table.Column{table.NewColumn("c1", int64(9)), table.NewColumn("c2", table.Max)}
+	endRowKey = []*table.Column{table.NewColumn("c1", int64(11)), table.NewColumn("c2", table.Min)}
 	keyRanges = []*table.RangePair{table.NewRangePair(startRowKey, endRowKey, false)}
 	resSet, err = cli.Query(
 		context.TODO(),
@@ -99,7 +99,7 @@ func TestQueryZeroSimple(t *testing.T) {
 	}
 
 	startRowKey = []*table.Column{table.NewColumn("c1", int64(8)), table.NewColumn("c2", table.Min)}
-	endRowKey = []*table.Column{table.NewColumn("c1", int64(9)), table.NewColumn("c2", table.Max)}
+	endRowKey = []*table.Column{table.NewColumn("c1", int64(9)), table.NewColumn("c2", table.Min)}
 	keyRanges = []*table.RangePair{table.NewRangePair(startRowKey, endRowKey, true, false)}
 	resSet, err = cli.Query(
 		context.TODO(),

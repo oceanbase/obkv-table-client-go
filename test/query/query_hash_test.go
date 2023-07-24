@@ -58,12 +58,14 @@ func TestQueryHashSimple(t *testing.T) {
 		option.WithSelectColumns([]string{"c1", "c2", "c3"}),
 	)
 	assert.Equal(t, nil, err)
-	for i := 0; i < recordCount; i++ {
-		res, err := resSet.Next()
+	i := 0
+	for res, err := resSet.Next(); res != nil && err == nil; res, err = resSet.Next() {
 		assert.Equal(t, nil, err)
 		assert.EqualValues(t, res.Value("c1"), res.Value("c2"))
 		assert.EqualValues(t, "hello", res.Value("c3"))
+		i++
 	}
+	assert.EqualValues(t, recordCount, i)
 
 	startRowKey = []*table.Column{table.NewColumn("c1", int64(5)), table.NewColumn("c2", table.Min)}
 	endRowKey = []*table.Column{table.NewColumn("c1", int64(5)), table.NewColumn("c2", table.Max)}
@@ -160,12 +162,14 @@ func TestQueryHashSimple(t *testing.T) {
 		option.WithSelectColumns([]string{"c1", "c2", "c3"}),
 	)
 	assert.Equal(t, nil, err)
-	for i := 0; i < 5; i++ {
-		res, err := resSet.Next()
+	i = 0
+	for res, err := resSet.Next(); res != nil && err == nil; res, err = resSet.Next() {
 		assert.Equal(t, nil, err)
 		assert.EqualValues(t, res.Value("c1"), res.Value("c2"))
 		assert.EqualValues(t, "hello", res.Value("c3"))
+		i++
 	}
+	assert.EqualValues(t, 5, i)
 
 	// test NextBatch()
 	startRowKey = []*table.Column{table.NewColumn("c1", int64(5)), table.NewColumn("c2", table.Min)}
@@ -208,12 +212,14 @@ func TestQueryHashBatchSize(t *testing.T) {
 		option.WithBatchSize(batchSize),
 	)
 	assert.Equal(t, nil, err)
-	for i := 0; i < recordCount; i++ {
-		res, err := resSet.Next()
+	i := 0
+	for res, err := resSet.Next(); res != nil && err == nil; res, err = resSet.Next() {
 		assert.Equal(t, nil, err)
 		assert.EqualValues(t, res.Value("c1"), res.Value("c2"))
 		assert.EqualValues(t, "hello", res.Value("c3"))
+		i++
 	}
+	assert.EqualValues(t, recordCount, i)
 
 	// test NextBatch()
 	startRowKey = []*table.Column{table.NewColumn("c1", int64(0)), table.NewColumn("c2", table.Min)}
@@ -260,12 +266,14 @@ func TestQueryHashIndex(t *testing.T) {
 		option.WithIndexName("i1"),
 	)
 	assert.Equal(t, nil, err)
-	for i := 0; i < recordCount; i++ {
-		res, err := resSet.Next()
+	i := 0
+	for res, err := resSet.Next(); res != nil && err == nil; res, err = resSet.Next() {
 		assert.Equal(t, nil, err)
 		assert.EqualValues(t, res.Value("c1"), res.Value("c2"))
 		assert.EqualValues(t, "hello", res.Value("c3"))
+		i++
 	}
+	assert.EqualValues(t, recordCount, i)
 
 	startRowKey = []*table.Column{table.NewColumn("c1", int64(0)), table.NewColumn("c3", "not exist")}
 	endRowKey = []*table.Column{table.NewColumn("c1", int64(0)), table.NewColumn("c3", "not exist")}

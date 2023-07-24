@@ -103,14 +103,7 @@ func TestObTableQueryRequestEncodeDecode(t *testing.T) {
 	}
 	obTableQuery.SetScanRangeColumns(scanRangeColumns)
 
-	aggregations := make([]*ObTableAggregationSingle, 0, randomLen)
-	for i := 0; i < randomLen; i++ {
-		obTableAggregationSingle := NewObTableAggregationSingle()
-		obTableAggregationSingle.SetVersion(1)
-		obTableAggregationSingle.SetContentLength(0)
-		obTableAggregationSingle.SetAggType(ObTableAggregationType(rand.Intn(255)))
-		obTableAggregationSingle.SetAggColumn(util.String(10))
-	}
+	aggregations := make([]*ObTableAggregation, 0, randomLen)
 	obTableQuery.SetAggregations(aggregations)
 	obTableQueryRequest.SetTableQuery(obTableQuery)
 
