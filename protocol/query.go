@@ -40,7 +40,7 @@ type ObTableQuery struct {
 	isHbaseQuery     bool
 	hTableFilter     *ObHTableFilter
 	scanRangeColumns []string
-	aggregations     []*ObTableAggregationSingle
+	aggregations     []*ObTableAggregation
 }
 
 func NewObTableQuery() *ObTableQuery {
@@ -213,12 +213,20 @@ func (q *ObTableQuery) SetScanRangeColumns(scanRangeColumns []string) {
 	q.scanRangeColumns = scanRangeColumns
 }
 
-func (q *ObTableQuery) Aggregations() []*ObTableAggregationSingle {
+func (q *ObTableQuery) Aggregations() []*ObTableAggregation {
 	return q.aggregations
 }
 
-func (q *ObTableQuery) SetAggregations(aggregations []*ObTableAggregationSingle) {
+func (q *ObTableQuery) SetAggregations(aggregations []*ObTableAggregation) {
 	q.aggregations = aggregations
+}
+
+func (q *ObTableQuery) IsAggregations() bool {
+	if q.aggregations == nil {
+		return false
+	} else {
+		return true
+	}
 }
 
 func (q *ObTableQuery) PayloadLen() int {
@@ -355,10 +363,10 @@ func (q *ObTableQuery) Decode(buffer *bytes.Buffer) {
 	}
 
 	aggregationsLen := util.DecodeVi64(buffer)
-	q.aggregations = make([]*ObTableAggregationSingle, 0, aggregationsLen)
+	q.aggregations = make([]*ObTableAggregation, 0, aggregationsLen)
 	for i = 0; i < aggregationsLen; i++ {
-		obTableAggregationSingle := NewObTableAggregationSingle()
-		obTableAggregationSingle.Decode(buffer)
-		q.aggregations = append(q.aggregations, obTableAggregationSingle)
+		ObTableAggregation := NewObTableAggregation()
+		ObTableAggregation.Decode(buffer)
+		q.aggregations = append(q.aggregations, ObTableAggregation)
 	}
 }

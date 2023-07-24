@@ -23,20 +23,31 @@ import (
 	"github.com/oceanbase/obkv-table-client-go/util"
 )
 
-type ObTableAggregationSingle struct {
+type ObTableAggregation struct {
 	ObUniVersionHeader
 	aggType   ObTableAggregationType
 	aggColumn string
 }
 
-func NewObTableAggregationSingle() *ObTableAggregationSingle {
-	return &ObTableAggregationSingle{
+func NewObTableAggregation() *ObTableAggregation {
+	return &ObTableAggregation{
 		ObUniVersionHeader: ObUniVersionHeader{
 			version:       1,
 			contentLength: 0,
 		},
 		aggType:   0,
 		aggColumn: "",
+	}
+}
+
+func NewObTableAggregationWithParams(aggregationType ObTableAggregationType, aggregationColumn string) *ObTableAggregation {
+	return &ObTableAggregation{
+		ObUniVersionHeader: ObUniVersionHeader{
+			version:       1,
+			contentLength: 0,
+		},
+		aggType:   aggregationType,
+		aggColumn: aggregationColumn,
 	}
 }
 
@@ -51,27 +62,43 @@ const (
 	ObTableAggregationTypeAvg
 )
 
-func (s *ObTableAggregationSingle) AggType() ObTableAggregationType {
+func (s *ObTableAggregation) AggOperation() string {
+	switch s.aggType {
+	case ObTableAggregationTypeMax:
+		return "max(" + s.aggColumn + ")"
+	case ObTableAggregationTypeMin:
+		return "min(" + s.aggColumn + ")"
+	case ObTableAggregationTypeCount:
+		return "count(" + s.aggColumn + ")"
+	case ObTableAggregationTypeSum:
+		return "sum(" + s.aggColumn + ")"
+	case ObTableAggregationTypeAvg:
+		return "avg(" + s.aggColumn + ")"
+	}
+	return "invalid"
+}
+
+func (s *ObTableAggregation) AggType() ObTableAggregationType {
 	return s.aggType
 }
 
-func (s *ObTableAggregationSingle) SetAggType(aggType ObTableAggregationType) {
+func (s *ObTableAggregation) SetAggType(aggType ObTableAggregationType) {
 	s.aggType = aggType
 }
 
-func (s *ObTableAggregationSingle) AggColumn() string {
+func (s *ObTableAggregation) AggColumn() string {
 	return s.aggColumn
 }
 
-func (s *ObTableAggregationSingle) SetAggColumn(aggColumn string) {
+func (s *ObTableAggregation) SetAggColumn(aggColumn string) {
 	s.aggColumn = aggColumn
 }
 
-func (s *ObTableAggregationSingle) PayloadLen() int {
+func (s *ObTableAggregation) PayloadLen() int {
 	return s.PayloadContentLen() + s.ObUniVersionHeader.UniVersionHeaderLen() // Do not change the order
 }
 
-func (s *ObTableAggregationSingle) PayloadContentLen() int {
+func (s *ObTableAggregation) PayloadContentLen() int {
 	totalLen := 0
 	totalLen += 1 // aggType
 	totalLen += util.EncodedLengthByVString(s.aggColumn)
@@ -80,7 +107,7 @@ func (s *ObTableAggregationSingle) PayloadContentLen() int {
 	return s.ObUniVersionHeader.ContentLength()
 }
 
-func (s *ObTableAggregationSingle) Encode(buffer *bytes.Buffer) {
+func (s *ObTableAggregation) Encode(buffer *bytes.Buffer) {
 	s.ObUniVersionHeader.Encode(buffer)
 
 	util.PutUint8(buffer, uint8(s.aggType))
@@ -88,7 +115,7 @@ func (s *ObTableAggregationSingle) Encode(buffer *bytes.Buffer) {
 	util.EncodeVString(buffer, s.aggColumn)
 }
 
-func (s *ObTableAggregationSingle) Decode(buffer *bytes.Buffer) {
+func (s *ObTableAggregation) Decode(buffer *bytes.Buffer) {
 	s.ObUniVersionHeader.Decode(buffer)
 
 	s.aggType = ObTableAggregationType(util.Uint8(buffer))

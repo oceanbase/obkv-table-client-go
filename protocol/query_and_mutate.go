@@ -47,13 +47,19 @@ func NewObTableQueryAndMutate() *ObTableQueryAndMutate {
 
 func NewObTableQueryAndMutateWithParams(tableOperationType ObTableOperationType, rowKey []*table.Column, columns []*table.Column) (*ObTableQueryAndMutate, error) {
 	obTableBatchOperation := NewObTableBatchOperation()
-	obTableOperation, err := NewObTableOperationWithParams(tableOperationType, nil, columns)
-	if err != nil {
-		return nil, errors.WithMessage(err, "create table operation")
+	if tableOperationType == ObTableOperationInsert {
+		obTableOperation, err := NewObTableOperationWithParams(tableOperationType, rowKey, columns)
+		if err != nil {
+			return nil, errors.WithMessage(err, "create table operation")
+		}
+		obTableBatchOperation.SetObTableOperations([]*ObTableOperation{obTableOperation})
+	} else {
+		obTableOperation, err := NewObTableOperationWithParams(tableOperationType, nil, columns)
+		if err != nil {
+			return nil, errors.WithMessage(err, "create table operation")
+		}
+		obTableBatchOperation.SetObTableOperations([]*ObTableOperation{obTableOperation})
 	}
-
-	obTableBatchOperation.SetObTableOperations([]*ObTableOperation{obTableOperation})
-
 	obTableQuery, err := NewObTableQueryWithKeyRanges(rowKey, rowKey)
 	if err != nil {
 		return nil, errors.WithMessagef(err, "create table query")

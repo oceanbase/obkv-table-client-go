@@ -17,7 +17,9 @@
 
 package option
 
-import "github.com/oceanbase/obkv-table-client-go/table"
+import (
+	"github.com/oceanbase/obkv-table-client-go/table"
+)
 
 type ObQueryOption interface {
 	Apply(opts *ObQueryOptions)
