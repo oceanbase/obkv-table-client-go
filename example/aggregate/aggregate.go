@@ -50,6 +50,10 @@ func main() {
 	// get agg result
 	res, err := aggExecutor.Execute(context.TODO())
 
+	if err != nil {
+		panic(err)
+	}
+
 	// get agg result value
 	println(res.Value("sum(c3)").(int64))
 	println(res.Value("min(c2)").(int64))
