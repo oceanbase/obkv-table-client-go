@@ -20,6 +20,7 @@ package query
 import (
 	"context"
 	"fmt"
+	"github.com/oceanbase/obkv-table-client-go/client/filter"
 	"github.com/oceanbase/obkv-table-client-go/client/option"
 	"testing"
 
@@ -243,4 +244,38 @@ func TestQueryZeroMixture(t *testing.T) {
 		assert.EqualValues(t, res.Value("c1"), res.Value("c2"))
 		assert.EqualValues(t, "hello", res.Value("c3"))
 	}
+}
+
+func TestQueryZeroFilter(t *testing.T) {
+	tableName := queryZeroTableName
+	defer test.DeleteTable(tableName)
+
+	recordCount := 50
+	batchSize := 1
+	prepareZeroRecord(recordCount)
+
+	// test Next()
+	startRowKey := []*table.Column{table.NewColumn("c1", int64(0)), table.NewColumn("c2", table.Min)}
+	endRowKey := []*table.Column{table.NewColumn("c1", int64(100)), table.NewColumn("c2", table.Max)}
+	keyRanges := []*table.RangePair{table.NewRangePair(startRowKey, endRowKey)}
+	lt30 := filter.CompareVal(filter.LessThan, "c2", int64(30))
+	gt10 := filter.CompareVal(filter.GreaterThan, "c2", int64(10))
+	filterList := filter.AndList(lt30, gt10)
+	resSet, err := cli.Query(
+		context.TODO(),
+		tableName,
+		keyRanges,
+		option.WithSelectColumns([]string{"c1", "c2", "c3"}),
+		option.WithBatchSize(batchSize),
+		option.WithQueryFilter(filterList),
+	)
+	assert.Equal(t, nil, err)
+	i := 0
+	for res, err := resSet.Next(); res != nil && err == nil; res, err = resSet.Next() {
+		assert.Equal(t, nil, err)
+		assert.EqualValues(t, res.Value("c1"), res.Value("c2"))
+		assert.EqualValues(t, "hello", res.Value("c3"))
+		i++
+	}
+	assert.EqualValues(t, 19, i)
 }
