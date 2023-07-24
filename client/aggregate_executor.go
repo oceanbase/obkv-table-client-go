@@ -23,15 +23,15 @@ import (
 
 type AggExecutor interface {
 	// Min add a min operation to the agg executor.
-	Min(aggColumn string) AggExecutor
+	Min(columnName string) AggExecutor
 	// Max add a max operation to the agg executor.
-	Max(aggColumn string) AggExecutor
+	Max(columnName string) AggExecutor
 	// Count add a count operation to the agg executor.
 	Count() AggExecutor
 	// Sum add a sum operation to the agg executor.
-	Sum(aggColumn string) AggExecutor
+	Sum(columnName string) AggExecutor
 	// Avg add an avg operation to the agg executor.
-	Avg(aggColumn string) AggExecutor
+	Avg(columnName string) AggExecutor
 	// Execute an agg operation.
 	// AggregateResult contains the results of all operations.
 	Execute(ctx context.Context) (AggregateResult, error)
