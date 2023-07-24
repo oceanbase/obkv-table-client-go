@@ -26,7 +26,7 @@ import (
 	"time"
 )
 
-// create table if not exists autoIncNotRowkeyTable(`c1` bigint(20) not null, c2 bigint(20) auto_increment, c3 varchar(20) default 'hello', c4 bigint(20) default 0, primary key (`c1`)) partition by key(c1) partitions 100;
+// create table if not exists test(`c1` bigint(20) not null, c2 bigint(20) auto_increment, c3 varchar(20) default 'hello', c4 bigint(20) default 0, primary key (`c1`)) partition by key(c1) partitions 100;
 func main() {
 	const (
 		configUrl    = "xxx"
