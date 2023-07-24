@@ -19,6 +19,7 @@ package main
 
 import (
 	"context"
+	"github.com/oceanbase/obkv-table-client-go/client/option"
 	"time"
 
 	"github.com/oceanbase/obkv-table-client-go/client"
@@ -42,7 +43,10 @@ func main() {
 		panic(err)
 	}
 
-	batchExecutor := cli.NewBatchExecutor(tableName)
+	batchExecutor := cli.NewBatchExecutor(
+		tableName,
+		option.WithSamePropertiesNames(true), // Strongly recommend you to set this option to true if all names of properties are the same in this batch.
+	)
 
 	rowKey1 := []*table.Column{table.NewColumn("c1", int64(1))}
 	rowKey2 := []*table.Column{table.NewColumn("c1", int64(2))}
@@ -62,7 +66,13 @@ func main() {
 	if err != nil {
 		panic(err)
 	}
-
+	// get size of result
+	println(res.Size())
+	// get result
 	println(res.GetResults()[0].Value("c1"))
 	println(res.GetResults()[1].Value("c2"))
+	// get wrong result
+	println(res.ErrorIdx())
+	// get correct result
+	println(res.SuccessIdx())
 }

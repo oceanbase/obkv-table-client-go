@@ -24,7 +24,7 @@ import (
 	"github.com/oceanbase/obkv-table-client-go/table"
 )
 
-// create table if not exists aggregateTable(`c1` bigint(20) not null, c2 bigint(20) not null, c3 varchar(20) default 'hello', c4 double default null, primary key (`c1`, `c2`))
+// create table if not exists test(`c1` bigint(20) not null, c2 bigint(20) not null, c3 varchar(20) default 'hello', c4 double default null, primary key (`c1`, `c2`))
 func main() {
 	const (
 		configUrl    = "xxx"
