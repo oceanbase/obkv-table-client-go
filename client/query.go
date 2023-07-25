@@ -75,8 +75,6 @@ func (q *obQueryExecutor) setQueryOptions(queryOptions *option.ObQueryOptions) {
 	if queryOptions.QueryFilter != nil {
 		q.tableQuery.SetFilterString(queryOptions.QueryFilter.String())
 	}
-	// TODO: modify hTableFilter and set it to tableQuery.
-	q.tableQuery.SetHTableFilter(nil)
 	q.tableQuery.SetSelectColumns(queryOptions.SelectColumns)
 	q.tableQuery.SetIndexName(queryOptions.IndexName)
 	q.tableQuery.SetBatchSize(queryOptions.BatchSize)
@@ -84,9 +82,23 @@ func (q *obQueryExecutor) setQueryOptions(queryOptions *option.ObQueryOptions) {
 	q.tableQuery.SetLimit(queryOptions.Limit)
 	q.tableQuery.SetOffset(queryOptions.Offset)
 	q.tableQuery.SetScanOrder(protocol.ObScanOrder(queryOptions.ScanOrder))
-	q.tableQuery.SetIsHbaseQuery(queryOptions.IsHbaseQuery)
-	if queryOptions.IsHbaseQuery {
+
+	if queryOptions.HTableFilter != nil {
+		q.tableQuery.SetHTableFilter(queryOptions.HTableFilter.Transfrom2Proto())
+		q.tableQuery.SetIsHbaseQuery(true)
 		q.entityType = protocol.ObTableEntityTypeHKV
+	} else {
+		q.tableQuery.SetIsHbaseQuery(queryOptions.IsHbaseQuery)
+		switch queryOptions.KeyValueMode {
+		case table.DynamicMode:
+			q.entityType = protocol.ObTableEntityTypeDynamic
+		case table.ObTableMode:
+			q.entityType = protocol.ObTableEntityTypeKV
+		case table.ObHBaseMode:
+			q.entityType = protocol.ObTableEntityTypeHKV
+		default:
+			q.entityType = protocol.ObTableEntityTypeDynamic
+		}
 	}
 }
 

@@ -56,7 +56,7 @@ func TestQueryKeySimple(t *testing.T) {
 		context.TODO(),
 		tableName,
 		keyRanges,
-		option.WithSelectColumns([]string{"c1", "c2", "c3"}),
+		option.WithQuerySelectColumns([]string{"c1", "c2", "c3"}),
 	)
 	assert.Equal(t, nil, err)
 	i := 0
@@ -75,7 +75,7 @@ func TestQueryKeySimple(t *testing.T) {
 		context.TODO(),
 		tableName,
 		keyRanges,
-		option.WithSelectColumns([]string{"c1", "c2", "c3"}),
+		option.WithQuerySelectColumns([]string{"c1", "c2", "c3"}),
 	)
 	assert.Equal(t, nil, err)
 	i = 0
@@ -103,8 +103,8 @@ func TestQueryKeyBatchSize(t *testing.T) {
 		context.TODO(),
 		tableName,
 		keyRanges,
-		option.WithSelectColumns([]string{"c1", "c2", "c3"}),
-		option.WithBatchSize(batchSize),
+		option.WithQuerySelectColumns([]string{"c1", "c2", "c3"}),
+		option.WithQueryBatchSize(batchSize),
 	)
 	assert.Equal(t, nil, err)
 	i := 0
@@ -124,8 +124,8 @@ func TestQueryKeyBatchSize(t *testing.T) {
 		context.TODO(),
 		tableName,
 		keyRanges,
-		option.WithSelectColumns([]string{"c1", "c2", "c3"}),
-		option.WithBatchSize(batchSize),
+		option.WithQuerySelectColumns([]string{"c1", "c2", "c3"}),
+		option.WithQueryBatchSize(batchSize),
 	)
 	assert.Equal(t, nil, err)
 	for res, err := resSet.NextBatch(); err == nil; res, err = resSet.NextBatch() {
@@ -156,9 +156,9 @@ func TestQueryKeyIndex(t *testing.T) {
 		context.TODO(),
 		tableName,
 		keyRanges,
-		option.WithSelectColumns([]string{"c1", "c2", "c3"}),
-		option.WithBatchSize(batchSize),
-		option.WithIndexName("i1"),
+		option.WithQuerySelectColumns([]string{"c1", "c2", "c3"}),
+		option.WithQueryBatchSize(batchSize),
+		option.WithQueryIndexName("i1"),
 	)
 	assert.Equal(t, nil, err)
 	i := 0
@@ -177,9 +177,9 @@ func TestQueryKeyIndex(t *testing.T) {
 		context.TODO(),
 		tableName,
 		keyRanges,
-		option.WithSelectColumns([]string{"c1", "c2", "c3"}),
-		option.WithBatchSize(batchSize),
-		option.WithIndexName("i1"),
+		option.WithQuerySelectColumns([]string{"c1", "c2", "c3"}),
+		option.WithQueryBatchSize(batchSize),
+		option.WithQueryIndexName("i1"),
 	)
 	assert.Equal(t, nil, err)
 	res, err := resSet.Next()
@@ -206,8 +206,8 @@ func TestQueryKeyFilter(t *testing.T) {
 		context.TODO(),
 		tableName,
 		keyRanges,
-		option.WithSelectColumns([]string{"c1", "c2", "c3"}),
-		option.WithBatchSize(batchSize),
+		option.WithQuerySelectColumns([]string{"c1", "c2", "c3"}),
+		option.WithQueryBatchSize(batchSize),
 		option.WithQueryFilter(filterList),
 	)
 	assert.Equal(t, nil, err)

@@ -56,7 +56,7 @@ func TestQueryZeroSimple(t *testing.T) {
 		context.TODO(),
 		tableName,
 		keyRanges,
-		option.WithSelectColumns([]string{"c1", "c2", "c3"}),
+		option.WithQuerySelectColumns([]string{"c1", "c2", "c3"}),
 	)
 	assert.Equal(t, nil, err)
 	for i := 0; i < recordCount; i++ {
@@ -73,7 +73,7 @@ func TestQueryZeroSimple(t *testing.T) {
 		context.TODO(),
 		tableName,
 		keyRanges,
-		option.WithSelectColumns([]string{"c1", "c2", "c3"}),
+		option.WithQuerySelectColumns([]string{"c1", "c2", "c3"}),
 	)
 	assert.Equal(t, nil, err)
 	for i := 0; i < 5; i++ {
@@ -91,7 +91,7 @@ func TestQueryZeroSimple(t *testing.T) {
 		context.TODO(),
 		tableName,
 		keyRanges,
-		option.WithSelectColumns([]string{"c1", "c2", "c3"}),
+		option.WithQuerySelectColumns([]string{"c1", "c2", "c3"}),
 	)
 	assert.Equal(t, nil, err)
 	for res, err := resSet.Next(); res != nil && err == nil; res, err = resSet.Next() {
@@ -106,7 +106,7 @@ func TestQueryZeroSimple(t *testing.T) {
 		context.TODO(),
 		tableName,
 		keyRanges,
-		option.WithSelectColumns([]string{"c1", "c2", "c3"}),
+		option.WithQuerySelectColumns([]string{"c1", "c2", "c3"}),
 	)
 	assert.Equal(t, nil, err)
 	for res, err := resSet.Next(); res != nil && err == nil; res, err = resSet.Next() {
@@ -132,8 +132,8 @@ func TestQueryZeroBatchSize(t *testing.T) {
 		context.TODO(),
 		tableName,
 		keyRanges,
-		option.WithSelectColumns([]string{"c1", "c2", "c3"}),
-		option.WithBatchSize(batchSize),
+		option.WithQuerySelectColumns([]string{"c1", "c2", "c3"}),
+		option.WithQueryBatchSize(batchSize),
 	)
 	assert.Equal(t, nil, err)
 	for i := 0; i < recordCount; i++ {
@@ -151,8 +151,8 @@ func TestQueryZeroBatchSize(t *testing.T) {
 		context.TODO(),
 		tableName,
 		keyRanges,
-		option.WithSelectColumns([]string{"c1", "c2", "c3"}),
-		option.WithBatchSize(batchSize),
+		option.WithQuerySelectColumns([]string{"c1", "c2", "c3"}),
+		option.WithQueryBatchSize(batchSize),
 	)
 	assert.Equal(t, nil, err)
 	for res, err := resSet.NextBatch(); err == nil; res, err = resSet.NextBatch() {
@@ -183,9 +183,9 @@ func TestQueryZeroIndex(t *testing.T) {
 		context.TODO(),
 		tableName,
 		keyRanges,
-		option.WithSelectColumns([]string{"c1", "c2", "c3"}),
-		option.WithBatchSize(batchSize),
-		option.WithIndexName("i1"),
+		option.WithQuerySelectColumns([]string{"c1", "c2", "c3"}),
+		option.WithQueryBatchSize(batchSize),
+		option.WithQueryIndexName("i1"),
 	)
 	assert.Equal(t, nil, err)
 	for i := 0; i < recordCount; i++ {
@@ -202,9 +202,9 @@ func TestQueryZeroIndex(t *testing.T) {
 		context.TODO(),
 		tableName,
 		keyRanges,
-		option.WithSelectColumns([]string{"c1", "c2", "c3"}),
-		option.WithBatchSize(batchSize),
-		option.WithIndexName("i1"),
+		option.WithQuerySelectColumns([]string{"c1", "c2", "c3"}),
+		option.WithQueryBatchSize(batchSize),
+		option.WithQueryIndexName("i1"),
 	)
 	assert.Equal(t, nil, err)
 	res, err := resSet.Next()
@@ -230,11 +230,11 @@ func TestQueryZeroMixture(t *testing.T) {
 		context.TODO(),
 		tableName,
 		keyRanges,
-		option.WithSelectColumns([]string{"c1", "c2", "c3"}),
-		option.WithBatchSize(batchSize),
-		option.WithLimit(limit),
-		option.WithScanOrder(scanOrder),
-		option.WithOffset(offset),
+		option.WithQuerySelectColumns([]string{"c1", "c2", "c3"}),
+		option.WithQueryBatchSize(batchSize),
+		option.WithQueryLimit(limit),
+		option.WithQueryScanOrder(scanOrder),
+		option.WithQueryOffset(offset),
 	)
 	assert.Equal(t, nil, err)
 	for i := 0; i < limit; i++ {
@@ -265,8 +265,8 @@ func TestQueryZeroFilter(t *testing.T) {
 		context.TODO(),
 		tableName,
 		keyRanges,
-		option.WithSelectColumns([]string{"c1", "c2", "c3"}),
-		option.WithBatchSize(batchSize),
+		option.WithQuerySelectColumns([]string{"c1", "c2", "c3"}),
+		option.WithQueryBatchSize(batchSize),
 		option.WithQueryFilter(filterList),
 	)
 	assert.Equal(t, nil, err)
