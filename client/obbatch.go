@@ -19,9 +19,10 @@ package client
 
 import (
 	"context"
-	"github.com/oceanbase/obkv-table-client-go/client/option"
 	"strconv"
 	"sync"
+
+	"github.com/oceanbase/obkv-table-client-go/client/option"
 
 	"github.com/pkg/errors"
 

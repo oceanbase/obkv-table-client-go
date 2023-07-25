@@ -18,9 +18,15 @@
 package client
 
 type BatchOperationResult interface {
+	// IsEmptySet result is empty or not.
+	IsEmptySet() bool
+	// GetResults get all results.
 	GetResults() []SingleResult
+	// Size batch operation size.
 	Size() int
+	// SuccessIdx indexes of successful operation.
 	SuccessIdx() []int
+	// ErrorIdx indexes of unsuccessful operation.
 	ErrorIdx() []int
 }
 
@@ -30,6 +36,18 @@ type obBatchOperationResult struct {
 
 func newObBatchOperationResult(results []SingleResult) *obBatchOperationResult {
 	return &obBatchOperationResult{results}
+}
+
+func (r *obBatchOperationResult) IsEmptySet() bool {
+	if len(r.results) == 0 {
+		return true
+	}
+	for _, result := range r.results {
+		if !result.IsEmptySet() {
+			return false
+		}
+	}
+	return true
 }
 
 func (r *obBatchOperationResult) GetResults() []SingleResult {

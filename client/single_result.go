@@ -24,8 +24,15 @@ import (
 )
 
 type SingleResult interface {
+	// IsEmptySet get empty row or not when do Get operation.
+	IsEmptySet() bool
+	// AffectedRows get affected row.
 	AffectedRows() int64
+	// Value get value by column name.
 	Value(columnName string) interface{}
+	// Values get key value map.
+	Values() map[string]interface{}
+	// RowKey get affected rowkey, only work in Increment and Append operation.
 	RowKey() []interface{}
 }
 
@@ -36,6 +43,10 @@ func newObSingleResult(affectedRows int64, affectedEntity *protocol.ObTableEntit
 type obSingleResult struct {
 	affectedRows   int64
 	affectedEntity *protocol.ObTableEntity
+}
+
+func (r *obSingleResult) IsEmptySet() bool {
+	return len(r.affectedEntity.Properties()) == 0
 }
 
 func (r *obSingleResult) AffectedRows() int64 {
@@ -61,6 +72,17 @@ func (r *obSingleResult) Value(columnName string) interface{} {
 		}
 	}
 	return nil
+}
+
+func (r *obSingleResult) Values() map[string]interface{} {
+	if len(r.affectedEntity.Properties()) == 0 {
+		return nil
+	}
+	m := make(map[string]interface{}, len(r.affectedEntity.Properties()))
+	for k, v := range r.affectedEntity.Properties() {
+		m[k] = v.Value()
+	}
+	return m
 }
 
 func (r *obSingleResult) RowKey() []interface{} {

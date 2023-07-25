@@ -40,6 +40,12 @@ func TestSingleResult(t *testing.T) {
 	assert.EqualValues(t, 1, res.Value("c1"))
 	assert.EqualValues(t, 1, res.Value("C1"))
 	assert.EqualValues(t, nil, res.Value("C2"))
+	assert.EqualValues(t, 1, len(res.Values()))
+	for k, v := range res.Values() {
+		assert.EqualValues(t, "c1", k)
+		assert.EqualValues(t, 1, v)
+	}
+	assert.EqualValues(t, false, res.IsEmptySet())
 
 	assert.EqualValues(t, []interface{}(nil), res.RowKey())
 

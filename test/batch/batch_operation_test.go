@@ -160,6 +160,26 @@ func TestBatch_MultiGet(t *testing.T) {
 	}
 }
 
+func TestBatch_MultiGetEmpty(t *testing.T) {
+	tableName := batchOpTableTableName
+	defer test.DeleteTable(tableName)
+
+	recordCount := 10
+	prepareRecord(recordCount)
+
+	batchExecutor := cli.NewBatchExecutor(tableName)
+
+	for i := recordCount; i < recordCount+recordCount; i++ {
+		rowKey := []*table.Column{table.NewColumn("c1", int64(i))}
+		err := batchExecutor.AddGetOp(rowKey, getColumns)
+		assert.Equal(t, nil, err)
+	}
+
+	res, err := batchExecutor.Execute(context.TODO())
+	assert.Equal(t, nil, err)
+	assert.EqualValues(t, true, res.IsEmptySet())
+}
+
 func TestBatch_MultiDelete(t *testing.T) {
 	tableName := batchOpTableTableName
 	defer test.DeleteTable(tableName)
