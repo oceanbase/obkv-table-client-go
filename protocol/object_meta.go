@@ -138,10 +138,6 @@ func DefaultObjMeta(value interface{}) (ObObjectMeta, error) {
 		return ObObjTypeVarchar.DefaultObjMeta(), nil
 	case []byte:
 		return ObObjTypeVarchar.DefaultObjMeta(), nil
-	case table.Year:
-		return ObObjTypeYear.DefaultObjMeta(), nil
-	case table.Date:
-		return ObObjTypeDate.DefaultObjMeta(), nil
 	case table.DateTime:
 		return ObObjTypeDateTime.DefaultObjMeta(), nil
 	case table.TimeStamp:
@@ -886,16 +882,16 @@ type ObDateTimeType ObObjTypeValue
 
 func (t ObDateTimeType) Encode(buffer *bytes.Buffer, value interface{}) {
 	v := time.Time(value.(table.DateTime))
-	util.EncodeVi64(buffer, v.Unix())
+	util.EncodeVi64(buffer, v.UnixMicro()) // store UTC
 }
 
 func (t ObDateTimeType) Decode(buffer *bytes.Buffer, obCollationType ObCollationType) interface{} {
-	v := util.DecodeVi64(buffer)
-	return time.Unix(v, 0).In(util.TimeZone())
+	return time.UnixMicro(util.DecodeVi64(buffer)).In(time.UTC) // show UTC
 }
 
 func (t ObDateTimeType) EncodedLength(value interface{}) int {
-	return util.EncodedLengthByVi64(time.Time(value.(table.DateTime)).Unix())
+	v := time.Time(value.(table.DateTime))
+	return util.EncodedLengthByVi64(v.UnixMicro())
 }
 
 func (t ObDateTimeType) DefaultObjMeta() ObObjectMeta {
@@ -916,20 +912,15 @@ type ObTimestampType ObObjTypeValue
 
 func (t ObTimestampType) Encode(buffer *bytes.Buffer, value interface{}) {
 	v := time.Time(value.(table.TimeStamp))
-	util.EncodeVi64(buffer, v.UnixNano())
+	util.EncodeVi64(buffer, v.UnixMicro()) // store UTC
 }
 
 func (t ObTimestampType) Decode(buffer *bytes.Buffer, obCollationType ObCollationType) interface{} {
-	v := util.DecodeVi64(buffer)
-	if v < 1e10 {
-		return time.Unix(v, 0).In(util.TimeZone())
-	} else {
-		return time.Unix(0, v).In(util.TimeZone())
-	}
+	return time.UnixMicro(util.DecodeVi64(buffer)) // show local
 }
 
 func (t ObTimestampType) EncodedLength(value interface{}) int {
-	return util.EncodedLengthByVi64(time.Time(value.(table.TimeStamp)).UnixNano())
+	return util.EncodedLengthByVi64(time.Time(value.(table.TimeStamp)).UnixMicro())
 }
 
 func (t ObTimestampType) DefaultObjMeta() ObObjectMeta {
@@ -946,20 +937,20 @@ func (t ObTimestampType) String() string {
 		"}"
 }
 
-type ObDateType ObObjTypeValue
+type ObDateType ObObjTypeValue // TODO not support
 
 func (t ObDateType) Encode(buffer *bytes.Buffer, value interface{}) {
-	v := time.Time(value.(table.Date))
-	util.EncodeVi64(buffer, v.Unix())
+	// TODO not support
 }
 
 func (t ObDateType) Decode(buffer *bytes.Buffer, obCollationType ObCollationType) interface{} {
-	v := time.Unix(util.DecodeVi64(buffer), 0).In(util.TimeZone())
-	return time.Date(v.Year(), v.Month(), v.Day(), 0, 0, 0, 0, util.TimeZone())
+	return nil
+	// TODO not support
 }
 
 func (t ObDateType) EncodedLength(value interface{}) int {
-	return util.EncodedLengthByVi64(time.Time(value.(table.Date)).Unix())
+	return -1
+	// TODO not support
 }
 
 func (t ObDateType) DefaultObjMeta() ObObjectMeta {
@@ -1004,28 +995,20 @@ func (t ObTimeType) String() string {
 		"}"
 }
 
-type ObYearType ObObjTypeValue
+type ObYearType ObObjTypeValue // TODO not support
 
 func (t ObYearType) Encode(buffer *bytes.Buffer, value interface{}) {
-	// range [1901 - 2155]
-	year := uint16(value.(table.Year))
-	var fullYear uint16
-	if year > 0 && year <= 69 {
-		fullYear = year + 2000
-	} else if year >= 70 && year <= 99 {
-		fullYear = year + 1900
-	} else {
-		fullYear = year
-	}
-	util.PutUint8(buffer, uint8(fullYear-1901))
+	// TODO not support
 }
 
 func (t ObYearType) Decode(buffer *bytes.Buffer, obCollationType ObCollationType) interface{} {
-	return int16(util.Uint8(buffer)) + 1901
+	// TODO not support
+	return nil
 }
 
 func (t ObYearType) EncodedLength(value interface{}) int {
-	return 1
+	// TODO not support
+	return -1
 }
 
 func (t ObYearType) DefaultObjMeta() ObObjectMeta {

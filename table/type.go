@@ -21,10 +21,8 @@ import (
 	"time"
 )
 
-type Date time.Time
-
+// DateTime store/show in UTC timezone.
 type DateTime time.Time
 
+// TimeStamp store in UTC timezone, show in Local timezone.
 type TimeStamp time.Time
-
-type Year uint16

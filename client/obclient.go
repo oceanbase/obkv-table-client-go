@@ -19,13 +19,14 @@ package client
 
 import (
 	"context"
-	"github.com/oceanbase/obkv-table-client-go/client/option"
 	"math"
 	"strconv"
 	"strings"
 	"sync"
 	"sync/atomic"
 	"time"
+
+	"github.com/oceanbase/obkv-table-client-go/client/option"
 
 	"github.com/pkg/errors"
 
@@ -818,10 +819,6 @@ func (c *obClient) fetchMetadata() error {
 	if util.ObVersion() == 0.0 {
 		util.SetObVersion(ver)
 		route.InitSql(ver)
-	}
-	// 2.2 Set global time zone
-	if util.TimeZone() == nil {
-		util.SetGlobalTimeZone(c.config.TimeZone)
 	}
 
 	// 3. Dummy route to get tenant server and create ObTable for each observer node.
