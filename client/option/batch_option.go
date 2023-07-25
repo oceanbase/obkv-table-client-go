@@ -43,15 +43,15 @@ func (f ObBatchOptionFunc) Apply(opts *ObBatchOptions) {
 	f(opts)
 }
 
-// WithSamePropertiesNames set samePropertiesNames
-func WithSamePropertiesNames(samePropertiesNames bool) ObBatchOption {
+// WithBatchSamePropertiesNames set samePropertiesNames
+func WithBatchSamePropertiesNames(samePropertiesNames bool) ObBatchOption {
 	return ObBatchOptionFunc(func(opts *ObBatchOptions) {
 		opts.SamePropertiesNames = samePropertiesNames
 	})
 }
 
-// WithKeyValueMode set keyValueMode
-func WithKeyValueMode(keyValueMode table.ObKeyValueMode) ObBatchOption {
+// WithBatchKeyValueMode set keyValueMode
+func WithBatchKeyValueMode(keyValueMode table.ObKeyValueMode) ObBatchOption {
 	return ObBatchOptionFunc(func(opts *ObBatchOptions) {
 		opts.KeyValueMode = keyValueMode
 	})

@@ -64,11 +64,11 @@ func main() {
 		context.TODO(),
 		tableName,
 		keyRanges,
-		option.WithSelectColumns([]string{"c1", "c2"}),
-		option.WithBatchSize(batchSize),
-		option.WithLimit(limit),
-		option.WithScanOrder(scanOrder),
-		option.WithOffset(offset),
+		option.WithQuerySelectColumns([]string{"c1", "c2"}),
+		option.WithQueryBatchSize(batchSize),
+		option.WithQueryLimit(limit),
+		option.WithQueryScanOrder(scanOrder),
+		option.WithQueryOffset(offset),
 		option.WithQueryFilter(filterList),
 	)
 	for res, err := resSet.Next(); res != nil && err == nil; res, err = resSet.Next() {

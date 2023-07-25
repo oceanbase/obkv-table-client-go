@@ -56,7 +56,7 @@ func TestQueryHashSimple(t *testing.T) {
 		context.TODO(),
 		tableName,
 		keyRanges,
-		option.WithSelectColumns([]string{"c1", "c2", "c3"}),
+		option.WithQuerySelectColumns([]string{"c1", "c2", "c3"}),
 	)
 	assert.Equal(t, nil, err)
 	i := 0
@@ -75,7 +75,7 @@ func TestQueryHashSimple(t *testing.T) {
 		context.TODO(),
 		tableName,
 		keyRanges,
-		option.WithSelectColumns([]string{"c1", "c2", "c3"}),
+		option.WithQuerySelectColumns([]string{"c1", "c2", "c3"}),
 	)
 	assert.Equal(t, nil, err)
 	for res, err := resSet.Next(); err == nil; res, err = resSet.Next() {
@@ -96,7 +96,7 @@ func TestQueryHashSimple(t *testing.T) {
 		context.TODO(),
 		tableName,
 		keyRanges,
-		option.WithSelectColumns([]string{"c1", "c2", "c3"}),
+		option.WithQuerySelectColumns([]string{"c1", "c2", "c3"}),
 	)
 	assert.Equal(t, nil, err)
 	for res, err := resSet.Next(); err == nil; res, err = resSet.Next() {
@@ -115,7 +115,7 @@ func TestQueryHashSimple(t *testing.T) {
 		context.TODO(),
 		tableName,
 		keyRanges,
-		option.WithSelectColumns([]string{"c1", "c2", "c3"}),
+		option.WithQuerySelectColumns([]string{"c1", "c2", "c3"}),
 	)
 	assert.Equal(t, nil, err)
 	for res, err := resSet.Next(); res != nil && err == nil; res, err = resSet.Next() {
@@ -133,7 +133,7 @@ func TestQueryHashSimple(t *testing.T) {
 		context.TODO(),
 		tableName,
 		keyRanges,
-		option.WithSelectColumns([]string{"c1", "c2", "c3"}),
+		option.WithQuerySelectColumns([]string{"c1", "c2", "c3"}),
 	)
 	assert.Equal(t, nil, err)
 	for res, err := resSet.Next(); res != nil && err == nil; res, err = resSet.Next() {
@@ -149,7 +149,7 @@ func TestQueryHashSimple(t *testing.T) {
 		context.TODO(),
 		tableName,
 		keyRanges,
-		option.WithSelectColumns([]string{"c1", "c2", "c3"}),
+		option.WithQuerySelectColumns([]string{"c1", "c2", "c3"}),
 	)
 	assert.NotEqual(t, nil, err)
 
@@ -160,7 +160,7 @@ func TestQueryHashSimple(t *testing.T) {
 		context.TODO(),
 		tableName,
 		keyRanges,
-		option.WithSelectColumns([]string{"c1", "c2", "c3"}),
+		option.WithQuerySelectColumns([]string{"c1", "c2", "c3"}),
 	)
 	assert.Equal(t, nil, err)
 	i = 0
@@ -180,7 +180,7 @@ func TestQueryHashSimple(t *testing.T) {
 		context.TODO(),
 		tableName,
 		keyRanges,
-		option.WithSelectColumns([]string{"c1", "c2", "c3"}),
+		option.WithQuerySelectColumns([]string{"c1", "c2", "c3"}),
 	)
 	assert.Equal(t, nil, err)
 	for res, err := resSet.NextBatch(); res != nil && err == nil; res, err = resSet.NextBatch() {
@@ -209,8 +209,8 @@ func TestQueryHashBatchSize(t *testing.T) {
 		context.TODO(),
 		tableName,
 		keyRanges,
-		option.WithSelectColumns([]string{"c1", "c2", "c3"}),
-		option.WithBatchSize(batchSize),
+		option.WithQuerySelectColumns([]string{"c1", "c2", "c3"}),
+		option.WithQueryBatchSize(batchSize),
 	)
 	assert.Equal(t, nil, err)
 	i := 0
@@ -230,8 +230,8 @@ func TestQueryHashBatchSize(t *testing.T) {
 		context.TODO(),
 		tableName,
 		keyRanges,
-		option.WithSelectColumns([]string{"c1", "c2", "c3"}),
-		option.WithBatchSize(batchSize),
+		option.WithQuerySelectColumns([]string{"c1", "c2", "c3"}),
+		option.WithQueryBatchSize(batchSize),
 	)
 	assert.Equal(t, nil, err)
 	for res, err := resSet.NextBatch(); err == nil; res, err = resSet.NextBatch() {
@@ -262,9 +262,9 @@ func TestQueryHashIndex(t *testing.T) {
 		context.TODO(),
 		tableName,
 		keyRanges,
-		option.WithSelectColumns([]string{"c1", "c2", "c3"}),
-		option.WithBatchSize(batchSize),
-		option.WithIndexName("i1"),
+		option.WithQuerySelectColumns([]string{"c1", "c2", "c3"}),
+		option.WithQueryBatchSize(batchSize),
+		option.WithQueryIndexName("i1"),
 	)
 	assert.Equal(t, nil, err)
 	i := 0
@@ -283,9 +283,9 @@ func TestQueryHashIndex(t *testing.T) {
 		context.TODO(),
 		tableName,
 		keyRanges,
-		option.WithSelectColumns([]string{"c1", "c2", "c3"}),
-		option.WithBatchSize(batchSize),
-		option.WithIndexName("i1"),
+		option.WithQuerySelectColumns([]string{"c1", "c2", "c3"}),
+		option.WithQueryBatchSize(batchSize),
+		option.WithQueryIndexName("i1"),
 	)
 	assert.Equal(t, nil, err)
 	res, err := resSet.Next()
@@ -312,8 +312,8 @@ func TestQueryHashFilter(t *testing.T) {
 		context.TODO(),
 		tableName,
 		keyRanges,
-		option.WithSelectColumns([]string{"c1", "c2", "c3"}),
-		option.WithBatchSize(batchSize),
+		option.WithQuerySelectColumns([]string{"c1", "c2", "c3"}),
+		option.WithQueryBatchSize(batchSize),
 		option.WithQueryFilter(filterList),
 	)
 	assert.Equal(t, nil, err)

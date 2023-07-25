@@ -45,7 +45,7 @@ func main() {
 
 	batchExecutor := cli.NewBatchExecutor(
 		tableName,
-		option.WithSamePropertiesNames(true), // Strongly recommend you to set this option to true if all names of properties are the same in this batch.
+		option.WithBatchSamePropertiesNames(true), // Strongly recommend you to set this option to true if all names of properties are the same in this batch.
 	)
 
 	rowKey1 := []*table.Column{table.NewColumn("c1", int64(1))}

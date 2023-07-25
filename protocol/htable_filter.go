@@ -42,7 +42,7 @@ func NewObHTableFilter() *ObHTableFilter {
 			version:       1,
 			contentLength: 0,
 		},
-		isValid:               false,
+		isValid:               true,
 		selectColumnQualifier: nil,
 		minStamp:              0,
 		maxStamp:              math.MaxInt64,
