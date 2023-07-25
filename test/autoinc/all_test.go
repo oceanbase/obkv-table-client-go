@@ -31,15 +31,17 @@ func setup() {
 	cli = test.CreateClient()
 
 	test.CreateDB()
-	test.CreateTable(autoIncRowkeyTableCreateStatement)
-	test.CreateTable(autoIncNotRowkeyTableCreateStatement)
+	test.CreateTable(autoIncRowkeyZeroFillTableCreateStatement)
+	test.CreateTable(autoIncRowkeyNotFillTableCreateStatement)
+	test.CreateTable(autoIncNormalNotFillTableCreateStatement)
 }
 
 func teardown() {
 	cli.Close()
 
-	test.DropTable(autoIncRowkeyTableTableName)
-	test.DropTable(autoIncNotRowkeyTableTableName)
+	test.DropTable(autoIncRowkeyZeroFillTableTableName)
+	test.DropTable(autoIncRowkeyNotFillTableTableName)
+	test.DropTable(autoIncNormalNotFillTableTableName)
 	test.CloseDB()
 }
 
