@@ -138,7 +138,7 @@ func (q *ObQueryResultIterator) Next() (QueryResult, error) {
 
 // NextBatch returns nil if there is no more row.
 // Notes: NextBatch() could not be called with Next() at the same time.
-// Number of reuturned rows is less than or equal to the batch size.
+// Number of returned rows is less than or equal to the batch size.
 // Batch size, limit, amount of data will affect the number of returned rows.
 func (q *ObQueryResultIterator) NextBatch() ([]QueryResult, error) {
 	// check status

@@ -135,6 +135,7 @@ func (f *ObHTableFilter) PayloadContentLen() int {
 		util.EncodedLengthByVi32(f.limitPerRowPerCf) +
 		util.EncodedLengthByVi32(f.offsetPerRowPerCf) +
 		util.EncodedLengthByVString(f.filterString)
+	f.ObUniVersionHeader.SetContentLength(totalLen)
 	return totalLen
 }
 
