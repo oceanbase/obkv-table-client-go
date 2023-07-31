@@ -94,10 +94,12 @@ func TestQueryZeroSimple(t *testing.T) {
 		option.WithQuerySelectColumns([]string{"c1", "c2", "c3"}),
 	)
 	assert.Equal(t, nil, err)
-	for res, err := resSet.Next(); res != nil && err == nil; res, err = resSet.Next() {
+	res, err := resSet.Next()
+	for ; res != nil && err == nil; res, err = resSet.Next() {
 		assert.Equal(t, nil, err)
 		assert.Equal(t, nil, res)
 	}
+	assert.Equal(t, nil, err)
 
 	startRowKey = []*table.Column{table.NewColumn("c1", int64(8)), table.NewColumn("c2", table.Min)}
 	endRowKey = []*table.Column{table.NewColumn("c1", int64(9)), table.NewColumn("c2", table.Min)}
@@ -109,12 +111,13 @@ func TestQueryZeroSimple(t *testing.T) {
 		option.WithQuerySelectColumns([]string{"c1", "c2", "c3"}),
 	)
 	assert.Equal(t, nil, err)
-	for res, err := resSet.Next(); res != nil && err == nil; res, err = resSet.Next() {
-		assert.Equal(t, nil, err)
+	res, err = resSet.Next()
+	for ; res != nil && err == nil; res, err = resSet.Next() {
 		assert.EqualValues(t, 8, res.Value("c1"))
 		assert.EqualValues(t, res.Value("c1"), res.Value("c2"))
 		assert.EqualValues(t, "hello", res.Value("c3"))
 	}
+	assert.Equal(t, nil, err)
 }
 
 func TestQueryZeroBatchSize(t *testing.T) {
@@ -155,17 +158,15 @@ func TestQueryZeroBatchSize(t *testing.T) {
 		option.WithQueryBatchSize(batchSize),
 	)
 	assert.Equal(t, nil, err)
-	for res, err := resSet.NextBatch(); err == nil; res, err = resSet.NextBatch() {
-		if res == nil {
-			break
-		}
-		assert.Equal(t, nil, err)
+	res, err := resSet.NextBatch()
+	for ; res != nil && err == nil; res, err = resSet.NextBatch() {
 		for i := 0; i < len(res); i++ {
 			assert.EqualValues(t, res[i].Value("c1"), res[i].Value("c2"))
 			assert.EqualValues(t, "hello", res[i].Value("c3"))
 			assert.EqualValues(t, res[i].Values(), []interface{}{res[i].Value("c1"), res[i].Value("c1"), "hello"})
 		}
 	}
+	assert.Equal(t, nil, err)
 }
 
 func TestQueryZeroIndex(t *testing.T) {
@@ -271,11 +272,12 @@ func TestQueryZeroFilter(t *testing.T) {
 	)
 	assert.Equal(t, nil, err)
 	i := 0
-	for res, err := resSet.Next(); res != nil && err == nil; res, err = resSet.Next() {
-		assert.Equal(t, nil, err)
+	res, err := resSet.Next()
+	for ; res != nil && err == nil; res, err = resSet.Next() {
 		assert.EqualValues(t, res.Value("c1"), res.Value("c2"))
 		assert.EqualValues(t, "hello", res.Value("c3"))
 		i++
 	}
+	assert.Equal(t, nil, err)
 	assert.EqualValues(t, 19, i)
 }

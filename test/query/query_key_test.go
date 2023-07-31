@@ -60,12 +60,13 @@ func TestQueryKeySimple(t *testing.T) {
 	)
 	assert.Equal(t, nil, err)
 	i := 0
-	for res, err := resSet.Next(); res != nil && err == nil; res, err = resSet.Next() {
-		assert.Equal(t, nil, err)
+	res, err := resSet.Next()
+	for ; res != nil && err == nil; res, err = resSet.Next() {
 		assert.EqualValues(t, res.Value("c1"), res.Value("c2"))
 		assert.EqualValues(t, "hello", res.Value("c3"))
 		i++
 	}
+	assert.Equal(t, nil, err)
 	assert.EqualValues(t, recordCount, i)
 
 	startRowKey = []*table.Column{table.NewColumn("c1", int64(5)), table.NewColumn("c2", table.Min)}
@@ -79,12 +80,14 @@ func TestQueryKeySimple(t *testing.T) {
 	)
 	assert.Equal(t, nil, err)
 	i = 0
-	for res, err := resSet.Next(); res != nil && err == nil; res, err = resSet.Next() {
+	res, err = resSet.Next()
+	for ; res != nil && err == nil; res, err = resSet.Next() {
 		assert.Equal(t, nil, err)
 		assert.EqualValues(t, res.Value("c1"), res.Value("c2"))
 		assert.EqualValues(t, "hello", res.Value("c3"))
 		i++
 	}
+	assert.Equal(t, nil, err)
 	assert.EqualValues(t, 5, i)
 }
 
@@ -108,12 +111,14 @@ func TestQueryKeyBatchSize(t *testing.T) {
 	)
 	assert.Equal(t, nil, err)
 	i := 0
-	for res, err := resSet.Next(); res != nil && err == nil; res, err = resSet.Next() {
+	res, err := resSet.Next()
+	for ; res != nil && err == nil; res, err = resSet.Next() {
 		assert.Equal(t, nil, err)
 		assert.EqualValues(t, res.Value("c1"), res.Value("c2"))
 		assert.EqualValues(t, "hello", res.Value("c3"))
 		i++
 	}
+	assert.Equal(t, nil, err)
 	assert.EqualValues(t, recordCount, i)
 
 	// test NextBatch
@@ -128,17 +133,15 @@ func TestQueryKeyBatchSize(t *testing.T) {
 		option.WithQueryBatchSize(batchSize),
 	)
 	assert.Equal(t, nil, err)
-	for res, err := resSet.NextBatch(); err == nil; res, err = resSet.NextBatch() {
-		if res == nil {
-			break
-		}
-		assert.Equal(t, nil, err)
-		for i := 0; i < len(res); i++ {
-			assert.EqualValues(t, res[i].Value("c1"), res[i].Value("c2"))
-			assert.EqualValues(t, "hello", res[i].Value("c3"))
-			assert.EqualValues(t, res[i].Values(), []interface{}{res[i].Value("c1"), res[i].Value("c1"), "hello"})
+	batchRes, err := resSet.NextBatch()
+	for ; batchRes == nil && err == nil; batchRes, err = resSet.NextBatch() {
+		for i := 0; i < len(batchRes); i++ {
+			assert.EqualValues(t, batchRes[i].Value("c1"), batchRes[i].Value("c2"))
+			assert.EqualValues(t, "hello", batchRes[i].Value("c3"))
+			assert.EqualValues(t, batchRes[i].Values(), []interface{}{batchRes[i].Value("c1"), batchRes[i].Value("c1"), "hello"})
 		}
 	}
+	assert.Equal(t, nil, err)
 }
 
 func TestQueryKeyIndex(t *testing.T) {
@@ -162,12 +165,13 @@ func TestQueryKeyIndex(t *testing.T) {
 	)
 	assert.Equal(t, nil, err)
 	i := 0
-	for res, err := resSet.Next(); res != nil && err == nil; res, err = resSet.Next() {
-		assert.Equal(t, nil, err)
+	res, err := resSet.Next()
+	for ; res != nil && err == nil; res, err = resSet.Next() {
 		assert.EqualValues(t, res.Value("c1"), res.Value("c2"))
 		assert.EqualValues(t, "hello", res.Value("c3"))
 		i++
 	}
+	assert.Equal(t, nil, err)
 	assert.EqualValues(t, recordCount, i)
 
 	startRowKey = []*table.Column{table.NewColumn("c1", int64(0)), table.NewColumn("c3", "not exist")}
@@ -182,7 +186,7 @@ func TestQueryKeyIndex(t *testing.T) {
 		option.WithQueryIndexName("i1"),
 	)
 	assert.Equal(t, nil, err)
-	res, err := resSet.Next()
+	res, err = resSet.Next()
 	assert.Equal(t, nil, err)
 	assert.Equal(t, nil, res)
 }
@@ -212,11 +216,12 @@ func TestQueryKeyFilter(t *testing.T) {
 	)
 	assert.Equal(t, nil, err)
 	i := 0
-	for res, err := resSet.Next(); res != nil && err == nil; res, err = resSet.Next() {
-		assert.Equal(t, nil, err)
+	res, err := resSet.Next()
+	for ; res != nil && err == nil; res, err = resSet.Next() {
 		assert.EqualValues(t, res.Value("c1"), res.Value("c2"))
 		assert.EqualValues(t, "hello", res.Value("c3"))
 		i++
 	}
+	assert.Equal(t, nil, err)
 	assert.EqualValues(t, 19, i)
 }
