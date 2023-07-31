@@ -71,12 +71,13 @@ func main() {
 		option.WithQueryOffset(offset),
 		option.WithQueryFilter(filterList),
 	)
-	for res, err := resSet.Next(); res != nil && err == nil; res, err = resSet.Next() {
-		if err != nil {
-			panic(err)
-		}
+	res, err := resSet.Next()
+	for ; res != nil && err == nil; res, err = resSet.Next() {
 		values := res.Values()
 		println(values[0].(int64), values[1].(string))
 		println(res.Value("c1").(int64), res.Value("c2").(string))
+	}
+	if err != nil {
+		panic(err)
 	}
 }
