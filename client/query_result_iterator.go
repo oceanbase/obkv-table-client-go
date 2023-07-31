@@ -28,7 +28,7 @@ import (
 
 type QueryResultIterator interface {
 	IsClosed() bool
-	Close() error
+	Close()
 	Next() (QueryResult, error)
 	NextBatch() ([]QueryResult, error)
 }
@@ -80,10 +80,9 @@ func (q *ObQueryResultIterator) IsClosed() bool {
 }
 
 // Close closes the query result iterator.
-func (q *ObQueryResultIterator) Close() error {
+func (q *ObQueryResultIterator) Close() {
 	// TODO: Send a close request to the server
 	q.closed = true
-	return nil
 }
 
 // Next returns nil if there is no more row.
