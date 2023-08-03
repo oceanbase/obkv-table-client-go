@@ -53,17 +53,17 @@ type obBatchExecutor struct {
 	entityType          protocol.ObTableEntityType
 }
 
-func (c *obBatchExecutor) setBatchOptions(batchOptions *option.ObBatchOptions) {
-	c.samePropertiesNames = batchOptions.SamePropertiesNames
+func (b *obBatchExecutor) setBatchOptions(batchOptions *option.ObBatchOptions) {
+	b.samePropertiesNames = batchOptions.SamePropertiesNames
 	switch batchOptions.KeyValueMode {
 	case table.DynamicMode:
-		c.entityType = protocol.ObTableEntityTypeDynamic
+		b.entityType = protocol.ObTableEntityTypeDynamic
 	case table.ObTableMode:
-		c.entityType = protocol.ObTableEntityTypeKV
+		b.entityType = protocol.ObTableEntityTypeKV
 	case table.ObHBaseMode:
-		c.entityType = protocol.ObTableEntityTypeHKV
+		b.entityType = protocol.ObTableEntityTypeHKV
 	default:
-		c.entityType = protocol.ObTableEntityTypeDynamic
+		b.entityType = protocol.ObTableEntityTypeDynamic
 	}
 }
 
@@ -248,7 +248,7 @@ func (b *obBatchExecutor) partitionExecute(
 		partOp.tableParam.partitionId,
 		batchOp,
 		b.cli.config.OperationTimeOut,
-		b.cli.config.LogLevel,
+		b.cli.GetRpcFlag(),
 		b.entityType,
 	)
 

@@ -183,15 +183,27 @@ func (q *ObQueryResultIterator) fetchNext(hasPrev bool) error {
 			break
 		}
 		nextParam := q.targetParts[0]
+
 		// prepare request
-		queryRequest := protocol.NewObTableQueryRequestWithParams(q.tableName, nextParam.tableId, nextParam.partitionId, q.entityType, q.tableQuery)
-		asyncQueryRequest := protocol.NewObTableAsyncQueryRequestWithParams(queryRequest, q.cli.config.OperationTimeOut, q.cli.config.LogLevel)
+		queryRequest := protocol.NewObTableQueryRequestWithParams(
+			q.tableName,
+			nextParam.tableId,
+			nextParam.partitionId,
+			q.entityType,
+			q.tableQuery,
+		)
+		asyncQueryRequest := protocol.NewObTableAsyncQueryRequestWithParams(
+			queryRequest,
+			q.cli.config.OperationTimeOut,
+			q.cli.GetRpcFlag(),
+		)
 		if hasPrev {
 			asyncQueryRequest.SetQueryType(protocol.QueryNext)
 			asyncQueryRequest.SetQuerySessionId(q.prevSessionId)
 		} else {
 			asyncQueryRequest.SetQueryType(protocol.QueryStart)
 		}
+
 		// execute
 		err = nextParam.table.execute(q.ctx, asyncQueryRequest, result)
 		if err != nil {

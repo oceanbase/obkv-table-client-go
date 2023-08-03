@@ -20,6 +20,8 @@ package config
 import (
 	"strconv"
 	"time"
+
+	"github.com/oceanbase/obkv-table-client-go/log"
 )
 
 type ClientConfig struct {
@@ -27,7 +29,7 @@ type ClientConfig struct {
 	ConnConnectTimeOut  time.Duration
 	ConnLoginTimeout    time.Duration
 	OperationTimeOut    time.Duration
-	LogLevel            uint16
+	LogLevel            log.Level
 
 	TableEntryRefreshLockTimeout     time.Duration
 	TableEntryRefreshTryTimes        int
@@ -41,6 +43,8 @@ type ClientConfig struct {
 	RsListHttpGetTimeout       time.Duration
 	RsListHttpGetRetryTimes    int
 	RsListHttpGetRetryInterval time.Duration
+
+	EnableRerouting bool
 }
 
 func NewDefaultClientConfig() *ClientConfig {
@@ -49,7 +53,7 @@ func NewDefaultClientConfig() *ClientConfig {
 		ConnConnectTimeOut:               time.Duration(1000) * time.Millisecond,  // 1s
 		ConnLoginTimeout:                 time.Duration(1000) * time.Millisecond,  // 1s
 		OperationTimeOut:                 time.Duration(10000) * time.Millisecond, // 10s
-		LogLevel:                         7,
+		LogLevel:                         log.WarnLevel,
 		TableEntryRefreshLockTimeout:     time.Duration(4000) * time.Millisecond, // 4s
 		TableEntryRefreshTryTimes:        3,
 		TableEntryRefreshIntervalBase:    time.Duration(100) * time.Millisecond,   // 100ms
@@ -60,6 +64,7 @@ func NewDefaultClientConfig() *ClientConfig {
 		RsListHttpGetTimeout:             time.Duration(1000) * time.Millisecond, // 1s
 		RsListHttpGetRetryTimes:          3,
 		RsListHttpGetRetryInterval:       time.Duration(100) * time.Millisecond, // 100ms,
+		EnableRerouting:                  false,
 	}
 }
 
@@ -79,6 +84,7 @@ func (c *ClientConfig) String() string {
 		"RsListLocalFileLocation:" + c.RsListLocalFileLocation + ", " +
 		"RsListHttpGetTimeout:" + c.RsListHttpGetTimeout.String() + ", " +
 		"RsListHttpGetRetryTimes:" + strconv.Itoa(c.RsListHttpGetRetryTimes) + ", " +
-		"RsListHttpGetRetryInterval:" + c.RsListHttpGetRetryInterval.String() +
+		"RsListHttpGetRetryInterval:" + c.RsListHttpGetRetryInterval.String() + ", " +
+		"EnableRerouting:" + strconv.FormatBool(c.EnableRerouting) +
 		"}"
 }

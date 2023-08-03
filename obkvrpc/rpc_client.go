@@ -40,6 +40,18 @@ type RpcClientOption struct {
 	password     string
 }
 
+func (o *RpcClientOption) ConnPoolMaxConnSize() int {
+	return o.connPoolMaxConnSize
+}
+
+func (o *RpcClientOption) ConnectTimeout() time.Duration {
+	return o.connectTimeout
+}
+
+func (o *RpcClientOption) LoginTimeout() time.Duration {
+	return o.loginTimeout
+}
+
 func NewRpcClientOption(ip string, port int, connPoolMaxConnSize int, connectTimeout time.Duration, loginTimeout time.Duration,
 	tenantName string, databaseName string, userName string, password string) *RpcClientOption {
 	return &RpcClientOption{
@@ -75,6 +87,10 @@ type RpcClient struct {
 	connectionPool *ConnectionPool
 }
 
+func (c *RpcClient) Option() *RpcClientOption {
+	return c.option
+}
+
 func NewRpcClient(rpcClientOption *RpcClientOption) (*RpcClient, error) {
 	client := &RpcClient{option: rpcClientOption}
 
@@ -89,7 +105,7 @@ func NewRpcClient(rpcClientOption *RpcClientOption) (*RpcClient, error) {
 	return client, nil
 }
 
-func (c *RpcClient) Execute(ctx context.Context, request protocol.ObPayload, response protocol.ObPayload) error {
+func (c *RpcClient) Execute(ctx context.Context, request protocol.ObPayload, response protocol.ObPayload, moveResponse protocol.ObPayload) error {
 	var (
 		connection *Connection
 		index      int
@@ -106,7 +122,7 @@ func (c *RpcClient) Execute(ctx context.Context, request protocol.ObPayload, res
 
 	}
 
-	err = connection.Execute(ctx, request, response)
+	err = connection.Execute(ctx, request, response, moveResponse)
 	if err != nil {
 		return errors.WithMessage(err, "connection execute")
 	}

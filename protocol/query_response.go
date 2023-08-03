@@ -43,7 +43,7 @@ func NewObTableQueryResponse() *ObTableQueryResponse {
 			sequence:  0,
 			tenantId:  1,
 			sessionId: 0,
-			flag:      7,
+			flag:      0,
 			timeout:   10 * 1000 * time.Millisecond,
 		},
 		propertiesNames: nil,

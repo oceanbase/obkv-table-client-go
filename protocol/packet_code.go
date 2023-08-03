@@ -30,6 +30,7 @@ const (
 	ObTableApiExecuteQuery
 	ObTableApiQueryAndMute
 	ObTableApiExecuteAsyncQuery
+	ObTableApiMove
 	ObTableApiErrorPacket
 
 	ObTableApiNoSuch = -1
@@ -42,6 +43,7 @@ const (
 	obTableApiExecuteQueryStr      string = "ob table execute query"
 	obTableApiQueryAndMuteStr      string = "ob table query and mute"
 	obTableApiExecuteAsyncQueryStr string = "ob table execute async query"
+	obTableApiMoveStr              string = "ob table reroute"
 	obTableApiErrorPacketStr       string = "ob table error"
 )
 
@@ -52,6 +54,7 @@ const (
 	obTableApiPCodeExecuteQuery      uint32 = 0x1104
 	obTableApiPCodeQueryAndMute      uint32 = 0x1105
 	obTableApiPCodeExecuteAsyncQuery uint32 = 0x1106
+	obTableApiPCodeMove              uint32 = 0x1124
 	obTableApiPCodeErrorPacket       uint32 = 0x010
 )
 
@@ -62,6 +65,7 @@ var obTablePacketCodeStrings = []string{
 	ObTableApiExecuteQuery:      obTableApiExecuteQueryStr,
 	ObTableApiQueryAndMute:      obTableApiQueryAndMuteStr,
 	ObTableApiExecuteAsyncQuery: obTableApiExecuteAsyncQueryStr,
+	ObTableApiMove:              obTableApiMoveStr,
 	ObTableApiErrorPacket:       obTableApiErrorPacketStr,
 }
 
@@ -72,6 +76,7 @@ var obTablePacketCodePCodes = []uint32{
 	ObTableApiExecuteQuery:      obTableApiPCodeExecuteQuery,
 	ObTableApiQueryAndMute:      obTableApiPCodeQueryAndMute,
 	ObTableApiExecuteAsyncQuery: obTableApiPCodeExecuteAsyncQuery,
+	ObTableApiMove:              obTableApiPCodeMove,
 	ObTableApiErrorPacket:       obTableApiPCodeErrorPacket,
 }
 
@@ -93,6 +98,8 @@ func (c ObTablePacketCode) ValueOf(pCode uint32) (ObTablePacketCode, error) { //
 		return ObTableApiQueryAndMute, nil
 	case obTableApiPCodeExecuteAsyncQuery:
 		return ObTableApiExecuteAsyncQuery, nil
+	case obTableApiPCodeMove:
+		return ObTableApiMove, nil
 	case obTableApiPCodeErrorPacket:
 		return ObTableApiErrorPacket, nil
 	}

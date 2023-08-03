@@ -36,6 +36,7 @@ type ObTableQueryRequest struct {
 	tableQuery       *ObTableQuery
 }
 
+// NewObTableQueryRequest only use in test now
 func NewObTableQueryRequest() *ObTableQueryRequest {
 	return &ObTableQueryRequest{
 		ObUniVersionHeader: ObUniVersionHeader{
@@ -47,7 +48,7 @@ func NewObTableQueryRequest() *ObTableQueryRequest {
 			sequence:  0,
 			tenantId:  1,
 			sessionId: 0,
-			flag:      7,
+			flag:      0,
 			timeout:   10 * 1000 * time.Millisecond,
 		},
 		credential:       nil,

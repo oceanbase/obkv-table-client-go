@@ -110,6 +110,15 @@ func (c *obClient) String() string {
 		"}"
 }
 
+// GetRpcFlag get rpc header flag
+func (c *obClient) GetRpcFlag() uint16 {
+	rpcFlag := protocol.RpcHeaderDefaultFlag
+	if c.config.EnableRerouting {
+		rpcFlag |= protocol.RequireReroutingFlag
+	}
+	return rpcFlag
+}
+
 // standard format: user_name@tenant_name#cluster_name
 func (c *obClient) parseFullUserName(fullUserName string) error {
 	utIndex := strings.Index(fullUserName, "@")
@@ -489,7 +498,7 @@ func (c *obClient) execute(
 		operationOptions.ReturnRowKey,
 		operationOptions.ReturnAffectedEntity,
 		c.config.OperationTimeOut,
-		c.config.LogLevel,
+		c.GetRpcFlag(),
 	)
 	if err != nil {
 		return nil, errors.WithMessagef(err, "new operation request, tableName:%s, tableParam:%s, opType:%d",
@@ -544,7 +553,7 @@ func (c *obClient) executeWithFilter(
 		rowKey,
 		columns,
 		c.config.OperationTimeOut,
-		c.config.LogLevel,
+		c.GetRpcFlag(),
 	)
 	if err != nil {
 		return nil, errors.WithMessagef(err, "new operation request, tableName:%s, tableParam:%s, opType:%d",
