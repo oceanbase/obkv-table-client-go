@@ -29,6 +29,7 @@ import (
 	"github.com/oceanbase/obkv-table-client-go/client/option"
 	"github.com/oceanbase/obkv-table-client-go/table"
 	"github.com/oceanbase/obkv-table-client-go/test"
+	reroute "github.com/oceanbase/obkv-table-client-go/test/reroute/util"
 )
 
 const (
@@ -59,7 +60,7 @@ func TestMoveReplica_singleOp(t *testing.T) {
 	assert.EqualValues(t, 1, affectRows)
 
 	// 2. switch leader
-	err = switchReplicaLeaderRandomly(tenantName, databaseName, tableName, partNum)
+	err = reroute.SwitchReplicaLeaderRandomly(tenantName, databaseName, tableName, partNum)
 	assert.Equal(t, nil, err)
 	time.Sleep(5 * time.Second)
 
@@ -94,7 +95,7 @@ func TestMoveReplica_batch(t *testing.T) {
 	assert.EqualValues(t, 1, affectRows)
 
 	// 2. switch leader
-	err = switchReplicaLeaderRandomly(tenantName, databaseName, tableName, partNum)
+	err = reroute.SwitchReplicaLeaderRandomly(tenantName, databaseName, tableName, partNum)
 	assert.Equal(t, nil, err)
 	time.Sleep(5 * time.Second)
 
@@ -132,7 +133,7 @@ func TestMoveReplica_query(t *testing.T) {
 	assert.EqualValues(t, 1, affectRows)
 
 	// 2. switch leader
-	err = switchReplicaLeaderRandomly(tenantName, databaseName, tableName, partNum)
+	err = reroute.SwitchReplicaLeaderRandomly(tenantName, databaseName, tableName, partNum)
 	assert.Equal(t, nil, err)
 	time.Sleep(5 * time.Second)
 
@@ -176,7 +177,7 @@ func TestMoveReplica_queryAndMutate(t *testing.T) {
 	assert.EqualValues(t, 1, affectRows)
 
 	// 2. switch leader
-	err = switchReplicaLeaderRandomly(tenantName, databaseName, tableName, partNum)
+	err = reroute.SwitchReplicaLeaderRandomly(tenantName, databaseName, tableName, partNum)
 	assert.Equal(t, nil, err)
 	time.Sleep(5 * time.Second)
 

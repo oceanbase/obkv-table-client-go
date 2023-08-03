@@ -105,7 +105,7 @@ func NewRpcClient(rpcClientOption *RpcClientOption) (*RpcClient, error) {
 	return client, nil
 }
 
-func (c *RpcClient) Execute(ctx context.Context, request protocol.ObPayload, response protocol.ObPayload, moveResponse protocol.ObPayload) error {
+func (c *RpcClient) Execute(ctx context.Context, request protocol.ObPayload, response protocol.ObPayload) error {
 	var (
 		connection *Connection
 		index      int
@@ -122,7 +122,7 @@ func (c *RpcClient) Execute(ctx context.Context, request protocol.ObPayload, res
 
 	}
 
-	err = connection.Execute(ctx, request, response, moveResponse)
+	err = connection.Execute(ctx, request, response)
 	if err != nil {
 		return errors.WithMessage(err, "connection execute")
 	}

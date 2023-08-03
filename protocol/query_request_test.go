@@ -84,7 +84,7 @@ func TestObTableQueryRequestEncodeDecode(t *testing.T) {
 	obHTableFilter.SetContentLength(0)
 	obHTableFilter.SetIsValid(util.ByteToBool(byte(rand.Intn(2))))
 	selectColumnQualifierLen := rand.Intn(10)
-	selectColumnQualifier := make([][]byte, 0, rand.Intn(selectColumnQualifierLen))
+	selectColumnQualifier := make([][]byte, 0, 10)
 	for i := 0; i < selectColumnQualifierLen; i++ {
 		selectColumnQualifier = append(selectColumnQualifier, []byte(util.String(10)))
 	}

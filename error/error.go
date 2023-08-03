@@ -32,7 +32,14 @@ type ObProtocolError struct {
 
 // NewProtocolError
 // error message format: [code][code name][error message][host:port][trace][table name]
-func NewProtocolError(host string, port int, code ObErrorCode, sequence uint64, uniqueId uint64, tableName string) *ObProtocolError {
+func NewProtocolError(
+	host string,
+	port int,
+	code ObErrorCode,
+	sequence uint64,
+	uniqueId uint64,
+	tableName string) *ObProtocolError {
+
 	trace := fmt.Sprintf("Y%X-%016X", uniqueId, sequence)
 	server := fmt.Sprintf("%s:%d", host, port)
 	var msg string
