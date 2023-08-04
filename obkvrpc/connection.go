@@ -463,14 +463,14 @@ func (c *Connection) decodePacket(contentBuf []byte, response protocol.ObPayload
 			moveResponse.SetSequence(rpcHeader.TraceId1())
 			moveResponse.Decode(contentBuffer)
 		}
-		response.SetMoveResponse(moveResponse)
-		return oberror.NewProtocolError(
+		return protocol.NewProtocolError(
 			c.option.ip,
 			c.option.port,
 			rpcResponseCode.Code(),
 			rpcHeader.TraceId1(),
 			rpcHeader.TraceId0(),
 			"",
+			moveResponse,
 		)
 	} else {
 		// decode response

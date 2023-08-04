@@ -129,12 +129,14 @@ func (t *ObTable) execute(
 
 	err := t.rpcClient.Execute(ctx, request, result)
 	if err != nil {
-		if result.MoveResponse() != nil { // move response, retry
-			err = t.retry(ctx, request, result, result.MoveResponse())
+		switch err.(type) {
+		case *protocol.ObProtocolError:
+			err = t.retry(ctx, request, result, err.(*protocol.ObProtocolError).MoveResponse())
 			if err != nil {
-				return errors.WithMessagef(err, "retry execute request, move result%s", result.MoveResponse().String())
+				return errors.WithMessagef(err, "retry request, move result:%s",
+					err.(*protocol.ObProtocolError).MoveResponse().String())
 			}
-		} else {
+		default:
 			return errors.WithMessagef(err, "obtable execute")
 		}
 	}

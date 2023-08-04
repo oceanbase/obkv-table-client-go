@@ -513,13 +513,14 @@ func (c *obClient) execute(
 	}
 
 	if oberror.ObErrorCode(result.Header().ErrorNo()) != oberror.ObSuccess {
-		return nil, oberror.NewProtocolError(
+		return nil, protocol.NewProtocolError(
 			tableParam.table.ip,
 			tableParam.table.port,
 			oberror.ObErrorCode(result.Header().ErrorNo()),
 			result.Sequence(),
 			result.UniqueId(),
 			tableName,
+			nil,
 		)
 	}
 

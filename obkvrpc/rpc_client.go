@@ -124,7 +124,7 @@ func (c *RpcClient) Execute(ctx context.Context, request protocol.ObPayload, res
 
 	err = connection.Execute(ctx, request, response)
 	if err != nil {
-		return errors.WithMessage(err, "connection execute")
+		return err
 	}
 
 	return nil

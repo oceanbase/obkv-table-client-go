@@ -31,16 +31,6 @@ type ObPayloadBase struct {
 	sessionId uint64
 
 	timeout time.Duration
-
-	moveResponse *ObTableMoveResponse // do not serialize
-}
-
-func (p *ObPayloadBase) SetMoveResponse(moveResponse *ObTableMoveResponse) {
-	p.moveResponse = moveResponse
-}
-
-func (p *ObPayloadBase) MoveResponse() *ObTableMoveResponse {
-	return p.moveResponse
 }
 
 func (p *ObPayloadBase) UniqueId() uint64 {

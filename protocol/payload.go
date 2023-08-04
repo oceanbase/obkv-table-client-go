@@ -55,7 +55,4 @@ type ObPayload interface {
 
 	Timeout() time.Duration
 	SetTimeout(timeout time.Duration)
-
-	MoveResponse() *ObTableMoveResponse
-	SetMoveResponse(response *ObTableMoveResponse)
 }
