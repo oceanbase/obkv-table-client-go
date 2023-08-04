@@ -131,10 +131,13 @@ func (t *ObTable) execute(
 	if err != nil {
 		switch err.(type) {
 		case *protocol.ObProtocolError:
-			err = t.retry(ctx, request, result, err.(*protocol.ObProtocolError).MoveResponse())
-			if err != nil {
-				return errors.WithMessagef(err, "retry request, move result:%s",
-					err.(*protocol.ObProtocolError).MoveResponse().String())
+			moveRes := err.(*protocol.ObProtocolError).MoveResponse()
+			if moveRes != nil {
+				err = t.retry(ctx, request, result, err.(*protocol.ObProtocolError).MoveResponse())
+				if err != nil {
+					return errors.WithMessagef(err, "retry request, move result:%s",
+						err.(*protocol.ObProtocolError).MoveResponse().String())
+				}
 			}
 		default:
 			return errors.WithMessagef(err, "obtable execute")
