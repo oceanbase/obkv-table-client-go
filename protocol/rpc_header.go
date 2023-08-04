@@ -25,7 +25,8 @@ import (
 )
 
 const (
-	defaultFlag uint16 = 7
+	RequireReroutingFlag        = 1 << 9
+	RpcHeaderDefaultFlag uint16 = 7
 
 	defaultOperationTimeout = 10 * 1000 * time.Millisecond
 
@@ -104,7 +105,7 @@ func NewObRpcHeader() *ObRpcHeader {
 		pCode:           0,
 		hLen:            0,
 		priority:        5,
-		flag:            defaultFlag,
+		flag:            RpcHeaderDefaultFlag,
 		checksum:        0,
 		tenantId:        1,
 		prevTenantId:    1,
@@ -132,7 +133,7 @@ func (h *ObRpcHeader) Reset() {
 	h.pCode = 0
 	h.hLen = 0
 	h.priority = 5
-	h.flag = defaultFlag
+	h.flag = RpcHeaderDefaultFlag
 	h.checksum = 0
 	h.tenantId = 1
 	h.prevTenantId = 1

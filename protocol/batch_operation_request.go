@@ -40,6 +40,7 @@ type ObTableBatchOperationRequest struct {
 	atomicOperation         bool
 }
 
+// NewObTableBatchOperationRequest only use in test now
 func NewObTableBatchOperationRequest() *ObTableBatchOperationRequest {
 	return &ObTableBatchOperationRequest{
 		ObUniVersionHeader: ObUniVersionHeader{
@@ -51,7 +52,7 @@ func NewObTableBatchOperationRequest() *ObTableBatchOperationRequest {
 			sequence:  0,
 			tenantId:  1,
 			sessionId: 0,
-			flag:      7,
+			flag:      0,
 			timeout:   10 * 1000 * time.Millisecond,
 		},
 		credential:              nil,

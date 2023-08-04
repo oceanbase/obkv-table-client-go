@@ -17,7 +17,11 @@
 
 package route
 
-import "strconv"
+import (
+	"strconv"
+
+	"github.com/oceanbase/obkv-table-client-go/protocol"
+)
 
 type obServerRole int
 
@@ -27,27 +31,18 @@ const (
 	serverRoleFollower obServerRole = 2
 )
 
-type obReplicaType int
-
-const (
-	replicaTypeInvalid  obReplicaType = -1
-	replicaTypeFull     obReplicaType = 0
-	replicaTypeLogOnly  obReplicaType = 5
-	replicaTypeReadOnly obReplicaType = 16
-)
-
 type obReplicaLocation struct {
 	addr        *ObServerAddr
 	svrStatus   *obServerStatus
 	role        obServerRole
-	replicaType obReplicaType
+	replicaType protocol.ObReplicaType
 }
 
 func (l *obReplicaLocation) SvrStatus() *obServerStatus {
 	return l.svrStatus
 }
 
-func newReplicaLocation(addr *ObServerAddr, svrStatus *obServerStatus, role obServerRole, replicaType obReplicaType) *obReplicaLocation {
+func newReplicaLocation(addr *ObServerAddr, svrStatus *obServerStatus, role obServerRole, replicaType protocol.ObReplicaType) *obReplicaLocation {
 	return &obReplicaLocation{addr, svrStatus, role, replicaType}
 }
 
@@ -57,7 +52,7 @@ func (l *obReplicaLocation) Addr() *ObServerAddr {
 
 func (l *obReplicaLocation) isValid() bool {
 	return (l.addr != nil) && (l.role != serverRoleInvalid) && (l.svrStatus != nil) &&
-		l.svrStatus.IsActive() && (l.replicaType != replicaTypeInvalid)
+		l.svrStatus.IsActive() && (l.replicaType != protocol.ReplicaTypeInvalid)
 }
 
 func (l *obReplicaLocation) isLeader() bool {

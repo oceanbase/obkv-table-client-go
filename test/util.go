@@ -50,39 +50,49 @@ func CreateClient() client.Client {
 	return cli
 }
 
-var globalDB *sql.DB
+func CreateMoveClient() client.Client {
+	cfg := config.NewDefaultClientConfig()
+	cfg.EnableRerouting = true
+	cli, err := client.NewClient(configUrl, fullUserName, passWord, sysUserName, sysPassWord, cfg)
+	if err != nil {
+		panic(err.Error())
+	}
+	return cli
+}
+
+var GlobalDB *sql.DB
 
 func CreateDB() {
-	if globalDB == nil {
+	if GlobalDB == nil {
 		dsn := fmt.Sprintf("%s:%s@tcp(%s:%s)/%s", sqlUser, sqlPassWord, sqlIp, sqlPort, sqlDatabase)
 		db, err := sql.Open("mysql", dsn)
 		if err != nil {
 			panic(err.Error())
 		}
-		globalDB = db
+		GlobalDB = db
 	}
 }
 
 func CloseDB() {
-	globalDB.Close()
+	GlobalDB.Close()
 }
 
 func CreateTable(createTableStatement string) {
-	_, err := globalDB.Exec(createTableStatement)
+	_, err := GlobalDB.Exec(createTableStatement)
 	if err != nil {
 		panic(err.Error())
 	}
 }
 
 func DropTable(tableName string) {
-	_, err := globalDB.Exec(fmt.Sprintf("drop table %s;", tableName))
+	_, err := GlobalDB.Exec(fmt.Sprintf("drop table %s;", tableName))
 	if err != nil {
 		panic(err.Error())
 	}
 }
 
 func DeleteTable(tableName string) {
-	_, err := globalDB.Exec(fmt.Sprintf("delete from %s;", tableName))
+	_, err := GlobalDB.Exec(fmt.Sprintf("delete from %s;", tableName))
 	if err != nil {
 		panic(err.Error())
 	}
@@ -95,7 +105,7 @@ func DeleteTables(tableNames []string) {
 }
 
 func InsertTable(insertStatement string) {
-	_, err := globalDB.Exec(insertStatement)
+	_, err := GlobalDB.Exec(insertStatement)
 	if err != nil {
 		panic(err.Error())
 	}

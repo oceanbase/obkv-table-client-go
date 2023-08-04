@@ -296,7 +296,7 @@ func getTableEntryFromResultSet(rows *Rows, tableName string) (*ObTableEntry, er
 			NewObServerAddr(svrIp, sqlPort, svrPort),
 			newServerStatus(stopTime, status),
 			obServerRole(role),
-			obReplicaType(replicaType),
+			protocol.ObReplicaType(replicaType),
 		)
 		if !replica.isValid() {
 			return nil, errors.Errorf("replica is invalid, replaca:%s", replica.String())
@@ -417,7 +417,7 @@ func getPartLocationEntryFromResultSet(rows *Rows, tableName string) (*ObPartLoc
 			NewObServerAddr(svrIp, sqlPort, svrPort),
 			newServerStatus(stopTime, status),
 			obServerRole(role),
-			obReplicaType(replicaType),
+			protocol.ObReplicaType(replicaType),
 		)
 
 		// 2. find or create location, then add replica location

@@ -15,29 +15,44 @@
  * #L%
  */
 
-package error
+package protocol
 
 import (
 	"fmt"
+
+	error2 "github.com/oceanbase/obkv-table-client-go/error"
 )
 
 type ObProtocolError struct {
-	host      string
-	port      int
-	code      ObErrorCode
-	trace     string
-	tableName string
-	message   string
+	host         string
+	port         int
+	code         error2.ObErrorCode
+	trace        string
+	tableName    string
+	message      string
+	moveResponse *ObTableMoveResponse
+}
+
+func (e *ObProtocolError) MoveResponse() *ObTableMoveResponse {
+	return e.moveResponse
 }
 
 // NewProtocolError
 // error message format: [code][code name][error message][host:port][trace][table name]
-func NewProtocolError(host string, port int, code ObErrorCode, sequence uint64, uniqueId uint64, tableName string) *ObProtocolError {
+func NewProtocolError(
+	host string,
+	port int,
+	code error2.ObErrorCode,
+	sequence uint64,
+	uniqueId uint64,
+	tableName string,
+	moveResponse *ObTableMoveResponse) *ObProtocolError {
+
 	trace := fmt.Sprintf("Y%X-%016X", uniqueId, sequence)
 	server := fmt.Sprintf("%s:%d", host, port)
 	var msg string
 	switch code {
-	case ObErrPrimaryKeyDuplicate:
+	case error2.ObErrPrimaryKeyDuplicate:
 		msg += fmt.Sprintf(
 			"errCode:%d, errCodeName:%s, errMsg:%s, server:%s, trace:%s, tableName:%s",
 			code,
@@ -47,7 +62,7 @@ func NewProtocolError(host string, port int, code ObErrorCode, sequence uint64, 
 			trace,
 			tableName,
 		)
-	case ObErrUnknownTable:
+	case error2.ObErrUnknownTable:
 		msg += fmt.Sprintf(
 			"errCode:%d, errCodeName:%s, errMsg:%s, server:%s, trace:%s, tableName:%s",
 			code,
@@ -57,7 +72,7 @@ func NewProtocolError(host string, port int, code ObErrorCode, sequence uint64, 
 			trace,
 			tableName,
 		)
-	case ObErrColumnNotFound:
+	case error2.ObErrColumnNotFound:
 		msg += fmt.Sprintf(
 			"errCode:%d, errCodeName:%s, errMsg:%s, server:%s, trace:%s, tableName:%s",
 			code,
@@ -67,7 +82,7 @@ func NewProtocolError(host string, port int, code ObErrorCode, sequence uint64, 
 			trace,
 			tableName,
 		)
-	case ObObjTypeError:
+	case error2.ObObjTypeError:
 		msg += fmt.Sprintf(
 			"errCode:%d, errCodeName:%s, errMsg:%s, server:%s, trace:%s, tableName:%s",
 			code,
@@ -77,7 +92,7 @@ func NewProtocolError(host string, port int, code ObErrorCode, sequence uint64, 
 			trace,
 			tableName,
 		)
-	case ObBadNullError:
+	case error2.ObBadNullError:
 		msg += fmt.Sprintf(
 			"errCode:%d, errCodeName:%s, errMsg:%s, server:%s, trace:%s, tableName:%s",
 			code,
@@ -87,7 +102,7 @@ func NewProtocolError(host string, port int, code ObErrorCode, sequence uint64, 
 			trace,
 			tableName,
 		)
-	case ObInvalidArgument:
+	case error2.ObInvalidArgument:
 		msg += fmt.Sprintf(
 			"errCode:%d, errCodeName:%s, errMsg:%s, server:%s, trace:%s, tableName:%s",
 			code,
@@ -97,7 +112,7 @@ func NewProtocolError(host string, port int, code ObErrorCode, sequence uint64, 
 			trace,
 			tableName,
 		)
-	case ObDeserializeError:
+	case error2.ObDeserializeError:
 		msg += fmt.Sprintf(
 			"errCode:%d, errCodeName:%s, errMsg:%s, server:%s, trace:%s, tableName:%s",
 			code,
@@ -107,7 +122,7 @@ func NewProtocolError(host string, port int, code ObErrorCode, sequence uint64, 
 			trace,
 			tableName,
 		)
-	case ObPasswordWrong:
+	case error2.ObPasswordWrong:
 		msg += fmt.Sprintf(
 			"errCode:%d, errCodeName:%s, errMsg:%s, server:%s, trace:%s, tableName:%s",
 			code,
@@ -117,7 +132,7 @@ func NewProtocolError(host string, port int, code ObErrorCode, sequence uint64, 
 			trace,
 			tableName,
 		)
-	case ObLocationLeaderNotExist:
+	case error2.ObLocationLeaderNotExist:
 		msg += fmt.Sprintf(
 			"errCode:%d, errCodeName:%s, errMsg:%s, server:%s, trace:%s, tableName:%s",
 			code,
@@ -127,7 +142,7 @@ func NewProtocolError(host string, port int, code ObErrorCode, sequence uint64, 
 			trace,
 			tableName,
 		)
-	case ObNotMaster:
+	case error2.ObNotMaster:
 		msg += fmt.Sprintf(
 			"errCode:%d, errCodeName:%s, errMsg:%s, server:%s, trace:%s, tableName:%s",
 			code,
@@ -137,7 +152,7 @@ func NewProtocolError(host string, port int, code ObErrorCode, sequence uint64, 
 			trace,
 			tableName,
 		)
-	case ObRsNotMaster:
+	case error2.ObRsNotMaster:
 		msg += fmt.Sprintf(
 			"errCode:%d, errCodeName:%s, errMsg:%s, server:%s, trace:%s, tableName:%s",
 			code,
@@ -147,7 +162,7 @@ func NewProtocolError(host string, port int, code ObErrorCode, sequence uint64, 
 			trace,
 			tableName,
 		)
-	case ObRsShutdown:
+	case error2.ObRsShutdown:
 		msg += fmt.Sprintf(
 			"errCode:%d, errCodeName:%s, errMsg:%s, server:%s, trace:%s, tableName:%s",
 			code,
@@ -157,7 +172,7 @@ func NewProtocolError(host string, port int, code ObErrorCode, sequence uint64, 
 			trace,
 			tableName,
 		)
-	case ObRpcConnectError:
+	case error2.ObRpcConnectError:
 		msg += fmt.Sprintf(
 			"errCode:%d, errCodeName:%s, errMsg:%s, server:%s, trace:%s, tableName:%s",
 			code,
@@ -167,7 +182,7 @@ func NewProtocolError(host string, port int, code ObErrorCode, sequence uint64, 
 			trace,
 			tableName,
 		)
-	case ObPartitionNotExist:
+	case error2.ObPartitionNotExist:
 		msg += fmt.Sprintf(
 			"errCode:%d, errCodeName:%s, errMsg:%s, server:%s, trace:%s, tableName:%s",
 			code,
@@ -177,7 +192,7 @@ func NewProtocolError(host string, port int, code ObErrorCode, sequence uint64, 
 			trace,
 			tableName,
 		)
-	case ObPartitionIsStopped:
+	case error2.ObPartitionIsStopped:
 		msg += fmt.Sprintf(
 			"errCode:%d, errCodeName:%s, errMsg:%s, server:%s, trace:%s, tableName:%s",
 			code,
@@ -187,7 +202,7 @@ func NewProtocolError(host string, port int, code ObErrorCode, sequence uint64, 
 			trace,
 			tableName,
 		)
-	case ObLocationNotExist:
+	case error2.ObLocationNotExist:
 		msg += fmt.Sprintf(
 			"errCode:%d, errCodeName:%s, errMsg:%s, server:%s, trace:%s, tableName:%s",
 			code,
@@ -197,7 +212,7 @@ func NewProtocolError(host string, port int, code ObErrorCode, sequence uint64, 
 			trace,
 			tableName,
 		)
-	case ObServerIsInit:
+	case error2.ObServerIsInit:
 		msg += fmt.Sprintf(
 			"errCode:%d, errCodeName:%s, errMsg:%s, server:%s, trace:%s, tableName:%s",
 			code,
@@ -207,7 +222,7 @@ func NewProtocolError(host string, port int, code ObErrorCode, sequence uint64, 
 			trace,
 			tableName,
 		)
-	case ObServerIsStopping:
+	case error2.ObServerIsStopping:
 		msg += fmt.Sprintf(
 			"errCode:%d, errCodeName:%s, errMsg:%s, server:%s, trace:%s, tableName:%s",
 			code,
@@ -217,7 +232,7 @@ func NewProtocolError(host string, port int, code ObErrorCode, sequence uint64, 
 			trace,
 			tableName,
 		)
-	case ObTenantNotInServer:
+	case error2.ObTenantNotInServer:
 		msg += fmt.Sprintf(
 			"errCode:%d, errCodeName:%s, errMsg:%s, server:%s, trace:%s, tableName:%s",
 			code,
@@ -227,7 +242,7 @@ func NewProtocolError(host string, port int, code ObErrorCode, sequence uint64, 
 			trace,
 			tableName,
 		)
-	case ObTransRpcTimeout:
+	case error2.ObTransRpcTimeout:
 		msg += fmt.Sprintf(
 			"errCode:%d, errCodeName:%s, errMsg:%s, server:%s, trace:%s, tableName:%s",
 			code,
@@ -237,7 +252,7 @@ func NewProtocolError(host string, port int, code ObErrorCode, sequence uint64, 
 			trace,
 			tableName,
 		)
-	case ObNoReadableReplica:
+	case error2.ObNoReadableReplica:
 		msg += fmt.Sprintf(
 			"errCode:%d, errCodeName:%s, errMsg:%s, server:%s, trace:%s, tableName:%s",
 			code,
@@ -247,7 +262,7 @@ func NewProtocolError(host string, port int, code ObErrorCode, sequence uint64, 
 			trace,
 			tableName,
 		)
-	case ObReplicaNotReadable:
+	case error2.ObReplicaNotReadable:
 		msg += fmt.Sprintf(
 			"errCode:%d, errCodeName:%s, errMsg:%s, server:%s, trace:%s, tableName:%s",
 			code,
@@ -257,7 +272,7 @@ func NewProtocolError(host string, port int, code ObErrorCode, sequence uint64, 
 			trace,
 			tableName,
 		)
-	case ObTimeout:
+	case error2.ObTimeout:
 		msg += fmt.Sprintf(
 			"errCode:%d, errCodeName:%s, errMsg:%s, server:%s, trace:%s, tableName:%s",
 			code,
@@ -267,7 +282,7 @@ func NewProtocolError(host string, port int, code ObErrorCode, sequence uint64, 
 			trace,
 			tableName,
 		)
-	case ObTransTimeout:
+	case error2.ObTransTimeout:
 		msg += fmt.Sprintf(
 			"errCode:%d, errCodeName:%s, errMsg:%s, server:%s, trace:%s, tableName:%s",
 			code,
@@ -277,7 +292,7 @@ func NewProtocolError(host string, port int, code ObErrorCode, sequence uint64, 
 			trace,
 			tableName,
 		)
-	case ObWaitqueueTimeout:
+	case error2.ObWaitqueueTimeout:
 		msg += fmt.Sprintf(
 			"errCode:%d, errCodeName:%s, errMsg:%s, server:%s, trace:%s, tableName:%s",
 			code,
@@ -298,7 +313,7 @@ func NewProtocolError(host string, port int, code ObErrorCode, sequence uint64, 
 			tableName,
 		)
 	}
-	return &ObProtocolError{host, port, code, trace, tableName, msg}
+	return &ObProtocolError{host, port, code, trace, tableName, msg, moveResponse}
 }
 
 func (e *ObProtocolError) Error() string {

@@ -185,7 +185,11 @@ func (c *Connection) Login(ctx context.Context) error {
 	return nil
 }
 
-func (c *Connection) Execute(ctx context.Context, request protocol.ObPayload, response protocol.ObPayload) error {
+func (c *Connection) Execute(
+	ctx context.Context,
+	request protocol.ObPayload,
+	response protocol.ObPayload) error {
+
 	seq := c.seq.Add(1)
 
 	totalBuf := c.encodePacket(seq, request)
@@ -451,22 +455,29 @@ func (c *Connection) decodePacket(contentBuf []byte, response protocol.ObPayload
 	rpcResponseCode := protocol.NewObRpcResponseCode()
 	rpcResponseCode.Decode(contentBuffer)
 
-	if rpcResponseCode.Code() != oberror.ObSuccess {
-		return oberror.NewProtocolError(
+	if rpcResponseCode.Code() != oberror.ObSuccess { // error occur in observer
+		var moveResponse *protocol.ObTableMoveResponse = nil
+		if rpcHeader.PCode() == protocol.ObTableApiMove.Value() {
+			moveResponse = protocol.NewObTableMoveResponse()
+			moveResponse.SetUniqueId(rpcHeader.TraceId0())
+			moveResponse.SetSequence(rpcHeader.TraceId1())
+			moveResponse.Decode(contentBuffer)
+		}
+		return protocol.NewProtocolError(
 			c.option.ip,
 			c.option.port,
 			rpcResponseCode.Code(),
 			rpcHeader.TraceId1(),
 			rpcHeader.TraceId0(),
 			"",
+			moveResponse,
 		)
+	} else {
+		// decode response
+		response.SetUniqueId(rpcHeader.TraceId0())
+		response.SetSequence(rpcHeader.TraceId1())
+		response.Decode(contentBuffer)
 	}
-
-	// decode response
-	response.SetUniqueId(rpcHeader.TraceId0())
-	response.SetSequence(rpcHeader.TraceId1())
-	response.Decode(contentBuffer)
-
 	rpcHeader.Reset()
 	rpcHeaderPool.Put(rpcHeader)
 

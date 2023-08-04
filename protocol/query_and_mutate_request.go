@@ -38,6 +38,7 @@ type ObTableQueryAndMutateRequest struct {
 	tableQueryAndMutate *ObTableQueryAndMutate
 }
 
+// NewObTableQueryAndMutateRequest only use in test now
 func NewObTableQueryAndMutateRequest() *ObTableQueryAndMutateRequest {
 	return &ObTableQueryAndMutateRequest{
 		ObUniVersionHeader: ObUniVersionHeader{
@@ -49,7 +50,7 @@ func NewObTableQueryAndMutateRequest() *ObTableQueryAndMutateRequest {
 			sequence:  0,
 			tenantId:  1,
 			sessionId: 0,
-			flag:      7,
+			flag:      0,
 			timeout:   10 * 1000 * time.Millisecond,
 		},
 		credential:          nil,

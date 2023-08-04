@@ -21,6 +21,8 @@ import (
 	"testing"
 
 	"github.com/stretchr/testify/assert"
+
+	"github.com/oceanbase/obkv-table-client-go/protocol"
 )
 
 func TestObPartitionLocation(t *testing.T) {
@@ -29,8 +31,8 @@ func TestObPartitionLocation(t *testing.T) {
 	s1 := NewObServerAddr("127.0.0.1", 2001, 2000)
 	s2 := NewObServerAddr("127.0.0.1", 2001, 2000)
 	st := newServerStatus(0, "active")
-	r1 := newReplicaLocation(s1, st, serverRoleLeader, replicaTypeFull)
-	r2 := newReplicaLocation(s2, st, serverRoleFollower, replicaTypeFull)
+	r1 := newReplicaLocation(s1, st, serverRoleLeader, protocol.ReplicaTypeFull)
+	r2 := newReplicaLocation(s2, st, serverRoleFollower, protocol.ReplicaTypeFull)
 	l.addReplicaLocation(r1)
 	l.addReplicaLocation(r2)
 	assert.Equal(t, r1, l.getReplica(ConsistencyStrong))
