@@ -123,10 +123,9 @@ func InitSql(obVersion float32) {
 	proxySqlGuard.Unlock()
 }
 
-// GetObVersionFromRemote get OceanBase cluster version by sql
+// GetObVersionFromRemoteBySysUA get OceanBase cluster version by sysUA
 // called when client init
-func GetObVersionFromRemote(addr *ObServerAddr, sysUA *ObUserAuth) (float32, error) {
-	// 1. Get db handle.
+func GetObVersionFromRemoteBySysUA(addr *ObServerAddr, sysUA *ObUserAuth) (float32, error) {
 	db, err := NewDB(
 		sysUA.userName,
 		sysUA.password,
@@ -140,21 +139,44 @@ func GetObVersionFromRemote(addr *ObServerAddr, sysUA *ObUserAuth) (float32, err
 	defer func() {
 		_ = db.Close()
 	}()
+	return GetObVersionFromRemote(db)
+}
 
-	// 2. Prepare get observer version sql statement.
+// GetObVersionFromRemoteByIpPort get OceanBase cluster version by sql
+// called when client init
+func GetObVersionFromRemoteByIpPort(ip string, port int, userName string, password string) (float32, error) {
+	db, err := NewDB(
+		userName,
+		password,
+		ip,
+		strconv.Itoa(port),
+		OceanBaseDatabase,
+	)
+	if err != nil {
+		return 0.0, errors.WithMessagef(err, "new db, ip:%s, port:%d, userName:%s, password:%s", ip, port, userName, password)
+	}
+	defer func() {
+		_ = db.Close()
+	}()
+	return GetObVersionFromRemote(db)
+}
+
+// GetObVersionFromRemote get OceanBase cluster version by sql
+func GetObVersionFromRemote(db *DB) (float32, error) {
+	// 1. Prepare get observer version sql statement.
 	stmt, err := db.Prepare(obVersionSql)
 	if err != nil {
 		return 0.0, errors.WithMessagef(err, "prepare get observer version sql, sql:%s", obVersionSql)
 	}
 
-	// 3. Get result from query row.
+	// 2. Get result from query row.
 	var obVersionStr string
 	err = stmt.QueryRow().Scan(&obVersionStr)
 	if err != nil {
 		return 0.0, errors.WithMessagef(err, "get observer version from query result, sql:%s", obVersionSql)
 	}
 
-	// 4. parse ob version string
+	// 3. parse ob version string
 	// +-----------------+
 	// | CLUSTER_VERSION |
 	// +-----------------+

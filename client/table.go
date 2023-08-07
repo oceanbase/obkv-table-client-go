@@ -138,6 +138,8 @@ func (t *ObTable) execute(
 					return errors.WithMessagef(err, "retry request, move result:%s",
 						err.(*protocol.ObProtocolError).MoveResponse().String())
 				}
+			} else {
+				return errors.WithMessagef(err, "obtable execute, move result is nil")
 			}
 		default:
 			return errors.WithMessagef(err, "obtable execute")

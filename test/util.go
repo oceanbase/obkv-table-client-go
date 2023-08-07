@@ -33,7 +33,14 @@ const (
 	passWord     = ""
 	sysUserName  = "root"
 	sysPassWord  = ""
+
+	// odp
+	odpIP      = "..."
+	odpRpcPort = 0
+	odpSqlPort = 0
+	database   = "..."
 )
+
 const (
 	sqlUser     = "root"
 	sqlPassWord = ""
@@ -43,7 +50,13 @@ const (
 )
 
 func CreateClient() client.Client {
-	cli, err := client.NewClient(configUrl, fullUserName, passWord, sysUserName, sysPassWord, config.NewDefaultClientConfig())
+	var cli client.Client
+	var err error
+	if odpIP != "" {
+		cli, err = client.NewOdpClient(fullUserName, passWord, odpIP, odpRpcPort, odpSqlPort, database, config.NewDefaultClientConfig())
+	} else {
+		cli, err = client.NewClient(configUrl, fullUserName, passWord, sysUserName, sysPassWord, config.NewDefaultClientConfig())
+	}
 	if err != nil {
 		panic(err.Error())
 	}

@@ -108,6 +108,11 @@ func (q *obQueryExecutor) getTableParams(
 	tableName string,
 	keyRanges []*table.RangePair,
 	refresh bool) ([]*ObTableParam, error) {
+	// odp table
+	if q.cli.odpTable != nil {
+		return []*ObTableParam{NewObTableParam(q.cli.odpTable, 0, 0)}, nil
+	}
+
 	entry, err := q.cli.getOrRefreshTableEntry(ctx, tableName, refresh, false)
 	if err != nil {
 		return nil, errors.WithMessagef(err, "get or refresh table entry, tableName:%s", tableName)

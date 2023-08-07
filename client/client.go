@@ -67,6 +67,46 @@ func NewClient(
 	return cli, nil
 }
 
+// NewOdpClient create a odp client .
+// fullUserName format id "userName@tenantName#clusterName".
+// passWord is the password of the fullUserName user.
+// odpIP is the ip of the odp server.
+// odpRpcPort is the rpc port of the odp server.
+// odpSqlPort is the sql port of the odp server.
+// database is the database name which you want to access.
+// cliConfig is the configuration of the client, you can configure based on your business.
+func NewOdpClient(
+	fullUserName string,
+	passWord string,
+	odpIP string,
+	odpRpcPort int,
+	odpSqlPort int,
+	database string,
+	cliConfig *config.ClientConfig) (Client, error) {
+	// 1. Check args
+	if fullUserName == "" {
+		return nil, errors.New("full user name is null")
+	}
+	if odpIP == "" {
+		return nil, errors.New("Odp IP is null")
+	}
+	if cliConfig == nil {
+		return nil, errors.New("client config is nil")
+	}
+
+	// 2. New odp client and init
+	cli, err := newOdpClient(fullUserName, passWord, odpIP, odpRpcPort, odpSqlPort, database, cliConfig)
+	if err != nil {
+		return nil, errors.WithMessagef(err, "new odp client, odpIP:%s, fullUserName:%s", odpIP, fullUserName)
+	}
+	err = cli.initOdp()
+	if err != nil {
+		return nil, errors.WithMessagef(err, "init client, client:%s", cli.String())
+	}
+
+	return cli, nil
+}
+
 type Client interface {
 	// Insert a record by rowKey.
 	Insert(ctx context.Context, tableName string, rowKey []*table.Column, mutateColumns []*table.Column, opts ...option.ObOperationOption) (int64, error)
