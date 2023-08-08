@@ -35,7 +35,6 @@ func setup() {
 	moveCli = test.CreateMoveClient()
 
 	test.CreateDB()
-	test.CreateObDB()
 
 	test.CreateTable(testInt32RerouteCreateStatement)
 }

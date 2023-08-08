@@ -48,6 +48,7 @@ const (
 func TestMoveReplica_singleOp(t *testing.T) {
 	if passReroutingTest {
 		fmt.Println("Please run Rerouting tests manually!!!")
+		fmt.Println("Change passReroutingTest to false in test/reroute/reroute_test.go to run rerouting tests.")
 		assert.Equal(t, passReroutingTest, false)
 		return
 	}
@@ -92,6 +93,7 @@ func TestMoveReplica_singleOp(t *testing.T) {
 func TestMoveReplica_singleOp_insertUp(t *testing.T) {
 	if passReroutingTest {
 		fmt.Println("Please run Rerouting tests manually!!!")
+		fmt.Println("Change passReroutingTest to false in test/reroute/reroute_test.go to run rerouting tests.")
 		assert.Equal(t, passReroutingTest, false)
 		return
 	}
@@ -135,6 +137,7 @@ func TestMoveReplica_singleOp_insertUp(t *testing.T) {
 func TestMoveReplica_batch(t *testing.T) {
 	if passReroutingTest {
 		fmt.Println("Please run Rerouting tests manually!!!")
+		fmt.Println("Change passReroutingTest to false in test/reroute/reroute_test.go to run rerouting tests.")
 		assert.Equal(t, passReroutingTest, false)
 		return
 	}
@@ -183,6 +186,7 @@ func TestMoveReplica_batch(t *testing.T) {
 func TestMoveReplica_batch_insertUp(t *testing.T) {
 	if passReroutingTest {
 		fmt.Println("Please run Rerouting tests manually!!!")
+		fmt.Println("Change passReroutingTest to false in test/reroute/reroute_test.go to run rerouting tests.")
 		assert.Equal(t, passReroutingTest, false)
 		return
 	}
@@ -231,6 +235,7 @@ func TestMoveReplica_batch_insertUp(t *testing.T) {
 func TestMoveReplica_query(t *testing.T) {
 	if passReroutingTest {
 		fmt.Println("Please run Rerouting tests manually!!!")
+		fmt.Println("Change passReroutingTest to false in test/reroute/reroute_test.go to run rerouting tests.")
 		assert.Equal(t, passReroutingTest, false)
 		return
 	}
@@ -285,6 +290,7 @@ func TestMoveReplica_query(t *testing.T) {
 func TestMoveReplica_queryAndMutate(t *testing.T) {
 	if passReroutingTest {
 		fmt.Println("Please run Rerouting tests manually!!!")
+		fmt.Println("Change passReroutingTest to false in test/reroute/reroute_test.go to run rerouting tests.")
 		assert.Equal(t, passReroutingTest, false)
 		return
 	}

@@ -142,7 +142,11 @@ func (i *ObTableMoveReplicaInfo) Encode(buffer *bytes.Buffer) {
 
 	util.EncodeVi64(buffer, int64(int32(i.tableId)))
 	util.EncodeVi64(buffer, int64(int32(i.schemaVersion)))
-	util.EncodeVi64(buffer, int64(int32(i.partitionId)))
+	if util.ObVersion() >= 4 {
+		util.PutUint64(buffer, i.partitionId)
+	} else {
+		util.EncodeVi64(buffer, int64(i.partitionId))
+	}
 	i.server.Encode(buffer)
 	util.PutUint8(buffer, uint8(i.role))
 	util.EncodeVi32(buffer, int32(i.replicaType))

@@ -32,8 +32,8 @@ import (
 
 const (
 	getReplicaSql      = "SELECT A.table_id as table_id, A.partition_id as partition_id, A.svr_ip as svr_ip, B.svr_port as svr_port, A.role as role FROM oceanbase.__all_virtual_proxy_schema A inner join oceanbase.__all_server B on A.svr_ip = B.svr_ip and A.sql_port = B.inner_port WHERE tenant_name = ? and database_name = ? and table_name = ? and partition_id in "
-	getLDIdSql         = "SELECT ls_id FROM cdb_ob_table_locations WHERE tenant_id = 1 and database_name = ? and table_name = ? and role = 'LEADER'"
-	getFollowerAddrSql = "SELECT concat(svr_ip,':',svr_port) AS host FROM __all_virtual_ls_meta_table WHERE tenant_id = 1 and ls_id = ? and role = 2 and replica_status = 'NORMAL' limit 1;"
+	getLDIdSql         = "SELECT ls_id FROM oceanbase.cdb_ob_table_locations WHERE tenant_id = 1 and database_name = ? and table_name = ? and role = 'LEADER'"
+	getFollowerAddrSql = "SELECT concat(svr_ip,':',svr_port) AS host FROM oceanbase.__all_virtual_ls_meta_table WHERE tenant_id = 1 and ls_id = ? and role = 2 and replica_status = 'NORMAL' limit 1;"
 	switch2FollwerSql  = "ALTER SYSTEM SWITCH REPLICA LEADER ls = %d server= '%s' tenant='sys'"
 )
 
@@ -207,7 +207,7 @@ func SwitchReplicaLeaderRandomly(
 }
 
 func getLsId(ctx context.Context, databaseName string, tableName string) (uint64, error) {
-	rows, err := test.GlobalObDB.QueryContext(ctx, getLDIdSql, databaseName, tableName)
+	rows, err := test.GlobalDB.QueryContext(ctx, getLDIdSql, databaseName, tableName)
 	if err != nil {
 		return 0, errors.WithMessagef(err, "sql query, sql:%s", getLDIdSql)
 	}
@@ -246,7 +246,7 @@ func getLsId(ctx context.Context, databaseName string, tableName string) (uint64
 }
 
 func getFollowerAddr(ctx context.Context, LsId uint64) (string, error) {
-	rows, err := test.GlobalObDB.QueryContext(ctx, getFollowerAddrSql, LsId)
+	rows, err := test.GlobalDB.QueryContext(ctx, getFollowerAddrSql, LsId)
 	if err != nil {
 		return "", errors.WithMessagef(err, "sql query, sql:%s", getFollowerAddrSql)
 	}
@@ -277,7 +277,7 @@ func getFollowerAddr(ctx context.Context, LsId uint64) (string, error) {
 }
 
 func switch2Follwer(ctx context.Context, LsId uint64, addr string) error {
-	_, err := test.GlobalObDB.Exec(fmt.Sprintf(switch2FollwerSql, LsId, addr))
+	_, err := test.GlobalDB.Exec(fmt.Sprintf(switch2FollwerSql, LsId, addr))
 	if err != nil {
 		return errors.WithMessagef(err, "sql query, sql:%s", switch2FollwerSql)
 	}
