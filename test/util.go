@@ -74,6 +74,7 @@ func CreateMoveClient() client.Client {
 }
 
 var GlobalDB *sql.DB
+var GlobalObDB *sql.DB
 
 func CreateDB() {
 	if GlobalDB == nil {
@@ -83,6 +84,17 @@ func CreateDB() {
 			panic(err.Error())
 		}
 		GlobalDB = db
+	}
+}
+
+func CreateObDB() {
+	if GlobalObDB == nil {
+		dsn := fmt.Sprintf("%s:%s@tcp(%s:%s)/%s", sqlUser, sqlPassWord, sqlIp, sqlPort, "OCEANBASE")
+		db, err := sql.Open("mysql", dsn)
+		if err != nil {
+			panic(err.Error())
+		}
+		GlobalObDB = db
 	}
 }
 

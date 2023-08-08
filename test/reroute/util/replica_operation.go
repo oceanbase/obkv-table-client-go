@@ -20,6 +20,7 @@ package reroute
 import (
 	"context"
 	"fmt"
+	"math"
 	"strconv"
 	"time"
 
@@ -30,7 +31,10 @@ import (
 )
 
 const (
-	getReplicaSql = "SELECT A.table_id as table_id, A.partition_id as partition_id, A.svr_ip as svr_ip, B.svr_port as svr_port, A.role as role FROM oceanbase.__all_virtual_proxy_schema A inner join oceanbase.__all_server B on A.svr_ip = B.svr_ip and A.sql_port = B.inner_port WHERE tenant_name = ? and database_name = ? and table_name = ? and partition_id in "
+	getReplicaSql      = "SELECT A.table_id as table_id, A.partition_id as partition_id, A.svr_ip as svr_ip, B.svr_port as svr_port, A.role as role FROM oceanbase.__all_virtual_proxy_schema A inner join oceanbase.__all_server B on A.svr_ip = B.svr_ip and A.sql_port = B.inner_port WHERE tenant_name = ? and database_name = ? and table_name = ? and partition_id in "
+	getLDIdSql         = "SELECT ls_id FROM cdb_ob_table_locations WHERE tenant_id = 1 and database_name = ? and table_name = ? and role = 'LEADER'"
+	getFollowerAddrSql = "SELECT concat(svr_ip,':',svr_port) AS host FROM __all_virtual_ls_meta_table WHERE tenant_id = 1 and ls_id = ? and role = 2 and replica_status = 'NORMAL' limit 1;"
+	switch2FollwerSql  = "ALTER SYSTEM SWITCH REPLICA LEADER ls = %d server= '%s' tenant='sys'"
 )
 
 func disableAutoReplicaSwitch() error {
@@ -197,6 +201,109 @@ func SwitchReplicaLeaderRandomly(
 	err = switchLeader(partitions)
 	if err != nil {
 		return errors.WithMessagef(err, "switch leader")
+	}
+
+	return nil
+}
+
+func getLsId(ctx context.Context, databaseName string, tableName string) (uint64, error) {
+	rows, err := test.GlobalObDB.QueryContext(ctx, getLDIdSql, databaseName, tableName)
+	if err != nil {
+		return 0, errors.WithMessagef(err, "sql query, sql:%s", getLDIdSql)
+	}
+	defer func() {
+		_ = rows.Close()
+	}()
+
+	var (
+		lsId     uint64
+		prevLsId uint64
+	)
+	prevLsId = math.MaxUint64
+
+	isEmpty := true
+	for rows.Next() {
+		if isEmpty {
+			isEmpty = false
+		}
+
+		err := rows.Scan(&lsId)
+		if err != nil {
+			return 0, errors.WithMessagef(err, "scan row")
+		}
+		if prevLsId == math.MaxUint64 {
+			prevLsId = lsId
+		} else {
+			if lsId != prevLsId {
+				return 0, errors.Errorf("suppose ls is the same for every partition, lsId:%d, prevLsId:%d", lsId, prevLsId)
+			}
+		}
+	}
+	if isEmpty {
+		return 0, errors.Errorf("empty set")
+	}
+	return lsId, nil
+}
+
+func getFollowerAddr(ctx context.Context, LsId uint64) (string, error) {
+	rows, err := test.GlobalObDB.QueryContext(ctx, getFollowerAddrSql, LsId)
+	if err != nil {
+		return "", errors.WithMessagef(err, "sql query, sql:%s", getFollowerAddrSql)
+	}
+	defer func() {
+		_ = rows.Close()
+	}()
+
+	var (
+		addr string
+	)
+	addr = ""
+
+	isEmpty := true
+	for rows.Next() {
+		if isEmpty {
+			isEmpty = false
+		}
+
+		err := rows.Scan(&addr)
+		if err != nil {
+			return "", errors.WithMessagef(err, "scan row")
+		}
+	}
+	if isEmpty {
+		return "", errors.Errorf("empty set")
+	}
+	return addr, nil
+}
+
+func switch2Follwer(ctx context.Context, LsId uint64, addr string) error {
+	_, err := test.GlobalObDB.Exec(fmt.Sprintf(switch2FollwerSql, LsId, addr))
+	if err != nil {
+		return errors.WithMessagef(err, "sql query, sql:%s", switch2FollwerSql)
+	}
+	return nil
+}
+
+func SwitchReplicaLeaderRandomly4x(tenantName string, databaseName string, tableName string) error {
+	// select tenant_id from dba_ob_tenants where status = 'NORMAL' and tenant_name = 'sys';
+	// Since we use sys tenant, the tenant_id is 1.
+
+	// get lsId
+	lsId, err := getLsId(context.Background(), databaseName, tableName)
+	if err != nil {
+		return errors.WithMessagef(err, "get lsId")
+	}
+
+	// get follower addr
+	addr, err := getFollowerAddr(context.Background(), lsId)
+	if err != nil {
+		return errors.WithMessagef(err, "get follower addr")
+	}
+
+	// switch leader to follower
+	err = switch2Follwer(context.Background(), lsId, addr)
+	if err != nil {
+		return errors.WithMessagef(err, "switch leader to follower")
 	}
 
 	return nil

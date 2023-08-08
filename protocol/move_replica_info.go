@@ -154,7 +154,11 @@ func (i *ObTableMoveReplicaInfo) Decode(buffer *bytes.Buffer) {
 	i.ObUniVersionHeader.Decode(buffer)
 	i.tableId = uint64(util.DecodeVi64(buffer))
 	i.schemaVersion = uint64(util.DecodeVi64(buffer))
-	i.partitionId = uint64(util.DecodeVi64(buffer))
+	if util.ObVersion() >= 4 {
+		i.partitionId = util.Uint64(buffer)
+	} else {
+		i.partitionId = uint64(util.DecodeVi64(buffer))
+	}
 	i.server.Decode(buffer)
 	i.role = ObRole(util.Uint8(buffer))
 	i.replicaType = ObReplicaType(util.DecodeVi32(buffer))
