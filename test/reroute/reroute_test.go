@@ -20,6 +20,7 @@ package reroute
 import (
 	"context"
 	"fmt"
+	"github.com/oceanbase/obkv-table-client-go/util"
 	"testing"
 	"time"
 
@@ -38,12 +39,19 @@ const (
 )
 
 const (
-	tenantName   = "sys"
-	databaseName = "test"
-	partNum      = 2
+	passReroutingTest = true
+	tenantName        = "sys"
+	databaseName      = "test"
+	partNum           = 2
 )
 
 func TestMoveReplica_singleOp(t *testing.T) {
+	if passReroutingTest {
+		fmt.Println("Please run Rerouting tests manually!!!")
+		fmt.Println("Change passReroutingTest to false in test/reroute/reroute_test.go to run rerouting tests.")
+		assert.Equal(t, passReroutingTest, false)
+		return
+	}
 	tableName := testInt32RerouteTableName
 	defer test.DeleteTable(tableName)
 
@@ -60,8 +68,13 @@ func TestMoveReplica_singleOp(t *testing.T) {
 	assert.EqualValues(t, 1, affectRows)
 
 	// 2. switch leader
-	err = reroute.SwitchReplicaLeaderRandomly(tenantName, databaseName, tableName, partNum)
-	assert.Equal(t, nil, err)
+	if util.ObVersion() < 4 {
+		err = reroute.SwitchReplicaLeaderRandomly(tenantName, databaseName, tableName, partNum)
+		assert.Equal(t, nil, err)
+	} else {
+		err = reroute.SwitchReplicaLeaderRandomly4x(tenantName, databaseName, tableName)
+		assert.Equal(t, nil, err)
+	}
 	time.Sleep(5 * time.Second)
 
 	// 3. get
@@ -77,7 +90,57 @@ func TestMoveReplica_singleOp(t *testing.T) {
 	assert.EqualValues(t, int32(0), res.Value("c2"))
 }
 
+func TestMoveReplica_singleOp_insertUp(t *testing.T) {
+	if passReroutingTest {
+		fmt.Println("Please run Rerouting tests manually!!!")
+		fmt.Println("Change passReroutingTest to false in test/reroute/reroute_test.go to run rerouting tests.")
+		assert.Equal(t, passReroutingTest, false)
+		return
+	}
+	tableName := testInt32RerouteTableName
+	defer test.DeleteTable(tableName)
+
+	// 1. insert
+	rowKey := []*table.Column{table.NewColumn("c1", int32(0))}
+	mutateColumns := []*table.Column{table.NewColumn("c2", int32(0))}
+	affectRows, err := moveCli.Insert(
+		context.TODO(),
+		tableName,
+		rowKey,
+		mutateColumns,
+	)
+	assert.Equal(t, nil, err)
+	assert.EqualValues(t, 1, affectRows)
+
+	// 2. switch leader
+	if util.ObVersion() < 4 {
+		err = reroute.SwitchReplicaLeaderRandomly(tenantName, databaseName, tableName, partNum)
+		assert.Equal(t, nil, err)
+	} else {
+		err = reroute.SwitchReplicaLeaderRandomly4x(tenantName, databaseName, tableName)
+		assert.Equal(t, nil, err)
+	}
+	time.Sleep(5 * time.Second)
+
+	// 3. get
+	ctx, _ := context.WithTimeout(context.Background(), 1000*time.Second) // 10s
+	affectRows, err = moveCli.InsertOrUpdate(
+		ctx,
+		tableName,
+		rowKey,
+		mutateColumns,
+	)
+	assert.Equal(t, nil, err)
+	assert.EqualValues(t, 1, affectRows)
+}
+
 func TestMoveReplica_batch(t *testing.T) {
+	if passReroutingTest {
+		fmt.Println("Please run Rerouting tests manually!!!")
+		fmt.Println("Change passReroutingTest to false in test/reroute/reroute_test.go to run rerouting tests.")
+		assert.Equal(t, passReroutingTest, false)
+		return
+	}
 	tableName := testInt32RerouteTableName
 	defer test.DeleteTable(tableName)
 
@@ -95,8 +158,13 @@ func TestMoveReplica_batch(t *testing.T) {
 	assert.EqualValues(t, 1, affectRows)
 
 	// 2. switch leader
-	err = reroute.SwitchReplicaLeaderRandomly(tenantName, databaseName, tableName, partNum)
-	assert.Equal(t, nil, err)
+	if util.ObVersion() < 4 {
+		err = reroute.SwitchReplicaLeaderRandomly(tenantName, databaseName, tableName, partNum)
+		assert.Equal(t, nil, err)
+	} else {
+		err = reroute.SwitchReplicaLeaderRandomly4x(tenantName, databaseName, tableName)
+		assert.Equal(t, nil, err)
+	}
 	time.Sleep(5 * time.Second)
 
 	// 3. multi get
@@ -104,7 +172,7 @@ func TestMoveReplica_batch(t *testing.T) {
 		tableName,
 		option.WithBatchSamePropertiesNames(true), // Strongly recommend you to set this option to true if all names of properties are the same in this batch.
 	)
-	err = batchExecutor.AddGetOp(rowKey, nil)
+	err = batchExecutor.AddGetOp(rowKey, []string{"c1", "c2"})
 	assert.Equal(t, nil, err)
 
 	ctx, _ := context.WithTimeout(context.Background(), 1000*time.Second) // 10s
@@ -115,7 +183,13 @@ func TestMoveReplica_batch(t *testing.T) {
 	assert.EqualValues(t, int32(0), res.GetResults()[0].Value("c2"))
 }
 
-func TestMoveReplica_query(t *testing.T) {
+func TestMoveReplica_batch_insertUp(t *testing.T) {
+	if passReroutingTest {
+		fmt.Println("Please run Rerouting tests manually!!!")
+		fmt.Println("Change passReroutingTest to false in test/reroute/reroute_test.go to run rerouting tests.")
+		assert.Equal(t, passReroutingTest, false)
+		return
+	}
 	tableName := testInt32RerouteTableName
 	defer test.DeleteTable(tableName)
 
@@ -133,8 +207,62 @@ func TestMoveReplica_query(t *testing.T) {
 	assert.EqualValues(t, 1, affectRows)
 
 	// 2. switch leader
-	err = reroute.SwitchReplicaLeaderRandomly(tenantName, databaseName, tableName, partNum)
+	if util.ObVersion() < 4 {
+		err = reroute.SwitchReplicaLeaderRandomly(tenantName, databaseName, tableName, partNum)
+		assert.Equal(t, nil, err)
+	} else {
+		err = reroute.SwitchReplicaLeaderRandomly4x(tenantName, databaseName, tableName)
+		assert.Equal(t, nil, err)
+	}
+	time.Sleep(5 * time.Second)
+
+	// 3. multi get
+	batchExecutor := moveCli.NewBatchExecutor(
+		tableName,
+		option.WithBatchSamePropertiesNames(true), // Strongly recommend you to set this option to true if all names of properties are the same in this batch.
+	)
+	insertUpColumns := []*table.Column{table.NewColumn("c2", int32(5))}
+	err = batchExecutor.AddInsertOrUpdateOp(rowKey, insertUpColumns)
 	assert.Equal(t, nil, err)
+
+	ctx, _ := context.WithTimeout(context.Background(), 1000*time.Second) // 10s
+	res, err := batchExecutor.Execute(ctx)
+	assert.Equal(t, nil, err)
+	assert.EqualValues(t, 1, res.Size())
+	assert.EqualValues(t, int64(1), res.GetResults()[0].AffectedRows())
+}
+
+func TestMoveReplica_query(t *testing.T) {
+	if passReroutingTest {
+		fmt.Println("Please run Rerouting tests manually!!!")
+		fmt.Println("Change passReroutingTest to false in test/reroute/reroute_test.go to run rerouting tests.")
+		assert.Equal(t, passReroutingTest, false)
+		return
+	}
+	tableName := testInt32RerouteTableName
+	defer test.DeleteTable(tableName)
+
+	// 1. insert
+	ctx1, _ := context.WithTimeout(context.Background(), 1000*time.Second) // 10s
+	rowKey := []*table.Column{table.NewColumn("c1", int32(0))}
+	mutateColumns := []*table.Column{table.NewColumn("c2", int32(0))}
+	affectRows, err := moveCli.Insert(
+		ctx1,
+		tableName,
+		rowKey,
+		mutateColumns,
+	)
+	assert.Equal(t, nil, err)
+	assert.EqualValues(t, 1, affectRows)
+
+	// 2. switch leader
+	if util.ObVersion() < 4 {
+		err = reroute.SwitchReplicaLeaderRandomly(tenantName, databaseName, tableName, partNum)
+		assert.Equal(t, nil, err)
+	} else {
+		err = reroute.SwitchReplicaLeaderRandomly4x(tenantName, databaseName, tableName)
+		assert.Equal(t, nil, err)
+	}
 	time.Sleep(5 * time.Second)
 
 	// 3. query
@@ -160,6 +288,12 @@ func TestMoveReplica_query(t *testing.T) {
 }
 
 func TestMoveReplica_queryAndMutate(t *testing.T) {
+	if passReroutingTest {
+		fmt.Println("Please run Rerouting tests manually!!!")
+		fmt.Println("Change passReroutingTest to false in test/reroute/reroute_test.go to run rerouting tests.")
+		assert.Equal(t, passReroutingTest, false)
+		return
+	}
 	tableName := testInt32RerouteTableName
 	defer test.DeleteTable(tableName)
 
@@ -177,8 +311,13 @@ func TestMoveReplica_queryAndMutate(t *testing.T) {
 	assert.EqualValues(t, 1, affectRows)
 
 	// 2. switch leader
-	err = reroute.SwitchReplicaLeaderRandomly(tenantName, databaseName, tableName, partNum)
-	assert.Equal(t, nil, err)
+	if util.ObVersion() < 4 {
+		err = reroute.SwitchReplicaLeaderRandomly(tenantName, databaseName, tableName, partNum)
+		assert.Equal(t, nil, err)
+	} else {
+		err = reroute.SwitchReplicaLeaderRandomly4x(tenantName, databaseName, tableName)
+		assert.Equal(t, nil, err)
+	}
 	time.Sleep(5 * time.Second)
 
 	// 3. query and mutate
