@@ -19,6 +19,7 @@ package ttl
 
 import (
 	"context"
+	"fmt"
 	"testing"
 	"time"
 
@@ -34,7 +35,17 @@ const (
 	testTTLCreateStatement = "create table if not exists test_ttl(c1 int(12) primary key, c2 int(12), c3 timestamp(6)) TTL(c3 + INTERVAL 2 second);"
 )
 
+const (
+	passTTLTest = true
+)
+
 func TestTTL_insert(t *testing.T) {
+	if passTTLTest {
+		fmt.Println("Please run TTL tests manually!!!")
+		fmt.Println("Change passTTLTest to false in test/ttl/ttl_test.go to run ttl tests.")
+		assert.Equal(t, passTTLTest, false)
+		return
+	}
 	tableName := testTTLTableName
 	defer test.DeleteTable(tableName)
 
@@ -89,6 +100,12 @@ func TestTTL_insert(t *testing.T) {
 }
 
 func TestTTL_delete(t *testing.T) {
+	if passTTLTest {
+		fmt.Println("Please run TTL tests manually!!!")
+		fmt.Println("Change passTTLTest to false in test/ttl/ttl_test.go to run ttl tests.")
+		assert.Equal(t, passTTLTest, false)
+		return
+	}
 	tableName := testTTLTableName
 	defer test.DeleteTable(tableName)
 
@@ -151,6 +168,12 @@ func TestTTL_delete(t *testing.T) {
 }
 
 func TestTTL_update(t *testing.T) {
+	if passTTLTest {
+		fmt.Println("Please run TTL tests manually!!!")
+		fmt.Println("Change passTTLTest to false in test/ttl/ttl_test.go to run ttl tests.")
+		assert.Equal(t, passTTLTest, false)
+		return
+	}
 	tableName := testTTLTableName
 	defer test.DeleteTable(tableName)
 
@@ -207,6 +230,12 @@ func TestTTL_update(t *testing.T) {
 }
 
 func TestTTL_replace(t *testing.T) {
+	if passTTLTest {
+		fmt.Println("Please run TTL tests manually!!!")
+		fmt.Println("Change passTTLTest to false in test/ttl/ttl_test.go to run ttl tests.")
+		assert.Equal(t, passTTLTest, false)
+		return
+	}
 	tableName := testTTLTableName
 	defer test.DeleteTable(tableName)
 
@@ -263,6 +292,12 @@ func TestTTL_replace(t *testing.T) {
 }
 
 func TestTTL_insertUp(t *testing.T) {
+	if passTTLTest {
+		fmt.Println("Please run TTL tests manually!!!")
+		fmt.Println("Change passTTLTest to false in test/ttl/ttl_test.go to run ttl tests.")
+		assert.Equal(t, passTTLTest, false)
+		return
+	}
 	tableName := testTTLTableName
 	defer test.DeleteTable(tableName)
 
@@ -320,6 +355,12 @@ func TestTTL_insertUp(t *testing.T) {
 }
 
 func TestTTL_increment(t *testing.T) {
+	if passTTLTest {
+		fmt.Println("Please run TTL tests manually!!!")
+		fmt.Println("Change passTTLTest to false in test/ttl/ttl_test.go to run ttl tests.")
+		assert.Equal(t, passTTLTest, false)
+		return
+	}
 	tableName := testTTLTableName
 	defer test.DeleteTable(tableName)
 

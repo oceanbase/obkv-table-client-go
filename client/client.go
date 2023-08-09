@@ -107,6 +107,37 @@ func NewOdpClient(
 	return cli, nil
 }
 
+// NewClientWithXmlConfig create a client with xml config.
+func NewClientWithXmlConfig(configFilePath string) (Client, error) {
+	xmlConfig, err := config.NewConfigurationWithXML(configFilePath)
+	if err != nil {
+		return nil, errors.WithMessagef(err, "new config with xml, configFilePath:%s", configFilePath)
+	}
+	switch xmlConfig.Mode {
+	case "direct":
+		return NewClient(
+			xmlConfig.ConfigUrl,
+			xmlConfig.FullUserName,
+			xmlConfig.Password,
+			xmlConfig.SysUserName,
+			xmlConfig.SysPassword,
+			xmlConfig.TableConfig,
+		)
+	case "proxy":
+		return NewOdpClient(
+			xmlConfig.FullUserName,
+			xmlConfig.Password,
+			xmlConfig.OdpIp,
+			xmlConfig.OdpRpcPort,
+			xmlConfig.OdpSqlPort,
+			xmlConfig.Database,
+			xmlConfig.TableConfig,
+		)
+	default:
+		return nil, errors.Errorf("invalid mode:%s", xmlConfig.Mode)
+	}
+}
+
 type Client interface {
 	// Insert a record by rowKey.
 	Insert(ctx context.Context, tableName string, rowKey []*table.Column, mutateColumns []*table.Column, opts ...option.ObOperationOption) (int64, error)

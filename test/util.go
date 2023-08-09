@@ -35,10 +35,13 @@ const (
 	sysPassWord  = ""
 
 	// odp
-	odpIP      = "..."
+	odpIP      = ""
 	odpRpcPort = 0
 	odpSqlPort = 0
 	database   = "..."
+
+	// xml config
+	xmlConfigPath = ""
 )
 
 const (
@@ -52,7 +55,9 @@ const (
 func CreateClient() client.Client {
 	var cli client.Client
 	var err error
-	if odpIP != "" {
+	if xmlConfigPath != "" {
+		cli, err = client.NewClientWithXmlConfig(xmlConfigPath)
+	} else if odpIP != "" {
 		cli, err = client.NewOdpClient(fullUserName, passWord, odpIP, odpRpcPort, odpSqlPort, database, config.NewDefaultClientConfig())
 	} else {
 		cli, err = client.NewClient(configUrl, fullUserName, passWord, sysUserName, sysPassWord, config.NewDefaultClientConfig())
