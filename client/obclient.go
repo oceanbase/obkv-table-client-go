@@ -202,6 +202,7 @@ func (c *obClient) initOdp() error {
 	// 2. Set ob version and init route sql by ob version.
 	if util.ObVersion() == 0.0 {
 		util.SetObVersion(ver)
+		route.InitSql(ver)
 	}
 	// 3. Create odp table
 	t := NewObTable(c.odpIP, c.odpRpcPort, c.tenantName, c.userName, c.password, c.database)

@@ -20,11 +20,9 @@ package client
 import (
 	"context"
 	"github.com/oceanbase/obkv-table-client-go/client/option"
-
-	"github.com/pkg/errors"
-
 	"github.com/oceanbase/obkv-table-client-go/config"
 	"github.com/oceanbase/obkv-table-client-go/table"
+	"github.com/pkg/errors"
 )
 
 // NewClient create a client.
@@ -105,6 +103,37 @@ func NewOdpClient(
 	}
 
 	return cli, nil
+}
+
+// NewClientWithXmlConfig create a client with xml config.
+func NewClientWithTomlConfig(configFilePath string) (Client, error) {
+	clientConfig, err := config.GetClientConfigurationFromTOML(configFilePath)
+	if err != nil {
+		return nil, errors.WithMessagef(err, "get client config from toml, configFilePath:%s", configFilePath)
+	}
+	switch clientConfig.Mode {
+	case "direct":
+		return NewClient(
+			clientConfig.DirectClientConfig.ConfigUrl,
+			clientConfig.DirectClientConfig.FullUserName,
+			clientConfig.DirectClientConfig.Password,
+			clientConfig.DirectClientConfig.SysUserName,
+			clientConfig.DirectClientConfig.SysPassword,
+			clientConfig.GetClientConfig(),
+		)
+	case "proxy":
+		return NewOdpClient(
+			clientConfig.OdpClientConfig.FullUserName,
+			clientConfig.OdpClientConfig.Password,
+			clientConfig.OdpClientConfig.OdpIp,
+			clientConfig.OdpClientConfig.OdpRpcPort,
+			clientConfig.OdpClientConfig.OdpSqlPort,
+			clientConfig.OdpClientConfig.Database,
+			clientConfig.GetClientConfig(),
+		)
+	default:
+		return nil, errors.Errorf("invalid mode:%s", clientConfig.Mode)
+	}
 }
 
 type Client interface {

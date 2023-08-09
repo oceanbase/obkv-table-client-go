@@ -1,0 +1,51 @@
+# Client Mode - `direct` or `proxy`
+mode = "proxy"
+
+## Direct Mode
+[DirectClientConfig]
+ConfigUrl = ""
+FullUserName = ""
+Password = ""
+SysUserName = "root"
+SysPassword= ""
+
+
+## ODP Mode
+[OdpClientConfig]
+OdpIp = ""
+OdpRpcPort = 0
+OdpSqlPort= 0
+FullUserName = ""
+Password = ""
+Database = ""
+
+
+# Normal Configuration
+[ConnConfig]
+PoolMaxConnSize = 1
+ConnectTimeOut = 1000
+LoginTimeout = 1000
+
+
+[TableEntryConfig]
+RefreshLockTimeout = 4000
+RefreshTryTimes = 3
+RefreshIntervalBase = 100
+RefreshIntervalCeiling = 1600
+
+
+[RouteMetaDataConfig]
+RefreshInterval = 60000
+RefreshLockTimeout = 8000
+
+[RsListConfig]
+LocalFileLocation = ""
+HttpGetTimeout = 1000
+HttpGetRetryTimes = 3
+HttpGetRetryInterval = 100
+
+
+[ExtraConfig]
+OperationTimeOut = 10000
+LogLevel = "info"
+EnableRerouting = false

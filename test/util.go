@@ -39,6 +39,9 @@ const (
 	odpRpcPort = 0
 	odpSqlPort = 0
 	database   = "..."
+
+	// toml config
+	tomlConfigPath = ""
 )
 
 const (
@@ -52,7 +55,9 @@ const (
 func CreateClient() client.Client {
 	var cli client.Client
 	var err error
-	if odpIP != "" {
+	if tomlConfigPath != "" {
+		cli, err = client.NewClientWithTomlConfig(tomlConfigPath)
+	} else if odpIP != "" {
 		cli, err = client.NewOdpClient(fullUserName, passWord, odpIP, odpRpcPort, odpSqlPort, database, config.NewDefaultClientConfig())
 	} else {
 		cli, err = client.NewClient(configUrl, fullUserName, passWord, sysUserName, sysPassWord, config.NewDefaultClientConfig())

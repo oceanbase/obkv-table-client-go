@@ -18,6 +18,7 @@
 package ttl
 
 import (
+	"fmt"
 	"os"
 	"testing"
 
@@ -28,6 +29,12 @@ import (
 var cli client.Client
 
 func setup() {
+	if passTTLTest {
+		fmt.Println("Please run TTL tests manually!!!")
+		fmt.Println("Change passTTLTest to false in test/ttl/ttl_test.go to run ttl tests.")
+		return
+	}
+
 	cli = test.CreateClient()
 
 	test.CreateDB()
@@ -36,6 +43,12 @@ func setup() {
 }
 
 func teardown() {
+	if passTTLTest {
+		fmt.Println("Please run TTL tests manually!!!")
+		fmt.Println("Change passTTLTest to false in test/ttl/ttl_test.go to run ttl tests.")
+		return
+	}
+
 	cli.Close()
 
 	test.DropTable(testTTLTableName)

@@ -192,3 +192,24 @@ func NewLogger(writer io.Writer, level Level, opts ...Option) *Logger {
 	}
 	return logger
 }
+
+func MatchStr2LogLevel(level string) Level {
+	switch level {
+	case "debug":
+		return DebugLevel
+	case "info":
+		return InfoLevel
+	case "warn":
+		return WarnLevel
+	case "error":
+		return ErrorLevel
+	case "dpanic":
+		return DPanicLevel
+	case "panic":
+		return PanicLevel
+	case "fatal":
+		return FatalLevel
+	default:
+		return InfoLevel
+	}
+}
