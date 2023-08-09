@@ -20,11 +20,9 @@ package client
 import (
 	"context"
 	"github.com/oceanbase/obkv-table-client-go/client/option"
-
-	"github.com/pkg/errors"
-
 	"github.com/oceanbase/obkv-table-client-go/config"
 	"github.com/oceanbase/obkv-table-client-go/table"
+	"github.com/pkg/errors"
 )
 
 // NewClient create a client.
@@ -108,33 +106,33 @@ func NewOdpClient(
 }
 
 // NewClientWithXmlConfig create a client with xml config.
-func NewClientWithXmlConfig(configFilePath string) (Client, error) {
-	xmlConfig, err := config.NewConfigurationWithXML(configFilePath)
+func NewClientWithTomlConfig(configFilePath string) (Client, error) {
+	clientConfig, err := config.GetClientConfigurationFromTOML(configFilePath)
 	if err != nil {
-		return nil, errors.WithMessagef(err, "new config with xml, configFilePath:%s", configFilePath)
+		return nil, errors.WithMessagef(err, "get client config from toml, configFilePath:%s", configFilePath)
 	}
-	switch xmlConfig.Mode {
+	switch clientConfig.Mode {
 	case "direct":
 		return NewClient(
-			xmlConfig.ConfigUrl,
-			xmlConfig.FullUserName,
-			xmlConfig.Password,
-			xmlConfig.SysUserName,
-			xmlConfig.SysPassword,
-			xmlConfig.TableConfig,
+			clientConfig.DirectClientConfig.ConfigUrl,
+			clientConfig.DirectClientConfig.FullUserName,
+			clientConfig.DirectClientConfig.Password,
+			clientConfig.DirectClientConfig.SysUserName,
+			clientConfig.DirectClientConfig.SysPassword,
+			clientConfig.GetClientConfig(),
 		)
 	case "proxy":
 		return NewOdpClient(
-			xmlConfig.FullUserName,
-			xmlConfig.Password,
-			xmlConfig.OdpIp,
-			xmlConfig.OdpRpcPort,
-			xmlConfig.OdpSqlPort,
-			xmlConfig.Database,
-			xmlConfig.TableConfig,
+			clientConfig.OdpClientConfig.FullUserName,
+			clientConfig.OdpClientConfig.Password,
+			clientConfig.OdpClientConfig.OdpIp,
+			clientConfig.OdpClientConfig.OdpRpcPort,
+			clientConfig.OdpClientConfig.OdpSqlPort,
+			clientConfig.OdpClientConfig.Database,
+			clientConfig.GetClientConfig(),
 		)
 	default:
-		return nil, errors.Errorf("invalid mode:%s", xmlConfig.Mode)
+		return nil, errors.Errorf("invalid mode:%s", clientConfig.Mode)
 	}
 }
 

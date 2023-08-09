@@ -1,0 +1,51 @@
+# Client Mode - `direct` or `proxy`
+mode = "proxy"
+
+# Direct Mode
+[DirectClientConfig]
+ConfigUrl = "http://ocp-cfg.alibaba.net:8080/services?User_ID=alibaba&UID=test&Action=ObRootServiceInfo&ObCluster=ob11.zeli.lwb.11.158.77.130&database=test"
+FullUserName = "root@sys#ob11.zeli.lwb.11.158.77.130"
+Password = ""
+SysUserName = "root"
+SysPassword= ""
+
+
+# ODP Mode
+[OdpClientConfig]
+OdpIp = "11.158.77.130"
+OdpRpcPort = 2885
+OdpSqlPort= 58007
+FullUserName = "root@sys#ob11.zeli.lwb.11.158.77.130"
+Password = ""
+Database = "test"
+
+
+# Config for Connection
+[ConnConfig]
+PoolMaxConnSize = 1
+ConnectTimeOut = 1000
+LoginTimeout = 1000
+
+
+[TableEntryConfig]
+RefreshLockTimeout = 4000
+RefreshTryTimes = 3
+RefreshIntervalBase = 100
+RefreshIntervalCeiling = 1600
+
+
+[MetaDataConfig]
+RefreshInterval = 60000
+RefreshLockTimeout = 8000
+
+[RsListConfig]
+LocalFileLocation = ""
+HttpGetTimeout = 1000
+HttpGetRetryTimes = 3
+HttpGetRetryInterval = 100
+
+
+[ExtraConfig]
+OperationTimeOut = 10000
+LogLevel = "info"
+EnableRerouting = false
