@@ -34,7 +34,7 @@ RefreshIntervalBase = 100
 RefreshIntervalCeiling = 1600
 
 
-[MetaDataConfig]
+[RouteMetaDataConfig]
 RefreshInterval = 60000
 RefreshLockTimeout = 8000
 

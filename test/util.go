@@ -35,7 +35,7 @@ const (
 	sysPassWord  = ""
 
 	// odp
-	odpIP      = ""
+	odpIP      = "..."
 	odpRpcPort = 0
 	odpSqlPort = 0
 	database   = "..."

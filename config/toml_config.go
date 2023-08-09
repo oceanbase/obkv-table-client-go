@@ -28,14 +28,14 @@ import (
 )
 
 type ClientConfiguration struct {
-	DirectClientConfig DirectClientConfig
-	OdpClientConfig    ODPClientConfig
-	ConnConfig         ConnConfig
-	TableEntryConfig   TableEntryConfig
-	MetaDataConfig     MetaDataConfig
-	RsListConfig       RsListConfig
-	ExtraConfig        ExtraConfig
-	Mode               string
+	DirectClientConfig  DirectClientConfig
+	OdpClientConfig     ODPClientConfig
+	ConnConfig          ConnConfig
+	TableEntryConfig    TableEntryConfig
+	RouteMetaDataConfig RouteMetaDataConfig
+	RsListConfig        RsListConfig
+	ExtraConfig         ExtraConfig
+	Mode                string
 }
 
 type DirectClientConfig struct {
@@ -68,7 +68,7 @@ type TableEntryConfig struct {
 	RefreshIntervalCeiling int
 }
 
-type MetaDataConfig struct {
+type RouteMetaDataConfig struct {
 	RefreshInterval    int
 	RefreshLockTimeout int
 }
@@ -140,8 +140,8 @@ func (c *ClientConfiguration) GetClientConfig() *ClientConfig {
 		TableEntryRefreshTryTimes:        c.TableEntryConfig.RefreshTryTimes,
 		TableEntryRefreshIntervalBase:    time.Duration(c.TableEntryConfig.RefreshIntervalBase) * time.Millisecond,
 		TableEntryRefreshIntervalCeiling: time.Duration(c.TableEntryConfig.RefreshIntervalCeiling) * time.Millisecond,
-		MetadataRefreshInterval:          time.Duration(c.MetaDataConfig.RefreshInterval) * time.Millisecond,
-		MetadataRefreshLockTimeout:       time.Duration(c.MetaDataConfig.RefreshLockTimeout) * time.Millisecond,
+		MetadataRefreshInterval:          time.Duration(c.RouteMetaDataConfig.RefreshInterval) * time.Millisecond,
+		MetadataRefreshLockTimeout:       time.Duration(c.RouteMetaDataConfig.RefreshLockTimeout) * time.Millisecond,
 		RsListLocalFileLocation:          c.RsListConfig.LocalFileLocation,
 		RsListHttpGetTimeout:             time.Duration(c.RsListConfig.HttpGetTimeout) * time.Millisecond,
 		RsListHttpGetRetryTimes:          c.RsListConfig.HttpGetRetryTimes,
