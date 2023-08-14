@@ -19,22 +19,24 @@ package autoinc
 
 import (
 	"context"
+	"testing"
+
+	"github.com/stretchr/testify/assert"
+
 	"github.com/oceanbase/obkv-table-client-go/client/filter"
 	"github.com/oceanbase/obkv-table-client-go/client/option"
 	"github.com/oceanbase/obkv-table-client-go/test"
-	"github.com/stretchr/testify/assert"
-	"testing"
 
 	"github.com/oceanbase/obkv-table-client-go/table"
 )
 
 const (
-	autoIncRowkeyTableTableName       = "autoIncRowkeyTable"
-	autoIncRowkeyTableCreateStatement = "create table if not exists autoIncRowkeyTable(`c1` bigint(20) not null auto_increment, c2 bigint(20) not null, c3 varchar(20) default 'hello', c4 bigint(20) default 0, primary key (`c1`, `c2`)) partition by hash(c2) partitions 15;"
+	autoIncRowkeyZeroFillTableTableName       = "autoIncRowkeyZeroFillTable"
+	autoIncRowkeyZeroFillTableCreateStatement = "create table if not exists autoIncRowkeyZeroFillTable(`c1` bigint(20) not null auto_increment, c2 bigint(20) not null, c3 varchar(20) default 'hello', c4 bigint(20) default 0, primary key (`c1`, `c2`)) partition by hash(c2) partitions 15;"
 )
 
-func TestAuto_IncRowkey(t *testing.T) {
-	tableName := autoIncRowkeyTableTableName
+func TestAuto_IncRowkeyFillZero(t *testing.T) {
+	tableName := autoIncRowkeyZeroFillTableTableName
 	defer test.DeleteTable(tableName)
 
 	// test insert.
@@ -64,6 +66,18 @@ func TestAuto_IncRowkey(t *testing.T) {
 	assert.EqualValues(t, int64(1), result.Value("c1"))
 	assert.EqualValues(t, int64(1), result.Value("c2"))
 	assert.EqualValues(t, "hello", result.Value("c3"))
+
+	// test assign bad value, column type not match
+	rowKey = []*table.Column{table.NewColumn("c1", "50"), table.NewColumn("c2", int64(1))}
+
+	res, err = cli.Insert(
+		context.TODO(),
+		tableName,
+		rowKey,
+		nil,
+	)
+
+	assert.NotEqual(t, nil, err)
 
 	// test assign value.
 	rowKey = []*table.Column{table.NewColumn("c1", int64(50)), table.NewColumn("c2", int64(1))}

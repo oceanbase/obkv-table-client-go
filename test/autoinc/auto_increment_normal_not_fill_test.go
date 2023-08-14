@@ -19,21 +19,23 @@ package autoinc
 
 import (
 	"context"
+	"testing"
+
+	"github.com/stretchr/testify/assert"
+
 	"github.com/oceanbase/obkv-table-client-go/client/filter"
 	"github.com/oceanbase/obkv-table-client-go/client/option"
 	"github.com/oceanbase/obkv-table-client-go/table"
 	"github.com/oceanbase/obkv-table-client-go/test"
-	"github.com/stretchr/testify/assert"
-	"testing"
 )
 
 const (
-	autoIncNotRowkeyTableTableName       = "autoIncNotRowkeyTable"
-	autoIncNotRowkeyTableCreateStatement = "create table if not exists autoIncNotRowkeyTable(`c1` bigint(20) not null, c2 bigint(20) auto_increment, c3 varchar(20) default 'hello', c4 bigint(20) default 0, primary key (`c1`)) partition by key(c1) partitions 100;"
+	autoIncNormalNotFillTableTableName       = "autoIncNormalNotFillTable"
+	autoIncNormalNotFillTableCreateStatement = "create table if not exists autoIncNormalNotFillTable(`c1` bigint(20) not null, c2 bigint(20) auto_increment, c3 varchar(20) default 'hello', c4 bigint(20) default 0, primary key (`c1`)) partition by key(c1) partitions 100;"
 )
 
-func TestAuto_IncNotRowkey(t *testing.T) {
-	tableName := autoIncNotRowkeyTableTableName
+func TestAuto_NormalNotFill(t *testing.T) {
+	tableName := autoIncNormalNotFillTableTableName
 	defer test.DeleteTable(tableName)
 
 	// test insert.
@@ -191,7 +193,7 @@ func TestAuto_IncNotRowkey(t *testing.T) {
 
 	// test replace exist, replace
 	rowKey = []*table.Column{table.NewColumn("c1", int64(4))}
-	mutationColumns = []*table.Column{table.NewColumn("c2", int64(20)), table.NewColumn("c3", "replace exist")}
+	mutationColumns = []*table.Column{table.NewColumn("c3", "replace exist")}
 	res, err = cli.Replace(
 		context.TODO(),
 		tableName,
@@ -211,7 +213,7 @@ func TestAuto_IncNotRowkey(t *testing.T) {
 
 	assert.Equal(t, nil, err)
 	assert.EqualValues(t, int64(4), result.Value("c1"))
-	assert.EqualValues(t, int64(20), result.Value("c2"))
+	assert.EqualValues(t, int64(53), result.Value("c2"))
 	assert.EqualValues(t, "replace exist", result.Value("c3"))
 
 	// test insertup not exist, insert
@@ -236,7 +238,7 @@ func TestAuto_IncNotRowkey(t *testing.T) {
 
 	assert.Equal(t, nil, err)
 	assert.EqualValues(t, int64(5), result.Value("c1"))
-	assert.EqualValues(t, int64(53), result.Value("c2"))
+	assert.EqualValues(t, int64(54), result.Value("c2"))
 	assert.EqualValues(t, "insertup", result.Value("c3"))
 
 	// test insertup exist, update
@@ -287,7 +289,7 @@ func TestAuto_IncNotRowkey(t *testing.T) {
 
 	assert.Equal(t, nil, err)
 	assert.EqualValues(t, int64(6), result.Value("c1"))
-	assert.EqualValues(t, int64(54), result.Value("c2"))
+	assert.EqualValues(t, int64(55), result.Value("c2"))
 	assert.EqualValues(t, int64(10), result.Value("c4"))
 
 	// test increment exist, increment
@@ -313,7 +315,7 @@ func TestAuto_IncNotRowkey(t *testing.T) {
 
 	assert.Equal(t, nil, err)
 	assert.EqualValues(t, int64(6), result.Value("c1"))
-	assert.EqualValues(t, int64(54), result.Value("c2"))
+	assert.EqualValues(t, int64(55), result.Value("c2"))
 	assert.EqualValues(t, int64(20), result.Value("c4"))
 
 	// test append not exist, insert
@@ -339,7 +341,7 @@ func TestAuto_IncNotRowkey(t *testing.T) {
 
 	assert.Equal(t, nil, err)
 	assert.EqualValues(t, int64(7), result.Value("c1"))
-	assert.EqualValues(t, int64(56), result.Value("c2"))
+	assert.EqualValues(t, int64(57), result.Value("c2"))
 	assert.EqualValues(t, "append", result.Value("c3"))
 
 	// test append exist, append
@@ -365,6 +367,6 @@ func TestAuto_IncNotRowkey(t *testing.T) {
 
 	assert.Equal(t, nil, err)
 	assert.EqualValues(t, int64(7), result.Value("c1"))
-	assert.EqualValues(t, int64(56), result.Value("c2"))
+	assert.EqualValues(t, int64(57), result.Value("c2"))
 	assert.EqualValues(t, "append exist", result.Value("c3"))
 }
