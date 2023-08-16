@@ -42,6 +42,13 @@ func prepareHashRecord(recordCount int) {
 	}
 }
 
+func prepareHashSinglePartitionRecord(pk int, recordCount int) {
+	for i := 0; i < recordCount; i++ {
+		insertStatement := fmt.Sprintf("insert into %s(c1, c2) values(%d, %d);", queryHashTableName, pk, i)
+		test.InsertTable(insertStatement)
+	}
+}
+
 func TestQueryHashSimple(t *testing.T) {
 	tableName := queryHashTableName
 	defer test.DeleteTable(tableName)
@@ -189,7 +196,7 @@ func TestQueryHashSimple(t *testing.T) {
 	)
 	assert.Equal(t, nil, err)
 	batchRes, err := resSet.NextBatch()
-	for ; res != nil && err == nil; batchRes, err = resSet.NextBatch() {
+	for ; batchRes != nil && err == nil; batchRes, err = resSet.NextBatch() {
 		assert.Equal(t, nil, err)
 		for i := 0; i < len(batchRes); i++ {
 			assert.EqualValues(t, batchRes[i].Value("c1"), batchRes[i].Value("c2"))
@@ -198,6 +205,97 @@ func TestQueryHashSimple(t *testing.T) {
 		}
 	}
 	assert.Equal(t, nil, err)
+}
+
+func TestQueryHashSinglePartition(t *testing.T) {
+	tableName := queryHashTableName
+	defer test.DeleteTable(tableName)
+
+	pk := 0
+	recordCount := 10
+	prepareHashSinglePartitionRecord(pk, recordCount)
+
+	startRowKey := []*table.Column{table.NewColumn("c1", int64(pk)), table.NewColumn("c2", table.Min)}
+	endRowKey := []*table.Column{table.NewColumn("c1", int64(pk)), table.NewColumn("c2", table.Max)}
+	keyRanges := []*table.RangePair{table.NewRangePair(startRowKey, endRowKey)}
+	resSet, err := cli.Query(
+		context.TODO(),
+		tableName,
+		keyRanges,
+		option.WithQuerySelectColumns([]string{"c1", "c2", "c3"}),
+	)
+	assert.Equal(t, nil, err)
+	i := 0
+	res, err := resSet.Next()
+	for ; res != nil && err == nil; res, err = resSet.Next() {
+		assert.EqualValues(t, "hello", res.Value("c3"))
+		i++
+	}
+	assert.Equal(t, nil, err)
+	assert.EqualValues(t, recordCount, i)
+
+	// wrong range
+	// Max - Min
+	startRowKey = []*table.Column{table.NewColumn("c1", table.Max), table.NewColumn("c2", table.Min)}
+	endRowKey = []*table.Column{table.NewColumn("c1", table.Min), table.NewColumn("c2", table.Max)}
+	keyRanges = []*table.RangePair{table.NewRangePair(startRowKey, endRowKey)}
+	resSet, err = cli.Query(
+		context.TODO(),
+		tableName,
+		keyRanges,
+		option.WithQuerySelectColumns([]string{"c1", "c2", "c3"}),
+	)
+	assert.Equal(t, nil, err)
+	res, err = resSet.Next()
+	for ; res != nil && err == nil; res, err = resSet.Next() {
+		assert.Equal(t, nil, err)
+		assert.Equal(t, nil, res)
+	}
+	assert.Equal(t, nil, err)
+
+	// test NextBatch()
+	startRowKey = []*table.Column{table.NewColumn("c1", int64(pk)), table.NewColumn("c2", table.Min)}
+	endRowKey = []*table.Column{table.NewColumn("c1", int64(pk)), table.NewColumn("c2", table.Max)}
+	keyRanges = []*table.RangePair{table.NewRangePair(startRowKey, endRowKey)}
+	resSet, err = cli.Query(
+		context.TODO(),
+		tableName,
+		keyRanges,
+		option.WithQuerySelectColumns([]string{"c1", "c2", "c3"}),
+	)
+	assert.Equal(t, nil, err)
+	batchRes, err := resSet.NextBatch()
+	for ; batchRes != nil && err == nil; batchRes, err = resSet.NextBatch() {
+		assert.Equal(t, nil, err)
+		for i := 0; i < len(batchRes); i++ {
+			assert.EqualValues(t, "hello", batchRes[i].Value("c3"))
+			assert.EqualValues(t, batchRes[i].Values(), []interface{}{int64(pk), int64(i), "hello"})
+		}
+	}
+	assert.Equal(t, nil, err)
+
+	// test batchSize
+	batchSize := 1
+	startRowKey = []*table.Column{table.NewColumn("c1", int64(0)), table.NewColumn("c2", table.Min)}
+	endRowKey = []*table.Column{table.NewColumn("c1", int64(100)), table.NewColumn("c2", table.Max)}
+	keyRanges = []*table.RangePair{table.NewRangePair(startRowKey, endRowKey)}
+	resSet, err = cli.Query(
+		context.TODO(),
+		tableName,
+		keyRanges,
+		option.WithQuerySelectColumns([]string{"c1", "c2", "c3"}),
+		option.WithQueryBatchSize(batchSize),
+	)
+	assert.Equal(t, nil, err)
+	i = 0
+	res, err = resSet.Next()
+	for ; res != nil && err == nil; res, err = resSet.Next() {
+		assert.Equal(t, nil, err)
+		assert.EqualValues(t, "hello", res.Value("c3"))
+		i++
+	}
+	assert.Equal(t, nil, err)
+	assert.EqualValues(t, recordCount, i)
 }
 
 func TestQueryHashBatchSize(t *testing.T) {

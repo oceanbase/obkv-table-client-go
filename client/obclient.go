@@ -104,7 +104,7 @@ func newOdpClient(
 	cliConfig *config.ClientConfig) (*obClient, error) {
 	cli := new(obClient)
 	// 1. Parse full username to get userName/tenantName/clusterName
-	err := cli.parseFullUserName(fullUserName)
+	err := cli.parseOdpFullUserName(fullUserName)
 	if err != nil {
 		return nil, errors.WithMessagef(err, "parse full user name, fullUserName:%s", fullUserName)
 	}
@@ -171,6 +171,29 @@ func (c *obClient) parseFullUserName(fullUserName string) error {
 	return nil
 }
 
+// standard format: user_name@tenant_name#cluster_name or user_name for VIP
+func (c *obClient) parseOdpFullUserName(fullUserName string) error {
+	utIndex := strings.Index(fullUserName, "@")
+	tcIndex := strings.Index(fullUserName, "#")
+	if utIndex == -1 || tcIndex == -1 || tcIndex <= utIndex {
+		c.userName = fullUserName
+		c.fullUserName = fullUserName
+	} else {
+		userName := fullUserName[:utIndex]
+		tenantName := fullUserName[utIndex+1 : tcIndex]
+		clusterName := fullUserName[tcIndex+1:]
+		if userName == "" || tenantName == "" || clusterName == "" {
+			return errors.Errorf("invalid element in full user name, userName:%s, tenantName:%s, clusterName:%s",
+				userName, tenantName, clusterName)
+		}
+		c.userName = userName
+		c.tenantName = tenantName
+		c.clusterName = clusterName
+		c.fullUserName = fullUserName
+	}
+	return nil
+}
+
 // format: http://127.0.0.1:8080/services?User_ID=xxx&UID=xxx&Action=ObRootServiceInfo&ObCluster=xxx&database=xxx
 func (c *obClient) parseConfigUrl(configUrl string) error {
 	index := strings.Index(configUrl, "database=")
@@ -205,7 +228,7 @@ func (c *obClient) initOdp() error {
 		route.InitSql(ver)
 	}
 	// 3. Create odp table
-	t := NewObTable(c.odpIP, c.odpRpcPort, c.tenantName, c.userName, c.password, c.database)
+	t := NewObTable(c.odpIP, c.odpRpcPort, c.tenantName, c.fullUserName, c.password, c.database)
 	err = t.init(c.config.ConnPoolMaxConnSize, c.config.ConnConnectTimeOut, c.config.ConnLoginTimeout)
 	if err != nil {
 		return errors.WithMessagef(err, "init ob table, obTable:%s", t.String())
