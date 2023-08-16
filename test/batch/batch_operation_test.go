@@ -61,7 +61,7 @@ func TestBatch_MultiInsert(t *testing.T) {
 
 	assert.EqualValues(t, recordCount, res.Size())
 	for i := 0; i < res.Size(); i++ {
-		assert.Equal(t, nil, res.GetResults()[i])
+		assert.NotEqual(t, nil, res.GetResults()[i])
 		if res.GetResults()[i] != nil {
 			assert.EqualValues(t, 1, res.GetResults()[i].AffectedRows())
 		}
