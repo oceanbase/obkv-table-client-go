@@ -251,7 +251,7 @@ func TestQueryHashSinglePartition(t *testing.T) {
 		assert.Equal(t, nil, err)
 		assert.Equal(t, nil, res)
 	}
-	assert.Equal(t, nil, err)
+	// assert.Equal(t, nil, err) ODP will return err now
 
 	// test NextBatch()
 	startRowKey = []*table.Column{table.NewColumn("c1", int64(pk)), table.NewColumn("c2", table.Min)}
@@ -276,8 +276,8 @@ func TestQueryHashSinglePartition(t *testing.T) {
 
 	// test batchSize
 	batchSize := 1
-	startRowKey = []*table.Column{table.NewColumn("c1", int64(0)), table.NewColumn("c2", table.Min)}
-	endRowKey = []*table.Column{table.NewColumn("c1", int64(100)), table.NewColumn("c2", table.Max)}
+	startRowKey = []*table.Column{table.NewColumn("c1", int64(pk)), table.NewColumn("c2", table.Min)}
+	endRowKey = []*table.Column{table.NewColumn("c1", int64(pk)), table.NewColumn("c2", table.Max)}
 	keyRanges = []*table.RangePair{table.NewRangePair(startRowKey, endRowKey)}
 	resSet, err = cli.Query(
 		context.TODO(),
@@ -296,6 +296,34 @@ func TestQueryHashSinglePartition(t *testing.T) {
 	}
 	assert.Equal(t, nil, err)
 	assert.EqualValues(t, recordCount, i)
+
+	// test filter
+	lt6 := filter.CompareVal(filter.LessThan, "c2", int64(6))
+	gt4 := filter.CompareVal(filter.GreaterThan, "c2", int64(4))
+	filterList := filter.AndList(lt6, gt4)
+
+	startRowKey = []*table.Column{table.NewColumn("c1", int64(pk)), table.NewColumn("c2", table.Min)}
+	endRowKey = []*table.Column{table.NewColumn("c1", int64(pk)), table.NewColumn("c2", table.Max)}
+	keyRanges = []*table.RangePair{table.NewRangePair(startRowKey, endRowKey)}
+	resSet, err = cli.Query(
+		context.TODO(),
+		tableName,
+		keyRanges,
+		option.WithQuerySelectColumns([]string{"c1", "c2", "c3"}),
+		option.WithQueryBatchSize(batchSize),
+		option.WithQueryFilter(filterList),
+	)
+	assert.Equal(t, nil, err)
+	i = 0
+	res, err = resSet.Next()
+	for ; res != nil && err == nil; res, err = resSet.Next() {
+		assert.Equal(t, nil, err)
+		assert.EqualValues(t, "hello", res.Value("c3"))
+		assert.Equal(t, int64(5), res.Value("c2"))
+		i++
+	}
+	assert.Equal(t, nil, err)
+	assert.EqualValues(t, 1, i)
 }
 
 func TestQueryHashBatchSize(t *testing.T) {
