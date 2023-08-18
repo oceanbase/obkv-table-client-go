@@ -181,6 +181,17 @@ func (c *Connection) Login(ctx context.Context) error {
 	c.credential = loginResponse.Credential()
 	c.tenantId = loginResponse.TenantId()
 
+	// Set version if missing
+	if util.ObVersion() == 0.0 && loginResponse.ServerVersion() != "" {
+		// version should be set before login when direct mode
+		version, err := util.ParseObVerionFromLogin(loginResponse.ServerVersion())
+		if err != nil {
+			return errors.WithMessagef(err, "parse ob version from login response, uniqueId: %d remote addr: %s",
+				c.uniqueId, c.conn.RemoteAddr().String())
+		}
+		util.SetObVersion(version)
+	}
+
 	c.active.Store(true)
 	return nil
 }

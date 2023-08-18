@@ -161,6 +161,11 @@ func GetObVersionFromRemoteByIpPort(ip string, port int, userName string, passwo
 	return GetObVersionFromRemote(db)
 }
 
+// GetObVersionFromOdp get OceanBase cluster version by odp
+func GetObVersionFromOdp(ip string, port int, userName string, password string) (float32, error) {
+	return 0, nil
+}
+
 // GetObVersionFromRemote get OceanBase cluster version by sql
 func GetObVersionFromRemote(db *DB) (float32, error) {
 	// 1. Prepare get observer version sql statement.
