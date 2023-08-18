@@ -51,7 +51,7 @@ func NewDefaultClientConfig() *ClientConfig {
 	return &ClientConfig{
 		ConnPoolMaxConnSize:              1,
 		ConnConnectTimeOut:               time.Duration(1000) * time.Millisecond,  // 1s
-		ConnLoginTimeout:                 time.Duration(3000) * time.Millisecond,  // 1s
+		ConnLoginTimeout:                 time.Duration(1000) * time.Millisecond,  // 1s
 		OperationTimeOut:                 time.Duration(10000) * time.Millisecond, // 10s
 		LogLevel:                         log.WarnLevel,
 		TableEntryRefreshLockTimeout:     time.Duration(4000) * time.Millisecond, // 4s
