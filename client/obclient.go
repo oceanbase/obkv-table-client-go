@@ -56,7 +56,6 @@ type obClient struct {
 	odpTable   *ObTable
 	odpIP      string
 	odpRpcPort int
-	odpSqlPort int // refactor after impl DDL
 
 	tableMutexes   sync.Map // map[tableName]sync.RWMutex
 	tableLocations sync.Map // map[tableName]*route.ObTableEntry
@@ -99,7 +98,6 @@ func newOdpClient(
 	passWord string,
 	odpIP string,
 	odpRpcPort int,
-	odpSqlPort int,
 	database string,
 	cliConfig *config.ClientConfig) (*obClient, error) {
 	cli := new(obClient)
@@ -112,7 +110,6 @@ func newOdpClient(
 	cli.password = passWord
 	cli.odpIP = odpIP
 	cli.odpRpcPort = odpRpcPort
-	cli.odpSqlPort = odpSqlPort
 	cli.database = database
 	cli.config = cliConfig
 
@@ -217,23 +214,16 @@ func (c *obClient) init() error {
 }
 
 func (c *obClient) initOdp() error {
-	// 1. Get ob cluster version
-	ver, err := route.GetObVersionFromRemoteByIpPort(c.odpIP, c.odpSqlPort, c.userName, c.password)
-	if err != nil {
-		return err
-	}
-	// 2. Set ob version and init route sql by ob version.
-	if util.ObVersion() == 0.0 {
-		util.SetObVersion(ver)
-		route.InitSql(ver)
-	}
-	// 3. Create odp table
+	// 1. Init odp table
 	t := NewObTable(c.odpIP, c.odpRpcPort, c.tenantName, c.fullUserName, c.password, c.database)
-	err = t.init(c.config.ConnPoolMaxConnSize, c.config.ConnConnectTimeOut, c.config.ConnLoginTimeout)
+	err := t.init(c.config.ConnPoolMaxConnSize, c.config.ConnConnectTimeOut, c.config.ConnLoginTimeout)
+	// 2. Init sql
+	// ObVersion will be set when login in init()
+	route.InitSql(util.ObVersion())
 	if err != nil {
 		return errors.WithMessagef(err, "init ob table, obTable:%s", t.String())
 	}
-	// 4. Set ODP Table
+	// 3. Set ODP Table
 	c.odpTable = t
 
 	return nil

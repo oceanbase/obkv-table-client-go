@@ -44,7 +44,7 @@ func prepareZeroRecord(recordCount int) {
 
 func prepareZeroSinglePartitionRecord(pk int, recordCount int) {
 	for i := 0; i < recordCount; i++ {
-		insertStatement := fmt.Sprintf("insert into %s(c1, c2) values(%d, %d);", queryZeroTableName, pk, i)
+		insertStatement := fmt.Sprintf("insert into %s(c1, c2, c3) values(%d, %d, %s);", queryZeroTableName, pk, i, fmt.Sprintf("'hello_%d'", i))
 		test.InsertTable(insertStatement)
 	}
 }
@@ -148,7 +148,7 @@ func TestQueryZeroSinglePartition(t *testing.T) {
 	i := 0
 	res, err := resSet.Next()
 	for ; res != nil && err == nil; res, err = resSet.Next() {
-		assert.EqualValues(t, "hello", res.Value("c3"))
+		assert.EqualValues(t, "hello", res.Value("c3").(string)[:5])
 		i++
 	}
 	assert.Equal(t, nil, err)
@@ -188,7 +188,9 @@ func TestQueryZeroSinglePartition(t *testing.T) {
 	for ; batchRes != nil && err == nil; batchRes, err = resSet.NextBatch() {
 		assert.Equal(t, nil, err)
 		for i := 0; i < len(batchRes); i++ {
-			assert.EqualValues(t, batchRes[i].Values(), []interface{}{int64(pk), int64(i), "hello"})
+			assert.Equal(t, int64(pk), batchRes[i].Value("c1"))
+			assert.Equal(t, int64(i), batchRes[i].Value("c2"))
+			assert.Equal(t, "hello", batchRes[i].Value("c3").(string)[:5])
 		}
 	}
 	assert.Equal(t, nil, err)
@@ -210,7 +212,7 @@ func TestQueryZeroSinglePartition(t *testing.T) {
 	res, err = resSet.Next()
 	for ; res != nil && err == nil; res, err = resSet.Next() {
 		assert.Equal(t, nil, err)
-		assert.EqualValues(t, "hello", res.Value("c3"))
+		assert.EqualValues(t, "hello", res.Value("c3").(string)[:5])
 		i++
 	}
 	assert.Equal(t, nil, err)
@@ -237,12 +239,51 @@ func TestQueryZeroSinglePartition(t *testing.T) {
 	res, err = resSet.Next()
 	for ; res != nil && err == nil; res, err = resSet.Next() {
 		assert.Equal(t, nil, err)
-		assert.EqualValues(t, "hello", res.Value("c3"))
+		assert.EqualValues(t, "hello", res.Value("c3").(string)[:5])
 		assert.Equal(t, int64(5), res.Value("c2"))
 		i++
 	}
 	assert.Equal(t, nil, err)
 	assert.EqualValues(t, 1, i)
+
+	// test local index
+	startRowKey = []*table.Column{table.NewColumn("c1", int64(pk)), table.NewColumn("c3", "hello_3")}
+	endRowKey = []*table.Column{table.NewColumn("c1", int64(pk)), table.NewColumn("c3", "hello_5")}
+	keyRanges = []*table.RangePair{table.NewRangePair(startRowKey, endRowKey)}
+	resSet, err = cli.Query(
+		context.TODO(),
+		tableName,
+		keyRanges,
+		option.WithQuerySelectColumns([]string{"c1", "c2", "c3"}),
+		option.WithQueryBatchSize(batchSize),
+		option.WithQueryIndexName("i1"),
+	)
+	assert.Equal(t, nil, err)
+	i = 0
+	res, err = resSet.Next()
+	for ; res != nil && err == nil; res, err = resSet.Next() {
+		assert.EqualValues(t, int64(pk), res.Value("c1"))
+		assert.EqualValues(t, "hello", res.Value("c3").(string)[:5])
+		i++
+	}
+	assert.Equal(t, nil, err)
+	assert.EqualValues(t, 3, i)
+
+	startRowKey = []*table.Column{table.NewColumn("c1", int64(0)), table.NewColumn("c3", "not exist")}
+	endRowKey = []*table.Column{table.NewColumn("c1", int64(0)), table.NewColumn("c3", "not exist")}
+	keyRanges = []*table.RangePair{table.NewRangePair(startRowKey, endRowKey)}
+	resSet, err = cli.Query(
+		context.TODO(),
+		tableName,
+		keyRanges,
+		option.WithQuerySelectColumns([]string{"c1", "c2", "c3"}),
+		option.WithQueryBatchSize(batchSize),
+		option.WithQueryIndexName("i1"),
+	)
+	assert.Equal(t, nil, err)
+	res, err = resSet.Next()
+	assert.Equal(t, nil, err)
+	assert.Equal(t, nil, res)
 }
 
 func TestQueryZeroBatchSize(t *testing.T) {

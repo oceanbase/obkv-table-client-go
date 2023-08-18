@@ -146,7 +146,8 @@ func (c *Connection) Connect(ctx context.Context) error {
 	// ez header length rpc header length
 	c.ezHeaderLength = protocol.EzHeaderLength
 	c.rpcHeaderLength = protocol.RpcHeaderEncodeSizeV3
-	if util.ObVersion() >= 4 {
+	if util.ObVersion() >= 4 || util.ObVersion() == 0 {
+		// send as much as we could when we don't know the version
 		c.rpcHeaderLength = protocol.RpcHeaderEncodeSizeV4
 	}
 
@@ -180,6 +181,23 @@ func (c *Connection) Login(ctx context.Context) error {
 
 	c.credential = loginResponse.Credential()
 	c.tenantId = loginResponse.TenantId()
+
+	// Set version if missing
+	if util.ObVersion() == 0.0 && loginResponse.ServerVersion() != "" {
+		// version should be set before login when direct mode
+		version, err := util.ParseObVerionFromLogin(loginResponse.ServerVersion())
+		if err != nil {
+			return errors.WithMessagef(err, "parse ob version from login response, uniqueId: %d remote addr: %s",
+				c.uniqueId, c.conn.RemoteAddr().String())
+		}
+		util.SetObVersion(version)
+		// rpc header length rpc header length should be modified if version is missing before login
+		if util.ObVersion() >= 4 {
+			c.rpcHeaderLength = protocol.RpcHeaderEncodeSizeV4
+		} else {
+			c.rpcHeaderLength = protocol.RpcHeaderEncodeSizeV3
+		}
+	}
 
 	c.active.Store(true)
 	return nil
