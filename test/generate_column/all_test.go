@@ -15,7 +15,7 @@
  * #L%
  */
 
-package autoinc
+package current_timestamp
 
 import (
 	"os"
@@ -31,19 +31,17 @@ func setup() {
 	cli = test.CreateClient()
 
 	test.CreateDB()
-	test.CreateTable(autoIncRowkeyZeroFillTableCreateStatement)
-	test.CreateTable(autoIncRowkeyNotFillTableCreateStatement)
-	test.CreateTable(autoIncNormalNotFillTableCreateStatement)
-	test.CreateTable(autoIncNormalFillTableCreateStatement)
+
+	test.CreateTable(testStoredGenColumnTableNameCreateStatement)
+	test.CreateTable(testVirtualGenColumnTableNameCreateStatement)
 }
 
 func teardown() {
 	cli.Close()
 
-	test.DropTable(autoIncRowkeyZeroFillTableTableName)
-	test.DropTable(autoIncRowkeyNotFillTableTableName)
-	test.DropTable(autoIncNormalNotFillTableTableName)
-	test.DropTable(autoIncNormalFillTableTableName)
+	test.DropTable(testVirtualGenColumnTableName)
+	test.DropTable(testStoredGenColumnTableName)
+
 	test.CloseDB()
 }
 

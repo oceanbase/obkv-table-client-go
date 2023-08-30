@@ -28,22 +28,23 @@ import (
 )
 
 const (
-	autoIncNormalNotFillTableTableName       = "autoIncNormalNotFillTable"
-	autoIncNormalNotFillTableCreateStatement = "create table if not exists autoIncNormalNotFillTable(`c1` bigint(20) not null, c2 bigint(20) auto_increment, c3 varchar(20) default 'hello', c4 bigint(20) default 0, primary key (`c1`)) partition by key(c1) partitions 100;"
+	autoIncNormalFillTableTableName       = "autoIncNormalFillTable"
+	autoIncNormalFillTableCreateStatement = "create table if not exists autoIncNormalFillTable(`c1` bigint(20) not null, c2 bigint(20) auto_increment, c3 varchar(20) default 'hello', c4 bigint(20) default 0, primary key (`c1`)) partition by key(c1) partitions 100;"
 )
 
-func TestAuto_NormalNotFill(t *testing.T) {
-	tableName := autoIncNormalNotFillTableTableName
+func TestAuto_NormalFill(t *testing.T) {
+	tableName := autoIncNormalFillTableTableName
 	defer test.DeleteTable(tableName)
 
 	// test insert.
-	// c1-1 c2-auto=1 c3-default("hello") c4-default(0)
+	// c1-1 c2-1 c3-default("hello") c4-default(0)
 	rowKey := []*table.Column{table.NewColumn("c1", int64(1))}
+	mutationColumns := []*table.Column{table.NewColumn("c2", int64(1))}
 	affectRows, err := cli.Insert(
 		context.TODO(),
 		tableName,
 		rowKey,
-		nil,
+		mutationColumns,
 	)
 	assert.Equal(t, nil, err)
 	assert.EqualValues(t, 1, affectRows)
@@ -63,7 +64,7 @@ func TestAuto_NormalNotFill(t *testing.T) {
 	// test update.
 	// c1-1 c2-1 c3-"update" c4-default(0)
 	rowKey = []*table.Column{table.NewColumn("c1", int64(1))}
-	mutationColumns := []*table.Column{table.NewColumn("c3", "update")}
+	mutationColumns = []*table.Column{table.NewColumn("c3", "update")}
 	affectRows, err = cli.Update(
 		context.TODO(),
 		tableName,
@@ -86,9 +87,12 @@ func TestAuto_NormalNotFill(t *testing.T) {
 	assert.EqualValues(t, 0, result.Value("c4"))
 
 	// test replace not exist, insert
-	// c1-2 c2-auto-2 c3-"replace" c4-default(0)
+	// c1-2 c2-2 c3-"replace" c4-default(0)
 	rowKey = []*table.Column{table.NewColumn("c1", int64(2))}
-	mutationColumns = []*table.Column{table.NewColumn("c3", "replace")}
+	mutationColumns = []*table.Column{
+		table.NewColumn("c2", int64(2)),
+		table.NewColumn("c3", "replace"),
+	}
 	affectRows, err = cli.Replace(
 		context.TODO(),
 		tableName,
@@ -111,8 +115,11 @@ func TestAuto_NormalNotFill(t *testing.T) {
 	assert.EqualValues(t, 0, result.Value("c4"))
 
 	// test replace exist, replace
-	// c1-2 c2-auto-3 c3-"replace exist" c4-default(0)
-	mutationColumns = []*table.Column{table.NewColumn("c3", "replace exist")}
+	// c1-2 c2-3 c3-"replace exist" c4-default(0)
+	mutationColumns = []*table.Column{
+		table.NewColumn("c2", int64(3)),
+		table.NewColumn("c3", "replace exist"),
+	}
 	affectRows, err = cli.Replace(
 		context.TODO(),
 		tableName,
@@ -135,9 +142,12 @@ func TestAuto_NormalNotFill(t *testing.T) {
 	assert.EqualValues(t, 0, result.Value("c4"))
 
 	// test insertup not exist, insert
-	// c1-3 c2-auto-4 c3-"insertup-insert" c4-default(0)
+	// c1-3 c2-4 c3-"insertup-insert" c4-default(0)
 	rowKey = []*table.Column{table.NewColumn("c1", int64(3))}
-	mutationColumns = []*table.Column{table.NewColumn("c3", "insertup-insert")}
+	mutationColumns = []*table.Column{
+		table.NewColumn("c2", int64(4)),
+		table.NewColumn("c3", "insertup-insert"),
+	}
 	affectRows, err = cli.InsertOrUpdate(
 		context.TODO(),
 		tableName,
@@ -161,8 +171,11 @@ func TestAuto_NormalNotFill(t *testing.T) {
 	assert.EqualValues(t, 0, result.Value("c4"))
 
 	// test insertup exist, update
-	// c1-3 c2-auto-4 c3-"insertup-update" c4-default(0)
-	mutationColumns = []*table.Column{table.NewColumn("c3", "insertup-update")}
+	// c1-3 c2-4 c3-"insertup-update" c4-default(0)
+	mutationColumns = []*table.Column{
+		table.NewColumn("c2", int64(4)),
+		table.NewColumn("c3", "insertup-update"),
+	}
 	affectRows, err = cli.InsertOrUpdate(
 		context.TODO(),
 		tableName,
@@ -184,12 +197,12 @@ func TestAuto_NormalNotFill(t *testing.T) {
 	assert.EqualValues(t, "insertup-update", result.Value("c3"))
 	assert.EqualValues(t, 0, result.Value("c4"))
 
-	// insert up cause c2 to be 5, global auto value is 5 now
-
 	// test increment not exist, insert
-	// c1-4 c2-auto-6 c3-default("hello") c4-1
+	// c1-4 c2-5 c3-default("hello") c4-1
 	rowKey = []*table.Column{table.NewColumn("c1", int64(4))}
-	mutationColumns = []*table.Column{table.NewColumn("c4", int64(1))}
+	mutationColumns = []*table.Column{
+		table.NewColumn("c4", int64(1)),
+	}
 	resultSet, err := cli.Increment(
 		context.TODO(),
 		tableName,
@@ -207,13 +220,15 @@ func TestAuto_NormalNotFill(t *testing.T) {
 	)
 	assert.Equal(t, nil, err)
 	assert.EqualValues(t, 4, result.Value("c1"))
-	assert.EqualValues(t, 6, result.Value("c2"))
+	assert.EqualValues(t, 5, result.Value("c2"))
 	assert.EqualValues(t, "hello", result.Value("c3"))
 	assert.EqualValues(t, 1, result.Value("c4"))
 
 	// test increment exist, increment
-	// c1-4 c2-auto-6 c3-default("hello") c4-1+1
-	mutationColumns = []*table.Column{table.NewColumn("c4", int64(1))}
+	// c1-4 c2-5 c3-default("hello") c4-1+1
+	mutationColumns = []*table.Column{
+		table.NewColumn("c4", int64(1)),
+	}
 	resultSet, err = cli.Increment(
 		context.TODO(),
 		tableName,
@@ -231,16 +246,16 @@ func TestAuto_NormalNotFill(t *testing.T) {
 	)
 	assert.Equal(t, nil, err)
 	assert.EqualValues(t, 4, result.Value("c1"))
-	assert.EqualValues(t, 6, result.Value("c2"))
+	assert.EqualValues(t, 5, result.Value("c2"))
 	assert.EqualValues(t, "hello", result.Value("c3"))
 	assert.EqualValues(t, 2, result.Value("c4"))
 
-	// insert up(increment) cause c2 to be 5, global auto value is 7 now
-
 	// test append not exist, insert
-	// c1-5 c2-auto-8 c3-"append" c4-default(0)
+	// c1-5 c2-7 c3-"append" c4-default(0)
 	rowKey = []*table.Column{table.NewColumn("c1", int64(5))}
-	mutationColumns = []*table.Column{table.NewColumn("c3", "append")}
+	mutationColumns = []*table.Column{
+		table.NewColumn("c3", "append"),
+	}
 	resultSet, err = cli.Append(
 		context.TODO(),
 		tableName,
@@ -258,14 +273,16 @@ func TestAuto_NormalNotFill(t *testing.T) {
 	)
 	assert.Equal(t, nil, err)
 	assert.EqualValues(t, 5, result.Value("c1"))
-	assert.EqualValues(t, 8, result.Value("c2"))
+	assert.EqualValues(t, 7, result.Value("c2"))
 	assert.EqualValues(t, "append", result.Value("c3"))
 	assert.EqualValues(t, 0, result.Value("c4"))
 
 	// test append exist, append
-	// c1-5 c2-auto-8 c3-"append-exist" c4-default(0)
+	// c1-5 c2-7 c3-"append-exist" c4-default(0)
 	rowKey = []*table.Column{table.NewColumn("c1", int64(5))}
-	mutationColumns = []*table.Column{table.NewColumn("c3", "-exist")}
+	mutationColumns = []*table.Column{
+		table.NewColumn("c3", "-exist"),
+	}
 	resultSet, err = cli.Append(
 		context.TODO(),
 		tableName,
@@ -283,7 +300,7 @@ func TestAuto_NormalNotFill(t *testing.T) {
 	)
 	assert.Equal(t, nil, err)
 	assert.EqualValues(t, 5, result.Value("c1"))
-	assert.EqualValues(t, 8, result.Value("c2"))
+	assert.EqualValues(t, 7, result.Value("c2"))
 	assert.EqualValues(t, "append-exist", result.Value("c3"))
 	assert.EqualValues(t, 0, result.Value("c4"))
 }

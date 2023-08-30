@@ -25,9 +25,8 @@ import (
 
 	"github.com/oceanbase/obkv-table-client-go/client/filter"
 	"github.com/oceanbase/obkv-table-client-go/client/option"
-	"github.com/oceanbase/obkv-table-client-go/test"
-
 	"github.com/oceanbase/obkv-table-client-go/table"
+	"github.com/oceanbase/obkv-table-client-go/test"
 )
 
 const (

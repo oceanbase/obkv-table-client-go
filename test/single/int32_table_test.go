@@ -19,8 +19,9 @@ package single
 
 import (
 	"context"
-	"github.com/oceanbase/obkv-table-client-go/client/option"
 	"testing"
+
+	"github.com/oceanbase/obkv-table-client-go/client/option"
 
 	"github.com/stretchr/testify/assert"
 

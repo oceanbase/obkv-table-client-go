@@ -20,9 +20,11 @@ package aggregate
 import (
 	"context"
 	"fmt"
-	"github.com/oceanbase/obkv-table-client-go/table"
-	"github.com/stretchr/testify/assert"
 	"testing"
+
+	"github.com/stretchr/testify/assert"
+
+	"github.com/oceanbase/obkv-table-client-go/table"
 
 	"github.com/oceanbase/obkv-table-client-go/test"
 )
