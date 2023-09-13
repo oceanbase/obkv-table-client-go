@@ -19,7 +19,10 @@ package client
 
 import (
 	"context"
+	"fmt"
+
 	"github.com/oceanbase/obkv-table-client-go/client/option"
+	"github.com/oceanbase/obkv-table-client-go/route"
 
 	"github.com/pkg/errors"
 
@@ -197,8 +200,26 @@ func (q *obQueryExecutor) init(ctx context.Context) (*ObQueryResultIterator, err
 		return nil, errors.WithMessage(err, "check query params")
 	}
 
+	// construct index table name if do index scan
+	tableName := q.tableName
+	if "" != q.tableQuery.IndexName() {
+		indexTableName, err := q.constructIndexTableName(ctx)
+		if err != nil {
+			return nil, errors.WithMessage(err, "construct index table name")
+		}
+
+		info, err := q.cli.getOrRefreshIndexInfo(ctx, q.tableQuery.IndexName(), indexTableName)
+		if err != nil {
+			return nil, errors.WithMessage(err, "get index info fail")
+		}
+
+		if info.IndexType().IsGlobalIndex() {
+			tableName = indexTableName
+		}
+	}
+
 	// get table params
-	targetParts, err := q.getTableParams(ctx, q.tableName, q.keyRanges, false)
+	targetParts, err := q.getTableParams(ctx, tableName, q.keyRanges, false)
 	if err != nil {
 		return nil, errors.WithMessage(err, "get table params")
 	}
@@ -211,4 +232,23 @@ func (q *obQueryExecutor) init(ctx context.Context) (*ObQueryResultIterator, err
 	q.tableQuery.SetKeyRanges(keyRanges)
 
 	return newObQueryResultIteratorWithParams(ctx, q.cli, q.tableQuery, targetParts, q.entityType, q.tableName), nil
+}
+
+// constructIndexTableName construct index table name, get main table id from cache or remote.
+func (q *obQueryExecutor) constructIndexTableName(ctx context.Context) (string, error) {
+	var tableId uint64
+	var err error
+	entry := q.cli.getTableEntryFromCache(q.tableName)
+	if entry == nil { // do dml in sql, do query in obkv, entry is null
+		addr := q.cli.serverRoster.GetServer()
+		tableId, err = route.GetTableIdFromRemote(ctx, addr, q.cli.sysUA, q.tableName)
+		if err != nil {
+			return "", errors.WithMessagef(err, "get table id from remote, tableName:%s", q.tableName)
+		}
+	} else {
+		tableId = entry.TableId()
+	}
+
+	// [__idx_][data_table_id][_index_name]
+	return fmt.Sprintf("__idx_%d_%s", tableId, q.tableQuery.IndexName()), nil
 }

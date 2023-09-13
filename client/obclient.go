@@ -62,6 +62,9 @@ type obClient struct {
 	tableRoster    sync.Map // map[route.ObServerAddr{}]*ObTable
 	serverRoster   obServerRoster
 
+	indexMutexes sync.Map // map[indexName]sync.RWMutex
+	indexRoster  sync.Map // map[indexName]
+
 	lastRefreshMetadataTimestamp atomic.Int64
 	refreshMetadataLock          sync.Mutex
 }
@@ -1043,4 +1046,77 @@ func (c *obClient) getTable(entry *route.ObTableEntry, partId uint64) (*ObTable,
 	// todo: check server addr is expired or not
 	tb, _ := t.(*ObTable)
 	return tb, nil
+}
+
+// getOrRefreshIndexInfo get index info from cache or from remote
+func (c *obClient) getOrRefreshIndexInfo(
+	ctx context.Context,
+	indexName string,
+	indexTableName string) (*route.ObIndexInfo, error) {
+	var err error
+	// 1. Get entry from cache
+	info := c.getIndexInfoFromCache(indexName)
+	if info != nil {
+		return info, nil
+	}
+
+	// 2. Cache not exist, get from remote
+	// 2.1 Lock table firstly
+	var lock *sync.RWMutex
+	tmpLock := new(sync.RWMutex)
+	v, loaded := c.indexMutexes.LoadOrStore(indexName, tmpLock)
+	if loaded {
+		lock = v.(*sync.RWMutex)
+	} else {
+		lock = tmpLock
+	}
+
+	var timeout int64 = 0
+	for ; timeout < c.config.TableEntryRefreshLockTimeout.Milliseconds() && !lock.TryLock(); timeout++ {
+		time.Sleep(time.Millisecond)
+	}
+	if timeout == c.config.TableEntryRefreshLockTimeout.Milliseconds() {
+		return nil, errors.Errorf("failed to try lock table to refresh, timeout:%d", timeout)
+	}
+	defer func() {
+		lock.Unlock()
+	}()
+
+	// 2.2 Double check whether we need to do fetch or not, other goroutine may have refreshed
+	info = c.getIndexInfoFromCache(indexName)
+	if info != nil {
+		return info, nil
+	}
+
+	// 2.3 get from remote, try specific times
+	if info == nil {
+		refreshTryTimes := int(math.Min(float64(c.serverRoster.Size()), float64(c.config.TableEntryRefreshTryTimes)))
+		addr := c.serverRoster.GetServer()
+		for i := 0; i < refreshTryTimes; i++ {
+			info, err = route.GetIndexInfoFromRemote(ctx, addr, c.sysUA, indexTableName)
+			if err != nil {
+				log.Warn("failed to fetch table index info",
+					log.Int("times", i),
+					log.String("indexTableName", indexTableName))
+			} else {
+				c.indexRoster.Store(indexName, info)
+				return info, nil
+			}
+		}
+		log.Info("fetch table info has tried specific times failure",
+			log.Int("refreshTryTimes", refreshTryTimes),
+			log.String("indexTableName", indexTableName))
+		return nil, errors.Errorf("fail to fetch index info from remote, indexTableName:%s", indexTableName)
+	}
+
+	return nil, errors.Errorf("fail to get index info, indexTableName:%s", indexTableName)
+}
+
+func (c *obClient) getIndexInfoFromCache(indexName string) *route.ObIndexInfo {
+	v, ok := c.indexRoster.Load(indexName)
+	if ok {
+		info, _ := v.(*route.ObIndexInfo)
+		return info
+	}
+	return nil
 }
