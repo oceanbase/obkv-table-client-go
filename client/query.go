@@ -195,8 +195,26 @@ func (q *obQueryExecutor) init(ctx context.Context) (*ObQueryResultIterator, err
 		return nil, errors.WithMessage(err, "check query params")
 	}
 
+	// construct index table name if do index scan
+	tableName := q.tableName
+	if "" != q.tableQuery.IndexName() {
+		indexTableName, err := q.cli.routeInfo.ConstructIndexTableName(ctx, tableName, q.tableQuery.IndexName())
+		if err != nil {
+			return nil, errors.WithMessage(err, "construct index table name")
+		}
+
+		info, err := q.cli.routeInfo.GetOrRefreshIndexInfo(ctx, q.tableQuery.IndexName(), indexTableName)
+		if err != nil {
+			return nil, errors.WithMessage(err, "get index info fail")
+		}
+
+		if info.IndexType().IsGlobalIndex() {
+			tableName = indexTableName
+		}
+	}
+
 	// get table params
-	targetParts, err := q.getTableParams(ctx, q.tableName, q.keyRanges)
+	targetParts, err := q.getTableParams(ctx, tableName, q.keyRanges)
 	if err != nil {
 		return nil, errors.WithMessage(err, "get table params")
 	}

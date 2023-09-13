@@ -46,6 +46,9 @@ type ObRouteInfo struct {
 	tableRoster      ObTableRoster
 	serverRoster     ObServerRoster // all servers which contain current tenant
 	taskInfo         *ObRouteTaskInfo
+
+	indexMutexes sync.Map // map[indexName]sync.RWMutex
+	indexRoster  sync.Map // map[indexName]
 }
 
 // GetTable get table by partition id
@@ -361,6 +364,74 @@ func (i *ObRouteInfo) GetTableEntry(ctx context.Context, tableName string) (*ObT
 	i.tableLocations.Store(tableName, entry)
 
 	return entry, nil
+}
+
+// ConstructIndexTableName construct index table name, get main table id from cache or remote.
+func (i *ObRouteInfo) ConstructIndexTableName(
+	ctx context.Context,
+	tableName string,
+	indexName string) (string, error) {
+
+	var tableId uint64
+	var err error
+	entry := i.getTableEntryFromCache(tableName)
+	if entry == nil { // do dml in sql, do query in obkv, entry is null
+		addr := i.serverRoster.GetServer()
+		tableId, err = GetTableIdFromRemote(ctx, addr, i.sysUA, tableName)
+		if err != nil {
+			return "", errors.WithMessagef(err, "get table id from remote, tableName:%s", tableName)
+		}
+	} else {
+		tableId = entry.TableId()
+	}
+
+	// [__idx_][data_table_id][_index_name]
+	return fmt.Sprintf("__idx_%d_%s", tableId, indexName), nil
+}
+
+func (i *ObRouteInfo) getIndexInfoFromCache(indexName string) *ObIndexInfo {
+	v, ok := i.indexRoster.Load(indexName)
+	if ok {
+		info, _ := v.(*ObIndexInfo)
+		return info
+	}
+	return nil
+}
+
+// GetOrRefreshIndexInfo get index info from cache or from remote
+func (i *ObRouteInfo) GetOrRefreshIndexInfo(
+	ctx context.Context,
+	indexName string,
+	indexTableName string) (*ObIndexInfo, error) {
+
+	var err error
+	// 1. Get entry from cache
+	info := i.getIndexInfoFromCache(indexName)
+	if info != nil {
+		return info, nil
+	}
+
+	// 2. Cache not exist, get from remote
+	// 2.1 Lock table firstly
+	i.tableMutexes.Lock(indexName)
+	defer i.tableMutexes.Unlock(indexName)
+
+	// 2.2 Double check whether we need to do fetch or not, other goroutine may have refreshed
+	info = i.getIndexInfoFromCache(indexName)
+	if info != nil {
+		return info, nil
+	}
+
+	// 2.3 get from remote
+	info, err = GetIndexInfoFromRemote(ctx, i.serverRoster.GetServer(), i.sysUA, indexTableName)
+	if err != nil {
+		return nil, errors.WithMessagef(err, "get index info from remote, key:%s", indexTableName)
+	}
+
+	// 3. Store cache
+	i.tableLocations.Store(indexName, info)
+
+	return info, nil
 }
 
 func (i *ObRouteInfo) refreshTableLocations(addr *tcpAddr) error {
