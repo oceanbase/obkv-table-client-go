@@ -208,7 +208,7 @@ func (q *obQueryExecutor) init(ctx context.Context) (*ObQueryResultIterator, err
 			return nil, errors.WithMessage(err, "construct index table name")
 		}
 
-		info, err := q.cli.getOrRefreshIndexInfo(ctx, q.tableQuery.IndexName(), indexTableName)
+		info, err := q.cli.getOrRefreshIndexInfo(ctx, indexTableName)
 		if err != nil {
 			return nil, errors.WithMessage(err, "get index info fail")
 		}

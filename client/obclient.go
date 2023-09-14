@@ -62,8 +62,8 @@ type obClient struct {
 	tableRoster    sync.Map // map[route.ObServerAddr{}]*ObTable
 	serverRoster   obServerRoster
 
-	indexMutexes sync.Map // map[indexName]sync.RWMutex
-	indexRoster  sync.Map // map[indexName]
+	indexMutexes sync.Map // map[indexTableName]sync.RWMutex
+	indexRoster  sync.Map // map[indexTableName]
 
 	lastRefreshMetadataTimestamp atomic.Int64
 	refreshMetadataLock          sync.Mutex
@@ -1049,13 +1049,10 @@ func (c *obClient) getTable(entry *route.ObTableEntry, partId uint64) (*ObTable,
 }
 
 // getOrRefreshIndexInfo get index info from cache or from remote
-func (c *obClient) getOrRefreshIndexInfo(
-	ctx context.Context,
-	indexName string,
-	indexTableName string) (*route.ObIndexInfo, error) {
+func (c *obClient) getOrRefreshIndexInfo(ctx context.Context, indexTableName string) (*route.ObIndexInfo, error) {
 	var err error
 	// 1. Get entry from cache
-	info := c.getIndexInfoFromCache(indexName)
+	info := c.getIndexInfoFromCache(indexTableName)
 	if info != nil {
 		return info, nil
 	}
@@ -1064,7 +1061,7 @@ func (c *obClient) getOrRefreshIndexInfo(
 	// 2.1 Lock table firstly
 	var lock *sync.RWMutex
 	tmpLock := new(sync.RWMutex)
-	v, loaded := c.indexMutexes.LoadOrStore(indexName, tmpLock)
+	v, loaded := c.indexMutexes.LoadOrStore(indexTableName, tmpLock)
 	if loaded {
 		lock = v.(*sync.RWMutex)
 	} else {
@@ -1083,7 +1080,7 @@ func (c *obClient) getOrRefreshIndexInfo(
 	}()
 
 	// 2.2 Double check whether we need to do fetch or not, other goroutine may have refreshed
-	info = c.getIndexInfoFromCache(indexName)
+	info = c.getIndexInfoFromCache(indexTableName)
 	if info != nil {
 		return info, nil
 	}
@@ -1099,7 +1096,7 @@ func (c *obClient) getOrRefreshIndexInfo(
 					log.Int("times", i),
 					log.String("indexTableName", indexTableName))
 			} else {
-				c.indexRoster.Store(indexName, info)
+				c.indexRoster.Store(indexTableName, info)
 				return info, nil
 			}
 		}
@@ -1112,8 +1109,8 @@ func (c *obClient) getOrRefreshIndexInfo(
 	return nil, errors.Errorf("fail to get index info, indexTableName:%s", indexTableName)
 }
 
-func (c *obClient) getIndexInfoFromCache(indexName string) *route.ObIndexInfo {
-	v, ok := c.indexRoster.Load(indexName)
+func (c *obClient) getIndexInfoFromCache(indexTableName string) *route.ObIndexInfo {
+	v, ok := c.indexRoster.Load(indexTableName)
 	if ok {
 		info, _ := v.(*route.ObIndexInfo)
 		return info
