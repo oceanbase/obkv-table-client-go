@@ -38,8 +38,10 @@ func TestInsertDatetime(t *testing.T) {
 	tableName := testDatetimeTableName
 	defer test.DeleteTable(tableName)
 
-	rowKey := []*table.Column{table.NewColumn("c1", table.DateTime(time.Now().Local()))}
-	mutateColumns := []*table.Column{table.NewColumn("c2", table.DateTime(time.Now().Local()))}
+	rkDateTime := table.DateTime(time.Now().Local())
+	mutDateTime := table.DateTime(time.Now().Local())
+	rowKey := []*table.Column{table.NewColumn("c1", rkDateTime)}
+	mutateColumns := []*table.Column{table.NewColumn("c2", mutDateTime)}
 	affectRows, err := cli.Insert(
 		context.TODO(),
 		tableName,
@@ -57,6 +59,8 @@ func TestInsertDatetime(t *testing.T) {
 		selectColumns,
 	)
 	assert.Equal(t, nil, err)
+	assert.Equal(t, rkDateTime, table.DateTime(result.Value("c1").(time.Time)))
+	assert.Equal(t, mutDateTime, table.DateTime(result.Value("c2").(time.Time)))
 	fmt.Println(result.Value("c1").(time.Time).String())
 	fmt.Println(result.Value("c2").(time.Time).String())
 }

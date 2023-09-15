@@ -881,12 +881,16 @@ func (t ObUNumberType) String() string {
 type ObDateTimeType ObObjTypeValue
 
 func (t ObDateTimeType) Encode(buffer *bytes.Buffer, value interface{}) {
+	// use the origin point which is in timezone of value
 	v := time.Time(value.(table.DateTime))
-	util.EncodeVi64(buffer, v.UnixMicro()) // store UTC
+	origin := time.Date(1970, time.January, 1, 0, 0, 0, 0, v.Location())
+	util.EncodeVi64(buffer, v.UnixMicro()-origin.UnixMicro())
 }
 
 func (t ObDateTimeType) Decode(buffer *bytes.Buffer, obCollationType ObCollationType) interface{} {
-	return time.UnixMicro(util.DecodeVi64(buffer)).In(time.UTC) // show UTC
+	// we always consider the timezone of value is local
+	// since the UnixMicro return the UTC time, we must add back the time diff
+	return time.UnixMicro(util.DecodeVi64(buffer) + util.LocalTimeOrigin.UnixMicro()).In(time.Local) // use local time
 }
 
 func (t ObDateTimeType) EncodedLength(value interface{}) int {

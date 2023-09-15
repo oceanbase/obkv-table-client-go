@@ -15,14 +15,10 @@
  * #L%
  */
 
-package table
+package util
 
 import (
 	"time"
 )
 
-// DateTime from db will be recognize as local timezone, datetime send to server will ignore the timezone.
-type DateTime time.Time
-
-// TimeStamp store in UTC timezone, show in Local timezone.
-type TimeStamp time.Time
+var LocalTimeOrigin time.Time = time.Date(1970, 1, 1, 0, 0, 0, 0, time.Local)
