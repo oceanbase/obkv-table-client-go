@@ -38,6 +38,9 @@ type RpcClientOption struct {
 	databaseName string
 	userName     string
 	password     string
+
+	maxConnectionAge     time.Duration
+	enableSLBLoadBalance bool
 }
 
 func (o *RpcClientOption) ConnPoolMaxConnSize() int {
@@ -53,17 +56,19 @@ func (o *RpcClientOption) LoginTimeout() time.Duration {
 }
 
 func NewRpcClientOption(ip string, port int, connPoolMaxConnSize int, connectTimeout time.Duration, loginTimeout time.Duration,
-	tenantName string, databaseName string, userName string, password string) *RpcClientOption {
+	tenantName string, databaseName string, userName string, password string, maxConnectionAge time.Duration, enableSLBLoadBalance bool) *RpcClientOption {
 	return &RpcClientOption{
-		ip:                  ip,
-		port:                port,
-		connPoolMaxConnSize: connPoolMaxConnSize,
-		connectTimeout:      connectTimeout,
-		loginTimeout:        loginTimeout,
-		tenantName:          tenantName,
-		databaseName:        databaseName,
-		userName:            userName,
-		password:            password,
+		ip:                   ip,
+		port:                 port,
+		connPoolMaxConnSize:  connPoolMaxConnSize,
+		connectTimeout:       connectTimeout,
+		loginTimeout:         loginTimeout,
+		tenantName:           tenantName,
+		databaseName:         databaseName,
+		userName:             userName,
+		password:             password,
+		maxConnectionAge:     maxConnectionAge,
+		enableSLBLoadBalance: enableSLBLoadBalance,
 	}
 }
 
@@ -77,7 +82,9 @@ func (o *RpcClientOption) String() string {
 		"tenantName:" + o.tenantName + ", " +
 		"databaseName:" + o.databaseName + ", " +
 		"userName:" + o.userName + ", " +
-		"password:" + o.password +
+		"password:" + o.password + ", " +
+		"maxConnectionAge:" + o.maxConnectionAge.String() + ", " +
+		"enableSLBLoadBalance:" + strconv.FormatBool(o.enableSLBLoadBalance) +
 		"}"
 }
 
@@ -95,7 +102,7 @@ func NewRpcClient(rpcClientOption *RpcClientOption) (*RpcClient, error) {
 	client := &RpcClient{option: rpcClientOption}
 
 	poolOption := NewPoolOption(client.option.ip, client.option.port, client.option.connPoolMaxConnSize, client.option.connectTimeout, client.option.loginTimeout,
-		client.option.tenantName, client.option.databaseName, client.option.userName, client.option.password)
+		client.option.tenantName, client.option.databaseName, client.option.userName, client.option.password, client.option.maxConnectionAge, client.option.enableSLBLoadBalance)
 	connectionPool, err := NewConnectionPool(poolOption)
 	if err != nil {
 		return nil, errors.WithMessage(err, "create connection pool")

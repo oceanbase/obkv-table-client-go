@@ -20,9 +20,7 @@ package test
 import (
 	"database/sql"
 	"fmt"
-
 	_ "github.com/go-sql-driver/mysql"
-
 	"github.com/oceanbase/obkv-table-client-go/client"
 	"github.com/oceanbase/obkv-table-client-go/config"
 )
@@ -76,6 +74,20 @@ func CreateMoveClient() client.Client {
 	if err != nil {
 		panic(err.Error())
 	}
+	return cli
+}
+
+func CreateConnectionBalanceClient(maxConnectionAge time.Duration, enableSLBLoadBalance bool, connectionPoolSize int) client.Client {
+	cfg := config.NewDefaultClientConfig()
+	cfg.MaxConnectionAge = maxConnectionAge
+	cfg.ConnPoolMaxConnSize = connectionPoolSize
+	cfg.EnableSLBLoadBalance = enableSLBLoadBalance
+
+	cli, err := client.NewOdpClient(odpFullUserName, odpPassWord, odpIP, odpRpcPort, database, cfg)
+	if err != nil {
+		panic(err.Error())
+	}
+	println("connection Balance Client Created")
 	return cli
 }
 

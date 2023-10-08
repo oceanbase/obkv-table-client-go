@@ -61,10 +61,10 @@ type ConnectionOption struct {
 	connectTimeout time.Duration
 	loginTimeout   time.Duration
 
-	tenantName   string
-	databaseName string
-	userName     string
-	password     string
+	tenantName       string
+	databaseName     string
+	userName         string
+	password         string
 }
 
 func NewConnectionOption(ip string, port int, connectTimeout time.Duration, loginTimeout time.Duration,
@@ -105,6 +105,9 @@ type Connection struct {
 
 	ezHeaderLength  int
 	rpcHeaderLength int
+	expireTime      time.Time
+	isExpired       atomic.Bool
+	slbLoader       *SLBLoader
 }
 
 type packet struct {
@@ -211,6 +214,7 @@ func (c *Connection) Execute(
 	seq := c.seq.Add(1)
 
 	totalBuf := c.encodePacket(seq, request)
+	trace := fmt.Sprintf("Y%X-%016X", request.UniqueId(), request.Sequence())
 
 	call := &call{
 		err:     nil,
@@ -234,21 +238,21 @@ func (c *Connection) Execute(
 		c.mutex.Lock()
 		delete(c.pending, seq)
 		c.mutex.Unlock()
-		return errors.WithMessage(ctx.Err(), "wait send packet to channel")
+		return errors.WithMessage(ctx.Err(), "wait send packet to channel, trace: "+trace)
 	}
 
 	// wait call back
 	select {
 	case call = <-call.signal:
 		if call.err != nil { // transport failed
-			return errors.WithMessage(call.err, "receive packet")
+			return errors.WithMessage(call.err, "receive packet, trace: "+trace)
 		}
 	case <-ctx.Done():
 		// timeout
 		c.mutex.Lock()
 		delete(c.pending, seq)
 		c.mutex.Unlock()
-		return errors.WithMessage(ctx.Err(), "wait transport packet")
+		return errors.WithMessage(ctx.Err(), "wait transport packet, trace: "+trace)
 	}
 
 	// transport success
