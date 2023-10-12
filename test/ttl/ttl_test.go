@@ -32,7 +32,7 @@ import (
 
 const (
 	testTTLTableName       = "test_ttl"
-	testTTLCreateStatement = "create table if not exists test_ttl(c1 int(12) primary key, c2 int(12), c3 timestamp(6)) TTL(c3 + INTERVAL 2 second);"
+	testTTLCreateStatement = "create table if not exists test_ttl(c1 int(12) primary key, c2 int(12), c3 timestamp default current_timestamp on update current_timestamp) TTL(c3 + INTERVAL 2 second);"
 )
 
 const (
@@ -266,7 +266,7 @@ func TestTTL_replace(t *testing.T) {
 
 	time.Sleep(2 * time.Second)
 
-	// 3. replace, expired, replace successfully, affectRows = 1
+	// 3. replace, expired, replace successfully, affectRows = 2
 	ctx, _ = context.WithTimeout(context.Background(), 1000*time.Second) // 10s
 	rowKey = []*table.Column{table.NewColumn("c1", int32(0))}
 	mutateColumns = []*table.Column{table.NewColumn("c2", int32(2)), table.NewColumn("c3", table.TimeStamp(time.Now().Local()))}
@@ -303,7 +303,7 @@ func TestTTL_insertUp(t *testing.T) {
 
 	// 1. insertUp(insert)
 	rowKey := []*table.Column{table.NewColumn("c1", int32(0))}
-	mutateColumns := []*table.Column{table.NewColumn("c2", int32(0)), table.NewColumn("c3", table.TimeStamp(time.Now().Local()))}
+	mutateColumns := []*table.Column{table.NewColumn("c2", int32(0))}
 	affectRows, err := cli.InsertOrUpdate(
 		context.TODO(),
 		tableName,
@@ -316,7 +316,7 @@ func TestTTL_insertUp(t *testing.T) {
 	// 2. insertUp(insert), not expired, update
 	ctx, _ := context.WithTimeout(context.Background(), 1000*time.Second) // 10s
 	rowKey = []*table.Column{table.NewColumn("c1", int32(0))}
-	mutateColumns = []*table.Column{table.NewColumn("c2", int32(1)), table.NewColumn("c3", table.TimeStamp(time.Now().Local()))}
+	mutateColumns = []*table.Column{table.NewColumn("c2", int32(1))}
 	affectRows, err = cli.InsertOrUpdate(
 		ctx,
 		tableName,
@@ -331,7 +331,7 @@ func TestTTL_insertUp(t *testing.T) {
 	// 3. insertUp(insert), expired, delete expired, insert new, success
 	ctx, _ = context.WithTimeout(context.Background(), 1000*time.Second) // 10s
 	rowKey = []*table.Column{table.NewColumn("c1", int32(0))}
-	mutateColumns = []*table.Column{table.NewColumn("c2", int32(2)), table.NewColumn("c3", table.TimeStamp(time.Now().Local()))}
+	mutateColumns = []*table.Column{table.NewColumn("c2", int32(2))}
 	affectRows, err = cli.InsertOrUpdate(
 		ctx,
 		tableName,
