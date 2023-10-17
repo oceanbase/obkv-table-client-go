@@ -23,6 +23,7 @@ import (
 	_ "github.com/go-sql-driver/mysql"
 	"github.com/oceanbase/obkv-table-client-go/client"
 	"github.com/oceanbase/obkv-table-client-go/config"
+	"time"
 )
 
 const (
