@@ -55,7 +55,7 @@ func TestMoveReplica_singleOp(t *testing.T) {
 	}
 	tableName := testInt32RerouteTableName
 	defer test.DeleteTable(tableName)
-
+	test.SetReroutingEnable(true)
 	// 1. insert
 	rowKey := []*table.Column{table.NewColumn("c1", int32(0))}
 	mutateColumns := []*table.Column{table.NewColumn("c2", int32(0))}
@@ -144,7 +144,7 @@ func TestMoveReplica_batch(t *testing.T) {
 	}
 	tableName := testInt32RerouteTableName
 	defer test.DeleteTable(tableName)
-
+	test.SetReroutingEnable(true)
 	// 1. insert
 	ctx1, _ := context.WithTimeout(context.Background(), 1000*time.Second) // 10s
 	rowKey := []*table.Column{table.NewColumn("c1", int32(0))}
@@ -193,6 +193,7 @@ func TestMoveReplica_batch_insertUp(t *testing.T) {
 	}
 	tableName := testInt32RerouteTableName
 	defer test.DeleteTable(tableName)
+	test.SetReroutingEnable(true)
 
 	// 1. insert
 	ctx1, _ := context.WithTimeout(context.Background(), 1000*time.Second) // 10s
@@ -297,6 +298,7 @@ func TestMoveReplica_queryAndMutate(t *testing.T) {
 	}
 	tableName := testInt32RerouteTableName
 	defer test.DeleteTable(tableName)
+	test.SetReroutingEnable(true)
 
 	// 1. insert
 	ctx1, _ := context.WithTimeout(context.Background(), 1000*time.Second) // 10s
@@ -333,4 +335,160 @@ func TestMoveReplica_queryAndMutate(t *testing.T) {
 	)
 	assert.Equal(t, nil, err)
 	assert.EqualValues(t, 1, affectRows)
+}
+
+func TestMoveReplica_serverReroutingOff(t *testing.T) {
+	tableName := testInt32RerouteTableName
+	defer test.DeleteTable(tableName)
+	test.SetReroutingEnable(false)
+	// 1. insert
+	ctx1, _ := context.WithTimeout(context.Background(), 1000*time.Second) // 10s
+	rowKey := []*table.Column{table.NewColumn("c1", int32(0))}
+	mutateColumns := []*table.Column{table.NewColumn("c2", int32(0))}
+	affectRows, err := moveCli.Insert(
+		ctx1,
+		tableName,
+		rowKey,
+		mutateColumns,
+	)
+	assert.Equal(t, nil, err)
+	assert.EqualValues(t, 1, affectRows)
+
+	// 2. switch leader
+	if util.ObVersion() < 4 {
+		err = reroute.SwitchReplicaLeaderRandomly(tenantName, databaseName, tableName, partNum)
+		assert.Equal(t, nil, err)
+	} else {
+		err = reroute.SwitchReplicaLeaderRandomly4x(tenantName, databaseName, tableName)
+		assert.Equal(t, nil, err)
+	}
+	time.Sleep(5 * time.Second)
+
+	// 3. do operator
+	// single get
+	ctx2, _ := context.WithTimeout(context.Background(), 1000*time.Second) // 10s
+	res2, err2 := moveCli.Get(
+		ctx2,
+		tableName,
+		rowKey,
+		nil,
+	)
+	assert.NotEqual(t, nil, err2)
+	assert.Equal(t, nil, res2)
+	// multi get
+	batchExecutor := moveCli.NewBatchExecutor(
+		tableName,
+		option.WithBatchSamePropertiesNames(true), // Strongly recommend you to set this option to true if all names of properties are the same in this batch.
+	)
+	err = batchExecutor.AddGetOp(rowKey, nil)
+	assert.Equal(t, nil, err)
+	ctx3, _ := context.WithTimeout(context.Background(), 1000*time.Second) // 10s
+	_, err3 := batchExecutor.Execute(ctx3)
+	assert.NotEqual(t, nil, err3)
+
+	// query
+	ctx4, _ := context.WithTimeout(context.Background(), 1000*time.Second) // 10s
+	startRowKey := []*table.Column{table.NewColumn("c1", int32(0))}
+	endRowKey := []*table.Column{table.NewColumn("c1", int32(0))}
+	keyRanges := []*table.RangePair{table.NewRangePair(startRowKey, endRowKey)}
+	resSet, err4 := moveCli.Query(
+		ctx4,
+		tableName,
+		keyRanges,
+		option.WithQuerySelectColumns([]string{"c1", "c2"}),
+	)
+	assert.Equal(t, nil, err4)
+	res4, _ := resSet.Next()
+	assert.Equal(t, nil, res4)
+
+	ctx5, _ := context.WithTimeout(context.Background(), 1000*time.Second) // 10s
+	updateColumns := []*table.Column{table.NewColumn("c2", int32(0))}
+	affectRows5, err5 := moveCli.Update(
+		ctx5,
+		tableName,
+		rowKey,
+		updateColumns,
+		option.WithFilter(filter.CompareVal(filter.Equal, "c2", int32(0))), // where c2 = 0
+	)
+	assert.NotEqual(t, nil, err5)
+	assert.EqualValues(t, -1, affectRows5)
+}
+
+func TestMoveReplica_clientReroutingOff(t *testing.T) {
+	tableName := testInt32RerouteTableName
+	defer test.DeleteTable(tableName)
+	test.SetReroutingEnable(true)
+	//client := moveCli // client move res on
+	client := cli // client move res off
+	// 1. insert
+	ctx1, _ := context.WithTimeout(context.Background(), 1000*time.Second) // 10s
+	rowKey := []*table.Column{table.NewColumn("c1", int32(0))}
+	mutateColumns := []*table.Column{table.NewColumn("c2", int32(0))}
+	affectRows, err := client.Insert(
+		ctx1,
+		tableName,
+		rowKey,
+		mutateColumns,
+	)
+	assert.Equal(t, nil, err)
+	assert.EqualValues(t, 1, affectRows)
+
+	// 2. switch leader
+	if util.ObVersion() < 4 {
+		err = reroute.SwitchReplicaLeaderRandomly(tenantName, databaseName, tableName, partNum)
+		assert.Equal(t, nil, err)
+	} else {
+		err = reroute.SwitchReplicaLeaderRandomly4x(tenantName, databaseName, tableName)
+		assert.Equal(t, nil, err)
+	}
+	time.Sleep(5 * time.Second)
+
+	// 3. do operator
+	// single get
+	ctx2, _ := context.WithTimeout(context.Background(), 1000*time.Second) // 10s
+	res2, err2 := client.Get(
+		ctx2,
+		tableName,
+		rowKey,
+		nil,
+	)
+	assert.NotEqual(t, nil, err2)
+	assert.Equal(t, nil, res2)
+	// multi get
+	batchExecutor := client.NewBatchExecutor(
+		tableName,
+		option.WithBatchSamePropertiesNames(true), // Strongly recommend you to set this option to true if all names of properties are the same in this batch.
+	)
+	err = batchExecutor.AddGetOp(rowKey, nil)
+	assert.Equal(t, nil, err)
+	ctx3, _ := context.WithTimeout(context.Background(), 1000*time.Second) // 10s
+	_, err3 := batchExecutor.Execute(ctx3)
+	assert.NotEqual(t, nil, err3)
+
+	// query
+	ctx4, _ := context.WithTimeout(context.Background(), 1000*time.Second) // 10s
+	startRowKey := []*table.Column{table.NewColumn("c1", int32(0))}
+	endRowKey := []*table.Column{table.NewColumn("c1", int32(0))}
+	keyRanges := []*table.RangePair{table.NewRangePair(startRowKey, endRowKey)}
+	resSet, err4 := client.Query(
+		ctx4,
+		tableName,
+		keyRanges,
+		option.WithQuerySelectColumns([]string{"c1", "c2"}),
+	)
+	assert.Equal(t, nil, err4)
+	res4, _ := resSet.Next()
+	assert.Equal(t, nil, res4)
+
+	ctx5, _ := context.WithTimeout(context.Background(), 1000*time.Second) // 10s
+	updateColumns := []*table.Column{table.NewColumn("c2", int32(0))}
+	affectRows5, err5 := client.Update(
+		ctx5,
+		tableName,
+		rowKey,
+		updateColumns,
+		option.WithFilter(filter.CompareVal(filter.Equal, "c2", int32(0))), // where c2 = 0
+	)
+	assert.NotEqual(t, nil, err5)
+	assert.EqualValues(t, -1, affectRows5)
 }

@@ -755,6 +755,8 @@ func GetTableIdFromRemote(
 	ctx context.Context,
 	addr *ObServerAddr,
 	sysUA *ObUserAuth,
+	tenantName string,
+	databaseName string,
 	tableName string) (uint64, error) {
 	// 1. Get db handle
 	db, err := NewDB(
@@ -772,7 +774,8 @@ func GetTableIdFromRemote(
 	}()
 
 	// 2. make sql
-	sql := fmt.Sprintf("select table_id from oceanbase.__all_virtual_table where table_name = '%s'", tableName)
+	sql := fmt.Sprintf("select table_id from oceanbase.__all_virtual_proxy_schema "+
+		"where tenant_name = '%s' and database_name = '%s' and table_name = '%s' limit 1", tenantName, databaseName, tableName)
 	rows, err := db.QueryContext(ctx, sql)
 	if err != nil {
 		return 0, errors.WithMessagef(err, "query table id sql:%s", sql)
