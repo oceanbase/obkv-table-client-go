@@ -81,9 +81,11 @@ type RsListConfig struct {
 }
 
 type ExtraConfig struct {
-	OperationTimeOut int
-	LogLevel         string
-	EnableRerouting  bool
+	OperationTimeOut     int
+	LogLevel             string
+	EnableRerouting      bool
+	MaxConnectionAge     int
+	EnableSLBLoadBalance bool
 }
 
 func (c *ClientConfiguration) checkClientConfiguration() error {
@@ -147,6 +149,8 @@ func (c *ClientConfiguration) GetClientConfig() *ClientConfig {
 		RsListHttpGetRetryTimes:          c.RsListConfig.HttpGetRetryTimes,
 		RsListHttpGetRetryInterval:       time.Duration(c.RsListConfig.HttpGetRetryInterval) * time.Millisecond,
 		EnableRerouting:                  c.ExtraConfig.EnableRerouting,
+		MaxConnectionAge:                 time.Duration(c.ExtraConfig.MaxConnectionAge) * time.Millisecond,
+		EnableSLBLoadBalance:             c.ExtraConfig.EnableSLBLoadBalance,
 	}
 }
 

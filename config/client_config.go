@@ -45,6 +45,10 @@ type ClientConfig struct {
 	RsListHttpGetRetryInterval time.Duration
 
 	EnableRerouting bool
+
+	// connection rebalance in ODP mode
+	MaxConnectionAge     time.Duration
+	EnableSLBLoadBalance bool
 }
 
 func NewDefaultClientConfig() *ClientConfig {
@@ -65,6 +69,8 @@ func NewDefaultClientConfig() *ClientConfig {
 		RsListHttpGetRetryTimes:          3,
 		RsListHttpGetRetryInterval:       time.Duration(100) * time.Millisecond, // 100ms,
 		EnableRerouting:                  false,
+		MaxConnectionAge:                 time.Duration(0) * time.Second, // valid iff > 0
+		EnableSLBLoadBalance:             false,
 	}
 }
 
@@ -85,6 +91,8 @@ func (c *ClientConfig) String() string {
 		"RsListHttpGetTimeout:" + c.RsListHttpGetTimeout.String() + ", " +
 		"RsListHttpGetRetryTimes:" + strconv.Itoa(c.RsListHttpGetRetryTimes) + ", " +
 		"RsListHttpGetRetryInterval:" + c.RsListHttpGetRetryInterval.String() + ", " +
-		"EnableRerouting:" + strconv.FormatBool(c.EnableRerouting) +
+		"EnableRerouting:" + strconv.FormatBool(c.EnableRerouting) + ", " +
+		"MaxConnectionAge:" + c.MaxConnectionAge.String() + ", " +
+		"EnableSLBLoadBalance:" + strconv.FormatBool(c.EnableSLBLoadBalance) +
 		"}"
 }

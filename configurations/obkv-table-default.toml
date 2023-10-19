@@ -48,3 +48,5 @@ HttpGetRetryInterval = 100
 OperationTimeOut = 10000
 LogLevel = "info"
 EnableRerouting = false
+MaxConnectionAge = 0
+EnableSLBLoadBalance = false

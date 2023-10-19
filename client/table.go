@@ -41,6 +41,9 @@ type ObTable struct {
 
 	isClosed bool
 	mutex    sync.Mutex
+
+	maxConnectionAge     time.Duration
+	enableSLBLoadBalance bool
 }
 
 func NewObTable(
@@ -51,13 +54,15 @@ func NewObTable(
 	password string,
 	database string) *ObTable {
 	return &ObTable{
-		ip:         ip,
-		port:       port,
-		tenantName: tenantName,
-		userName:   userName,
-		password:   password,
-		database:   database,
-		isClosed:   false,
+		ip:                   ip,
+		port:                 port,
+		tenantName:           tenantName,
+		userName:             userName,
+		password:             password,
+		database:             database,
+		isClosed:             false,
+		maxConnectionAge:     time.Duration(0),
+		enableSLBLoadBalance: false,
 	}
 }
 
@@ -72,6 +77,8 @@ func (t *ObTable) init(connPoolSize int, connectTimeout time.Duration, loginTime
 		t.database,
 		t.userName,
 		t.password,
+		t.maxConnectionAge,
+		t.enableSLBLoadBalance,
 	)
 	cli, err := obkvrpc.NewRpcClient(opt)
 	if err != nil {
@@ -79,6 +86,14 @@ func (t *ObTable) init(connPoolSize int, connectTimeout time.Duration, loginTime
 	}
 	t.rpcClient = cli
 	return nil
+}
+
+func (t *ObTable) setMaxConnectionAge(duration time.Duration) {
+	t.maxConnectionAge = duration
+}
+
+func (t *ObTable) setEnableSLBLoadBalance(b bool) {
+	t.enableSLBLoadBalance = b
 }
 
 func (t *ObTable) retry(

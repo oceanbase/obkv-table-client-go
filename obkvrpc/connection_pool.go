@@ -19,6 +19,8 @@ package obkvrpc
 
 import (
 	"context"
+	"fmt"
+	"github.com/oceanbase/obkv-table-client-go/log"
 	"math/rand"
 	"sync"
 	"time"
@@ -37,6 +39,9 @@ type PoolOption struct {
 	databaseName string
 	userName     string
 	password     string
+
+	maxConnectionAge     time.Duration
+	enableSLBLoadBalance bool
 }
 
 type ConnectionPool struct {
@@ -44,20 +49,23 @@ type ConnectionPool struct {
 
 	connections []*Connection
 	rwMutexes   []sync.RWMutex
+	connMgr     *ConnectionMgr
 }
 
 func NewPoolOption(ip string, port int, connPoolMaxConnSize int, connectTimeout time.Duration, loginTimeout time.Duration,
-	tenantName string, databaseName string, userName string, password string) *PoolOption {
+	tenantName string, databaseName string, userName string, password string, maxConnectionAge time.Duration, enableSLBLoadBalance bool) *PoolOption {
 	return &PoolOption{
-		ip:                  ip,
-		port:                port,
-		connPoolMaxConnSize: connPoolMaxConnSize,
-		connectTimeout:      connectTimeout,
-		loginTimeout:        loginTimeout,
-		tenantName:          tenantName,
-		databaseName:        databaseName,
-		userName:            userName,
-		password:            password,
+		ip:                   ip,
+		port:                 port,
+		connPoolMaxConnSize:  connPoolMaxConnSize,
+		connectTimeout:       connectTimeout,
+		loginTimeout:         loginTimeout,
+		tenantName:           tenantName,
+		databaseName:         databaseName,
+		userName:             userName,
+		password:             password,
+		maxConnectionAge:     maxConnectionAge,
+		enableSLBLoadBalance: enableSLBLoadBalance,
 	}
 }
 
@@ -68,23 +76,15 @@ func NewConnectionPool(option *PoolOption) (*ConnectionPool, error) {
 		rwMutexes:   make([]sync.RWMutex, 0, option.connPoolMaxConnSize),
 	}
 
-	connectionOption := NewConnectionOption(pool.option.ip, pool.option.port, pool.option.connectTimeout, pool.option.loginTimeout,
-		pool.option.tenantName, pool.option.databaseName, pool.option.userName, pool.option.password)
+	if option.maxConnectionAge > 0 || option.enableSLBLoadBalance {
+		pool.connMgr = NewConnectionMgr(pool)
+	}
 
 	for i := 0; i < pool.option.connPoolMaxConnSize; i++ {
-
-		connection := NewConnection(connectionOption)
-
 		ctx, _ := context.WithTimeout(context.Background(), pool.option.connectTimeout)
-		err := connection.Connect(ctx)
+		connection, err := pool.CreateConnection(ctx)
 		if err != nil {
-			return nil, errors.WithMessage(err, "connection connect")
-		}
-
-		ctx, _ = context.WithTimeout(context.Background(), pool.option.loginTimeout)
-		err = connection.Login(ctx)
-		if err != nil {
-			return nil, errors.WithMessage(err, "connection login")
+			return nil, errors.WithMessage(err, "create connection")
 		}
 
 		pool.connections = append(pool.connections, connection)
@@ -92,11 +92,25 @@ func NewConnectionPool(option *PoolOption) (*ConnectionPool, error) {
 
 	}
 
+	if pool.connMgr != nil {
+		pool.connMgr.start()
+	}
+
 	return pool, nil
 }
 
+// GetConnection Find an unexpired and active connection to use
+// In theory, all connection won't expire at the same time
 func (p *ConnectionPool) GetConnection() (*Connection, int) {
 	index := rand.Intn(p.option.connPoolMaxConnSize)
+	for i := 0; i < p.option.connPoolMaxConnSize; i++ {
+		if p.connections[(index+i)%p.option.connPoolMaxConnSize].isExpired.Load() == false {
+			index = (index + i) % p.option.connPoolMaxConnSize
+			break
+		} else if i == p.option.connPoolMaxConnSize-1 {
+			log.Warn("All connections is expired, will pick a expired connection")
+		}
+	}
 
 	p.rwMutexes[index].RLock()
 	defer p.rwMutexes[index].RUnlock()
@@ -128,7 +142,8 @@ func (p *ConnectionPool) RecreateConnection(ctx context.Context, connectionIdx i
 }
 
 func (p *ConnectionPool) CreateConnection(ctx context.Context) (*Connection, error) {
-	connectionOption := NewConnectionOption(p.option.ip, p.option.port, p.option.connectTimeout, p.option.loginTimeout,
+	ip, port := p.getNextConnAddress()
+	connectionOption := NewConnectionOption(ip, port, p.option.connectTimeout, p.option.loginTimeout,
 		p.option.tenantName, p.option.databaseName, p.option.userName, p.option.password)
 	connection := NewConnection(connectionOption)
 	err := connection.Connect(ctx)
@@ -139,6 +154,12 @@ func (p *ConnectionPool) CreateConnection(ctx context.Context) (*Connection, err
 	if err != nil {
 		return nil, errors.WithMessage(err, "connection login")
 	}
+	// put it to here to ensure connection should not expire during connect & login phase
+	if p.option.maxConnectionAge > 0 {
+		connection.expireTime = time.Now().Add(p.option.maxConnectionAge)
+	}
+	log.Info(fmt.Sprintf("connect success, remote addr:%s, expire time: %s",
+		connection.conn.RemoteAddr().String(), connection.expireTime.String()))
 	return connection, nil
 }
 
@@ -146,4 +167,19 @@ func (p *ConnectionPool) Close() {
 	for _, connection := range p.connections {
 		connection.Close()
 	}
+
+	if p.connMgr != nil {
+		p.connMgr.close()
+	}
+}
+
+func (p *ConnectionPool) getNextConnAddress() (string, int) {
+	ip := p.option.ip
+	port := p.option.port
+	if p.connMgr != nil && p.connMgr.slbLoader != nil {
+		ip = p.connMgr.slbLoader.getNextSLBAddress()
+		log.Info(fmt.Sprintf("Get a SLB address %s:%d", ip, port))
+	}
+
+	return ip, port
 }

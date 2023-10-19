@@ -216,6 +216,8 @@ func (c *obClient) init() error {
 func (c *obClient) initOdp() error {
 	// 1. Init odp table
 	t := NewObTable(c.odpIP, c.odpRpcPort, c.tenantName, c.fullUserName, c.password, c.database)
+	t.setMaxConnectionAge(c.config.MaxConnectionAge)
+	t.setEnableSLBLoadBalance(c.config.EnableSLBLoadBalance)
 	err := t.init(c.config.ConnPoolMaxConnSize, c.config.ConnConnectTimeOut, c.config.ConnLoginTimeout)
 	// 2. Init sql
 	// ObVersion will be set when login in init()
