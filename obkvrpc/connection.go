@@ -61,10 +61,10 @@ type ConnectionOption struct {
 	connectTimeout time.Duration
 	loginTimeout   time.Duration
 
-	tenantName       string
-	databaseName     string
-	userName         string
-	password         string
+	tenantName   string
+	databaseName string
+	userName     string
+	password     string
 }
 
 func NewConnectionOption(ip string, port int, connectTimeout time.Duration, loginTimeout time.Duration,
@@ -406,6 +406,7 @@ func (c *Connection) writerWrite(packet packet) {
 }
 
 func (c *Connection) Close() {
+	log.Info(fmt.Sprintf("close connection start, remote addr:%s", c.conn.RemoteAddr().String()))
 	c.active.Store(false)
 	c.closeOnce.Do(func() {
 		close(c.packetChannelClose) // close packet channel
@@ -419,6 +420,7 @@ func (c *Connection) Close() {
 		}
 		c.mutex.Unlock()
 	})
+	log.Info(fmt.Sprintf("close connection success, remote addr:%s", c.conn.RemoteAddr().String()))
 }
 
 func (c *Connection) encodePacket(seq uint32, request protocol.ObPayload) []byte {

@@ -33,7 +33,7 @@ type ConnectionLifeCycleMgr struct {
 }
 
 func (s *ConnectionLifeCycleMgr) String() string {
-	return fmt.Sprintf("ConnectionLifeCycleMgr{connPool: %s, maxConnectionAge: %d,lastExpireIdx: %d}",
+	return fmt.Sprintf("ConnectionLifeCycleMgr{connPool: %p, maxConnectionAge: %d,lastExpireIdx: %d}",
 		s.connPool, s.maxConnectionAge, s.lastExpireIdx)
 }
 

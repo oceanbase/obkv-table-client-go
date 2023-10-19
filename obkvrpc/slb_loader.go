@@ -88,8 +88,8 @@ func (s *SLBLoader) refreshConnectionLife() {
 }
 
 func (s *SLBLoader) String() string {
-	return fmt.Sprintf("SLBLoader{connPool: %s, dnsAddress: %s, round: %d, slbAddress: %v}",
-		s.connPool, s.dnsAddress, s.round, s.slbAddress)
+	return fmt.Sprintf("SLBLoader{connPool: %p, dnsAddress: %s, round: %d, slbAddress: %v}",
+		s.connPool, s.dnsAddress, s.round.Load(), s.slbAddress)
 }
 
 func NewSLBLoader(p *ConnectionPool) *SLBLoader {
