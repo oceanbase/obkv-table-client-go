@@ -37,12 +37,10 @@ const (
 	testGlobalIndexNoPartCreateStat   = "CREATE TABLE IF NOT EXISTS `test_global_index_no_part` (`c1` int(11) NOT NULL, `c2` int(11) DEFAULT NULL, `c3` int(11) DEFAULT NULL,  PRIMARY KEY (`c1`),  KEY `idx` (`c2`) GLOBAL) partition by hash(`c1`) (partition p0, partition p1, partition p2, partition p3, partition p4, partition p6);"
 	testGlobalAllNoPartCreateStat     = "CREATE TABLE IF NOT EXISTS `test_global_all_no_part` (`c1` int(11) NOT NULL, `c2` int(11) DEFAULT NULL, `c3` int(11) DEFAULT NULL, PRIMARY KEY (`c1`), KEY `idx` (`c2`) GLOBAL);"
 	testGlobalPrimaryNoPartCreateStat = "CREATE TABLE IF NOT EXISTS `test_global_primary_no_part` (`c1` int(11) NOT NULL, `c2` int(11) DEFAULT NULL, `c3` int(11) DEFAULT NULL, PRIMARY KEY (`c1`), KEY `idx` (`c2`) GLOBAL partition by hash(`c2`) (partition p0, partition p1, partition p2, partition p3, partition p4));"
-)
-
-const (
-	tenantName   = "sys"
-	databaseName = "test"
-	partNum      = 2
+	testGlobalTwoLevelPart            = "test_global_two_level_part"
+	testGlobalTwoLevelPartCreateStat  = "CREATE TABLE IF NOT EXISTS `test_global_two_level_part` (`c1` int NOT NULL, `c2` int NOT NULL, `c3` int NOT NULL, `c4` int NOT NULL, `c5` varchar(20) default NULL,PRIMARY KEY (`c1`, `c2`), KEY `idx` (`c3`,`c4`) GLOBAL partition by hash(`c3`) partitions 8) partition by hash(`c1`) subpartition by hash(`c2`) subpartitions 4 partitions 16;"
+	testGlobalUniqueIndex             = "testGlobalUniqueIndex"
+	testGlobalUniqueIndexCreateStat   = "CREATE TABLE IF NOT EXISTS `testGlobalUniqueIndex` (`C1` int NOT NULL,`C2` int NOT NULL,`C3` int NOT NULL,`C4` int NOT NULL,`C5` varchar(20) default NULL,PRIMARY KEY (`C1`),UNIQUE KEY `idx` (`C3`) GLOBAL partition by hash(`C3`) partitions 8) partition by key(`C1`) partitions 16;"
 )
 
 func checkIndexTableRow(t *testing.T, indexTableName string, rowKey []*table.Column, mutateColumns []*table.Column, affectedCount int) {
@@ -317,4 +315,151 @@ func TestPrimaryNoPartitionAndGlobalIndexPartition(t *testing.T) {
 func TestPrimaryPartitionAndGlobalIndexNoPartition(t *testing.T) {
 	defer test.DeleteTable(testGlobalPrimaryNoPart)
 	doGlobalIndexQuery(t, testGlobalPrimaryNoPart)
+}
+
+func TestTwoLevelPartitionPrimaryTable(t *testing.T) {
+	defer test.DeleteTable(testGlobalTwoLevelPart)
+	doDmlAndQuery(t, testGlobalTwoLevelPart)
+}
+
+func verifyResult(t *testing.T, tableName string,
+	rowKey []*table.Column, mutateColumns []*table.Column) {
+	res, err := cli.Get(context.TODO(),
+		tableName,
+		rowKey,
+		[]string{"c1", "c2", "c3", "c4", "c5"})
+	assert.Equal(t, nil, err)
+	assert.Equal(t, rowKey[0].Value(), res.Value("c1"))
+	assert.Equal(t, rowKey[1].Value(), res.Value("c2"))
+	assert.Equal(t, mutateColumns[0].Value(), res.Value("c3"))
+	assert.Equal(t, mutateColumns[1].Value(), res.Value("c4"))
+	assert.Equal(t, mutateColumns[2].Value(), res.Value("c5"))
+
+}
+
+func doDmlAndQuery(t *testing.T, tableName string) {
+	recordCount := 20
+	// prepare data
+	for i := 0; i < recordCount; i++ {
+		rowKey := []*table.Column{table.NewColumn("c1", int32(i)), table.NewColumn("c2", int32(3*i))}
+		mutateColumns := []*table.Column{table.NewColumn("c3", int32(5*i)),
+			table.NewColumn("c4", int32(7*i)), table.NewColumn("c5", "hello~")}
+		affectRows, err := cli.Insert(
+			context.TODO(),
+			tableName,
+			rowKey,
+			mutateColumns,
+		)
+		assert.EqualValues(t, 1, affectRows)
+		assert.Equal(t, nil, err)
+		verifyResult(t, tableName, rowKey, mutateColumns)
+	}
+
+	// update
+	for i := 0; i < recordCount; i++ {
+		rowKey := []*table.Column{table.NewColumn("c1", int32(i)), table.NewColumn("c2", int32(3*i))}
+		mutateColumns := []*table.Column{table.NewColumn("c3", int32(4*i)),
+			table.NewColumn("c4", int32(6*i)), table.NewColumn("c5", "hello~hello~")}
+		affectRows, err := cli.Update(context.TODO(),
+			tableName,
+			rowKey,
+			mutateColumns)
+		assert.EqualValues(t, 1, affectRows)
+		assert.Equal(t, nil, err)
+		verifyResult(t, tableName, rowKey, mutateColumns)
+	}
+	// repalce
+	for i := 0; i < recordCount; i++ {
+		rowKey := []*table.Column{table.NewColumn("c1", int32(i)), table.NewColumn("c2", int32(3*i))}
+		mutateColumns := []*table.Column{table.NewColumn("c3", int32(5*i)),
+			table.NewColumn("c4", int32(7*i)), table.NewColumn("c5", "hello~")}
+		affectRows, err := cli.Replace(context.TODO(),
+			tableName,
+			rowKey,
+			mutateColumns)
+		assert.EqualValues(t, 2, affectRows)
+		assert.Equal(t, nil, err)
+		verifyResult(t, tableName, rowKey, mutateColumns)
+	}
+	// insert_or_update
+	for i := 0; i < recordCount; i++ {
+		rowKey := []*table.Column{table.NewColumn("c1", int32(i)), table.NewColumn("c2", int32(3*i))}
+		mutateColumns := []*table.Column{table.NewColumn("c3", int32(5*i)),
+			table.NewColumn("c4", int32(6*i)), table.NewColumn("c5", "hello~hi~")}
+		affectRows, err := cli.InsertOrUpdate(context.TODO(),
+			tableName,
+			rowKey,
+			mutateColumns)
+		assert.EqualValues(t, 1, affectRows)
+		assert.Equal(t, nil, err)
+		verifyResult(t, tableName, rowKey, mutateColumns)
+	}
+}
+
+func TestGlobalUniqueIndexWithConflict(t *testing.T) {
+	tableName := testGlobalUniqueIndex
+	defer test.DeleteTable(tableName)
+
+	// first insert
+	rowKey := []*table.Column{table.NewColumn("c1", int32(1))}
+	mutateColumns := []*table.Column{table.NewColumn("c2", int32(1)), table.NewColumn("c3", int32(1)),
+		table.NewColumn("c4", int32(1)), table.NewColumn("c5", "hello~")}
+	affectRows, err := cli.Insert(
+		context.TODO(),
+		tableName,
+		rowKey,
+		mutateColumns)
+	assert.EqualValues(t, 1, affectRows)
+	assert.Equal(t, nil, err)
+
+	// will cause unique conflict
+	rowKey2 := []*table.Column{table.NewColumn("c1", int32(2))}
+	mutateColumns2 := []*table.Column{table.NewColumn("c2", int32(2)), table.NewColumn("c3", int32(1)),
+		table.NewColumn("c4", int32(8)), table.NewColumn("c5", "hello~")}
+	affectRows, err = cli.Insert(
+		context.TODO(),
+		tableName,
+		rowKey2,
+		mutateColumns2)
+	assert.EqualValues(t, -1, affectRows)
+	assert.NotEqual(t, nil, err)
+
+	// query
+	startRowKey := []*table.Column{table.NewColumn("c3", int32(0))}
+	endRowKey := []*table.Column{table.NewColumn("c3", int32(10))}
+	keyRanges := []*table.RangePair{table.NewRangePair(startRowKey, endRowKey)}
+	resSet, err := cli.Query(
+		context.TODO(),
+		tableName,
+		keyRanges,
+		option.WithQuerySelectColumns([]string{"c1", "c2", "c3", "c4", "c5"}),
+		option.WithQueryIndexName("idx"),
+	)
+	assert.Equal(t, nil, err)
+	i := 0
+	res, err := resSet.Next()
+	for ; res != nil && err == nil; res, err = resSet.Next() {
+		assert.Equal(t, nil, err)
+		assert.EqualValues(t, 1, res.Value("c1"))
+		assert.EqualValues(t, 1, res.Value("c2"))
+		assert.EqualValues(t, 1, res.Value("c3"))
+		assert.EqualValues(t, 1, res.Value("c4"))
+		assert.EqualValues(t, "hello~", res.Value("c5"))
+
+		i++
+	}
+	assert.Equal(t, nil, err)
+	assert.EqualValues(t, 1, i)
+
+	// insert_or_update with global unique index
+	rowKey3 := []*table.Column{table.NewColumn("c1", int32(3))}
+	mutateColumns3 := []*table.Column{table.NewColumn("c2", int32(4)), table.NewColumn("c3", int32(1)),
+		table.NewColumn("c4", int32(16)), table.NewColumn("c5", "hi~")}
+	affectRows, err = cli.InsertOrUpdate(
+		context.TODO(),
+		tableName,
+		rowKey3,
+		mutateColumns3)
+	assert.EqualValues(t, 1, affectRows)
+	assert.Equal(t, nil, err)
 }

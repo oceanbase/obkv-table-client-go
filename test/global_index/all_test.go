@@ -27,7 +27,6 @@ import (
 var cli client.Client
 
 func setup() {
-	cli = test.CreateClient()
 	test.CreateDB()
 	test.ExecStatement("set global ob_enable_index_direct_select = 1;")
 	test.CreateTable(testGlabalIndexCreateHashTable)
@@ -35,6 +34,9 @@ func setup() {
 	test.CreateTable(testGlobalIndexNoPartCreateStat)
 	test.CreateTable(testGlobalAllNoPartCreateStat)
 	test.CreateTable(testGlobalPrimaryNoPartCreateStat)
+	test.CreateTable(testGlobalTwoLevelPartCreateStat)
+	test.CreateTable(testGlobalUniqueIndexCreateStat)
+	cli = test.CreateClient()
 }
 
 func teardown() {
@@ -44,12 +46,9 @@ func teardown() {
 	test.DropTable(testGlobalIndexNoPart)
 	test.DropTable(testGlobalAllNoPart)
 	test.DropTable(testGlobalPrimaryNoPart)
+	test.DropTable(testGlobalTwoLevelPart)
+	test.DropTable(testGlobalUniqueIndex)
 	test.CloseDB()
-}
-
-func createTableAndGlobalIndex(createTable string, createIndex string) {
-	test.ExecStatement(createTable)
-	test.ExecStatement(createIndex)
 }
 
 func getGlobalIndexTableName(tableName string) []string {
