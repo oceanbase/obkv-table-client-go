@@ -18,6 +18,7 @@
 package protocol
 
 import (
+	"net"
 	"time"
 )
 
@@ -55,4 +56,7 @@ type ObPayload interface {
 
 	Timeout() time.Duration
 	SetTimeout(timeout time.Duration)
+
+	RemoteAddr() net.Addr
+	SetRemoteAddr(remoteAddr net.Addr)
 }

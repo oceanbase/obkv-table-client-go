@@ -148,3 +148,13 @@ func StringWithCharset(length int, charset string) string {
 func String(length int) string {
 	return StringWithCharset(length, charset)
 }
+
+func GetIpPortfromAddr(addr net.Addr) (string, int) {
+	switch addr := addr.(type) {
+	case *net.UDPAddr:
+		return addr.IP.String(), addr.Port
+	case *net.TCPAddr:
+		return addr.IP.String(), addr.Port
+	}
+	return "0.0.0.0", -1
+}
