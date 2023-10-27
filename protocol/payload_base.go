@@ -18,6 +18,7 @@
 package protocol
 
 import (
+	"net"
 	"time"
 )
 
@@ -31,6 +32,8 @@ type ObPayloadBase struct {
 	sessionId uint64
 
 	timeout time.Duration
+
+	remoteAddr net.Addr // for debug
 }
 
 func (p *ObPayloadBase) UniqueId() uint64 {
@@ -79,4 +82,12 @@ func (p *ObPayloadBase) Timeout() time.Duration {
 
 func (p *ObPayloadBase) SetTimeout(timeout time.Duration) {
 	p.timeout = timeout
+}
+
+func (p *ObPayloadBase) RemoteAddr() net.Addr {
+	return p.remoteAddr
+}
+
+func (p *ObPayloadBase) SetRemoteAddr(remoteAddr net.Addr) {
+	p.remoteAddr = remoteAddr
 }

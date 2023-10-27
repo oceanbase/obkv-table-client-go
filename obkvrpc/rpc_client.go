@@ -121,12 +121,10 @@ func (c *RpcClient) Execute(ctx context.Context, request protocol.ObPayload, res
 
 	connection, index = c.connectionPool.GetConnection()
 	if connection == nil {
-
 		connection, err = c.connectionPool.RecreateConnection(ctx, index)
 		if err != nil {
 			return errors.WithMessage(err, "recreate connection")
 		}
-
 	}
 
 	err = connection.Execute(ctx, request, response)

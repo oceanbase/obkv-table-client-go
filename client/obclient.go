@@ -582,6 +582,19 @@ func (c *obClient) execute(
 	}
 
 	if oberror.ObErrorCode(result.Header().ErrorNo()) != oberror.ObSuccess {
+		if result.RemoteAddr() != nil {
+			remoteIp, remotePort := util.GetIpPortfromAddr(result.RemoteAddr())
+			return nil, protocol.NewProtocolError(
+				remoteIp,
+				remotePort,
+				oberror.ObErrorCode(result.Header().ErrorNo()),
+				result.Sequence(),
+				result.UniqueId(),
+				tableName,
+				nil,
+			)
+		}
+
 		return nil, protocol.NewProtocolError(
 			tableParam.table.ip,
 			tableParam.table.port,

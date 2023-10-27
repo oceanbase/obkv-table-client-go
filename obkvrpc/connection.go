@@ -132,6 +132,10 @@ func NewConnection(option *ConnectionOption) *Connection {
 		packetChannel: make(chan packet, defaultPacketChannelSize), packetChannelClose: make(chan struct{})}
 }
 
+func (c *Connection) RemoteAddr() net.Addr {
+	return c.conn.RemoteAddr()
+}
+
 func (c *Connection) Connect(ctx context.Context) error {
 	address := fmt.Sprintf("%s:%s", c.option.ip, strconv.Itoa(c.option.port))
 	dialer := &net.Dialer{}
@@ -230,6 +234,8 @@ func (c *Connection) Execute(
 	c.mutex.Lock()
 	c.pending[seq] = call
 	c.mutex.Unlock()
+
+	response.SetRemoteAddr(c.RemoteAddr())
 
 	select {
 	case c.packetChannel <- p: // write packet channel success, but not equal to connection write success.

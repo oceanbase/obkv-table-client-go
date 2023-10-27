@@ -150,14 +150,28 @@ func (t *ObTable) execute(
 			if moveRes != nil {
 				err = t.retry(ctx, request, result, err.(*protocol.ObProtocolError).MoveResponse())
 				if err != nil {
-					return errors.WithMessagef(err, "retry request, move result:%s",
-						err.(*protocol.ObProtocolError).MoveResponse().String())
+					if result.RemoteAddr() != nil {
+						return errors.WithMessagef(err, "retry request, remote:[%s], move result:%s",
+							result.RemoteAddr().String(),
+							err.(*protocol.ObProtocolError).MoveResponse().String())
+					} else {
+						return errors.WithMessagef(err, "retry request(remote unknown), move result:%s",
+							err.(*protocol.ObProtocolError).MoveResponse().String())
+					}
 				}
 			} else {
-				return errors.WithMessagef(err, "obtable execute, move result is nil")
+				if result.RemoteAddr() != nil {
+					return errors.WithMessagef(err, "obtable remote:[%s] execute", result.RemoteAddr().String())
+				} else {
+					return errors.WithMessagef(err, "obtable (remote unknown) execute")
+				}
 			}
 		default:
-			return errors.WithMessagef(err, "obtable execute")
+			if result.RemoteAddr() != nil {
+				return errors.WithMessagef(err, "obtable remote:[%s] execute", result.RemoteAddr().String())
+			} else {
+				return errors.WithMessagef(err, "obtable (remote unknown) execute")
+			}
 		}
 	}
 	return nil
