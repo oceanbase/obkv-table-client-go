@@ -34,6 +34,7 @@ const (
 	sysPassWord  = ""
 
 	// odp
+	isOdpMode       = false
 	odpIP           = ""
 	odpFullUserName = "..."
 	odpPassWord     = ""
@@ -57,7 +58,7 @@ func CreateClient() client.Client {
 	var err error
 	if tomlConfigPath != "" {
 		cli, err = client.NewClientWithTomlConfig(tomlConfigPath)
-	} else if odpIP != "" {
+	} else if isOdpMode {
 		cli, err = client.NewOdpClient(odpFullUserName, odpPassWord, odpIP, odpRpcPort, database, config.NewDefaultClientConfig())
 	} else {
 		cli, err = client.NewClient(configUrl, fullUserName, passWord, sysUserName, sysPassWord, config.NewDefaultClientConfig())
