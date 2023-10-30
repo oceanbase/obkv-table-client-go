@@ -20,6 +20,7 @@ package aggregate
 import (
 	"context"
 	"fmt"
+	"strings"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -31,7 +32,13 @@ import (
 
 const (
 	aggregateTableName            = "aggregateTable"
-	aggregateTableCreateStatement = "create table if not exists aggregateTable(`c1` bigint(20) not null, c2 bigint(20) not null, c3 varchar(20) default 'hello', c4 double default null, c5 int default null, primary key (`c1`, `c2`)) partition by hash(c1) partitions 15;"
+	aggregateTableCreateStatement = "create table if not exists aggregateTable(" +
+		"c1 bigint(20) not null, " +
+		"c2 bigint(20) not null, " +
+		"c3 varchar(20) default 'hello', " +
+		"c4 double default null, " +
+		"c5 int default null, " +
+		"primary key (`c1`, `c2`)) partition by hash(c1) partitions 15;"
 )
 
 func prepareAggRecord(recordCount int) {
@@ -154,4 +161,40 @@ func TestAggregate(t *testing.T) {
 
 	assert.Equal(t, nil, res)
 	assert.NotNil(t, err)
+}
+
+func TestAggregate_AvgVarcharNotSupport(t *testing.T) {
+	tableName := aggregateTableName
+	defer test.DeleteTable(tableName)
+
+	// insert
+	rowKey := []*table.Column{
+		table.NewColumn("c1", int64(1)),
+		table.NewColumn("c2", int64(1)),
+	}
+	mutateColumns := []*table.Column{
+		table.NewColumn("c3", "hello"),
+		table.NewColumn("c4", float64(1.1)),
+		table.NewColumn("c5", int32(1)),
+	}
+	affectRows, err := cli.Insert(
+		context.TODO(),
+		tableName,
+		rowKey,
+		mutateColumns,
+	)
+	assert.Equal(t, nil, err)
+	assert.EqualValues(t, 1, affectRows)
+
+	// aggregate empty table.
+	startRowKey := []*table.Column{table.NewColumn("c1", int64(1)), table.NewColumn("c2", int64(1))}
+	endRowKey := []*table.Column{table.NewColumn("c1", int64(1)), table.NewColumn("c2", int64(1))}
+	keyRanges := []*table.RangePair{table.NewRangePair(startRowKey, endRowKey)}
+
+	aggExecutor := cli.NewAggExecutor(tableName, keyRanges).Avg("c3")
+	_, err = aggExecutor.Execute(context.TODO())
+	assert.NotEqual(t, nil, err)
+	errString := err.Error()
+	errMsg := "errCode:-4007"
+	assert.Equal(t, true, strings.Contains(errString, errMsg))
 }

@@ -35,6 +35,8 @@ func setup() {
 	test.CreateTable(autoIncRowkeyNotFillTableCreateStatement)
 	test.CreateTable(autoIncNormalNotFillTableCreateStatement)
 	test.CreateTable(autoIncNormalFillTableCreateStatement)
+	test.CreateTable(autoIncRowkeyNilFillTableCreateStatement)
+	test.CreateTable(autoIncNormalNilFillTableCreateStatement)
 }
 
 func teardown() {
@@ -44,6 +46,8 @@ func teardown() {
 	test.DropTable(autoIncRowkeyNotFillTableTableName)
 	test.DropTable(autoIncNormalNotFillTableTableName)
 	test.DropTable(autoIncNormalFillTableTableName)
+	test.DropTable(autoIncRowkeyNilFillTableTableName)
+	test.DropTable(autoIncNormalNilFillTableTableName)
 	test.CloseDB()
 }
 
