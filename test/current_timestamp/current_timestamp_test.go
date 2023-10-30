@@ -31,7 +31,14 @@ import (
 
 const (
 	testTimestampCurrentTimeTableName       = "test_timestamp_current_time"
-	testTimestampCurrentTimeCreateStatement = "create table if not exists `test_timestamp_current_time`(`c1` int(12) not null,`c2` int(12) default 0, `c3` timestamp default current_timestamp, `c4` timestamp default current_timestamp on update current_timestamp, `c5` varchar(20) default 'hello', primary key (`c1`)) partition by key(c1) partitions 16;"
+	testTimestampCurrentTimeCreateStatement = "create table if not exists `test_timestamp_current_time`(" +
+		"`c1` int(12) not null," +
+		"`c2` int(12) default 0, " +
+		"`c3` timestamp default current_timestamp, " +
+		"`c4` timestamp default current_timestamp on update current_timestamp, " +
+		"`c5` timestamp default null on update current_timestamp, " +
+		"`c6` varchar(20) default 'hello', primary key (`c1`)) " +
+		"partition by key(c1) partitions 16;"
 )
 
 func TestCurrentTimestamp_common(t *testing.T) {
@@ -61,8 +68,8 @@ func TestCurrentTimestamp_common(t *testing.T) {
 	assert.Equal(t, nil, err)
 	assert.EqualValues(t, 0, result.Value("c1"))
 	assert.EqualValues(t, 0, result.Value("c2"))
-	fmt.Println(result.Value("c3"))
-	fmt.Println(result.Value("c4"))
+	assert.EqualValues(t, result.Value("c3"), result.Value("c4"))
+	assert.Equal(t, nil, result.Value("c5"))
 
 	// update
 	time.Sleep(1 * time.Second)
@@ -88,7 +95,7 @@ func TestCurrentTimestamp_common(t *testing.T) {
 	assert.EqualValues(t, 0, result.Value("c1"))
 	assert.EqualValues(t, 1, result.Value("c2"))
 	fmt.Println(result.Value("c3"))
-	fmt.Println(result.Value("c4"))
+	assert.EqualValues(t, result.Value("c4"), result.Value("c5"))
 
 	// insertUp insert
 	time.Sleep(1 * time.Second)
@@ -114,8 +121,8 @@ func TestCurrentTimestamp_common(t *testing.T) {
 	assert.Equal(t, nil, err)
 	assert.EqualValues(t, 1, result.Value("c1"))
 	assert.EqualValues(t, 0, result.Value("c2"))
-	fmt.Println(result.Value("c3"))
-	fmt.Println(result.Value("c4"))
+	assert.EqualValues(t, result.Value("c3"), result.Value("c4"))
+	assert.Equal(t, nil, result.Value("c5"))
 
 	// insertUp update
 	time.Sleep(1 * time.Second)
@@ -141,7 +148,7 @@ func TestCurrentTimestamp_common(t *testing.T) {
 	assert.EqualValues(t, 1, result.Value("c1"))
 	assert.EqualValues(t, 1, result.Value("c2"))
 	fmt.Println(result.Value("c3"))
-	fmt.Println(result.Value("c4"))
+	assert.EqualValues(t, result.Value("c4"), result.Value("c5"))
 
 	// replace insert
 	time.Sleep(1 * time.Second)
@@ -167,8 +174,8 @@ func TestCurrentTimestamp_common(t *testing.T) {
 	assert.Equal(t, nil, err)
 	assert.EqualValues(t, 2, result.Value("c1"))
 	assert.EqualValues(t, 0, result.Value("c2"))
-	fmt.Println(result.Value("c3"))
-	fmt.Println(result.Value("c4"))
+	assert.EqualValues(t, result.Value("c3"), result.Value("c4"))
+	assert.Equal(t, nil, result.Value("c5"))
 
 	// replace replace
 	time.Sleep(1 * time.Second)
@@ -195,6 +202,7 @@ func TestCurrentTimestamp_common(t *testing.T) {
 	assert.EqualValues(t, 1, result.Value("c2"))
 	fmt.Println(result.Value("c3"))
 	fmt.Println(result.Value("c4"))
+	assert.Equal(t, nil, result.Value("c5"))
 
 	// increment insert
 	time.Sleep(1 * time.Second)
@@ -222,8 +230,8 @@ func TestCurrentTimestamp_common(t *testing.T) {
 	assert.Equal(t, nil, err)
 	assert.EqualValues(t, 3, result.Value("c1"))
 	assert.EqualValues(t, 1, result.Value("c2"))
-	fmt.Println(result.Value("c3"))
-	fmt.Println(result.Value("c4"))
+	assert.EqualValues(t, result.Value("c3"), result.Value("c4"))
+	assert.Equal(t, nil, result.Value("c5"))
 
 	// increment inc
 	time.Sleep(1 * time.Second)
@@ -249,16 +257,15 @@ func TestCurrentTimestamp_common(t *testing.T) {
 	)
 	assert.Equal(t, nil, err)
 	assert.EqualValues(t, 3, result.Value("c1"))
-	//assert.EqualValues(t, 2, result.Value("c2"))
-	fmt.Println(result.Value("c3"))
-	fmt.Println(result.Value("c4"))
+	assert.EqualValues(t, result.Value("c3"), result.Value("c4"))
+	assert.EqualValues(t, result.Value("c4"), result.Value("c5"))
 
 	// append insert
 	time.Sleep(1 * time.Second)
 	fmt.Println("append-insert")
 	rowKey = []*table.Column{table.NewColumn("c1", int32(4))}
 	mutateColumns = []*table.Column{
-		table.NewColumn("c5", "abc"),
+		table.NewColumn("c6", "abc"),
 	}
 	res, err = cli.Append(
 		context.TODO(),
@@ -279,15 +286,15 @@ func TestCurrentTimestamp_common(t *testing.T) {
 	assert.Equal(t, nil, err)
 	assert.EqualValues(t, 4, result.Value("c1"))
 	assert.EqualValues(t, 0, result.Value("c2"))
-	assert.EqualValues(t, "abc", result.Value("c5"))
-	fmt.Println(result.Value("c3"))
-	fmt.Println(result.Value("c4"))
+	assert.EqualValues(t, "abc", result.Value("c6"))
+	assert.EqualValues(t, result.Value("c3"), result.Value("c4"))
+	assert.Equal(t, nil, result.Value("c5"))
 
 	// append append
 	time.Sleep(1 * time.Second)
 	fmt.Println("append-append")
 	mutateColumns = []*table.Column{
-		table.NewColumn("c5", "efg"),
+		table.NewColumn("c6", "efg"),
 	}
 	res, err = cli.Append(
 		context.TODO(),
@@ -308,9 +315,9 @@ func TestCurrentTimestamp_common(t *testing.T) {
 	assert.Equal(t, nil, err)
 	assert.EqualValues(t, 4, result.Value("c1"))
 	assert.EqualValues(t, 0, result.Value("c2"))
-	assert.EqualValues(t, "abcefg", result.Value("c5"))
-	fmt.Println(result.Value("c3"))
-	fmt.Println(result.Value("c4"))
+	assert.EqualValues(t, "abcefg", result.Value("c6"))
+	assert.EqualValues(t, result.Value("c3"), result.Value("c4"))
+	assert.EqualValues(t, result.Value("c4"), result.Value("c5"))
 }
 
 func TestCurrentTimestamp_fillValue(t *testing.T) {
@@ -346,8 +353,9 @@ func TestCurrentTimestamp_fillValue(t *testing.T) {
 	assert.Equal(t, nil, err)
 	assert.EqualValues(t, 0, result.Value("c1"))
 	assert.EqualValues(t, 0, result.Value("c2"))
-	fmt.Println(result.Value("c3"))
-	fmt.Println(result.Value("c4"))
+	assert.EqualValues(t, table.TimeStamp(now), result.Value("c3"))
+	assert.EqualValues(t, table.TimeStamp(now), result.Value("c4"))
+	assert.Equal(t, nil, result.Value("c5"))
 
 	// update
 	time.Sleep(1 * time.Second)
@@ -358,6 +366,7 @@ func TestCurrentTimestamp_fillValue(t *testing.T) {
 		table.NewColumn("c2", int32(1)),
 		table.NewColumn("c3", table.TimeStamp(now)),
 		table.NewColumn("c4", table.TimeStamp(now)),
+		table.NewColumn("c5", table.TimeStamp(now)),
 	}
 	affectRows, err = cli.Update(
 		context.TODO(),
@@ -378,8 +387,9 @@ func TestCurrentTimestamp_fillValue(t *testing.T) {
 	assert.Equal(t, nil, err)
 	assert.EqualValues(t, 0, result.Value("c1"))
 	assert.EqualValues(t, 1, result.Value("c2"))
-	fmt.Println(result.Value("c3"))
-	fmt.Println(result.Value("c4"))
+	assert.EqualValues(t, table.TimeStamp(now), result.Value("c3"))
+	assert.EqualValues(t, table.TimeStamp(now), result.Value("c4"))
+	assert.EqualValues(t, table.TimeStamp(now), result.Value("c5"))
 
 	// insertUp insert
 	time.Sleep(1 * time.Second)
@@ -411,8 +421,9 @@ func TestCurrentTimestamp_fillValue(t *testing.T) {
 	assert.Equal(t, nil, err)
 	assert.EqualValues(t, 1, result.Value("c1"))
 	assert.EqualValues(t, 0, result.Value("c2"))
-	fmt.Println(result.Value("c3"))
-	fmt.Println(result.Value("c4"))
+	assert.EqualValues(t, table.TimeStamp(now), result.Value("c3"))
+	assert.EqualValues(t, table.TimeStamp(now), result.Value("c4"))
+	assert.EqualValues(t, nil, result.Value("c5"))
 
 	// insertUp update
 	time.Sleep(1 * time.Second)
@@ -423,6 +434,7 @@ func TestCurrentTimestamp_fillValue(t *testing.T) {
 		table.NewColumn("c2", int32(1)),
 		table.NewColumn("c3", table.TimeStamp(now)),
 		table.NewColumn("c4", table.TimeStamp(now)),
+		table.NewColumn("c5", table.TimeStamp(now)),
 	}
 	affectRows, err = cli.InsertOrUpdate(
 		context.TODO(),
@@ -443,8 +455,9 @@ func TestCurrentTimestamp_fillValue(t *testing.T) {
 	assert.Equal(t, nil, err)
 	assert.EqualValues(t, 1, result.Value("c1"))
 	assert.EqualValues(t, 1, result.Value("c2"))
-	fmt.Println(result.Value("c3"))
-	fmt.Println(result.Value("c4"))
+	assert.EqualValues(t, table.TimeStamp(now), result.Value("c3"))
+	assert.EqualValues(t, table.TimeStamp(now), result.Value("c4"))
+	assert.EqualValues(t, table.TimeStamp(now), result.Value("c5"))
 
 	// replace insert
 	time.Sleep(1 * time.Second)
@@ -476,8 +489,9 @@ func TestCurrentTimestamp_fillValue(t *testing.T) {
 	assert.Equal(t, nil, err)
 	assert.EqualValues(t, 2, result.Value("c1"))
 	assert.EqualValues(t, 0, result.Value("c2"))
-	fmt.Println(result.Value("c3"))
-	fmt.Println(result.Value("c4"))
+	assert.EqualValues(t, table.TimeStamp(now), result.Value("c3"))
+	assert.EqualValues(t, table.TimeStamp(now), result.Value("c4"))
+	assert.EqualValues(t, nil, result.Value("c5"))
 
 	// replace replace
 	time.Sleep(1 * time.Second)
@@ -488,6 +502,7 @@ func TestCurrentTimestamp_fillValue(t *testing.T) {
 		table.NewColumn("c2", int32(1)),
 		table.NewColumn("c3", table.TimeStamp(now)),
 		table.NewColumn("c4", table.TimeStamp(now)),
+		table.NewColumn("c5", table.TimeStamp(now)),
 	}
 	affectRows, err = cli.Replace(
 		context.TODO(),
@@ -508,8 +523,9 @@ func TestCurrentTimestamp_fillValue(t *testing.T) {
 	assert.Equal(t, nil, err)
 	assert.EqualValues(t, 2, result.Value("c1"))
 	assert.EqualValues(t, 1, result.Value("c2"))
-	fmt.Println(result.Value("c3"))
-	fmt.Println(result.Value("c4"))
+	assert.EqualValues(t, table.TimeStamp(now), result.Value("c3"))
+	assert.EqualValues(t, table.TimeStamp(now), result.Value("c4"))
+	assert.EqualValues(t, table.TimeStamp(now), result.Value("c5"))
 
 	// increment insert
 	time.Sleep(1 * time.Second)
@@ -539,8 +555,6 @@ func TestCurrentTimestamp_fillValue(t *testing.T) {
 	assert.Equal(t, nil, err)
 	assert.EqualValues(t, 3, result.Value("c1"))
 	assert.EqualValues(t, 1, result.Value("c2"))
-	fmt.Println(result.Value("c3"))
-	fmt.Println(result.Value("c4"))
 
 	// increment inc
 	time.Sleep(1 * time.Second)
@@ -569,8 +583,6 @@ func TestCurrentTimestamp_fillValue(t *testing.T) {
 	assert.Equal(t, nil, err)
 	assert.EqualValues(t, 3, result.Value("c1"))
 	assert.EqualValues(t, 2, result.Value("c2"))
-	fmt.Println(result.Value("c3"))
-	fmt.Println(result.Value("c4"))
 
 	// append insert
 	time.Sleep(1 * time.Second)
@@ -579,7 +591,7 @@ func TestCurrentTimestamp_fillValue(t *testing.T) {
 	fmt.Println(now)
 	rowKey = []*table.Column{table.NewColumn("c1", int32(4))}
 	mutateColumns = []*table.Column{
-		table.NewColumn("c5", "abc"),
+		table.NewColumn("c6", "abc"),
 	}
 	res, err = cli.Append(
 		context.TODO(),
@@ -600,9 +612,8 @@ func TestCurrentTimestamp_fillValue(t *testing.T) {
 	assert.Equal(t, nil, err)
 	assert.EqualValues(t, 4, result.Value("c1"))
 	assert.EqualValues(t, 0, result.Value("c2"))
-	assert.EqualValues(t, "abc", result.Value("c5"))
-	fmt.Println(result.Value("c3"))
-	fmt.Println(result.Value("c4"))
+	assert.EqualValues(t, "abc", result.Value("c6"))
+	assert.EqualValues(t, nil, result.Value("c5"))
 
 	// append append
 	time.Sleep(1 * time.Second)
@@ -610,7 +621,7 @@ func TestCurrentTimestamp_fillValue(t *testing.T) {
 	now = time.Now().Local()
 	fmt.Println(now)
 	mutateColumns = []*table.Column{
-		table.NewColumn("c5", "efg"),
+		table.NewColumn("c6", "efg"),
 	}
 	res, err = cli.Append(
 		context.TODO(),
@@ -631,7 +642,5 @@ func TestCurrentTimestamp_fillValue(t *testing.T) {
 	assert.Equal(t, nil, err)
 	assert.EqualValues(t, 4, result.Value("c1"))
 	assert.EqualValues(t, 0, result.Value("c2"))
-	assert.EqualValues(t, "abcefg", result.Value("c5"))
-	fmt.Println(result.Value("c3"))
-	fmt.Println(result.Value("c4"))
+	assert.EqualValues(t, "abcefg", result.Value("c6"))
 }
