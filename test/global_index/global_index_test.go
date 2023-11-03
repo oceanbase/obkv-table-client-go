@@ -24,6 +24,7 @@ import (
 	"github.com/oceanbase/obkv-table-client-go/test"
 	"github.com/stretchr/testify/assert"
 	"testing"
+	"time"
 )
 
 const (
@@ -41,6 +42,8 @@ const (
 	testGlobalTwoLevelPartCreateStat  = "CREATE TABLE IF NOT EXISTS `test_global_two_level_part` (`c1` int NOT NULL, `c2` int NOT NULL, `c3` int NOT NULL, `c4` int NOT NULL, `c5` varchar(20) default NULL,PRIMARY KEY (`c1`, `c2`), KEY `idx` (`c3`,`c4`) GLOBAL partition by hash(`c3`) partitions 8) partition by hash(`c1`) subpartition by hash(`c2`) subpartitions 4 partitions 16;"
 	testGlobalUniqueIndex             = "testGlobalUniqueIndex"
 	testGlobalUniqueIndexCreateStat   = "CREATE TABLE IF NOT EXISTS `testGlobalUniqueIndex` (`C1` int NOT NULL,`C2` int NOT NULL,`C3` int NOT NULL,`C4` int NOT NULL,`C5` varchar(20) default NULL,PRIMARY KEY (`C1`),UNIQUE KEY `idx` (`C3`) GLOBAL partition by hash(`C3`) partitions 8) partition by key(`C1`) partitions 16;"
+	testGlobalIndexWithTTL            = "test_global_index_with_ttl"
+	testGlobalIndexWithTTLCreateStat  = "CREATE TABLE IF NOT EXISTS `test_global_index_with_ttl` (`c1` varchar(20) NOT NULL,`c2` bigint NOT NULL,`c3` bigint DEFAULT NULL,`c4` bigint DEFAULT NULL,`expired_ts` timestamp,PRIMARY KEY (`c1`, `c2`),KEY `idx`(`c1`, `c4`) local,KEY `idx2`(`c3`) global partition by hash(`c3`) partitions 4) TTL(expired_ts + INTERVAL 0 SECOND) partition by key(`c1`) partitions 4;"
 )
 
 func checkIndexTableRow(t *testing.T, indexTableName string, rowKey []*table.Column, mutateColumns []*table.Column, affectedCount int) {
@@ -462,4 +465,70 @@ func TestGlobalUniqueIndexWithConflict(t *testing.T) {
 		mutateColumns3)
 	assert.EqualValues(t, 1, affectRows)
 	assert.Equal(t, nil, err)
+}
+
+func TestGlobalIndexWithTTL(t *testing.T) {
+	tableName := testGlobalIndexWithTTL
+	defer test.DeleteTable(tableName)
+	prefixKey := "test"
+	keyIds := []int64{1, 2}
+	// prepare data
+	for i := 0; i < len(keyIds); i++ {
+		rowKey := []*table.Column{table.NewColumn("c1", prefixKey), table.NewColumn("c2", keyIds[i])}
+		mutateColumns := []*table.Column{table.NewColumn("c3", keyIds[i]+100),
+			table.NewColumn("c3", keyIds[i]+100),
+			table.NewColumn("c4", keyIds[i]+200),
+			table.NewColumn("expired_ts", nil)}
+		affectRows, err := cli.Insert(context.TODO(), tableName, rowKey, mutateColumns)
+		assert.Equal(t, nil, err)
+		assert.EqualValues(t, 1, affectRows)
+	}
+	// query
+	startRowKey := []*table.Column{table.NewColumn("c3", int64(101))}
+	endRowKey := []*table.Column{table.NewColumn("c3", int64(102))}
+	keyRanges := []*table.RangePair{table.NewRangePair(startRowKey, endRowKey)}
+	resSet, err := cli.Query(
+		context.TODO(),
+		tableName,
+		keyRanges,
+		option.WithQuerySelectColumns([]string{"c1", "c2", "c3", "c4", "expired_ts"}),
+		option.WithQueryIndexName("idx2"),
+	)
+	assert.Equal(t, nil, err)
+	res, err := resSet.Next()
+	assert.Equal(t, nil, err)
+	count := 0
+	for ; res != nil && err == nil; res, err = resSet.Next() {
+		count++
+	}
+	assert.EqualValues(t, 2, count)
+
+	// update
+	curTime := time.Now().Local()
+	rowKey := []*table.Column{table.NewColumn("c1", prefixKey), table.NewColumn("c2", keyIds[1])}
+	mutateColumns := []*table.Column{table.NewColumn("expired_ts", table.TimeStamp(curTime))}
+	affectRows, err := cli.Update(context.TODO(), tableName, rowKey, mutateColumns)
+	assert.Equal(t, nil, err)
+	assert.EqualValues(t, 1, affectRows)
+
+	// requery
+	resSet, err = cli.Query(
+		context.TODO(),
+		tableName,
+		keyRanges,
+		option.WithQuerySelectColumns([]string{"c1", "c2", "c3", "c4", "expired_ts"}),
+		option.WithQueryIndexName("idx2"),
+	)
+	assert.Equal(t, nil, err)
+	count = 0
+	res, err = resSet.Next()
+	for ; res != nil && err == nil; res, err = resSet.Next() {
+		count++
+		assert.EqualValues(t, "test", res.Value("c1"))
+		assert.EqualValues(t, 1, res.Value("c2"))
+		assert.EqualValues(t, 101, res.Value("c3"))
+		assert.EqualValues(t, 201, res.Value("c4"))
+		assert.EqualValues(t, nil, res.Value("expired_ts"))
+	}
+	assert.EqualValues(t, 1, count)
 }

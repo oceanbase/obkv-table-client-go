@@ -36,6 +36,7 @@ func setup() {
 	test.CreateTable(testGlobalPrimaryNoPartCreateStat)
 	test.CreateTable(testGlobalTwoLevelPartCreateStat)
 	test.CreateTable(testGlobalUniqueIndexCreateStat)
+	test.CreateTable(testGlobalIndexWithTTLCreateStat)
 	cli = test.CreateClient()
 }
 
@@ -48,6 +49,7 @@ func teardown() {
 	test.DropTable(testGlobalPrimaryNoPart)
 	test.DropTable(testGlobalTwoLevelPart)
 	test.DropTable(testGlobalUniqueIndex)
+	test.DropTable(testGlobalIndexWithTTL)
 	test.CloseDB()
 }
 
