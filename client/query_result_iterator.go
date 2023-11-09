@@ -24,6 +24,7 @@ import (
 	"github.com/pkg/errors"
 
 	"github.com/oceanbase/obkv-table-client-go/protocol"
+	"github.com/oceanbase/obkv-table-client-go/route"
 )
 
 type QueryResultIterator interface {
@@ -40,7 +41,7 @@ type ObQueryResultIterator struct {
 	tableQuery            *protocol.ObTableQuery
 	cachedPropertiesRows  [][]*protocol.ObObject
 	cachedPropertiesNames []string
-	targetParts           []*ObTableParam
+	targetParts           []*route.ObTableParam
 	entityType            protocol.ObTableEntityType
 	readConsistency       protocol.ObTableConsistencyLevel
 	tableName             string
@@ -54,7 +55,7 @@ type ObQueryResultIterator struct {
 func newObQueryResultIteratorWithParams(ctx context.Context,
 	cli *obClient,
 	tableQuery *protocol.ObTableQuery,
-	targetParts []*ObTableParam,
+	targetParts []*route.ObTableParam,
 	entityType protocol.ObTableEntityType,
 	tableName string) *ObQueryResultIterator {
 	return &ObQueryResultIterator{
@@ -187,8 +188,8 @@ func (q *ObQueryResultIterator) fetchNext(hasPrev bool) error {
 		// prepare request
 		queryRequest := protocol.NewObTableQueryRequestWithParams(
 			q.tableName,
-			nextParam.tableId,
-			nextParam.partitionId,
+			nextParam.TableId(),
+			nextParam.PartitionId(),
 			q.entityType,
 			q.tableQuery,
 		)
@@ -205,7 +206,7 @@ func (q *ObQueryResultIterator) fetchNext(hasPrev bool) error {
 		}
 
 		// execute
-		err = nextParam.table.execute(q.ctx, asyncQueryRequest, result)
+		err = q.cli.executeInternal(q.ctx, q.tableName, nextParam.Table(), asyncQueryRequest, result)
 		if err != nil {
 			return errors.WithMessagef(err, "execute request, request:%s", queryRequest.String())
 		}

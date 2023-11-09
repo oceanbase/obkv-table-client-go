@@ -43,7 +43,7 @@ const (
 	obTableApiExecuteQueryStr      string = "ob table execute query"
 	obTableApiQueryAndMuteStr      string = "ob table query and mute"
 	obTableApiExecuteAsyncQueryStr string = "ob table execute async query"
-	obTableApiMoveStr              string = "ob table reroute"
+	obTableApiMoveStr              string = "ob table route"
 	obTableApiErrorPacketStr       string = "ob table error"
 )
 

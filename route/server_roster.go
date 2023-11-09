@@ -15,55 +15,40 @@
  * #L%
  */
 
-package client
+package route
 
 import (
 	"math/rand"
-	"strconv"
-	"sync/atomic"
-
-	"github.com/oceanbase/obkv-table-client-go/route"
 )
 
-type obServerRoster struct {
-	maxPriority atomic.Int32
-	roster      []*route.ObServerAddr
+type ObServerRoster struct {
+	servers []*ObServerAddr
 }
 
-func (r *obServerRoster) MaxPriority() int32 {
-	return r.maxPriority.Load()
+func (r *ObServerRoster) GetServer() *ObServerAddr {
+	idx := rand.Intn(len(r.servers))
+	return r.servers[idx]
 }
 
-func (r *obServerRoster) Reset(servers []*route.ObServerAddr) {
-	r.maxPriority.Store(0)
-	r.roster = servers
+func (r *ObServerRoster) Size() int {
+	return len(r.servers)
 }
 
-func (r *obServerRoster) GetServer() *route.ObServerAddr {
-	idx := rand.Intn(len(r.roster))
-	return r.roster[idx]
-}
-
-func (r *obServerRoster) Size() int {
-	return len(r.roster)
-}
-
-func (r *obServerRoster) String() string {
+func (r *ObServerRoster) String() string {
 	var rostersStr string
 	rostersStr = rostersStr + "["
-	for i := 0; i < len(r.roster); i++ {
+	for i := 0; i < len(r.servers); i++ {
 		if i > 0 {
 			rostersStr += ", "
 		}
-		if r.roster[i] != nil {
-			rostersStr += r.roster[i].String()
+		if r.servers[i] != nil {
+			rostersStr += r.servers[i].String()
 		} else {
 			rostersStr += "nil"
 		}
 	}
 	rostersStr += "]"
-	return "obServerRoster{" +
-		"maxPriority:" + strconv.Itoa(int(r.maxPriority.Load())) + ", " +
+	return "ObServerRoster{" +
 		"roster:" + rostersStr +
 		"}"
 }

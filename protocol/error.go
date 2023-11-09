@@ -24,17 +24,12 @@ import (
 )
 
 type ObProtocolError struct {
-	host         string
-	port         int
-	code         error2.ObErrorCode
-	trace        string
-	tableName    string
-	message      string
-	moveResponse *ObTableMoveResponse
-}
-
-func (e *ObProtocolError) MoveResponse() *ObTableMoveResponse {
-	return e.moveResponse
+	host      string
+	port      int
+	code      error2.ObErrorCode
+	trace     string
+	tableName string
+	message   string
 }
 
 // NewProtocolError
@@ -45,8 +40,7 @@ func NewProtocolError(
 	code error2.ObErrorCode,
 	sequence uint64,
 	uniqueId uint64,
-	tableName string,
-	moveResponse *ObTableMoveResponse) *ObProtocolError {
+	tableName string) *ObProtocolError {
 
 	trace := fmt.Sprintf("Y%X-%016X", uniqueId, sequence)
 	server := fmt.Sprintf("%s:%d", host, port)
@@ -313,7 +307,7 @@ func NewProtocolError(
 			tableName,
 		)
 	}
-	return &ObProtocolError{host, port, code, trace, tableName, msg, moveResponse}
+	return &ObProtocolError{host, port, code, trace, tableName, msg}
 }
 
 func (e *ObProtocolError) Error() string {

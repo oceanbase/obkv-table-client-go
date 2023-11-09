@@ -123,49 +123,6 @@ func InitSql(obVersion float32) {
 	proxySqlGuard.Unlock()
 }
 
-// GetObVersionFromRemoteBySysUA get OceanBase cluster version by sysUA
-// called when client init
-func GetObVersionFromRemoteBySysUA(addr *ObServerAddr, sysUA *ObUserAuth) (float32, error) {
-	db, err := NewDB(
-		sysUA.userName,
-		sysUA.password,
-		addr.ip,
-		strconv.Itoa(addr.sqlPort),
-		OceanBaseDatabase,
-	)
-	if err != nil {
-		return 0.0, errors.WithMessagef(err, "new db, sysUA:%s, addr:%s", sysUA.String(), addr.String())
-	}
-	defer func() {
-		_ = db.Close()
-	}()
-	return GetObVersionFromRemote(db)
-}
-
-// GetObVersionFromRemoteByIpPort get OceanBase cluster version by sql
-// called when client init
-func GetObVersionFromRemoteByIpPort(ip string, port int, userName string, password string) (float32, error) {
-	db, err := NewDB(
-		userName,
-		password,
-		ip,
-		strconv.Itoa(port),
-		OceanBaseDatabase,
-	)
-	if err != nil {
-		return 0.0, errors.WithMessagef(err, "new db, ip:%s, port:%d, userName:%s, password:%s", ip, port, userName, password)
-	}
-	defer func() {
-		_ = db.Close()
-	}()
-	return GetObVersionFromRemote(db)
-}
-
-// GetObVersionFromOdp get OceanBase cluster version by odp
-func GetObVersionFromOdp(ip string, port int, userName string, password string) (float32, error) {
-	return 0, nil
-}
-
 // GetObVersionFromRemote get OceanBase cluster version by sql
 func GetObVersionFromRemote(db *DB) (float32, error) {
 	// 1. Prepare get observer version sql statement.
@@ -275,7 +232,7 @@ func GetTableEntryFromRemote(
 		return nil, errors.WithMessagef(err, "get table entry location, table entry:%s", entry.String())
 	}
 	entry.partLocationEntry = partLocationEntry
-	entry.refreshTimeMills = time.Time{}.Unix()
+	entry.refreshTime = time.Now()
 	return entry, nil
 }
 
@@ -325,9 +282,6 @@ func getTableEntryFromResultSet(rows *Rows, tableName string) (*ObTableEntry, er
 			obServerRole(role),
 			protocol.ObReplicaType(replicaType),
 		)
-		if !replica.isValid() {
-			return nil, errors.Errorf("replica is invalid, replaca:%s", replica.String())
-		}
 		tableLocation.replicaLocations = append(tableLocation.replicaLocations, replica)
 	}
 	if isEmpty {

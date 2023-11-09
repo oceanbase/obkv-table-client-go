@@ -25,7 +25,45 @@ import (
 
 func TestClientConfig_String(t *testing.T) {
 	cfg := &ClientConfig{}
-	assert.Equal(t, "ClientConfig{ConnPoolMaxConnSize:0, ConnConnectTimeOut:0s, ConnLoginTimeout:0s, OperationTimeOut:0s, LogLevel:0, TableEntryRefreshLockTimeout:0s, TableEntryRefreshTryTimes:0, TableEntryRefreshIntervalBase:0s, TableEntryRefreshIntervalCeiling:0s, MetadataRefreshInterval:0s, MetadataRefreshLockTimeout:0s, RsListLocalFileLocation:, RsListHttpGetTimeout:0s, RsListHttpGetRetryTimes:0, RsListHttpGetRetryInterval:0s, EnableRerouting:false}", cfg.String())
+	assert.Equal(t, "ClientConfig{"+
+		"ConnPoolMaxConnSize:0, "+
+		"ConnConnectTimeOut:0s, "+
+		"ConnLoginTimeout:0s, "+
+		"OperationTimeOut:0s, "+
+		"LogLevel:0, "+
+		"TableEntryRefreshLockTimeout:0s, "+
+		"TableEntryRefreshTryTimes:0, "+
+		"TableEntryRefreshIntervalBase:0s, "+
+		"TableEntryRefreshIntervalCeiling:0s, "+
+		"MetadataRefreshInterval:0s, "+
+		"MetadataRefreshLockTimeout:0s, "+
+		"RsListLocalFileLocation:, "+
+		"RsListHttpGetTimeout:0s, "+
+		"RsListHttpGetRetryTimes:0, "+
+		"RsListHttpGetRetryInterval:0s, "+
+		"EnableRerouting:false, "+
+		"MaxConnectionAge:0s, "+
+		"EnableSLBLoadBalance:false"+
+		"}", cfg.String())
 	cfg = NewDefaultClientConfig()
-	assert.Equal(t, "ClientConfig{ConnPoolMaxConnSize:1, ConnConnectTimeOut:1s, ConnLoginTimeout:1s, OperationTimeOut:10s, LogLevel:1, TableEntryRefreshLockTimeout:4s, TableEntryRefreshTryTimes:3, TableEntryRefreshIntervalBase:100ms, TableEntryRefreshIntervalCeiling:1.6s, MetadataRefreshInterval:1m0s, MetadataRefreshLockTimeout:8s, RsListLocalFileLocation:, RsListHttpGetTimeout:1s, RsListHttpGetRetryTimes:3, RsListHttpGetRetryInterval:100ms, EnableRerouting:false}", cfg.String())
+	assert.Equal(t, "ClientConfig{"+
+		"ConnPoolMaxConnSize:1, "+
+		"ConnConnectTimeOut:1s, "+
+		"ConnLoginTimeout:1s, "+
+		"OperationTimeOut:10s, "+
+		"LogLevel:1, "+
+		"TableEntryRefreshLockTimeout:4s, "+
+		"TableEntryRefreshTryTimes:3, "+
+		"TableEntryRefreshIntervalBase:100ms, "+
+		"TableEntryRefreshIntervalCeiling:1.6s, "+
+		"MetadataRefreshInterval:1m0s, "+
+		"MetadataRefreshLockTimeout:8s, "+
+		"RsListLocalFileLocation:, "+
+		"RsListHttpGetTimeout:1s, "+
+		"RsListHttpGetRetryTimes:3, "+
+		"RsListHttpGetRetryInterval:100ms, "+
+		"EnableRerouting:true, "+
+		"MaxConnectionAge:0s, "+
+		"EnableSLBLoadBalance:false"+
+		"}", cfg.String())
 }

@@ -26,6 +26,7 @@ import (
 
 const (
 	RequireReroutingFlag        = 1 << 9
+	RpcBadRoutingFlag           = RequireReroutingFlag
 	RpcHeaderDefaultFlag uint16 = 7
 
 	defaultOperationTimeout = 10 * 1000 * time.Millisecond

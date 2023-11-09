@@ -15,7 +15,7 @@
  * #L%
  */
 
-package client
+package route
 
 import (
 	"testing"

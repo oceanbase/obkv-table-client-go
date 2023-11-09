@@ -19,18 +19,21 @@ package route
 
 import (
 	"strconv"
+	"time"
 
 	"github.com/pkg/errors"
 
 	"github.com/oceanbase/obkv-table-client-go/util"
 )
 
+const refreshInterval = 5 // 5 second
+
 // ObTableEntry represents all the routing information of a table.
 type ObTableEntry struct {
 	tableId           uint64
 	partNum           int
 	replicaNum        int
-	refreshTimeMills  int64                // last refresh time
+	refreshTime       time.Time            // last refresh time
 	tableEntryKey     *ObTableEntryKey     // clusterName/tenantName/databaseName/tableName
 	partitionInfo     *obPartitionInfo     // partition key meta info
 	tableLocation     *ObTableLocation     // location of table, all replica information of table
@@ -39,10 +42,6 @@ type ObTableEntry struct {
 
 func (e *ObTableEntry) SetPartLocationEntry(partLocationEntry *ObPartLocationEntry) {
 	e.partLocationEntry = partLocationEntry
-}
-
-func (e *ObTableEntry) RefreshTimeMills() int64 {
-	return e.refreshTimeMills
 }
 
 func (e *ObTableEntry) TableLocation() *ObTableLocation {
@@ -59,6 +58,10 @@ func (e *ObTableEntry) PartitionInfo() *obPartitionInfo {
 
 func (e *ObTableEntry) IsPartitionTable() bool {
 	return e.partNum > 1
+}
+
+func (e *ObTableEntry) NeedRefresh() bool {
+	return time.Now().Sub(e.refreshTime).Seconds() > refreshInterval
 }
 
 func (e *ObTableEntry) String() string {
@@ -88,9 +91,9 @@ func (e *ObTableEntry) String() string {
 
 	return "ObTableEntry{" +
 		"tableId:" + strconv.Itoa(int(e.tableId)) + ", " +
-		"partNum:" + strconv.Itoa(int(e.partNum)) + ", " +
-		"replicaNum:" + strconv.Itoa(int(e.replicaNum)) + ", " +
-		"refreshTimeMills:" + strconv.Itoa(int(e.refreshTimeMills)) + ", " +
+		"partNum:" + strconv.Itoa(e.partNum) + ", " +
+		"replicaNum:" + strconv.Itoa(e.replicaNum) + ", " +
+		"refreshTime:" + e.refreshTime.String() + ", " +
 		"tableEntryKey:" + tableEntryKeyStr + ", " +
 		"partitionInfo:" + partitionInfoStr + ", " +
 		"tableLocation:" + tableLocationStr +

@@ -15,7 +15,7 @@
  * #L%
  */
 
-package client
+package route
 
 import (
 	"testing"
@@ -35,13 +35,13 @@ const (
 
 func TestObTable_init(t *testing.T) {
 	tb := NewObTable(testIp, testPort, testTenantName, testUserName, testPassword, testDatabase)
-	err := tb.init(1, time.Duration(1000)*time.Millisecond, 0)
+	err := tb.Init(1, time.Duration(1000)*time.Millisecond, 0)
 	assert.NotEqual(t, nil, err)
 }
 
 func TestObTable_close(t *testing.T) {
 	tb := NewObTable(testIp, testPort, testTenantName, testUserName, testPassword, testDatabase)
-	tb.close()
+	tb.Close()
 	assert.EqualValues(t, true, tb.isClosed)
 }
 

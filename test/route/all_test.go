@@ -18,19 +18,43 @@
 package route
 
 import (
+	"os"
 	"testing"
+
+	"github.com/oceanbase/obkv-table-client-go/client"
+	"github.com/oceanbase/obkv-table-client-go/test"
 )
 
-func TestObOcpModel_GetServerAddressRandomly(t *testing.T) {
-	server1 := NewObServerAddr("127.0.0.1", 1, 1)
-	server2 := NewObServerAddr("127.0.0.1", 1, 2)
-	server3 := NewObServerAddr("127.0.0.1", 1, 3)
-	server4 := NewObServerAddr("127.0.0.1", 1, 4)
-	server5 := NewObServerAddr("127.0.0.1", 1, 5)
-	servers := []*ObServerAddr{server1, server2, server3, server4, server5}
-	ocp := newOcpModel(servers, 1)
-	for i := 0; i < 10; i++ {
-		svr := ocp.GetServerAddressRandomly()
-		println(svr.String())
-	}
+var cli client.Client
+
+var moveCli client.Client
+
+func setup() {
+	cli = test.CreateClient()
+
+	moveCli = test.CreateMoveClient()
+
+	test.CreateDB()
+	test.EnableRerouting()
+
+	test.CreateTable(testInt32RerouteCreateStatement)
+	test.CreateTable(testInt32RouteCreateStatement)
+}
+
+func teardown() {
+	cli.Close()
+
+	moveCli.Close()
+
+	test.DropTable(testInt32RerouteTableName)
+	test.DropTable(testInt32RouteTableName)
+
+	test.CloseDB()
+}
+
+func TestMain(m *testing.M) {
+	setup()
+	code := m.Run()
+	teardown()
+	os.Exit(code)
 }

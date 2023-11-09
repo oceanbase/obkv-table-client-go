@@ -23,6 +23,7 @@ import (
 	"sync"
 
 	"github.com/oceanbase/obkv-table-client-go/client/option"
+	"github.com/oceanbase/obkv-table-client-go/route"
 
 	"github.com/pkg/errors"
 
@@ -211,16 +212,16 @@ func (b *obBatchExecutor) constructPartOpMap(ctx context.Context) (map[uint64]*o
 		for i, v := range rowKeyValue {
 			rowKey = append(rowKey, table.NewColumn(b.rowKeyName[i], v))
 		}
-		tableParam, err := b.cli.getTableParam(ctx, b.tableName, rowKey, false)
+		tableParam, err := b.cli.routeInfo.GetTableParam(ctx, b.tableName, rowKey, b.cli.odpTable)
 		if err != nil {
 			return nil, errors.WithMessagef(err, "get table param, tableName:%s, rowKeyValue:%s",
 				b.tableName, util.InterfacesToString(rowKeyValue))
 		}
 		singleOp := newSingleOp(i, op)
-		partOp, exist := partOpMap[tableParam.partitionId]
+		partOp, exist := partOpMap[tableParam.PartitionId()]
 		if !exist {
 			partOp = newPartOp(tableParam)
-			partOpMap[tableParam.partitionId] = partOp
+			partOpMap[tableParam.PartitionId()] = partOp
 		}
 		partOp.addOperation(singleOp)
 	}
@@ -244,8 +245,8 @@ func (b *obBatchExecutor) partitionExecute(
 	// 1.2 Construct batch operation request
 	request := protocol.NewObTableBatchOperationRequestWithParams(
 		b.tableName,
-		partOp.tableParam.tableId,
-		partOp.tableParam.partitionId,
+		partOp.tableParam.TableId(),
+		partOp.tableParam.PartitionId(),
 		batchOp,
 		b.cli.config.OperationTimeOut,
 		b.cli.GetRpcFlag(),
@@ -254,7 +255,7 @@ func (b *obBatchExecutor) partitionExecute(
 
 	// 2. Execute
 	partRes := protocol.NewObTableBatchOperationResponse()
-	err := partOp.tableParam.table.execute(ctx, request, partRes)
+	err := b.cli.executeInternal(ctx, b.tableName, partOp.tableParam.Table(), request, partRes)
 	if err != nil {
 		return errors.WithMessagef(err, "table execute, request:%s", request.String())
 	}
@@ -347,11 +348,11 @@ func operationResponse2SingleResult(res *protocol.ObTableOperationResponse) Sing
 }
 
 type obPartOp struct {
-	tableParam *ObTableParam
+	tableParam *route.ObTableParam
 	ops        []*obSingleOp
 }
 
-func newPartOp(tableParam *ObTableParam) *obPartOp {
+func newPartOp(tableParam *route.ObTableParam) *obPartOp {
 	ops := make([]*obSingleOp, 0)
 	return &obPartOp{tableParam, ops}
 }
