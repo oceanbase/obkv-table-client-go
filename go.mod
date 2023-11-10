@@ -4,7 +4,11 @@ go 1.19
 
 require (
 	github.com/go-sql-driver/mysql v1.7.0
+	github.com/golang/snappy v0.0.4
+	github.com/klauspost/compress v1.17.2
 	github.com/naoina/toml v0.1.1
+	github.com/pierrec/lz4 v2.6.1+incompatible
+	github.com/pierrec/lz4/v4 v4.1.18
 	github.com/pkg/errors v0.9.1
 	github.com/scylladb/go-set v1.0.2
 	github.com/stretchr/testify v1.8.0
@@ -13,6 +17,7 @@ require (
 
 require (
 	github.com/davecgh/go-spew v1.1.1 // indirect
+	github.com/frankban/quicktest v1.14.6 // indirect
 	github.com/kylelemons/godebug v1.1.0 // indirect
 	github.com/naoina/go-stringutil v0.1.0 // indirect
 	github.com/pmezard/go-difflib v1.0.0 // indirect

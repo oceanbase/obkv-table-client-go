@@ -481,6 +481,21 @@ func (c *Connection) decodePacket(contentBuf []byte, response protocol.ObPayload
 	rpcHeader := rpcHeaderPool.Get().(*protocol.ObRpcHeader)
 	rpcHeader.Decode(contentBuffer)
 
+	// decompress if need
+	if rpcHeader.CompressType() != protocol.ObCompressTypeInvalid {
+		contentLen := contentBuffer.Len()
+		decompressor, err := getDecompressor(rpcHeader.CompressType())
+		if err != nil {
+			return errors.New("fail to get decompressor")
+		}
+		decompressBuffer, err := decompressor.Decompress(contentBuffer, rpcHeader.OriginalLen())
+		if err != nil {
+			return err
+		}
+		contentBuffer = decompressBuffer
+		log.Info(fmt.Sprintf("compressType: %s, compressLen: %d, originLen: %d\n",
+			convertCompressTypeToString(rpcHeader.CompressType()), contentLen, rpcHeader.OriginalLen()))
+	}
 	// decode rpc response code
 	rpcResponseCode := protocol.NewObRpcResponseCode()
 	rpcResponseCode.Decode(contentBuffer)
