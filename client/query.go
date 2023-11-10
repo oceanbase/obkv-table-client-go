@@ -197,7 +197,7 @@ func (q *obQueryExecutor) init(ctx context.Context) (*ObQueryResultIterator, err
 
 	// construct index table name if do index scan
 	tableName := q.tableName
-	if "" != q.tableQuery.IndexName() {
+	if q.cli.odpTable == nil && "" != q.tableQuery.IndexName() {
 		indexTableName, err := q.cli.routeInfo.ConstructIndexTableName(ctx, tableName, q.tableQuery.IndexName())
 		if err != nil {
 			return nil, errors.WithMessage(err, "construct index table name")
