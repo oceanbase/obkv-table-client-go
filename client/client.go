@@ -19,6 +19,7 @@ package client
 
 import (
 	"context"
+
 	"github.com/pkg/errors"
 
 	"github.com/oceanbase/obkv-table-client-go/client/option"
@@ -174,6 +175,10 @@ type Client interface {
 	// InsertOrUpdate insert or update a record by rowKey.
 	// insert if the primary key does not exist, update if it does.
 	InsertOrUpdate(ctx context.Context, tableName string, rowKey []*table.Column, mutateColumns []*table.Column, opts ...option.ObOperationOption) (int64, error)
+	// InsertOrUpdateWithResult insert or update a record by rowKey.
+	// insert if the primary key does not exist, update if it does.
+	// IsInsertOrUpdateDoInsert() in SingleResult tells whether the insert operation has been performed.
+	InsertOrUpdateWithResult(ctx context.Context, tableName string, rowKey []*table.Column, mutateColumns []*table.Column, opts ...option.ObOperationOption) (SingleResult, error)
 	// Replace a record by rowKey.
 	Replace(ctx context.Context, tableName string, rowKey []*table.Column, mutateColumns []*table.Column, opts ...option.ObOperationOption) (int64, error)
 	// Increment a record by rowKey.

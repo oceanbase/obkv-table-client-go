@@ -24,6 +24,11 @@ import (
 	"github.com/oceanbase/obkv-table-client-go/util"
 )
 
+const (
+	IsInsertUpDoInsertMask = 1 << 0
+	IsInsertUpDoPutMask    = 1 << 1
+)
+
 type ObTableOperationResponse struct {
 	ObUniVersionHeader
 	ObPayloadBase
@@ -31,6 +36,7 @@ type ObTableOperationResponse struct {
 	operationType ObTableOperationType
 	entity        *ObTableEntity
 	affectedRows  int64
+	flags         uint64
 }
 
 func NewObTableOperationResponse() *ObTableOperationResponse {
@@ -51,6 +57,7 @@ func NewObTableOperationResponse() *ObTableOperationResponse {
 		operationType: ObTableOperationGet,
 		entity:        NewObTableEntity(),
 		affectedRows:  0,
+		flags:         0,
 	}
 }
 
@@ -86,6 +93,10 @@ func (r *ObTableOperationResponse) SetAffectedRows(affectedRows int64) {
 	r.affectedRows = affectedRows
 }
 
+func (r *ObTableOperationResponse) Flags() uint64 {
+	return r.flags
+}
+
 func (r *ObTableOperationResponse) PCode() ObTablePacketCode {
 	return ObTableApiExecute
 }
@@ -98,7 +109,8 @@ func (r *ObTableOperationResponse) PayloadContentLen() int {
 	totalLen := r.header.PayloadLen() +
 		1 +
 		r.entity.PayloadLen() +
-		util.EncodedLengthByVi64(r.affectedRows)
+		util.EncodedLengthByVi64(r.affectedRows) +
+		util.EncodedLengthByVi64(int64(r.flags))
 
 	r.ObUniVersionHeader.SetContentLength(totalLen)
 	return r.ObUniVersionHeader.ContentLength()
@@ -122,6 +134,7 @@ func (r *ObTableOperationResponse) Encode(buffer *bytes.Buffer) {
 	r.entity.Encode(buffer)
 
 	util.EncodeVi64(buffer, r.affectedRows)
+	util.EncodeVi64(buffer, int64(r.flags))
 }
 
 func (r *ObTableOperationResponse) Decode(buffer *bytes.Buffer) {
@@ -134,4 +147,6 @@ func (r *ObTableOperationResponse) Decode(buffer *bytes.Buffer) {
 	r.entity.Decode(buffer)
 
 	r.affectedRows = util.DecodeVi64(buffer)
+
+	r.flags = uint64(util.DecodeVi64(buffer))
 }

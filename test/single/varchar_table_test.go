@@ -19,8 +19,9 @@ package single
 
 import (
 	"context"
-	"github.com/oceanbase/obkv-table-client-go/client/option"
 	"testing"
+
+	"github.com/oceanbase/obkv-table-client-go/client/option"
 
 	"github.com/stretchr/testify/assert"
 
@@ -234,6 +235,48 @@ func TestGetVarchar(t *testing.T) {
 	assert.Equal(t, nil, err)
 	assert.EqualValues(t, nil, result.Value("c1"))
 	assert.EqualValues(t, nil, result.Value("c2"))
+}
+
+func TestIncrementVarchar(t *testing.T) {
+	tableName := testVarcharTableName
+	defer test.DeleteTable(tableName)
+
+	rowKey := []*table.Column{table.NewColumn("c1", "1")}
+	mutateColumns := []*table.Column{table.NewColumn("c2", "1")}
+	affectRows, err := cli.Insert(
+		context.TODO(),
+		tableName,
+		rowKey,
+		mutateColumns,
+	)
+	assert.Equal(t, nil, err)
+	assert.EqualValues(t, 1, affectRows)
+
+	// Increment
+	incrementColumns := []*table.Column{table.NewColumn("c2", "2")}
+	res, err := cli.Increment(
+		context.TODO(),
+		tableName,
+		rowKey,
+		incrementColumns,
+		option.WithReturnRowKey(true),
+		option.WithReturnAffectedEntity(true), // return affected entity
+	)
+	assert.Equal(t, nil, err)
+	assert.EqualValues(t, 1, res.AffectedRows())
+	assert.EqualValues(t, "3", res.Value("c2"))
+	assert.EqualValues(t, "1", res.RowKey()[0])
+
+	selectColumns := []string{"c1", "c2"}
+	result, err := cli.Get(
+		context.TODO(),
+		tableName,
+		rowKey,
+		selectColumns,
+	)
+	assert.Equal(t, nil, err)
+	assert.EqualValues(t, "1", result.Value("c1"))
+	assert.EqualValues(t, "3", result.Value("c2"))
 }
 
 func TestAppendVarchar(t *testing.T) {

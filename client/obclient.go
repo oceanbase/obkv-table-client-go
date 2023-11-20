@@ -20,11 +20,13 @@ package client
 import (
 	"context"
 	"fmt"
-	"github.com/oceanbase/obkv-table-client-go/log"
-	"golang.org/x/sys/unix"
 	"runtime"
 	"strings"
 	"time"
+
+	"golang.org/x/sys/unix"
+
+	"github.com/oceanbase/obkv-table-client-go/log"
 
 	"github.com/pkg/errors"
 
@@ -360,6 +362,27 @@ func (c *obClient) InsertOrUpdate(
 	return res.AffectedRows(), nil
 }
 
+func (c *obClient) InsertOrUpdateWithResult(
+	ctx context.Context,
+	tableName string,
+	rowKey []*table.Column,
+	mutateColumns []*table.Column,
+	opts ...option.ObOperationOption) (SingleResult, error) {
+	operationOptions := c.getOperationOptions(opts...)
+	res, err := c.executeWithRetry(
+		ctx,
+		tableName,
+		protocol.ObTableOperationInsertOrUpdate,
+		rowKey,
+		mutateColumns,
+		operationOptions)
+	if err != nil {
+		return nil, errors.WithMessagef(err, "execute insert or update, tableName:%s, rowKey:%s, mutateColumns:%s",
+			tableName, table.ColumnsToString(rowKey), table.ColumnsToString(mutateColumns))
+	}
+	return newObSingleResult(res.AffectedRows(), nil, res.Flags()), nil
+}
+
 func (c *obClient) Replace(
 	ctx context.Context,
 	tableName string,
@@ -400,7 +423,7 @@ func (c *obClient) Increment(
 		if err != nil {
 			return nil, err
 		}
-		return newObSingleResult(res.AffectedRows(), res.Entity()), nil
+		return newObSingleResult(res.AffectedRows(), res.Entity(), res.Flags()), nil
 	} else {
 		res, err := c.executeWithFilterAndRetry(
 			ctx,
@@ -412,7 +435,7 @@ func (c *obClient) Increment(
 		if err != nil {
 			return nil, err
 		}
-		return newObSingleResult(res.AffectedRows(), nil), nil
+		return newObSingleResult(res.AffectedRows(), nil, 0), nil
 	}
 }
 
@@ -435,7 +458,7 @@ func (c *obClient) Append(
 		if err != nil {
 			return nil, err
 		}
-		return newObSingleResult(res.AffectedRows(), res.Entity()), nil
+		return newObSingleResult(res.AffectedRows(), res.Entity(), res.Flags()), nil
 	} else {
 		res, err := c.executeWithFilterAndRetry(
 			ctx,
@@ -447,7 +470,7 @@ func (c *obClient) Append(
 		if err != nil {
 			return nil, err
 		}
-		return newObSingleResult(res.AffectedRows(), nil), nil
+		return newObSingleResult(res.AffectedRows(), nil, 0), nil
 	}
 }
 
@@ -507,7 +530,7 @@ func (c *obClient) Get(
 	if err != nil {
 		return nil, err
 	}
-	return newObSingleResult(res.AffectedRows(), res.Entity()), nil
+	return newObSingleResult(res.AffectedRows(), res.Entity(), res.Flags()), nil
 }
 
 func (c *obClient) Query(ctx context.Context, tableName string, rangePairs []*table.RangePair, opts ...option.ObQueryOption) (QueryResultIterator, error) {
