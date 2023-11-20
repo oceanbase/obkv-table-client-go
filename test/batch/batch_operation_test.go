@@ -68,6 +68,31 @@ func TestBatch_MultiInsert(t *testing.T) {
 	}
 }
 
+func TestBatch_mixed(t *testing.T) {
+	tableName := batchOpTableTableName
+	defer test.DeleteTable(tableName)
+
+	batchExecutor := cli.NewBatchExecutor(tableName)
+
+	rowKey := []*table.Column{table.NewColumn("c1", int64(1))}
+	mutateColumns := []*table.Column{table.NewColumn("c2", int64(1))}
+	err := batchExecutor.AddInsertOp(rowKey, mutateColumns)
+	assert.Equal(t, nil, err)
+	err = batchExecutor.AddGetOp(rowKey, []string{"c1", "c2"})
+	assert.Equal(t, nil, err)
+
+	res, err := batchExecutor.Execute(context.TODO())
+	assert.Equal(t, nil, err)
+
+	assert.EqualValues(t, 2, res.Size())
+	for i := 0; i < res.Size(); i++ {
+		assert.NotEqual(t, nil, res.GetResults()[i])
+		if i == 1 {
+			assert.EqualValues(t, 1, res.GetResults()[i].Value("c1"))
+		}
+	}
+}
+
 func TestBatch_MultiInsert_Fail(t *testing.T) {
 	tableName := batchOpTableTableName
 	defer test.DeleteTable(tableName)

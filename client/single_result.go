@@ -34,15 +34,24 @@ type SingleResult interface {
 	Values() map[string]interface{}
 	// RowKey get affected rowkey, only work in Increment and Append operation.
 	RowKey() []interface{}
+	// IsInsertOrUpdateDoInsert InsertOrUpdate impl maybe do insert or do update,
+	// IsInsertOrUpdateDoInsert() to tell you which operation has done.
+	IsInsertOrUpdateDoInsert() bool
+	// IsInsertOrUpdateDoUpdate InsertOrUpdate impl maybe do insert or do update,
+	// IsInsertOrUpdateDoUpdate() to tell you which operation has done.
+	IsInsertOrUpdateDoUpdate() bool
+	// IsInsertOrUpdateDoPut InsertOrUpdate impl maybe do put when all columns are filled.
+	IsInsertOrUpdateDoPut() bool
 }
 
-func newObSingleResult(affectedRows int64, affectedEntity *protocol.ObTableEntity) *obSingleResult {
-	return &obSingleResult{affectedRows, affectedEntity}
+func newObSingleResult(affectedRows int64, affectedEntity *protocol.ObTableEntity, flags uint64) *obSingleResult {
+	return &obSingleResult{affectedRows, affectedEntity, flags}
 }
 
 type obSingleResult struct {
 	affectedRows   int64
 	affectedEntity *protocol.ObTableEntity
+	flags          uint64
 }
 
 func (r *obSingleResult) IsEmptySet() bool {
@@ -104,4 +113,16 @@ func (r *obSingleResult) RowKey() []interface{} {
 		}
 	}
 	return res
+}
+
+func (r *obSingleResult) IsInsertOrUpdateDoInsert() bool {
+	return r.flags&protocol.IsInsertUpDoInsertMask != 0
+}
+
+func (r *obSingleResult) IsInsertOrUpdateDoUpdate() bool {
+	return !r.IsInsertOrUpdateDoInsert() && !r.IsInsertOrUpdateDoPut()
+}
+
+func (r *obSingleResult) IsInsertOrUpdateDoPut() bool {
+	return r.flags&protocol.IsInsertUpDoPutMask != 0
 }

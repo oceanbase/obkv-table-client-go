@@ -324,6 +324,27 @@ func (c *obClient) InsertOrUpdate(
 	return res.AffectedRows(), nil
 }
 
+func (c *obClient) InsertOrUpdateWithResult(
+	ctx context.Context,
+	tableName string,
+	rowKey []*table.Column,
+	mutateColumns []*table.Column,
+	opts ...option.ObOperationOption) (SingleResult, error) {
+	operationOptions := c.getOperationOptions(opts...)
+	res, err := c.execute(
+		ctx,
+		tableName,
+		protocol.ObTableOperationInsertOrUpdate,
+		rowKey,
+		mutateColumns,
+		operationOptions)
+	if err != nil {
+		return nil, errors.WithMessagef(err, "execute insert or update, tableName:%s, rowKey:%s, mutateColumns:%s",
+			tableName, table.ColumnsToString(rowKey), table.ColumnsToString(mutateColumns))
+	}
+	return newObSingleResult(res.AffectedRows(), nil, res.Flags()), nil
+}
+
 func (c *obClient) Replace(
 	ctx context.Context,
 	tableName string,
@@ -364,7 +385,7 @@ func (c *obClient) Increment(
 			return nil, errors.WithMessagef(err, "execute increment, tableName:%s, rowKey:%s, mutateColumns:%s",
 				tableName, table.ColumnsToString(rowKey), table.ColumnsToString(mutateColumns))
 		}
-		return newObSingleResult(res.AffectedRows(), res.Entity()), nil
+		return newObSingleResult(res.AffectedRows(), res.Entity(), res.Flags()), nil
 	} else {
 		res, err := c.executeWithFilter(
 			ctx,
@@ -377,7 +398,7 @@ func (c *obClient) Increment(
 			return nil, errors.WithMessagef(err, "execute increment with filter, tableName:%s, rowKey:%s, mutateColumns:%s",
 				tableName, table.ColumnsToString(rowKey), table.ColumnsToString(mutateColumns))
 		}
-		return newObSingleResult(res.AffectedRows(), nil), nil
+		return newObSingleResult(res.AffectedRows(), nil, 0), nil
 	}
 }
 
@@ -400,7 +421,7 @@ func (c *obClient) Append(
 			return nil, errors.WithMessagef(err, "execute increment, tableName:%s, rowKey:%s, mutateColumns:%s",
 				tableName, table.ColumnsToString(rowKey), table.ColumnsToString(mutateColumns))
 		}
-		return newObSingleResult(res.AffectedRows(), res.Entity()), nil
+		return newObSingleResult(res.AffectedRows(), res.Entity(), res.Flags()), nil
 	} else {
 		res, err := c.executeWithFilter(
 			ctx,
@@ -413,7 +434,7 @@ func (c *obClient) Append(
 			return nil, errors.WithMessagef(err, "execute append with filter, tableName:%s, rowKey:%s, mutateColumns:%s",
 				tableName, table.ColumnsToString(rowKey), table.ColumnsToString(mutateColumns))
 		}
-		return newObSingleResult(res.AffectedRows(), nil), nil
+		return newObSingleResult(res.AffectedRows(), nil, 0), nil
 	}
 }
 
@@ -474,7 +495,7 @@ func (c *obClient) Get(
 		return nil, errors.WithMessagef(err, "execute get, tableName:%s, rowKey:%s, getColumns:%s",
 			tableName, table.ColumnsToString(rowKey), util.StringArrayToString(getColumns))
 	}
-	return newObSingleResult(res.AffectedRows(), res.Entity()), nil
+	return newObSingleResult(res.AffectedRows(), res.Entity(), res.Flags()), nil
 }
 
 func (c *obClient) Query(ctx context.Context, tableName string, rangePairs []*table.RangePair, opts ...option.ObQueryOption) (QueryResultIterator, error) {

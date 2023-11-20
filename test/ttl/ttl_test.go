@@ -36,7 +36,7 @@ const (
 )
 
 const (
-	passTTLTest = true
+	passTTLTest = false
 )
 
 func TestTTL_insert(t *testing.T) {
