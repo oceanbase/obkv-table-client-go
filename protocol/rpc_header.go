@@ -69,6 +69,8 @@ const (
 	ObCompressTypeSnappy
 	ObCompressTypeZlib
 	ObCompressTypeZstd
+	ObCompressTypeZstd_138
+	ObCompressTypeLZ4_191
 )
 
 type ObRpcHeader struct {

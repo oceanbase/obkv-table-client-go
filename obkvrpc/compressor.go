@@ -122,6 +122,10 @@ func getDecompressor(compressType protocol.ObCompressType) (DeCompressor, error)
 		return &ZlibDecompressor{}, nil
 	case protocol.ObCompressTypeZstd:
 		return &ZStdDecompressor{}, nil
+	case protocol.ObCompressTypeZstd_138:
+		return &ZStdDecompressor{}, nil
+	case protocol.ObCompressTypeLZ4_191:
+		return &Lz4Decompressor{}, nil
 	case protocol.ObCompressTypeNone:
 		return &NoneDecompressor{}, nil
 	default:
@@ -141,7 +145,11 @@ func convertCompressTypeToString(compressType protocol.ObCompressType) string {
 		return "zStd"
 	case protocol.ObCompressTypeNone:
 		return "none"
+	case protocol.ObCompressTypeZstd_138:
+		return "zstd_1.3.8"
+	case protocol.ObCompressTypeLZ4_191:
+		return "lz4_1.9.1"
 	default:
-		return "invalid"
+		return "invalid compress type"
 	}
 }
