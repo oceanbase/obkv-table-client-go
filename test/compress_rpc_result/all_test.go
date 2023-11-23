@@ -29,6 +29,11 @@ import (
 
 var cli client.Client
 
+const (
+	CompressFuncSql      = "alter system set kv_transport_compress_func= '%s'"
+	CompressThresholdSql = "alter system set kv_transport_compress_threshold= '%s'"
+)
+
 func setup() {
 	cli = test.CreateClient()
 	test.CreateDB()
@@ -39,8 +44,6 @@ func setCompressType(compressTyepe string) error {
 	if test.GlobalDB == nil {
 		return errors.New("test GlobalDb is nil")
 	}
-	CompressFuncSql := "alter system set kv_transport_compress_func= '%s'"
-	CompressThresholdSql := "alter system set kv_transport_compress_threshold= '%s'"
 	setCompressFunc := fmt.Sprintf(CompressFuncSql, compressTyepe)
 	setCompressThreshold := fmt.Sprintf(CompressThresholdSql, "0K")
 	_, err := test.GlobalDB.Exec(setCompressFunc)
