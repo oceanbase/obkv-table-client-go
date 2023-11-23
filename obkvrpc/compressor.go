@@ -23,6 +23,7 @@ import (
 	"fmt"
 	"github.com/golang/snappy"
 	"github.com/klauspost/compress/zstd"
+	"github.com/oceanbase/obkv-table-client-go/log"
 	"github.com/oceanbase/obkv-table-client-go/protocol"
 	"github.com/pierrec/lz4"
 	"github.com/pkg/errors"
@@ -51,7 +52,7 @@ func (d *Lz4Decompressor) Decompress(src *bytes.Buffer, originLen int32) (*bytes
 		return nil, err
 	}
 	if int32(n) != originLen {
-		return nil, errors.New(fmt.Sprintf("length of decompress content is not expected: actual-%d, expected-%d", n, originLen))
+		return nil, errors.New(fmt.Sprintf("Lz4Decompressor: length of decompress content is not expected: actual-%d, expected-%d", n, originLen))
 	}
 	return bytes.NewBuffer(dstBytes), nil
 }
@@ -63,7 +64,7 @@ func (d *SnappyDecompressor) Decompress(src *bytes.Buffer, originLen int32) (*by
 		return nil, err
 	}
 	if int32(len(dstBytes)) != originLen {
-		return nil, errors.New(fmt.Sprintf("length of decompress content is not expected: actual-%d, expected-%d", int32(len(dstBytes)), originLen))
+		return nil, errors.New(fmt.Sprintf("SnappyDecompressor length of decompress content is not expected: actual-%d, expected-%d", int32(len(dstBytes)), originLen))
 	}
 	return bytes.NewBuffer(dstBytes), nil
 }
@@ -78,7 +79,7 @@ func (d *ZlibDecompressor) Decompress(src *bytes.Buffer, originLen int32) (*byte
 	defer func(zlibReader io.ReadCloser) {
 		err := zlibReader.Close()
 		if err != nil {
-			panic(err.Error())
+			log.Warn(fmt.Sprintf("fail to close the zlibReader, errMsg: %s", err.Error()))
 		}
 	}(zlibReader)
 
@@ -90,7 +91,7 @@ func (d *ZlibDecompressor) Decompress(src *bytes.Buffer, originLen int32) (*byte
 		return nil, err
 	}
 	if int32(n) != originLen {
-		return nil, errors.New(fmt.Sprintf("length of decompress content is not expected: actual-%d, expected-%d", n, originLen))
+		return nil, errors.New(fmt.Sprintf("ZlibDecompressor:length of decompress content is not expected: actual-%d, expected-%d", n, originLen))
 	}
 	return dstBuffer, nil
 }
@@ -107,7 +108,7 @@ func (d *ZStdDecompressor) Decompress(src *bytes.Buffer, originLen int32) (*byte
 		return nil, err
 	}
 	if int32(n) != originLen {
-		return nil, errors.New(fmt.Sprintf("length of decompress content is not expected: actual-%d, expected-%d", n, originLen))
+		return nil, errors.New(fmt.Sprintf("ZStdDecompressor: length of decompress content is not expected: actual-%d, expected-%d", n, originLen))
 	}
 	return dstBuffer, nil
 }
