@@ -493,7 +493,7 @@ func (c *Connection) decodePacket(contentBuf []byte, response protocol.ObPayload
 			return err
 		}
 		contentBuffer = decompressBuffer
-		log.Info(fmt.Sprintf("compressType: %s, compressLen: %d, originLen: %d\n",
+		log.Debug(fmt.Sprintf("compressType: %s, compressLen: %d, originLen: %d\n",
 			convertCompressTypeToString(rpcHeader.CompressType()), contentLen, rpcHeader.OriginalLen()))
 	}
 	// decode rpc response code
