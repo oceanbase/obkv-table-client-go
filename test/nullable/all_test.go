@@ -15,7 +15,7 @@
  * #L%
  */
 
-package ttl
+package nullable
 
 import (
 	"os"
@@ -31,15 +31,13 @@ func setup() {
 	cli = test.CreateClient()
 
 	test.CreateDB()
-
-	test.CreateTable(testTTLCreateStatement)
+	test.CreateTable(nullableCreateStatement)
 }
 
 func teardown() {
 	cli.Close()
 
-	test.DropTable(testTTLTableName)
-
+	test.DropTable(nullableTableName)
 	test.CloseDB()
 }
 

@@ -34,6 +34,7 @@ func setup() {
 	test.CreateTable(queryZeroTableCreateStatement)
 	test.CreateTable(queryKeyTableCreateStatement)
 	test.CreateTable(queryHashTableCreateStatement)
+	test.CreateTable(queryLobTableCreateStatement)
 }
 
 func teardown() {
@@ -42,6 +43,7 @@ func teardown() {
 	test.DropTable(queryKeyTableName)
 	test.DropTable(queryHashTableName)
 	test.DropTable(queryZeroTableName)
+	test.DropTable(queryLobTableName)
 	test.CloseDB()
 }
 
