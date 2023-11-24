@@ -19,6 +19,7 @@ package login
 
 import (
 	"context"
+	"fmt"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -34,7 +35,7 @@ const (
 )
 
 const (
-	passLoginTest = false
+	passLoginTest = true
 )
 
 const (
@@ -46,6 +47,13 @@ const (
 )
 
 func TestLogin_login(t *testing.T) {
+	if passLoginTest {
+		fmt.Println("Please run passLoginTest tests manually!!!")
+		fmt.Println("Change passLoginTest to false in test/login/login_test.go to run Login tests.")
+		assert.Equal(t, passLoginTest, false)
+		return
+	}
+
 	cfg := config.NewDefaultClientConfig()
 	url1 := configUrl + "&" + "database=" + database1
 	cli1, err := client.NewClient(url1, fullUserName, passWord, sysUserName, sysPassWord, cfg)

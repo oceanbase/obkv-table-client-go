@@ -30,7 +30,7 @@ import (
 
 const (
 	batchOpTableTableName       = "batchOpTable"
-	batchOpTableCreateStatement = "create table if not exists batchOpTable(`c1` bigint(20) not null, c2 bigint(20) not null, c3 varchar(20) default 'hello', primary key (`c1`)) partition by hash(c1) partitions 15;"
+	batchOpTableCreateStatement = "create table if not exists batchOpTable(`c1` bigint(20) not null, c2 bigint(20), c3 varchar(20) default 'hello', primary key (`c1`)) partition by hash(c1) partitions 15;"
 )
 
 var getColumns = []string{"c1", "c2"}

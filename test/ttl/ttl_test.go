@@ -19,7 +19,6 @@ package ttl
 
 import (
 	"context"
-	"fmt"
 	"testing"
 	"time"
 
@@ -35,17 +34,7 @@ const (
 	testTTLCreateStatement = "create table if not exists test_ttl(c1 int(12) primary key, c2 int(12), c3 timestamp default current_timestamp on update current_timestamp) TTL(c3 + INTERVAL 2 second);"
 )
 
-const (
-	passTTLTest = true
-)
-
 func TestTTL_insert(t *testing.T) {
-	if passTTLTest {
-		fmt.Println("Please run TTL tests manually!!!")
-		fmt.Println("Change passTTLTest to false in test/ttl/ttl_test.go to run ttl tests.")
-		assert.Equal(t, passTTLTest, false)
-		return
-	}
 	tableName := testTTLTableName
 	defer test.DeleteTable(tableName)
 
@@ -100,12 +89,6 @@ func TestTTL_insert(t *testing.T) {
 }
 
 func TestTTL_delete(t *testing.T) {
-	if passTTLTest {
-		fmt.Println("Please run TTL tests manually!!!")
-		fmt.Println("Change passTTLTest to false in test/ttl/ttl_test.go to run ttl tests.")
-		assert.Equal(t, passTTLTest, false)
-		return
-	}
 	tableName := testTTLTableName
 	defer test.DeleteTable(tableName)
 
@@ -168,12 +151,6 @@ func TestTTL_delete(t *testing.T) {
 }
 
 func TestTTL_update(t *testing.T) {
-	if passTTLTest {
-		fmt.Println("Please run TTL tests manually!!!")
-		fmt.Println("Change passTTLTest to false in test/ttl/ttl_test.go to run ttl tests.")
-		assert.Equal(t, passTTLTest, false)
-		return
-	}
 	tableName := testTTLTableName
 	defer test.DeleteTable(tableName)
 
@@ -230,12 +207,6 @@ func TestTTL_update(t *testing.T) {
 }
 
 func TestTTL_replace(t *testing.T) {
-	if passTTLTest {
-		fmt.Println("Please run TTL tests manually!!!")
-		fmt.Println("Change passTTLTest to false in test/ttl/ttl_test.go to run ttl tests.")
-		assert.Equal(t, passTTLTest, false)
-		return
-	}
 	tableName := testTTLTableName
 	defer test.DeleteTable(tableName)
 
@@ -292,12 +263,6 @@ func TestTTL_replace(t *testing.T) {
 }
 
 func TestTTL_insertUp(t *testing.T) {
-	if passTTLTest {
-		fmt.Println("Please run TTL tests manually!!!")
-		fmt.Println("Change passTTLTest to false in test/ttl/ttl_test.go to run ttl tests.")
-		assert.Equal(t, passTTLTest, false)
-		return
-	}
 	tableName := testTTLTableName
 	defer test.DeleteTable(tableName)
 
@@ -355,12 +320,6 @@ func TestTTL_insertUp(t *testing.T) {
 }
 
 func TestTTL_increment(t *testing.T) {
-	if passTTLTest {
-		fmt.Println("Please run TTL tests manually!!!")
-		fmt.Println("Change passTTLTest to false in test/ttl/ttl_test.go to run ttl tests.")
-		assert.Equal(t, passTTLTest, false)
-		return
-	}
 	tableName := testTTLTableName
 	defer test.DeleteTable(tableName)
 
@@ -419,4 +378,53 @@ func TestTTL_increment(t *testing.T) {
 	assert.Equal(t, nil, err)
 	assert.EqualValues(t, 0, res.Value("c1"))
 	assert.EqualValues(t, 2, res.Value("c2"))
+}
+
+func TestTTL_batch(t *testing.T) {
+	tableName := testTTLTableName
+	defer test.DeleteTable(tableName)
+
+	batchExecutor := cli.NewBatchExecutor(tableName)
+	rowKey := []*table.Column{table.NewColumn("c1", int32(0))}
+	mutateColumns := []*table.Column{table.NewColumn("c2", int32(0)), table.NewColumn("c3", table.TimeStamp(time.Now().Local()))}
+	err := batchExecutor.AddInsertOp(rowKey, mutateColumns)
+	assert.EqualValues(t, nil, err)
+
+	res, err := batchExecutor.Execute(context.TODO())
+	assert.EqualValues(t, nil, err)
+	assert.EqualValues(t, 1, len(res.GetResults()))
+	assert.EqualValues(t, 1, res.GetResults()[0].AffectedRows())
+
+	time.Sleep(2 * time.Second)
+
+	// expired, expected insert success
+	batchExecutor = cli.NewBatchExecutor(tableName)
+	err = batchExecutor.AddInsertOp(rowKey, mutateColumns)
+	assert.EqualValues(t, nil, err)
+	res, err = batchExecutor.Execute(context.TODO())
+	assert.EqualValues(t, nil, err)
+	assert.EqualValues(t, 1, len(res.GetResults()))
+	assert.EqualValues(t, 1, res.GetResults()[0].AffectedRows())
+
+	time.Sleep(2 * time.Second)
+
+	// expired, expected insertUp success
+	batchExecutor = cli.NewBatchExecutor(tableName)
+	err = batchExecutor.AddInsertOrUpdateOp(rowKey, mutateColumns)
+	assert.EqualValues(t, nil, err)
+	res, err = batchExecutor.Execute(context.TODO())
+	assert.EqualValues(t, nil, err)
+	assert.EqualValues(t, 1, len(res.GetResults()))
+	assert.EqualValues(t, 1, res.GetResults()[0].AffectedRows())
+
+	time.Sleep(2 * time.Second)
+
+	// expired, expected increment success
+	batchExecutor = cli.NewBatchExecutor(tableName)
+	err = batchExecutor.AddIncrementOp(rowKey, mutateColumns)
+	assert.EqualValues(t, nil, err)
+	res, err = batchExecutor.Execute(context.TODO())
+	assert.EqualValues(t, nil, err)
+	assert.EqualValues(t, 1, len(res.GetResults()))
+	assert.EqualValues(t, 1, res.GetResults()[0].AffectedRows())
 }
