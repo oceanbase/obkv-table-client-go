@@ -276,13 +276,15 @@ func getTableEntryFromResultSet(rows *Rows, tableName string) (*ObTableEntry, er
 		if err != nil {
 			return nil, errors.WithMessagef(err, "scan row")
 		}
-		replica := newReplicaLocation(
-			NewObServerAddr(svrIp, sqlPort, svrPort),
-			newServerStatus(stopTime, status),
-			obServerRole(role),
-			protocol.ObReplicaType(replicaType),
-		)
-		tableLocation.replicaLocations = append(tableLocation.replicaLocations, replica)
+		if strings.EqualFold(status, "active") {
+			replica := newReplicaLocation(
+				NewObServerAddr(svrIp, sqlPort, svrPort),
+				newServerStatus(stopTime, status),
+				obServerRole(role),
+				protocol.ObReplicaType(replicaType),
+			)
+			tableLocation.replicaLocations = append(tableLocation.replicaLocations, replica)
+		}
 	}
 	if isEmpty {
 		return nil, errors.Errorf("Table not exist, tableName:%s", tableName)
