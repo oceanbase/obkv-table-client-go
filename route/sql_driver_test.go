@@ -27,7 +27,7 @@ import (
 func TestNewDB(t *testing.T) {
 	const (
 		testUserName = "root"
-		testPassword = "::::"
+		testPassword = ""
 		testIp       = "127.0.0.1"
 		testSqlPort  = 41101
 		testDatabase = "test"
