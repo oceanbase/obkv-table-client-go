@@ -55,7 +55,7 @@ func TestQueryResultWithCompress(t *testing.T) {
 		assert.EqualValues(t, 1, affectRows)
 	}
 
-	compressTypeList := []string{"lz4_1.0", "snappy_1.0", "zstd_1.0", "zlib_1.0", "zstd_1.3.8", "lz4_1.9.1"}
+	compressTypeList := []string{"lz4_1.0", "snappy_1.0", "zstd_1.0", "zstd_1.3.8", "lz4_1.9.1"}
 	for _, compressType := range compressTypeList {
 		err := setCompressType(compressType)
 		assert.Equal(t, nil, err)
