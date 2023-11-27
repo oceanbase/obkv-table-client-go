@@ -35,18 +35,20 @@ const (
 	queryLobTableName            = "queryLobTable"
 	queryLobTableCreateStatement = "create table if not exists queryLobTable(" +
 		"c1 bigint(20) not null, " +
-		"c2 longtext not null, " +
+		"c2 bigint(20) not null, " +
+		"c3 longtext not null, " +
 		"primary key (c1));"
 )
 
 const (
 	passQueryLobTest = true
+	lobLength        = 2 * 1024 * 1024 // 2M
 )
 
 func prepareLobRecord(recordCount int) {
-	lobVal := strings.Repeat("a", 2*1024*1024) // 2M
+	lobVal := strings.Repeat("a", lobLength) // 2M
 	for i := 0; i < recordCount; i++ {
-		insertStatement := fmt.Sprintf("insert into %s(c1, c2) values(%d, '%s');", queryLobTableName, i, lobVal)
+		insertStatement := fmt.Sprintf("insert into %s(c1, c2, c3) values(%d, %d, '%s');", queryLobTableName, i, i, lobVal)
 		test.InsertTable(insertStatement)
 	}
 }
@@ -75,12 +77,16 @@ func TestQueryLob_test1(t *testing.T) {
 		context.TODO(),
 		tableName,
 		keyRanges,
-		option.WithQuerySelectColumns([]string{"c1", "c2"}),
+		option.WithQuerySelectColumns([]string{"c1", "c2", "c3"}),
 	)
 	assert.Equal(t, nil, err)
 	for i := 0; i < recordCount; i++ {
 		res, err := resSet.Next()
 		assert.Equal(t, nil, err)
 		assert.EqualValues(t, i, res.Value("c1"))
+		str, ok := res.Value("c3").(string)
+		if ok {
+			assert.EqualValues(t, lobLength, len(str))
+		}
 	}
 }
