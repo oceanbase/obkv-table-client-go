@@ -23,6 +23,7 @@ import (
 	"math"
 	"regexp"
 	"strconv"
+	"strings"
 	"sync"
 )
 
@@ -41,8 +42,14 @@ func SetObVersion(version float32) {
 
 // ParseObVerionFromLogin may be used in ODP mode
 func ParseObVerionFromLogin(serverVersion string) (float32, error) {
-	// serverVersion is like "OceanBase 4.0.0.0"
-	pattern := "^OceanBase\\s+(\\d+)\\.(\\d+)\\.(\\d+)\\.(\\d+)$"
+	pattern := ""
+	if strings.HasPrefix(serverVersion, "OceanBase_CE") {
+		// serverVersion is like "OceanBase_CE 4.0.0.0" in CE
+		pattern = "^OceanBase_CE\\s+(\\d+)\\.(\\d+)\\.(\\d+)\\.(\\d+)$"
+	} else {
+		// serverVersion is like "OceanBase 4.0.0.0"
+		pattern = "^OceanBase\\s+(\\d+)\\.(\\d+)\\.(\\d+)\\.(\\d+)$"
+	}
 	re := regexp.MustCompile(pattern)
 	match := re.FindStringSubmatch(serverVersion)
 	if len(match) == 5 && match[0] == serverVersion {
