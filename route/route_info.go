@@ -19,6 +19,7 @@ package route
 
 import (
 	"context"
+	"fmt"
 	"strconv"
 	"sync"
 	"sync/atomic"
@@ -122,7 +123,10 @@ func (i *ObRouteInfo) FetchConfigServerInfo(
 
 // FetchClusterVersion get ob cluster version by sql
 func (i *ObRouteInfo) FetchClusterVersion() error {
-	addr := i.configServerInfo.GetServerAddressRandomly()
+	addr, err := i.configServerInfo.GetServerAddressRandomly()
+	if err != nil {
+		return err
+	}
 	db, err := NewDB(
 		i.sysUA.userName,
 		i.sysUA.password,
@@ -156,7 +160,10 @@ func (i *ObRouteInfo) FetchServerRoster(clusterName, tenantName string) error {
 		OceanBaseDatabase,
 		AllDummyTable,
 	)
-	addr := i.configServerInfo.GetServerAddressRandomly()
+	addr, err := i.configServerInfo.GetServerAddressRandomly()
+	if err != nil {
+		return err
+	}
 	entry, err := GetTableEntryFromRemote(context.TODO(), addr, i.sysUA, key)
 	if err != nil {
 		return errors.WithMessagef(err, "dummy tenant server from remote, addr:%s, sysUA:%s, key:%s",
@@ -596,12 +603,13 @@ func (i *ObRouteInfo) runCheckRslistTask() {
 		}
 		if !i.configServerInfo.rslist.Equal(newRslist) {
 			missServers := i.configServerInfo.rslist.FindMissingElements(newRslist)
-			log.Info("[runCheckRslistTask] missServers size", log.Int("missServers", len(missServers)))
+			log.Info(fmt.Sprintf("[runCheckRslistTask] missServers size:%d", len(missServers)))
 			for _, server := range missServers {
+				log.Info(fmt.Sprintf("[runCheckRslistTask] missServer:%s", server.tcpAddr.String()))
 				t, ok := i.tableRoster.Get(server.tcpAddr)
 				if ok {
 					if t.IsDisconnected() {
-						log.Info("[runCheckRslistTask] connection pool need close, pool:%s", log.String("pool", t.String()))
+						log.Info(fmt.Sprintf("[runCheckRslistTask] connection pool need close, pool:%s", t.String()))
 						isDropping := &atomic.Bool{}
 						isDropping.Store(false)
 						server := tcpAddr{t.ip, t.port}

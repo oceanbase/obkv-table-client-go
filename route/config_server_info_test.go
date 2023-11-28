@@ -19,6 +19,8 @@ package route
 
 import (
 	"testing"
+
+	"github.com/stretchr/testify/assert"
 )
 
 func TestObConfigServerInfo_GetServerAddressRandomly(t *testing.T) {
@@ -33,7 +35,7 @@ func TestObConfigServerInfo_GetServerAddressRandomly(t *testing.T) {
 		info.rslist.Append(server)
 	}
 	for i := 0; i < 10; i++ {
-		svr := info.GetServerAddressRandomly()
-		println(svr.String())
+		_, err := info.GetServerAddressRandomly()
+		assert.NotEqual(t, nil, err)
 	}
 }

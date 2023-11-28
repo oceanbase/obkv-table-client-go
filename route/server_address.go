@@ -17,7 +17,12 @@
 
 package route
 
-import "strconv"
+import (
+	"fmt"
+	"net"
+	"strconv"
+	"time"
+)
 
 type tcpAddr struct {
 	ip   string
@@ -50,6 +55,16 @@ func (a *ObServerAddr) Ip() string {
 
 func (a *ObServerAddr) Equal(other *ObServerAddr) bool {
 	return a.tcpAddr.Equal(&other.tcpAddr) && a.sqlPort == other.sqlPort
+}
+
+func (a *ObServerAddr) IsConnectionFine() bool {
+	addr := fmt.Sprintf("%s:%d", a.tcpAddr.ip, a.tcpAddr.port)
+	conn, err := net.DialTimeout("tcp", addr, time.Second*1)
+	if err != nil {
+		return false
+	}
+	defer conn.Close()
+	return true
 }
 
 func NewObServerAddr(ip string, sqlPort int, svrPort int) *ObServerAddr {

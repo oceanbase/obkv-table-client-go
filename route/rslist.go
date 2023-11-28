@@ -20,6 +20,8 @@ package route
 import (
 	"fmt"
 	"math/rand"
+
+	"github.com/pkg/errors"
 )
 
 type ObRslist struct {
@@ -33,9 +35,24 @@ func NewRslist() *ObRslist {
 }
 
 // GetServerRandomly get one randomly server from all the servers
-func (l *ObRslist) GetServerRandomly() *ObServerAddr {
+func (l *ObRslist) GetServerRandomly() (*ObServerAddr, error) {
+	if len(l.list) == 0 {
+		return nil, errors.New("list is empty")
+	}
+
 	idx := rand.Intn(len(l.list))
-	return l.list[idx]
+	addr := l.list[idx]
+	if addr.IsConnectionFine() {
+		return addr, nil
+	}
+
+	for _, serverAddr := range l.list {
+		if serverAddr.IsConnectionFine() {
+			return serverAddr, nil
+		}
+	}
+
+	return nil, errors.New("has no valid server node")
 }
 
 func (l *ObRslist) Append(addr *ObServerAddr) {

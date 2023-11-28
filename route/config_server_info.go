@@ -46,7 +46,7 @@ func NewConfigServerInfo() *ObConfigServerInfo {
 }
 
 // GetServerAddressRandomly get one randomly server from all the servers
-func (i *ObConfigServerInfo) GetServerAddressRandomly() *ObServerAddr {
+func (i *ObConfigServerInfo) GetServerAddressRandomly() (*ObServerAddr, error) {
 	return i.rslist.GetServerRandomly()
 }
 
