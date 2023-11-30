@@ -143,7 +143,7 @@ func convertCompressTypeToString(compressType protocol.ObCompressType) string {
 	case protocol.ObCompressTypeZlib:
 		return "zlib"
 	case protocol.ObCompressTypeZstd:
-		return "zStd"
+		return "zstd"
 	case protocol.ObCompressTypeNone:
 		return "none"
 	case protocol.ObCompressTypeZstd_138:
