@@ -438,14 +438,14 @@ func (i *ObRouteInfo) Execute(
 			server := tcpAddr{table.ip, table.port}
 			i.taskInfo.dropConnPoolServers.AddIfAbsent(server, isDropping)
 			i.taskInfo.TriggerDropConnectionPool()
-		} else {
-			if result.Flag()&protocol.RpcBadRoutingFlag != 0 {
-				needRefreshTable = true
-			}
+		}
 
-			if moveRsp != nil {
-				needReroute = true
-			}
+		if result.Flag()&protocol.RpcBadRoutingFlag != 0 {
+			needRefreshTable = true
+		}
+
+		if moveRsp != nil {
+			needReroute = true
 		}
 	}
 
