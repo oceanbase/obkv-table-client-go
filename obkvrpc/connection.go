@@ -490,6 +490,12 @@ func (c *Connection) decodePacket(contentBuf []byte, response protocol.ObPayload
 			moveResponse.SetSequence(rpcHeader.TraceId1())
 			moveResponse.Decode(contentBuffer)
 		}
+
+		// some error code need refresh route table
+		if rpcResponseCode.Code().IsRefreshTableErrorCode() {
+			response.SetFlag(response.Flag() | protocol.RpcBadRoutingFlag)
+		}
+
 		return moveResponse, protocol.NewProtocolError(
 			c.option.ip,
 			c.option.port,

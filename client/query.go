@@ -208,5 +208,5 @@ func (q *obQueryExecutor) init(ctx context.Context) (*ObQueryResultIterator, err
 	}
 	q.tableQuery.SetKeyRanges(keyRanges)
 
-	return newObQueryResultIteratorWithParams(ctx, q.cli, q.tableQuery, targetParts, q.entityType, q.tableName), nil
+	return newObQueryResultIteratorWithParams(ctx, q, targetParts), nil
 }

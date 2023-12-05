@@ -50,7 +50,7 @@ type ObRouteInfo struct {
 
 // GetTable get table by partition id
 func (i *ObRouteInfo) getTableWithRetry(ctx context.Context, server *ObServerAddr) (*ObTable, error) {
-	// 2. Get table from table Roster by server addr
+	// Get table from table Roster by server addr
 	t, ok := i.tableRoster.Get(server.tcpAddr)
 	if !ok {
 		isCreating := &atomic.Bool{}
@@ -154,7 +154,7 @@ func (i *ObRouteInfo) CheckClusterAndTenant(tenantName string) error {
 	if err != nil {
 		return err
 	}
-	
+
 	return nil
 }
 
@@ -434,8 +434,9 @@ func (i *ObRouteInfo) Execute(
 	tableName string,
 	table *ObTable,
 	request protocol.ObPayload,
-	result protocol.ObPayload) error {
+	result protocol.ObPayload) (error, bool) {
 
+	needRetry := false
 	needRefreshTable := false
 	needReroute := false
 	moveRsp, err := table.Execute(ctx, request, result)
@@ -463,6 +464,7 @@ func (i *ObRouteInfo) Execute(
 		isRefreshing.Store(false)
 		i.taskInfo.tables.AddIfAbsent(tableName, isRefreshing)
 		i.taskInfo.TriggerRefreshTable()
+		needRetry = true
 	}
 
 	if needReroute {
@@ -472,13 +474,13 @@ func (i *ObRouteInfo) Execute(
 
 	if err != nil {
 		if result.RemoteAddr() != nil {
-			return errors.WithMessagef(err, "obtable remote:[%s] execute", result.RemoteAddr().String())
+			return errors.WithMessagef(err, "obtable remote:[%s] execute", result.RemoteAddr().String()), needRetry
 		} else {
-			return errors.WithMessagef(err, "obtable (remote unknown) execute")
+			return errors.WithMessagef(err, "obtable (remote unknown) execute"), needRetry
 		}
 	}
 
-	return nil
+	return nil, false
 }
 
 func (i *ObRouteInfo) addTable(addr tcpAddr) error {

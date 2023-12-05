@@ -20,8 +20,10 @@ package client
 import (
 	"context"
 	"strings"
+	"time"
 
 	"github.com/oceanbase/obkv-table-client-go/client/option"
+	"github.com/oceanbase/obkv-table-client-go/log"
 
 	"github.com/pkg/errors"
 
@@ -272,7 +274,7 @@ func (c *obClient) Insert(
 	opts ...option.ObOperationOption) (int64, error) {
 	operationOptions := c.getOperationOptions(opts...)
 	if operationOptions.TableFilter == nil {
-		res, err := c.execute(
+		res, err := c.executeWithRetry(
 			ctx,
 			tableName,
 			protocol.ObTableOperationInsert,
@@ -285,7 +287,7 @@ func (c *obClient) Insert(
 		}
 		return res.AffectedRows(), nil
 	} else {
-		res, err := c.executeWithFilter(
+		res, err := c.executeWithFilterAndRetry(
 			ctx,
 			tableName,
 			protocol.ObTableOperationInsert,
@@ -308,7 +310,7 @@ func (c *obClient) Update(
 	opts ...option.ObOperationOption) (int64, error) {
 	operationOptions := c.getOperationOptions(opts...)
 	if operationOptions.TableFilter == nil {
-		res, err := c.execute(
+		res, err := c.executeWithRetry(
 			ctx,
 			tableName,
 			protocol.ObTableOperationUpdate,
@@ -321,7 +323,7 @@ func (c *obClient) Update(
 		}
 		return res.AffectedRows(), nil
 	} else {
-		res, err := c.executeWithFilter(
+		res, err := c.executeWithFilterAndRetry(
 			ctx,
 			tableName,
 			protocol.ObTableOperationUpdate,
@@ -343,7 +345,7 @@ func (c *obClient) InsertOrUpdate(
 	mutateColumns []*table.Column,
 	opts ...option.ObOperationOption) (int64, error) {
 	operationOptions := c.getOperationOptions(opts...)
-	res, err := c.execute(
+	res, err := c.executeWithRetry(
 		ctx,
 		tableName,
 		protocol.ObTableOperationInsertOrUpdate,
@@ -364,7 +366,7 @@ func (c *obClient) Replace(
 	mutateColumns []*table.Column,
 	opts ...option.ObOperationOption) (int64, error) {
 	operationOptions := c.getOperationOptions(opts...)
-	res, err := c.execute(
+	res, err := c.executeWithRetry(
 		ctx,
 		tableName,
 		protocol.ObTableOperationReplace,
@@ -386,7 +388,7 @@ func (c *obClient) Increment(
 	opts ...option.ObOperationOption) (SingleResult, error) {
 	operationOptions := c.getOperationOptions(opts...)
 	if operationOptions.TableFilter == nil {
-		res, err := c.execute(
+		res, err := c.executeWithRetry(
 			ctx,
 			tableName,
 			protocol.ObTableOperationIncrement,
@@ -399,7 +401,7 @@ func (c *obClient) Increment(
 		}
 		return newObSingleResult(res.AffectedRows(), res.Entity()), nil
 	} else {
-		res, err := c.executeWithFilter(
+		res, err := c.executeWithFilterAndRetry(
 			ctx,
 			tableName,
 			protocol.ObTableOperationIncrement,
@@ -422,7 +424,7 @@ func (c *obClient) Append(
 	opts ...option.ObOperationOption) (SingleResult, error) {
 	operationOptions := c.getOperationOptions(opts...)
 	if operationOptions.TableFilter == nil {
-		res, err := c.execute(
+		res, err := c.executeWithRetry(
 			ctx,
 			tableName,
 			protocol.ObTableOperationAppend,
@@ -435,7 +437,7 @@ func (c *obClient) Append(
 		}
 		return newObSingleResult(res.AffectedRows(), res.Entity()), nil
 	} else {
-		res, err := c.executeWithFilter(
+		res, err := c.executeWithFilterAndRetry(
 			ctx,
 			tableName,
 			protocol.ObTableOperationAppend,
@@ -457,7 +459,7 @@ func (c *obClient) Delete(
 	opts ...option.ObOperationOption) (int64, error) {
 	operationOptions := c.getOperationOptions(opts...)
 	if operationOptions.TableFilter == nil {
-		res, err := c.execute(
+		res, err := c.executeWithRetry(
 			ctx,
 			tableName,
 			protocol.ObTableOperationDel,
@@ -470,7 +472,7 @@ func (c *obClient) Delete(
 		}
 		return res.AffectedRows(), nil
 	} else {
-		res, err := c.executeWithFilter(
+		res, err := c.executeWithFilterAndRetry(
 			ctx,
 			tableName,
 			protocol.ObTableOperationDel,
@@ -496,7 +498,7 @@ func (c *obClient) Get(
 		columns = append(columns, table.NewColumn(columnName, nil))
 	}
 	operationOptions := c.getOperationOptions(opts...)
-	res, err := c.execute(
+	res, err := c.executeWithRetry(
 		ctx,
 		tableName,
 		protocol.ObTableOperationGet,
@@ -566,7 +568,7 @@ func (c *obClient) getObBatchOptions(options ...option.ObBatchOption) *option.Ob
 	return opts
 }
 
-func (c *obClient) execute(
+func (c *obClient) executeWithRetry(
 	ctx context.Context,
 	tableName string,
 	opType protocol.ObTableOperationType,
@@ -578,10 +580,38 @@ func (c *obClient) execute(
 		ctx, _ = context.WithTimeout(ctx, c.config.OperationTimeOut) // default timeout operation timeout
 	}
 
+	res, err, needRetry := c.execute(ctx, tableName, opType, rowKey, columns, operationOptions)
+	for err != nil && needRetry {
+		select {
+		case <-ctx.Done():
+			return nil, errors.WithMessage(err, "retry and timeout")
+		default:
+			res, err, needRetry = c.execute(ctx, tableName, opType, rowKey, columns, operationOptions)
+			log.Info("retry")
+			time.Sleep(1 * time.Millisecond)
+		}
+	}
+
+	if err != nil {
+		return nil, err
+	}
+
+	return res, nil
+}
+
+func (c *obClient) execute(
+	ctx context.Context,
+	tableName string,
+	opType protocol.ObTableOperationType,
+	rowKey []*table.Column,
+	columns []*table.Column,
+	operationOptions *option.ObOperationOptions) (*protocol.ObTableOperationResponse, error, bool) {
+
+	needRetry := false
 	// 1. Get table route
 	tableParam, err := c.routeInfo.GetTableParam(ctx, tableName, rowKey, c.odpTable)
 	if err != nil {
-		return nil, errors.WithMessagef(err, "get table param, tableName:%s, opType:%d", tableName, opType)
+		return nil, errors.WithMessagef(err, "get table param, tableName:%s, opType:%d", tableName, opType), needRetry
 	}
 
 	// 2. Construct request.
@@ -599,14 +629,14 @@ func (c *obClient) execute(
 	)
 	if err != nil {
 		return nil, errors.WithMessagef(err, "new operation request, tableName:%s, tableParam:%s, opType:%d",
-			tableName, tableParam.String(), opType)
+			tableName, tableParam.String(), opType), needRetry
 	}
 
 	// 3. execute
 	result := protocol.NewObTableOperationResponse()
-	err = c.executeInternal(ctx, tableName, tableParam.Table(), request, result)
+	err, needRetry = c.executeInternal(ctx, tableName, tableParam.Table(), request, result)
 	if err != nil {
-		return nil, errors.WithMessagef(err, "execute request, request:%s", request.String())
+		return nil, errors.WithMessagef(err, "execute request, request:%s", request.String()), needRetry
 	}
 
 	if oberror.ObErrorCode(result.Header().ErrorNo()) != oberror.ObSuccess {
@@ -619,7 +649,7 @@ func (c *obClient) execute(
 				result.Sequence(),
 				result.UniqueId(),
 				tableName,
-			)
+			), needRetry
 		}
 
 		return nil, protocol.NewProtocolError(
@@ -629,13 +659,13 @@ func (c *obClient) execute(
 			result.Sequence(),
 			result.UniqueId(),
 			tableName,
-		)
+		), needRetry
 	}
 
-	return result, nil
+	return result, nil, needRetry
 }
 
-func (c *obClient) executeWithFilter(
+func (c *obClient) executeWithFilterAndRetry(
 	ctx context.Context,
 	tableName string,
 	opType protocol.ObTableOperationType,
@@ -647,10 +677,38 @@ func (c *obClient) executeWithFilter(
 		ctx, _ = context.WithTimeout(ctx, c.config.OperationTimeOut) // default timeout operation timeout
 	}
 
+	res, err, needRetry := c.executeWithFilter(ctx, tableName, opType, rowKey, columns, operationOptions)
+	for err != nil && needRetry {
+		select {
+		case <-ctx.Done():
+			return nil, errors.WithMessage(err, "retry and timeout")
+		default:
+			res, err, needRetry = c.executeWithFilter(ctx, tableName, opType, rowKey, columns, operationOptions)
+			time.Sleep(1 * time.Millisecond)
+		}
+	}
+
+	if err != nil {
+		return nil, err
+	}
+
+	return res, nil
+}
+
+func (c *obClient) executeWithFilter(
+	ctx context.Context,
+	tableName string,
+	opType protocol.ObTableOperationType,
+	rowKey []*table.Column,
+	columns []*table.Column,
+	operationOptions *option.ObOperationOptions) (*protocol.ObTableQueryAndMutateResponse, error, bool) {
+
+	needRetry := false
+
 	// 1. Get table route
 	tableParam, err := c.routeInfo.GetTableParam(ctx, tableName, rowKey, c.odpTable)
 	if err != nil {
-		return nil, errors.WithMessagef(err, "get table param, tableName:%s, opType:%d", tableName, opType)
+		return nil, errors.WithMessagef(err, "get table param, tableName:%s, opType:%d", tableName, opType), needRetry
 	}
 
 	// 2. Construct request.
@@ -666,7 +724,7 @@ func (c *obClient) executeWithFilter(
 	)
 	if err != nil {
 		return nil, errors.WithMessagef(err, "new operation request, tableName:%s, tableParam:%s, opType:%d",
-			tableName, tableParam.String(), opType)
+			tableName, tableParam.String(), opType), needRetry
 	}
 
 	request.TableQueryAndMutate().TableQuery().SetFilterString(operationOptions.TableFilter.String())
@@ -675,19 +733,19 @@ func (c *obClient) executeWithFilter(
 		// set query range into table query
 		keyRanges, err := TransferQueryRange(operationOptions.ScanRange)
 		if err != nil {
-			return nil, errors.WithMessage(err, "transfer query range")
+			return nil, errors.WithMessage(err, "transfer query range"), needRetry
 		}
 		request.TableQueryAndMutate().TableQuery().SetKeyRanges(keyRanges)
 	}
 
 	// 3. execute
 	result := protocol.NewObTableQueryAndMutateResponse()
-	err = c.executeInternal(ctx, tableName, tableParam.Table(), request, result)
+	err, needRetry = c.executeInternal(ctx, tableName, tableParam.Table(), request, result)
 	if err != nil {
-		return nil, errors.WithMessagef(err, "execute request, request:%s", request.String())
+		return nil, errors.WithMessagef(err, "execute request, request:%s", request.String()), needRetry
 	}
 
-	return result, nil
+	return result, nil, needRetry
 }
 
 func (c *obClient) executeInternal(
@@ -695,12 +753,12 @@ func (c *obClient) executeInternal(
 	tableName string,
 	table *route.ObTable,
 	request protocol.ObPayload,
-	result protocol.ObPayload) error {
+	result protocol.ObPayload) (error, bool) {
 
 	if c.routeInfo != nil {
 		return c.routeInfo.Execute(ctx, tableName, table, request, result)
 	}
 
 	_, err := table.Execute(ctx, request, result)
-	return err
+	return err, false
 }

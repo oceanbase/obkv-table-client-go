@@ -251,6 +251,7 @@ const (
 	ObMissArgument                           ObErrorCode = -4272
 	ObCacheFreeBlockNotEnough                ObErrorCode = -4273
 	ObSyncWashMbTimeout                      ObErrorCode = -4274
+	ObGTSNotReady                            ObErrorCode = -4283
 	ObNotAllowMigrateIn                      ObErrorCode = -4275
 	ObImportNotInServer                      ObErrorCode = -4505
 	ObConvertError                           ObErrorCode = -4507
@@ -625,6 +626,7 @@ const (
 	ObIgnoreSqlInRestore                     ObErrorCode = -5309
 	ObErrUnexpectedTzTransition              ObErrorCode = -5310
 	ObErrInvalidColumnId                     ObErrorCode = -5311
+	ObSchemaEagain                           ObErrorCode = -5627
 	ObTransactionSetViolation                ObErrorCode = -6001
 	ObTransRollbacked                        ObErrorCode = -6002
 	ObErrExclusiveLockConflict               ObErrorCode = -6003
@@ -717,3 +719,9 @@ const (
 	ObRsListInvaild                          ObErrorCode = -9017
 	ObAgentHasFailedTask                     ObErrorCode = -9018
 )
+
+func (c ObErrorCode) IsRefreshTableErrorCode() bool {
+	return c == ObSchemaError ||
+		c == ObGTSNotReady ||
+		c == ObSchemaEagain
+}
