@@ -210,8 +210,8 @@ func (c *obClient) init() error {
 		return errors.WithMessagef(err, "get rslist, url:%s", c.configUrl)
 	}
 
-	// 2. fetch cluster version, accessing route table depends on the cluster version
-	err = c.routeInfo.FetchClusterVersion()
+	// 2. fetch cluster version, accessing route table depends on the cluster version. And check tenant exist.
+	err = c.routeInfo.CheckClusterAndTenant(c.tenantName)
 	if err != nil {
 		return errors.WithMessagef(err, "get cluster version")
 	}

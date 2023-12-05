@@ -38,8 +38,9 @@ const (
 )
 
 const (
-	obVersionSql     = "SELECT /*+READ_CONSISTENCY(WEAK)*/ OB_VERSION() AS CLUSTER_VERSION;"
-	DummyLocationSql = "SELECT /*+READ_CONSISTENCY(WEAK)*/ A.partition_id as partition_id, A.svr_ip as svr_ip, " +
+	obVersionSql        = "SELECT /*+READ_CONSISTENCY(WEAK)*/ OB_VERSION() AS CLUSTER_VERSION;"
+	checkTenantExistSql = "SELECT /*+READ_CONSISTENCY(WEAK)*/ tenant_id from __all_tenant where tenant_name = ?;"
+	DummyLocationSql    = "SELECT /*+READ_CONSISTENCY(WEAK)*/ A.partition_id as partition_id, A.svr_ip as svr_ip, " +
 		"A.sql_port as sql_port, A.table_id as table_id, A.role as role, A.replica_num as replica_num, A.part_num as part_num, " +
 		"B.svr_port as svr_port, B.status as status, B.stop_time as stop_time, A.spare1 as replica_type " +
 		"FROM oceanbase.__all_virtual_proxy_schema A inner join oceanbase.__all_server B on A.svr_ip = B.svr_ip " +
@@ -150,6 +151,33 @@ func GetObVersionFromRemote(db *DB) (float32, error) {
 	}
 	res := float32(ver) / 1000.0 // ObVersion = 4.1
 	return res, nil
+}
+
+// CheckTenantExist check tenant exist or not
+func CheckTenantExist(db *DB, tenantName string) error {
+	sql := checkTenantExistSql
+	rows, err := db.Query(sql, tenantName)
+	if err != nil {
+		return errors.WithMessagef(err, "check tenant%s", tenantName)
+	}
+	defer func() {
+		_ = rows.Close()
+	}()
+
+	var tenantId int = -1
+	for rows.Next() {
+		err = rows.Scan(&tenantId)
+		if err != nil {
+			err = errors.Errorf("failed to scan row, sql:%s, tenant:%s", sql, tenantName)
+			return err
+		}
+	}
+
+	if tenantId == -1 {
+		return errors.Errorf("tenant not exist, tenant:%s", tenantName)
+	}
+
+	return nil
 }
 
 // GetTableEntryFromRemote obtain the route of a table in the ob cluster by querying the routing system table.

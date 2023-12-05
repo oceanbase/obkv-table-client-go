@@ -121,8 +121,9 @@ func (i *ObRouteInfo) FetchConfigServerInfo(
 	return nil
 }
 
-// FetchClusterVersion get ob cluster version by sql
-func (i *ObRouteInfo) FetchClusterVersion() error {
+// CheckClusterAndTenant get ob cluster version and check tenant exist
+func (i *ObRouteInfo) CheckClusterAndTenant(tenantName string) error {
+	// 1. fetch cluster version
 	addr, err := i.configServerInfo.GetServerAddressRandomly()
 	if err != nil {
 		return err
@@ -147,6 +148,13 @@ func (i *ObRouteInfo) FetchClusterVersion() error {
 	}
 
 	i.clusterVersion = ver
+
+	// 2. check tenant exist
+	err = CheckTenantExist(db, tenantName)
+	if err != nil {
+		return err
+	}
+	
 	return nil
 }
 
@@ -458,6 +466,7 @@ func (i *ObRouteInfo) Execute(
 	}
 
 	if needReroute {
+		log.Info(fmt.Sprintf("route, to:%s", moveRsp.ReplicaInfo().Server().String()))
 		err = i.reroute(ctx, moveRsp, request, result)
 	}
 
