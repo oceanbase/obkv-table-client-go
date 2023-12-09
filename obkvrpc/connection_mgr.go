@@ -51,8 +51,8 @@ func NewConnectionMgr(p *ConnectionPool) *ConnectionMgr {
 
 func (c *ConnectionMgr) start() {
 	ticker := time.NewTicker(ConnectionMgrTaskInterval)
+	c.wg.Add(1)
 	go func() {
-		c.wg.Add(1)
 		defer c.wg.Done()
 		for {
 			select {
