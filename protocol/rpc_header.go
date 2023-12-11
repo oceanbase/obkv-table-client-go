@@ -25,9 +25,13 @@ import (
 )
 
 const (
-	RequireReroutingFlag        = 1 << 9
-	RpcBadRoutingFlag           = RequireReroutingFlag
-	RpcHeaderDefaultFlag uint16 = 7
+	IsKVRequestFLAG = 1 << 5
+
+	RequireReroutingFlag = 1 << 9
+
+	RpcBadRoutingFlag = RequireReroutingFlag
+
+	RpcHeaderDefaultFlag uint16 = 7 | IsKVRequestFLAG
 
 	defaultOperationTimeout = 10 * 1000 * time.Millisecond
 
