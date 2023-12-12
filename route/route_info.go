@@ -629,6 +629,7 @@ func (i *ObRouteInfo) runCheckRslistTask() {
 					}
 				}
 			}
+			i.configServerInfo.rslist = newRslist
 		}
 	}()
 }
