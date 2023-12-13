@@ -105,7 +105,7 @@ func NewOdpClient(
 	return cli, nil
 }
 
-// NewClientWithTomlConfig create a client with xml config.
+// NewClientWithTomlConfig create a client with toml config.
 func NewClientWithTomlConfig(configFilePath string) (Client, error) {
 	clientConfig, err := config.GetClientConfigurationFromTOML(configFilePath)
 	if err != nil {
