@@ -32,7 +32,6 @@ func TestNewDB(t *testing.T) {
 		testSqlPort  = 41101
 		testDatabase = "test"
 	)
-
 	_, err := NewDB(testUserName, testPassword, testIp, strconv.Itoa(testSqlPort), testDatabase)
 	assert.NotEqual(t, nil, err)
 }
