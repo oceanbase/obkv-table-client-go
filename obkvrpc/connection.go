@@ -479,11 +479,11 @@ func (c *Connection) decodePacket(contentBuf []byte, response protocol.ObPayload
 		contentLen := contentBuffer.Len()
 		decompressor, err := getDecompressor(rpcHeader.CompressType())
 		if err != nil {
-			return errors.New("fail to get decompressor")
+			return nil, errors.New("fail to get decompressor")
 		}
 		decompressBuffer, err := decompressor.Decompress(contentBuffer, rpcHeader.OriginalLen())
 		if err != nil {
-			return err
+			return nil, err
 		}
 		contentBuffer = decompressBuffer
 		log.Debug(fmt.Sprintf("compressType: %s, compressLen: %d, originLen: %d\n",
