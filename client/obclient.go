@@ -22,10 +22,9 @@ import (
 	"strings"
 	"time"
 
-	"github.com/oceanbase/obkv-table-client-go/client/option"
-	"github.com/oceanbase/obkv-table-client-go/log"
-
 	"github.com/pkg/errors"
+
+	"github.com/oceanbase/obkv-table-client-go/client/option"
 
 	"github.com/oceanbase/obkv-table-client-go/config"
 	oberror "github.com/oceanbase/obkv-table-client-go/error"
@@ -587,7 +586,6 @@ func (c *obClient) executeWithRetry(
 			return nil, errors.WithMessage(err, "retry and timeout")
 		default:
 			res, err, needRetry = c.execute(ctx, tableName, opType, rowKey, columns, operationOptions)
-			log.Info("retry")
 			time.Sleep(1 * time.Millisecond)
 		}
 	}

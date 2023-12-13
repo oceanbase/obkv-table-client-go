@@ -26,13 +26,9 @@ type ObTableMutexes struct {
 }
 
 func (m *ObTableMutexes) Lock(tableName string) {
-	mutex, loaded := m.m.LoadOrStore(tableName, &sync.RWMutex{})
+	mutex, _ := m.m.LoadOrStore(tableName, &sync.RWMutex{})
 	tableMutex := mutex.(*sync.RWMutex)
-	if !loaded {
-		tableMutex.Lock()
-	} else {
-		tableMutex.Lock()
-	}
+	tableMutex.Lock()
 }
 
 func (m *ObTableMutexes) Unlock(tableName string) {
