@@ -171,15 +171,13 @@ func (c *Connection) Connect(ctx context.Context) error {
 	var reserved int64 = 0
 	c.uniqueId = uint64(ip | port | isUserRequest | reserved)
 
-	go c.receivePacket()
-	go c.sendPacket()
 	return nil
 }
 
 func (c *Connection) Login(ctx context.Context) error {
 	loginRequest := protocol.NewObLoginRequest(c.option.tenantName, c.option.databaseName, c.option.userName, c.option.password)
 	loginResponse := protocol.NewObLoginResponse()
-	err := c.Execute(ctx, loginRequest, loginResponse)
+	_, err := c.Execute(ctx, loginRequest, loginResponse)
 	if err != nil {
 		c.Close()
 		return errors.WithMessagef(err, "execute login, uniqueId: %d remote addr: %s tenantname: %s databasename: %s",
@@ -213,7 +211,7 @@ func (c *Connection) Login(ctx context.Context) error {
 func (c *Connection) Execute(
 	ctx context.Context,
 	request protocol.ObPayload,
-	response protocol.ObPayload) error {
+	response protocol.ObPayload) (*protocol.ObTableMoveResponse, error) {
 
 	seq := c.seq.Add(1)
 
@@ -244,30 +242,25 @@ func (c *Connection) Execute(
 		c.mutex.Lock()
 		delete(c.pending, seq)
 		c.mutex.Unlock()
-		return errors.WithMessage(ctx.Err(), "wait send packet to channel, trace: "+trace)
+		return nil, errors.WithMessage(ctx.Err(), "wait send packet to channel, trace: "+trace)
 	}
 
 	// wait call back
 	select {
 	case call = <-call.signal:
 		if call.err != nil { // transport failed
-			return errors.WithMessage(call.err, "receive packet, trace: "+trace)
+			return nil, errors.WithMessage(call.err, "receive packet, trace: "+trace)
 		}
 	case <-ctx.Done():
 		// timeout
 		c.mutex.Lock()
 		delete(c.pending, seq)
 		c.mutex.Unlock()
-		return errors.WithMessage(ctx.Err(), "wait transport packet, trace: "+trace)
+		return nil, errors.WithMessage(ctx.Err(), "wait transport packet, trace: "+trace)
 	}
 
 	// transport success
-	err := c.decodePacket(call.content, response)
-	if err != nil {
-		return err
-	}
-
-	return nil
+	return c.decodePacket(call.content, response)
 }
 
 func (c *Connection) receivePacket() {
@@ -474,7 +467,7 @@ func (c *Connection) encodePacket(seq uint32, request protocol.ObPayload) []byte
 	return totalBuf
 }
 
-func (c *Connection) decodePacket(contentBuf []byte, response protocol.ObPayload) error {
+func (c *Connection) decodePacket(contentBuf []byte, response protocol.ObPayload) (*protocol.ObTableMoveResponse, error) {
 	contentBuffer := bytes.NewBuffer(contentBuf)
 
 	// decode rpc header
@@ -500,22 +493,31 @@ func (c *Connection) decodePacket(contentBuf []byte, response protocol.ObPayload
 	rpcResponseCode := protocol.NewObRpcResponseCode()
 	rpcResponseCode.Decode(contentBuffer)
 
+	// set rpc flag
+	response.SetFlag(rpcHeader.Flag())
+
 	if rpcResponseCode.Code() != oberror.ObSuccess { // error occur in observer
 		var moveResponse *protocol.ObTableMoveResponse = nil
 		if rpcHeader.PCode() == protocol.ObTableApiMove.Value() {
 			moveResponse = protocol.NewObTableMoveResponse()
+			moveResponse.SetFlag(rpcHeader.Flag())
 			moveResponse.SetUniqueId(rpcHeader.TraceId0())
 			moveResponse.SetSequence(rpcHeader.TraceId1())
 			moveResponse.Decode(contentBuffer)
 		}
-		return protocol.NewProtocolError(
+
+		// some error code need refresh route table
+		if rpcResponseCode.Code().IsRefreshTableErrorCode() {
+			response.SetFlag(response.Flag() | protocol.RpcBadRoutingFlag)
+		}
+
+		return moveResponse, protocol.NewProtocolError(
 			c.option.ip,
 			c.option.port,
 			rpcResponseCode.Code(),
 			rpcHeader.TraceId1(),
 			rpcHeader.TraceId0(),
 			"",
-			moveResponse,
 		)
 	} else {
 		// decode response
@@ -527,7 +529,7 @@ func (c *Connection) decodePacket(contentBuf []byte, response protocol.ObPayload
 	rpcHeaderPool.Put(rpcHeader)
 
 	bufferPool.Put(&contentBuf) // reuse
-	return nil
+	return nil, nil
 }
 
 func (call *call) done() {

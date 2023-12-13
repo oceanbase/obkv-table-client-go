@@ -15,14 +15,15 @@
  * #L%
  */
 
-package reroute
+package route
 
 import (
 	"context"
 	"fmt"
-	"github.com/oceanbase/obkv-table-client-go/util"
 	"testing"
 	"time"
+
+	"github.com/oceanbase/obkv-table-client-go/util"
 
 	"github.com/stretchr/testify/assert"
 
@@ -30,7 +31,7 @@ import (
 	"github.com/oceanbase/obkv-table-client-go/client/option"
 	"github.com/oceanbase/obkv-table-client-go/table"
 	"github.com/oceanbase/obkv-table-client-go/test"
-	reroute "github.com/oceanbase/obkv-table-client-go/test/reroute/util"
+	reroute "github.com/oceanbase/obkv-table-client-go/test/route/util"
 )
 
 const (
@@ -48,7 +49,7 @@ const (
 func TestMoveReplica_singleOp(t *testing.T) {
 	if passReroutingTest {
 		fmt.Println("Please run Rerouting tests manually!!!")
-		fmt.Println("Change passReroutingTest to false in test/reroute/reroute_test.go to run rerouting tests.")
+		fmt.Println("Change passReroutingTest to false in test/route/reroute_test.go to run rerouting tests.")
 		assert.Equal(t, passReroutingTest, false)
 		return
 	}
@@ -93,7 +94,7 @@ func TestMoveReplica_singleOp(t *testing.T) {
 func TestMoveReplica_singleOp_insertUp(t *testing.T) {
 	if passReroutingTest {
 		fmt.Println("Please run Rerouting tests manually!!!")
-		fmt.Println("Change passReroutingTest to false in test/reroute/reroute_test.go to run rerouting tests.")
+		fmt.Println("Change passReroutingTest to false in test/route/reroute_test.go to run rerouting tests.")
 		assert.Equal(t, passReroutingTest, false)
 		return
 	}
@@ -137,7 +138,7 @@ func TestMoveReplica_singleOp_insertUp(t *testing.T) {
 func TestMoveReplica_batch(t *testing.T) {
 	if passReroutingTest {
 		fmt.Println("Please run Rerouting tests manually!!!")
-		fmt.Println("Change passReroutingTest to false in test/reroute/reroute_test.go to run rerouting tests.")
+		fmt.Println("Change passReroutingTest to false in test/route/reroute_test.go to run rerouting tests.")
 		assert.Equal(t, passReroutingTest, false)
 		return
 	}
@@ -186,7 +187,7 @@ func TestMoveReplica_batch(t *testing.T) {
 func TestMoveReplica_batch_insertUp(t *testing.T) {
 	if passReroutingTest {
 		fmt.Println("Please run Rerouting tests manually!!!")
-		fmt.Println("Change passReroutingTest to false in test/reroute/reroute_test.go to run rerouting tests.")
+		fmt.Println("Change passReroutingTest to false in test/route/reroute_test.go to run rerouting tests.")
 		assert.Equal(t, passReroutingTest, false)
 		return
 	}
@@ -235,7 +236,7 @@ func TestMoveReplica_batch_insertUp(t *testing.T) {
 func TestMoveReplica_query(t *testing.T) {
 	if passReroutingTest {
 		fmt.Println("Please run Rerouting tests manually!!!")
-		fmt.Println("Change passReroutingTest to false in test/reroute/reroute_test.go to run rerouting tests.")
+		fmt.Println("Change passReroutingTest to false in test/route/reroute_test.go to run rerouting tests.")
 		assert.Equal(t, passReroutingTest, false)
 		return
 	}
@@ -290,7 +291,7 @@ func TestMoveReplica_query(t *testing.T) {
 func TestMoveReplica_queryAndMutate(t *testing.T) {
 	if passReroutingTest {
 		fmt.Println("Please run Rerouting tests manually!!!")
-		fmt.Println("Change passReroutingTest to false in test/reroute/reroute_test.go to run rerouting tests.")
+		fmt.Println("Change passReroutingTest to false in test/route/reroute_test.go to run rerouting tests.")
 		assert.Equal(t, passReroutingTest, false)
 		return
 	}

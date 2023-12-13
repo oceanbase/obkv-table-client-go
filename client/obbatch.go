@@ -21,8 +21,10 @@ import (
 	"context"
 	"strconv"
 	"sync"
+	"time"
 
 	"github.com/oceanbase/obkv-table-client-go/client/option"
+	"github.com/oceanbase/obkv-table-client-go/route"
 
 	"github.com/pkg/errors"
 
@@ -211,16 +213,16 @@ func (b *obBatchExecutor) constructPartOpMap(ctx context.Context) (map[uint64]*o
 		for i, v := range rowKeyValue {
 			rowKey = append(rowKey, table.NewColumn(b.rowKeyName[i], v))
 		}
-		tableParam, err := b.cli.getTableParam(ctx, b.tableName, rowKey, false)
+		tableParam, err := b.cli.routeInfo.GetTableParam(ctx, b.tableName, rowKey, b.cli.odpTable)
 		if err != nil {
 			return nil, errors.WithMessagef(err, "get table param, tableName:%s, rowKeyValue:%s",
 				b.tableName, util.InterfacesToString(rowKeyValue))
 		}
 		singleOp := newSingleOp(i, op)
-		partOp, exist := partOpMap[tableParam.partitionId]
+		partOp, exist := partOpMap[tableParam.PartitionId()]
 		if !exist {
 			partOp = newPartOp(tableParam)
-			partOpMap[tableParam.partitionId] = partOp
+			partOpMap[tableParam.PartitionId()] = partOp
 		}
 		partOp.addOperation(singleOp)
 	}
@@ -231,7 +233,9 @@ func (b *obBatchExecutor) constructPartOpMap(ctx context.Context) (map[uint64]*o
 func (b *obBatchExecutor) partitionExecute(
 	ctx context.Context,
 	partOp *obPartOp,
-	res []SingleResult) error {
+	res []SingleResult) (error, bool) {
+
+	needRetry := false
 	// 1. Construct batch operation request
 	// 1.1 Construct batch operation
 	batchOp := protocol.NewObTableBatchOperation()
@@ -244,8 +248,8 @@ func (b *obBatchExecutor) partitionExecute(
 	// 1.2 Construct batch operation request
 	request := protocol.NewObTableBatchOperationRequestWithParams(
 		b.tableName,
-		partOp.tableParam.tableId,
-		partOp.tableParam.partitionId,
+		partOp.tableParam.TableId(),
+		partOp.tableParam.PartitionId(),
 		batchOp,
 		b.cli.config.OperationTimeOut,
 		b.cli.GetRpcFlag(),
@@ -253,10 +257,11 @@ func (b *obBatchExecutor) partitionExecute(
 	)
 
 	// 2. Execute
+	var err error
 	partRes := protocol.NewObTableBatchOperationResponse()
-	err := partOp.tableParam.table.execute(ctx, request, partRes)
+	err, needRetry = b.cli.executeInternal(ctx, b.tableName, partOp.tableParam.Table(), request, partRes)
 	if err != nil {
-		return errors.WithMessagef(err, "table execute, request:%s", request.String())
+		return errors.WithMessagef(err, "table execute, request:%s", request.String()), needRetry
 	}
 
 	// 3. Handle result
@@ -270,18 +275,67 @@ func (b *obBatchExecutor) partitionExecute(
 				res[op.indexOfBatch] = operationResponse2SingleResult(partRes.ObTableOperationResponses()[0])
 			}
 		} else {
-			return errors.Errorf("unexpected batch result size, subResSize:%d", subResSize)
+			return errors.Errorf("unexpected batch result size, subResSize:%d", subResSize), needRetry
 		}
 	} else {
 		if subResSize != subOpSize {
-			return errors.Errorf("unexpected batch result size, subResSize:%d, subOpSize:%d", subResSize, subOpSize)
+			return errors.Errorf("unexpected batch result size, subResSize:%d, subOpSize:%d", subResSize, subOpSize), needRetry
 		}
 		for i, op := range partOp.ops {
 			res[op.indexOfBatch] = operationResponse2SingleResult(partRes.ObTableOperationResponses()[i])
 		}
 	}
 
-	return nil
+	return nil, needRetry
+}
+
+func (b *obBatchExecutor) executeInternal(ctx context.Context) (BatchOperationResult, error, bool) {
+	needRetry := false
+	res := make([]SingleResult, len(b.batchOps.ObTableOperations()))
+	// 1. construct partition operation map
+	partOpMap, err := b.constructPartOpMap(ctx)
+	if err != nil {
+		return nil, errors.WithMessagef(err, "construct partition operation map"), needRetry
+	}
+
+	// 2. Loop map, execute per partition operations in goroutine
+	if len(partOpMap) > 1 {
+		errArr := make([]error, 0, 1)
+		var errArrLock sync.Mutex
+		var wg sync.WaitGroup
+		for _, partOp := range partOpMap {
+			wg.Add(1)
+			go func(ctx context.Context, partOp *obPartOp) {
+				defer wg.Done()
+				err, partNeedRetry := b.partitionExecute(ctx, partOp, res)
+				if err != nil {
+					log.Warn("failed to execute partition operations", log.String("partOp", partOp.String()), log.String("err", err.Error()))
+					errArrLock.Lock()
+					errArr = append(errArr, err)
+					if needRetry == false && partNeedRetry {
+						needRetry = true
+					}
+					errArrLock.Unlock()
+				}
+			}(ctx, partOp)
+		}
+		wg.Wait()
+		if len(errArr) != 0 {
+			log.Warn("error occur when execute partition operations")
+			//return newObBatchOperationResult(res), errArr[0], needRetry
+			return nil, errArr[0], needRetry
+		}
+	} else {
+		for _, partOp := range partOpMap {
+			err, needRetry = b.partitionExecute(ctx, partOp, res)
+			if err != nil {
+				return newObBatchOperationResult(res), errors.WithMessagef(err, "execute partition operations, partOp:%s",
+					partOp.String()), needRetry
+			}
+		}
+	}
+
+	return newObBatchOperationResult(res), nil, needRetry
 }
 
 // Execute a batch operation.
@@ -299,46 +353,22 @@ func (b *obBatchExecutor) Execute(ctx context.Context) (BatchOperationResult, er
 		ctx, _ = context.WithTimeout(ctx, b.cli.config.OperationTimeOut) // default timeout operation timeout
 	}
 
-	res := make([]SingleResult, len(b.batchOps.ObTableOperations()))
-	// 1. construct partition operation map
-	partOpMap, err := b.constructPartOpMap(ctx)
+	res, err, needRetry := b.executeInternal(ctx)
+	for err != nil && needRetry {
+		select {
+		case <-ctx.Done():
+			return nil, errors.Errorf("retry timeout")
+		default:
+			res, err, needRetry = b.executeInternal(ctx)
+			time.Sleep(1 * time.Millisecond)
+		}
+	}
+
 	if err != nil {
-		return nil, errors.WithMessagef(err, "construct partition operation map")
+		return nil, err
 	}
 
-	// 2. Loop map, execute per partition operations in goroutine
-	if len(partOpMap) > 1 {
-		errArr := make([]error, 0, 1)
-		var errArrLock sync.Mutex
-		var wg sync.WaitGroup
-		for _, partOp := range partOpMap {
-			wg.Add(1)
-			go func(ctx context.Context, partOp *obPartOp) {
-				defer wg.Done()
-				err := b.partitionExecute(ctx, partOp, res)
-				if err != nil {
-					log.Warn("failed to execute partition operations", log.String("partOp", partOp.String()), log.String("err", err.Error()))
-					errArrLock.Lock()
-					errArr = append(errArr, err)
-					errArrLock.Unlock()
-				}
-			}(ctx, partOp)
-		}
-		wg.Wait()
-		if len(errArr) != 0 {
-			log.Warn("error occur when execute partition operations")
-			return newObBatchOperationResult(res), errArr[0]
-		}
-	} else {
-		for _, partOp := range partOpMap {
-			err := b.partitionExecute(ctx, partOp, res)
-			if err != nil {
-				return newObBatchOperationResult(res), errors.WithMessagef(err, "execute partition operations, partOp:%s", partOp.String())
-			}
-		}
-	}
-
-	return newObBatchOperationResult(res), nil
+	return res, nil
 }
 
 // operationResponse2SingleResult convert operation response to single result.
@@ -347,11 +377,11 @@ func operationResponse2SingleResult(res *protocol.ObTableOperationResponse) Sing
 }
 
 type obPartOp struct {
-	tableParam *ObTableParam
+	tableParam *route.ObTableParam
 	ops        []*obSingleOp
 }
 
-func newPartOp(tableParam *ObTableParam) *obPartOp {
+func newPartOp(tableParam *route.ObTableParam) *obPartOp {
 	ops := make([]*obSingleOp, 0)
 	return &obPartOp{tableParam, ops}
 }

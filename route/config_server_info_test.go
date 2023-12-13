@@ -19,18 +19,23 @@ package route
 
 import (
 	"testing"
+
+	"github.com/stretchr/testify/assert"
 )
 
-func TestObOcpModel_GetServerAddressRandomly(t *testing.T) {
+func TestObConfigServerInfo_GetServerAddressRandomly(t *testing.T) {
 	server1 := NewObServerAddr("127.0.0.1", 1, 1)
 	server2 := NewObServerAddr("127.0.0.1", 1, 2)
 	server3 := NewObServerAddr("127.0.0.1", 1, 3)
 	server4 := NewObServerAddr("127.0.0.1", 1, 4)
 	server5 := NewObServerAddr("127.0.0.1", 1, 5)
 	servers := []*ObServerAddr{server1, server2, server3, server4, server5}
-	ocp := newOcpModel(servers, 1)
+	info := NewConfigServerInfo()
+	for _, server := range servers {
+		info.rslist.Append(server)
+	}
 	for i := 0; i < 10; i++ {
-		svr := ocp.GetServerAddressRandomly()
-		println(svr.String())
+		_, err := info.GetServerAddressRandomly()
+		assert.NotEqual(t, nil, err)
 	}
 }

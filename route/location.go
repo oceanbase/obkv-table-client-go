@@ -38,8 +38,9 @@ const (
 )
 
 const (
-	obVersionSql     = "SELECT /*+READ_CONSISTENCY(WEAK)*/ OB_VERSION() AS CLUSTER_VERSION;"
-	DummyLocationSql = "SELECT /*+READ_CONSISTENCY(WEAK)*/ A.partition_id as partition_id, A.svr_ip as svr_ip, " +
+	obVersionSql        = "SELECT /*+READ_CONSISTENCY(WEAK)*/ OB_VERSION() AS CLUSTER_VERSION;"
+	checkTenantExistSql = "SELECT /*+READ_CONSISTENCY(WEAK)*/ tenant_id from __all_tenant where tenant_name = ?;"
+	DummyLocationSql    = "SELECT /*+READ_CONSISTENCY(WEAK)*/ A.partition_id as partition_id, A.svr_ip as svr_ip, " +
 		"A.sql_port as sql_port, A.table_id as table_id, A.role as role, A.replica_num as replica_num, A.part_num as part_num, " +
 		"B.svr_port as svr_port, B.status as status, B.stop_time as stop_time, A.spare1 as replica_type " +
 		"FROM oceanbase.__all_virtual_proxy_schema A inner join oceanbase.__all_server B on A.svr_ip = B.svr_ip " +
@@ -123,49 +124,6 @@ func InitSql(obVersion float32) {
 	proxySqlGuard.Unlock()
 }
 
-// GetObVersionFromRemoteBySysUA get OceanBase cluster version by sysUA
-// called when client init
-func GetObVersionFromRemoteBySysUA(addr *ObServerAddr, sysUA *ObUserAuth) (float32, error) {
-	db, err := NewDB(
-		sysUA.userName,
-		sysUA.password,
-		addr.ip,
-		strconv.Itoa(addr.sqlPort),
-		OceanBaseDatabase,
-	)
-	if err != nil {
-		return 0.0, errors.WithMessagef(err, "new db, sysUA:%s, addr:%s", sysUA.String(), addr.String())
-	}
-	defer func() {
-		_ = db.Close()
-	}()
-	return GetObVersionFromRemote(db)
-}
-
-// GetObVersionFromRemoteByIpPort get OceanBase cluster version by sql
-// called when client init
-func GetObVersionFromRemoteByIpPort(ip string, port int, userName string, password string) (float32, error) {
-	db, err := NewDB(
-		userName,
-		password,
-		ip,
-		strconv.Itoa(port),
-		OceanBaseDatabase,
-	)
-	if err != nil {
-		return 0.0, errors.WithMessagef(err, "new db, ip:%s, port:%d, userName:%s, password:%s", ip, port, userName, password)
-	}
-	defer func() {
-		_ = db.Close()
-	}()
-	return GetObVersionFromRemote(db)
-}
-
-// GetObVersionFromOdp get OceanBase cluster version by odp
-func GetObVersionFromOdp(ip string, port int, userName string, password string) (float32, error) {
-	return 0, nil
-}
-
 // GetObVersionFromRemote get OceanBase cluster version by sql
 func GetObVersionFromRemote(db *DB) (float32, error) {
 	// 1. Prepare get observer version sql statement.
@@ -193,6 +151,33 @@ func GetObVersionFromRemote(db *DB) (float32, error) {
 	}
 	res := float32(ver) / 1000.0 // ObVersion = 4.1
 	return res, nil
+}
+
+// CheckTenantExist check tenant exist or not
+func CheckTenantExist(db *DB, tenantName string) error {
+	sql := checkTenantExistSql
+	rows, err := db.Query(sql, tenantName)
+	if err != nil {
+		return errors.WithMessagef(err, "check tenant%s", tenantName)
+	}
+	defer func() {
+		_ = rows.Close()
+	}()
+
+	var tenantId int = -1
+	for rows.Next() {
+		err = rows.Scan(&tenantId)
+		if err != nil {
+			err = errors.Errorf("failed to scan row, sql:%s, tenant:%s", sql, tenantName)
+			return err
+		}
+	}
+
+	if tenantId == -1 {
+		return errors.Errorf("tenant not exist, tenant:%s", tenantName)
+	}
+
+	return nil
 }
 
 // GetTableEntryFromRemote obtain the route of a table in the ob cluster by querying the routing system table.
@@ -275,7 +260,7 @@ func GetTableEntryFromRemote(
 		return nil, errors.WithMessagef(err, "get table entry location, table entry:%s", entry.String())
 	}
 	entry.partLocationEntry = partLocationEntry
-	entry.refreshTimeMills = time.Time{}.Unix()
+	entry.refreshTime = time.Now()
 	return entry, nil
 }
 
@@ -319,16 +304,15 @@ func getTableEntryFromResultSet(rows *Rows, tableName string) (*ObTableEntry, er
 		if err != nil {
 			return nil, errors.WithMessagef(err, "scan row")
 		}
-		replica := newReplicaLocation(
-			NewObServerAddr(svrIp, sqlPort, svrPort),
-			newServerStatus(stopTime, status),
-			obServerRole(role),
-			protocol.ObReplicaType(replicaType),
-		)
-		if !replica.isValid() {
-			return nil, errors.Errorf("replica is invalid, replaca:%s", replica.String())
+		if strings.EqualFold(status, "active") {
+			replica := newReplicaLocation(
+				NewObServerAddr(svrIp, sqlPort, svrPort),
+				newServerStatus(stopTime, status),
+				obServerRole(role),
+				protocol.ObReplicaType(replicaType),
+			)
+			tableLocation.replicaLocations = append(tableLocation.replicaLocations, replica)
 		}
-		tableLocation.replicaLocations = append(tableLocation.replicaLocations, replica)
 	}
 	if isEmpty {
 		return nil, errors.Errorf("Table not exist, tableName:%s", tableName)

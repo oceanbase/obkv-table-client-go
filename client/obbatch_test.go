@@ -23,6 +23,7 @@ import (
 	"github.com/stretchr/testify/assert"
 
 	"github.com/oceanbase/obkv-table-client-go/protocol"
+	"github.com/oceanbase/obkv-table-client-go/route"
 	"github.com/oceanbase/obkv-table-client-go/table"
 )
 
@@ -148,13 +149,13 @@ func TestObPartOp_String(t *testing.T) {
 	op = newPartOp(nil)
 	assert.Equal(t, "obPartOp{tableParam:nil, ops:[]}", op.String())
 
-	tableParam := NewObTableParam(&ObTable{}, testTableIdV3, testPartIdV3)
+	tableParam := route.NewObTableParam(&route.ObTable{}, 0, 0)
 	op = newPartOp(tableParam)
-	assert.EqualValues(t, "obPartOp{tableParam:ObTableParam{table:ObTable{ip:, port:0, tenantName:, userName:, password:, database:, isClosed:false}, tableId:1099511677791, partitionId:0}, ops:[]}", op.String())
+	assert.EqualValues(t, "obPartOp{tableParam:ObTableParam{table:ObTable{ip:, port:0, tenantName:, userName:, password:, database:, isClosed:false}, tableId:0, partitionId:0}, ops:[]}", op.String())
 
 	singleOp := newSingleOp(0, nil)
 	op.addOperation(singleOp)
-	assert.Equal(t, "obPartOp{tableParam:ObTableParam{table:ObTable{ip:, port:0, tenantName:, userName:, password:, database:, isClosed:false}, tableId:1099511677791, partitionId:0}, ops:[obSingleOp{indexOfBatch:0, op:nil}]}", op.String())
+	assert.Equal(t, "obPartOp{tableParam:ObTableParam{table:ObTable{ip:, port:0, tenantName:, userName:, password:, database:, isClosed:false}, tableId:0, partitionId:0}, ops:[obSingleOp{indexOfBatch:0, op:nil}]}", op.String())
 }
 
 func TestObSingleOp_String(t *testing.T) {

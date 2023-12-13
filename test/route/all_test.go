@@ -15,7 +15,7 @@
  * #L%
  */
 
-package reroute
+package route
 
 import (
 	"os"
@@ -35,8 +35,10 @@ func setup() {
 	moveCli = test.CreateMoveClient()
 
 	test.CreateDB()
+	test.EnableRerouting()
 
 	test.CreateTable(testInt32RerouteCreateStatement)
+	test.CreateTable(testInt32RouteCreateStatement)
 }
 
 func teardown() {
@@ -45,6 +47,7 @@ func teardown() {
 	moveCli.Close()
 
 	test.DropTable(testInt32RerouteTableName)
+	test.DropTable(testInt32RouteTableName)
 
 	test.CloseDB()
 }

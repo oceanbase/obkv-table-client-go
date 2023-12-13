@@ -15,14 +15,28 @@
  * #L%
  */
 
-package client
+package route
 
-import "strconv"
+import (
+	"strconv"
+)
 
 type ObTableParam struct {
 	table       *ObTable
 	tableId     uint64
 	partitionId uint64 // partition id in 3.x aka tablet id in 4.x
+}
+
+func (p *ObTableParam) Table() *ObTable {
+	return p.table
+}
+
+func (p *ObTableParam) TableId() uint64 {
+	return p.tableId
+}
+
+func (p *ObTableParam) PartitionId() uint64 {
+	return p.partitionId
 }
 
 func NewObTableParam(table *ObTable, tableId uint64, partitionId uint64) *ObTableParam {

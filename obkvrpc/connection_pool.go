@@ -20,10 +20,12 @@ package obkvrpc
 import (
 	"context"
 	"fmt"
-	"github.com/oceanbase/obkv-table-client-go/log"
 	"math/rand"
 	"sync"
+	"sync/atomic"
 	"time"
+
+	"github.com/oceanbase/obkv-table-client-go/log"
 
 	"github.com/pkg/errors"
 )
@@ -47,9 +49,10 @@ type PoolOption struct {
 type ConnectionPool struct {
 	option *PoolOption
 
-	connections []*Connection
-	rwMutexes   []sync.RWMutex
-	connMgr     *ConnectionMgr
+	connections       []*Connection
+	rwMutexes         []sync.RWMutex
+	connMgr           *ConnectionMgr
+	disConnectedCount atomic.Int32
 }
 
 func NewPoolOption(ip string, port int, connPoolMaxConnSize int, connectTimeout time.Duration, loginTimeout time.Duration,
@@ -71,10 +74,12 @@ func NewPoolOption(ip string, port int, connPoolMaxConnSize int, connectTimeout 
 
 func NewConnectionPool(option *PoolOption) (*ConnectionPool, error) {
 	pool := &ConnectionPool{
-		option:      option,
-		connections: make([]*Connection, 0, option.connPoolMaxConnSize),
-		rwMutexes:   make([]sync.RWMutex, 0, option.connPoolMaxConnSize),
+		option:            option,
+		connections:       make([]*Connection, 0, option.connPoolMaxConnSize),
+		rwMutexes:         make([]sync.RWMutex, 0, option.connPoolMaxConnSize),
+		disConnectedCount: atomic.Int32{},
 	}
+	pool.disConnectedCount.Store(0)
 
 	if option.maxConnectionAge > 0 || option.enableSLBLoadBalance {
 		pool.connMgr = NewConnectionMgr(pool)
@@ -97,6 +102,10 @@ func NewConnectionPool(option *PoolOption) (*ConnectionPool, error) {
 	}
 
 	return pool, nil
+}
+
+func (p *ConnectionPool) IsDisconnected() bool {
+	return p.disConnectedCount.Load() == int32(p.option.connPoolMaxConnSize)
 }
 
 // GetConnection Find an unexpired and active connection to use
@@ -138,6 +147,8 @@ func (p *ConnectionPool) RecreateConnection(ctx context.Context, connectionIdx i
 
 	p.connections[connectionIdx] = connection
 
+	p.disConnectedCount.Add(-1)
+
 	return p.connections[connectionIdx], nil
 }
 
@@ -150,6 +161,18 @@ func (p *ConnectionPool) CreateConnection(ctx context.Context) (*Connection, err
 	if err != nil {
 		return nil, errors.WithMessage(err, "connection connect")
 	}
+
+	// listen receive channel
+	go func() {
+		connection.receivePacket()
+		p.disConnectedCount.Add(1) // receivePacket() break means disconnected
+	}()
+
+	// listen send channel
+	go func() {
+		connection.sendPacket()
+	}()
+
 	err = connection.Login(ctx)
 	if err != nil {
 		return nil, errors.WithMessage(err, "connection login")

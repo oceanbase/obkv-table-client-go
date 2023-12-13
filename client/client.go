@@ -19,10 +19,12 @@ package client
 
 import (
 	"context"
+
+	"github.com/pkg/errors"
+
 	"github.com/oceanbase/obkv-table-client-go/client/option"
 	"github.com/oceanbase/obkv-table-client-go/config"
 	"github.com/oceanbase/obkv-table-client-go/table"
-	"github.com/pkg/errors"
 )
 
 // NewClient create a client.
@@ -103,7 +105,7 @@ func NewOdpClient(
 	return cli, nil
 }
 
-// NewClientWithXmlConfig create a client with xml config.
+// NewClientWithTomlConfig create a client with toml config.
 func NewClientWithTomlConfig(configFilePath string) (Client, error) {
 	clientConfig, err := config.GetClientConfigurationFromTOML(configFilePath)
 	if err != nil {

@@ -17,30 +17,66 @@
 
 package route
 
-import "strconv"
+import (
+	"fmt"
+	"net"
+	"strconv"
+	"time"
+)
+
+type tcpAddr struct {
+	ip   string
+	port int
+}
+
+func (a *tcpAddr) Equal(other *tcpAddr) bool {
+	return a.ip == other.ip && a.port == other.port
+}
+
+func (a *tcpAddr) String() string {
+	return "tcpAddr{" +
+		"ip:" + a.ip + ", " +
+		"port:" + strconv.Itoa(a.port) +
+		"}"
+}
 
 type ObServerAddr struct {
-	ip      string
+	tcpAddr
 	sqlPort int
-	svrPort int
 }
 
 func (a *ObServerAddr) SvrPort() int {
-	return a.svrPort
+	return a.port
 }
 
 func (a *ObServerAddr) Ip() string {
 	return a.ip
 }
 
+func (a *ObServerAddr) Equal(other *ObServerAddr) bool {
+	return a.tcpAddr.Equal(&other.tcpAddr) && a.sqlPort == other.sqlPort
+}
+
+func (a *ObServerAddr) IsConnectionFine() bool {
+	addr := fmt.Sprintf("%s:%d", a.tcpAddr.ip, a.tcpAddr.port)
+	conn, err := net.DialTimeout("tcp", addr, time.Second*1)
+	if err != nil {
+		return false
+	}
+	defer conn.Close()
+	return true
+}
+
 func NewObServerAddr(ip string, sqlPort int, svrPort int) *ObServerAddr {
-	return &ObServerAddr{ip, sqlPort, svrPort}
+	return &ObServerAddr{
+		tcpAddr{ip, svrPort},
+		sqlPort}
 }
 
 func (a *ObServerAddr) String() string {
 	return "ObServerAddr{" +
 		"ip:" + a.ip + ", " +
 		"sqlPort:" + strconv.Itoa(a.sqlPort) + ", " +
-		"svrPort:" + strconv.Itoa(a.svrPort) +
+		"svrPort:" + strconv.Itoa(a.port) +
 		"}"
 }

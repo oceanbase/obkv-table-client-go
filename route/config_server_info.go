@@ -19,7 +19,6 @@ package route
 
 import (
 	"encoding/json"
-	"math/rand"
 	"net/http"
 	"strconv"
 	"strings"
@@ -30,40 +29,40 @@ import (
 	"github.com/oceanbase/obkv-table-client-go/log"
 )
 
-// ObOcpModel contains information about rslist and IDC.
-type ObOcpModel struct {
-	servers   []*ObServerAddr
-	clusterId int
+// ObConfigServerInfo contains information about rslist and IDC.
+type ObConfigServerInfo struct {
+	configUrl     string
+	file          string // read from local file
+	timeout       time.Duration
+	retryTimes    int
+	retryInterval time.Duration
+	rslist        *ObRslist
 }
 
-func newOcpModel(servers []*ObServerAddr, clusterId int) *ObOcpModel {
-	return &ObOcpModel{servers, clusterId}
+func NewConfigServerInfo() *ObConfigServerInfo {
+	return &ObConfigServerInfo{
+		rslist: NewRslist(),
+	}
 }
 
 // GetServerAddressRandomly get one randomly server from all the servers
-func (o *ObOcpModel) GetServerAddressRandomly() *ObServerAddr {
-	idx := rand.Intn(len(o.servers))
-	return o.servers[idx]
+func (i *ObConfigServerInfo) GetServerAddressRandomly() (*ObServerAddr, error) {
+	return i.rslist.GetServerRandomly()
 }
 
-// LoadOcpModel obtain the rslist information from the configUrl using the http get service.
-func LoadOcpModel(
-	configUrl string,
-	fileName string,
-	timeout time.Duration,
-	retryTimes int,
-	retryInternal time.Duration) (*ObOcpModel, error) {
-	servers := make([]*ObServerAddr, 0, 3)
+// FetchRslist fetch the rslist information from the configUrl using the http get service.
+func (i *ObConfigServerInfo) FetchRslist() (*ObRslist, error) {
 	var resp obHttpRslistResponse
-	err := getRemoteOcpResponseOrNull(configUrl, fileName, timeout, retryTimes, retryInternal, &resp)
+	err := getConfigServerResponseOrNull(i.configUrl, i.timeout, i.retryTimes, i.retryInterval, &resp)
 	if err != nil {
-		return nil, errors.WithMessagef(err, "get remote ocp response, url:%s", configUrl)
+		return nil, errors.WithMessagef(err, "get remote ocp response, url:%s", i.configUrl)
 	}
 
-	if err != nil && len(strings.TrimSpace(fileName)) != 0 {
+	if err != nil && len(strings.TrimSpace(i.file)) != 0 {
 		return nil, errors.New("not support get config from local file now")
 	}
 
+	rslist := NewRslist()
 	for _, server := range resp.Data.RsList {
 		// split ip and port, server.Address(xx.xx.xx.xx:xx)
 		res := strings.Split(server.Address, ":")
@@ -75,15 +74,15 @@ func LoadOcpModel(
 		if err != nil {
 			return nil, errors.Errorf("fail to convert server port to int, port:%s", res[1])
 		}
-		addr := &ObServerAddr{ip: ip, sqlPort: server.SqlPort, svrPort: svrPort}
-		servers = append(servers, addr)
+		serverAddr := NewObServerAddr(ip, server.SqlPort, svrPort)
+		rslist.Append(serverAddr)
 	}
 
-	if len(servers) == 0 {
-		return nil, errors.Errorf("failed to load Rslist, url:%s", configUrl)
+	if rslist.Size() == 0 {
+		return nil, errors.Errorf("failed to load Rslist, url:%s", i.configUrl)
 	}
 
-	return newOcpModel(servers, resp.Data.ObClusterId), nil
+	return rslist, nil
 }
 
 type obHttpRslistResponse struct {
@@ -109,10 +108,9 @@ type obHttpRslistResponse struct {
 	Trace   string `json:"Trace"`
 }
 
-// getRemoteOcpResponseOrNull parse the response returned by http get and parse the json.
-func getRemoteOcpResponseOrNull(
+// getConfigServerResponseOrNull parse the response returned by http get and parse the json.
+func getConfigServerResponseOrNull(
 	url string,
-	fileName string,
 	timeout time.Duration,
 	retryTimes int,
 	retryInternal time.Duration,

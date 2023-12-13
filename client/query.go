@@ -19,7 +19,9 @@ package client
 
 import (
 	"context"
+
 	"github.com/oceanbase/obkv-table-client-go/client/option"
+	"github.com/oceanbase/obkv-table-client-go/route"
 
 	"github.com/pkg/errors"
 
@@ -103,17 +105,13 @@ func (q *obQueryExecutor) setQueryOptions(queryOptions *option.ObQueryOptions) {
 }
 
 // getTableParams returns the table params.
-func (q *obQueryExecutor) getTableParams(
-	ctx context.Context,
-	tableName string,
-	keyRanges []*table.RangePair,
-	refresh bool) ([]*ObTableParam, error) {
+func (q *obQueryExecutor) getTableParams(ctx context.Context, tableName string, keyRanges []*table.RangePair) ([]*route.ObTableParam, error) {
 	// odp table
 	if q.cli.odpTable != nil {
-		return []*ObTableParam{NewObTableParam(q.cli.odpTable, 0, 0)}, nil
+		return []*route.ObTableParam{route.NewObTableParam(q.cli.odpTable, 0, 0)}, nil
 	}
 
-	entry, err := q.cli.getOrRefreshTableEntry(ctx, tableName, refresh, false)
+	entry, err := q.cli.routeInfo.GetTableEntry(ctx, tableName)
 	if err != nil {
 		return nil, errors.WithMessagef(err, "get or refresh table entry, tableName:%s", tableName)
 	}
@@ -121,9 +119,9 @@ func (q *obQueryExecutor) getTableParams(
 	// get partition ids from key ranges
 	partIdList := make([]uint64, 0)
 	for _, keyRange := range keyRanges {
-		partIds, err := q.cli.getPartitionIds(entry, keyRange)
+		partIds, err := q.cli.routeInfo.GetPartitionIds(entry, keyRange)
 		if err != nil {
-			return nil, errors.WithMessagef(err, "get partition id, tableName:%s, tableEntry:%s", tableName, entry.String())
+			return nil, errors.WithMessagef(err, "get partition ids, tableName:%s, tableEntry:%s", tableName, entry.String())
 		}
 		partIdList = append(partIdList, partIds...)
 	}
@@ -139,9 +137,9 @@ func (q *obQueryExecutor) getTableParams(
 	}
 
 	// construct table params
-	tableParams := make([]*ObTableParam, 0, len(partIds))
+	tableParams := make([]*route.ObTableParam, 0, len(partIds))
 	for _, partId := range partIds {
-		t, err := q.cli.getTable(entry, partId)
+		t, err := q.cli.routeInfo.GetTable(ctx, entry, partId)
 		if err != nil {
 			return nil, errors.WithMessagef(err, "get table, tableName:%s, tableEntry:%s, partId:%d",
 				tableName, entry.String(), partId)
@@ -154,7 +152,7 @@ func (q *obQueryExecutor) getTableParams(
 					tableName, entry.String(), partId)
 			}
 		}
-		tableParams = append(tableParams, NewObTableParam(t, entry.TableId(), partId))
+		tableParams = append(tableParams, route.NewObTableParam(t, entry.TableId(), partId))
 	}
 
 	return tableParams, nil
@@ -198,7 +196,7 @@ func (q *obQueryExecutor) init(ctx context.Context) (*ObQueryResultIterator, err
 	}
 
 	// get table params
-	targetParts, err := q.getTableParams(ctx, q.tableName, q.keyRanges, false)
+	targetParts, err := q.getTableParams(ctx, q.tableName, q.keyRanges)
 	if err != nil {
 		return nil, errors.WithMessage(err, "get table params")
 	}
@@ -210,5 +208,5 @@ func (q *obQueryExecutor) init(ctx context.Context) (*ObQueryResultIterator, err
 	}
 	q.tableQuery.SetKeyRanges(keyRanges)
 
-	return newObQueryResultIteratorWithParams(ctx, q.cli, q.tableQuery, targetParts, q.entityType, q.tableName), nil
+	return newObQueryResultIteratorWithParams(ctx, q, targetParts), nil
 }

@@ -94,6 +94,10 @@ type RpcClient struct {
 	connectionPool *ConnectionPool
 }
 
+func (c *RpcClient) IsDisconnected() bool {
+	return c.connectionPool.IsDisconnected()
+}
+
 func (c *RpcClient) Option() *RpcClientOption {
 	return c.option
 }
@@ -112,7 +116,11 @@ func NewRpcClient(rpcClientOption *RpcClientOption) (*RpcClient, error) {
 	return client, nil
 }
 
-func (c *RpcClient) Execute(ctx context.Context, request protocol.ObPayload, response protocol.ObPayload) error {
+func (c *RpcClient) Execute(
+	ctx context.Context,
+	request protocol.ObPayload,
+	response protocol.ObPayload) (*protocol.ObTableMoveResponse, error) {
+
 	var (
 		connection *Connection
 		index      int
@@ -121,18 +129,14 @@ func (c *RpcClient) Execute(ctx context.Context, request protocol.ObPayload, res
 
 	connection, index = c.connectionPool.GetConnection()
 	if connection == nil {
+		// maybe this connection has been disconnected，we need to reconnect it.
 		connection, err = c.connectionPool.RecreateConnection(ctx, index)
 		if err != nil {
-			return errors.WithMessage(err, "recreate connection")
+			return nil, errors.WithMessage(err, "recreate connection")
 		}
 	}
 
-	err = connection.Execute(ctx, request, response)
-	if err != nil {
-		return err
-	}
-
-	return nil
+	return connection.Execute(ctx, request, response)
 }
 
 func (c *RpcClient) Close() {

@@ -20,10 +20,12 @@ package test
 import (
 	"database/sql"
 	"fmt"
+	"time"
+
 	_ "github.com/go-sql-driver/mysql"
+
 	"github.com/oceanbase/obkv-table-client-go/client"
 	"github.com/oceanbase/obkv-table-client-go/config"
-	"time"
 )
 
 const (
@@ -62,6 +64,24 @@ func CreateClient() client.Client {
 		cli, err = client.NewOdpClient(odpFullUserName, odpPassWord, odpIP, odpRpcPort, database, config.NewDefaultClientConfig())
 	} else {
 		cli, err = client.NewClient(configUrl, fullUserName, passWord, sysUserName, sysPassWord, config.NewDefaultClientConfig())
+	}
+	if err != nil {
+		panic(err.Error())
+	}
+	return cli
+}
+
+func CreateClientWithoutRouting() client.Client {
+	var cli client.Client
+	var err error
+	cfg := config.NewDefaultClientConfig()
+	cfg.EnableRerouting = false
+	if tomlConfigPath != "" {
+		cli, err = client.NewClientWithTomlConfig(tomlConfigPath)
+	} else if isOdpMode {
+		cli, err = client.NewOdpClient(odpFullUserName, odpPassWord, odpIP, odpRpcPort, database, cfg)
+	} else {
+		cli, err = client.NewClient(configUrl, fullUserName, passWord, sysUserName, sysPassWord, cfg)
 	}
 	if err != nil {
 		panic(err.Error())
@@ -139,6 +159,20 @@ func DeleteTables(tableNames []string) {
 
 func InsertTable(insertStatement string) {
 	_, err := GlobalDB.Exec(insertStatement)
+	if err != nil {
+		panic(err.Error())
+	}
+}
+
+func EnableRerouting() {
+	user := "root@sys"
+	database := "oceanbase"
+	dsn := fmt.Sprintf("%s:%s@tcp(%s:%s)/%s", user, sqlPassWord, sqlIp, sqlPort, database)
+	db, err := sql.Open("mysql", dsn)
+	if err != nil {
+		panic(err.Error())
+	}
+	_, err = db.Exec(fmt.Sprintf("alter system set _obkv_feature_mode = 'ttl=off, rerouting=on';"))
 	if err != nil {
 		panic(err.Error())
 	}

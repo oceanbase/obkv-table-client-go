@@ -68,7 +68,7 @@ func NewDefaultClientConfig() *ClientConfig {
 		RsListHttpGetTimeout:             time.Duration(1000) * time.Millisecond, // 1s
 		RsListHttpGetRetryTimes:          3,
 		RsListHttpGetRetryInterval:       time.Duration(100) * time.Millisecond, // 100ms,
-		EnableRerouting:                  false,
+		EnableRerouting:                  true,
 		MaxConnectionAge:                 time.Duration(0) * time.Second, // valid iff > 0
 		EnableSLBLoadBalance:             false,
 	}

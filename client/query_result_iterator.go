@@ -20,10 +20,12 @@ package client
 import (
 	"context"
 	"sync"
+	"time"
 
 	"github.com/pkg/errors"
 
 	"github.com/oceanbase/obkv-table-client-go/protocol"
+	"github.com/oceanbase/obkv-table-client-go/route"
 )
 
 type QueryResultIterator interface {
@@ -35,15 +37,12 @@ type QueryResultIterator interface {
 
 type ObQueryResultIterator struct {
 	ctx                   context.Context
-	cli                   *obClient
+	queryExecutor         *obQueryExecutor
 	lock                  sync.Mutex
-	tableQuery            *protocol.ObTableQuery
 	cachedPropertiesRows  [][]*protocol.ObObject
 	cachedPropertiesNames []string
-	targetParts           []*ObTableParam
-	entityType            protocol.ObTableEntityType
+	targetParts           []*route.ObTableParam
 	readConsistency       protocol.ObTableConsistencyLevel
-	tableName             string
 	prevSessionId         int64
 	rowIndex              int
 	closed                bool
@@ -51,22 +50,17 @@ type ObQueryResultIterator struct {
 }
 
 // newObQueryResultWithParam creates a new ObQueryResultIterator.
-func newObQueryResultIteratorWithParams(ctx context.Context,
-	cli *obClient,
-	tableQuery *protocol.ObTableQuery,
-	targetParts []*ObTableParam,
-	entityType protocol.ObTableEntityType,
-	tableName string) *ObQueryResultIterator {
+func newObQueryResultIteratorWithParams(
+	ctx context.Context,
+	queryExecutor *obQueryExecutor,
+	targetParts []*route.ObTableParam) *ObQueryResultIterator {
 	return &ObQueryResultIterator{
 		ctx:                   ctx,
-		cli:                   cli,
-		tableQuery:            tableQuery,
+		queryExecutor:         queryExecutor,
 		cachedPropertiesRows:  nil,
 		cachedPropertiesNames: nil,
 		targetParts:           targetParts,
-		entityType:            entityType,
 		readConsistency:       protocol.ObTableConsistencyLevelStrong,
-		tableName:             tableName,
 		prevSessionId:         0,
 		rowIndex:              0,
 		closed:                false,
@@ -109,7 +103,7 @@ func (q *ObQueryResultIterator) Next() (QueryResult, error) {
 	// get next row from previous server
 	// if prevSessionId != 0, it means that the previous server has not been read completely
 	if q.prevSessionId != 0 {
-		err = q.fetchNext(true)
+		err = q.fetchNextWithRetry(true)
 		if err != nil {
 			return nil, err
 		}
@@ -122,7 +116,7 @@ func (q *ObQueryResultIterator) Next() (QueryResult, error) {
 	}
 
 	// get next row from next server
-	err = q.fetchNext(false)
+	err = q.fetchNextWithRetry(false)
 	if err != nil {
 		return nil, err
 	}
@@ -152,7 +146,7 @@ func (q *ObQueryResultIterator) NextBatch() ([]QueryResult, error) {
 
 	// get next row from previous server
 	// if prevSessionId != 0, it means that the previous server has not been read completely
-	err = q.fetchNext(q.prevSessionId != 0)
+	err = q.fetchNextWithRetry(q.prevSessionId != 0)
 	if err != nil {
 		return nil, err
 	}
@@ -167,12 +161,40 @@ func (q *ObQueryResultIterator) NextBatch() ([]QueryResult, error) {
 	return result, nil
 }
 
+// fetchNextWithRetry fetches the next batch from the server, retry when route table change
+func (q *ObQueryResultIterator) fetchNextWithRetry(hasPrev bool) error {
+	err, needRetry := q.fetchNext(hasPrev)
+	for err != nil && needRetry {
+		select {
+		case <-q.ctx.Done():
+			return errors.WithMessage(err, "retry and timeout")
+		default:
+			// get and set route table again
+			targetParts, err := q.queryExecutor.getTableParams(q.ctx, q.queryExecutor.tableName, q.queryExecutor.keyRanges)
+			if err != nil {
+				return err
+			}
+			q.targetParts = targetParts
+
+			err, needRetry = q.fetchNext(hasPrev)
+			time.Sleep(1 * time.Millisecond)
+		}
+	}
+
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
+
 // fetchNext fetches the next batch from the server.
-func (q *ObQueryResultIterator) fetchNext(hasPrev bool) error {
+func (q *ObQueryResultIterator) fetchNext(hasPrev bool) (error, bool) {
+	needRetry := false
 	// check status
 	err := q.checkStatus()
 	if err != nil {
-		return err
+		return err, needRetry
 	}
 
 	// loop to get batch from servers
@@ -186,16 +208,16 @@ func (q *ObQueryResultIterator) fetchNext(hasPrev bool) error {
 
 		// prepare request
 		queryRequest := protocol.NewObTableQueryRequestWithParams(
-			q.tableName,
-			nextParam.tableId,
-			nextParam.partitionId,
-			q.entityType,
-			q.tableQuery,
+			q.queryExecutor.tableName,
+			nextParam.TableId(),
+			nextParam.PartitionId(),
+			q.queryExecutor.entityType,
+			q.queryExecutor.tableQuery,
 		)
 		asyncQueryRequest := protocol.NewObTableAsyncQueryRequestWithParams(
 			queryRequest,
-			q.cli.config.OperationTimeOut,
-			q.cli.GetRpcFlag(),
+			q.queryExecutor.cli.config.OperationTimeOut,
+			q.queryExecutor.cli.GetRpcFlag(),
 		)
 		if hasPrev {
 			asyncQueryRequest.SetQueryType(protocol.QueryNext)
@@ -205,9 +227,9 @@ func (q *ObQueryResultIterator) fetchNext(hasPrev bool) error {
 		}
 
 		// execute
-		err = nextParam.table.execute(q.ctx, asyncQueryRequest, result)
+		err, needRetry = q.queryExecutor.cli.executeInternal(q.ctx, q.queryExecutor.tableName, nextParam.Table(), asyncQueryRequest, result)
 		if err != nil {
-			return errors.WithMessagef(err, "execute request, request:%s", queryRequest.String())
+			return errors.WithMessagef(err, "execute request, request:%s", queryRequest.String()), needRetry
 		}
 		// deal with result, update status
 		cacheRows = result.ResultRowCount()
@@ -235,10 +257,10 @@ func (q *ObQueryResultIterator) fetchNext(hasPrev bool) error {
 
 	if cacheRows == 0 {
 		q.hasNext = false
-		return nil
+		return nil, needRetry
 	}
 
-	return nil
+	return nil, needRetry
 }
 
 // checkStatus checks the status of the query result.
