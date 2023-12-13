@@ -50,6 +50,7 @@ func main() {
 	// partition scan order
 	scanOrder := table.Reverse
 	// offset of partition result
+	// attention : offset only use with limit set, cannot use solo
 	offset := 3
 
 	// filter c2 < 100 and c2 > 50
