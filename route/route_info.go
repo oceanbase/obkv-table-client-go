@@ -377,7 +377,7 @@ func (i *ObRouteInfo) ConstructIndexTableName(
 	entry := i.getTableEntryFromCache(tableName)
 	if entry == nil { // do dml in sql, do query in obkv, entry is null
 		addr := i.serverRoster.GetServer()
-		tableId, err = GetTableIdFromRemote(ctx, addr, i.sysUA, tableName)
+		tableId, err = GetTableIdFromRemote(ctx, addr, i.sysUA, i.tableRoster.tenantName, i.tableRoster.database, tableName)
 		if err != nil {
 			return "", errors.WithMessagef(err, "get table id from remote, tableName:%s", tableName)
 		}

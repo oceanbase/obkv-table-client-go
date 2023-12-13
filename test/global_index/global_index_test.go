@@ -19,12 +19,14 @@ package global_index
 import (
 	"context"
 	"fmt"
+	"testing"
+	"time"
+
+	"github.com/stretchr/testify/assert"
+
 	"github.com/oceanbase/obkv-table-client-go/client/option"
 	"github.com/oceanbase/obkv-table-client-go/table"
 	"github.com/oceanbase/obkv-table-client-go/test"
-	"github.com/stretchr/testify/assert"
-	"testing"
-	"time"
 )
 
 const (
@@ -251,8 +253,8 @@ func doGlobalIndexQuery(t *testing.T, tableName string) {
 			rowKey,
 			mutateColumns,
 		)
-		assert.EqualValues(t, 1, affectRows)
 		assert.Equal(t, nil, err)
+		assert.EqualValues(t, 1, affectRows)
 	}
 
 	// test global index
