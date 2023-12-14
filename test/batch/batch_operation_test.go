@@ -101,7 +101,7 @@ func TestBatch_MultiInsert_Fail(t *testing.T) {
 	}
 
 	res, err = batchExecutor.Execute(context.TODO())
-	assert.NotEqual(t, nil, err)
+	assert.Equal(t, nil, err)
 
 	// number 2 - 4 which is 102-100 should be success
 	assert.EqualValues(t, []int{2, 3, 4}, res.SuccessIdx())

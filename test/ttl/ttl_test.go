@@ -40,7 +40,7 @@ func TestTTL_insert(t *testing.T) {
 
 	// 1. insert
 	rowKey := []*table.Column{table.NewColumn("c1", int32(0))}
-	mutateColumns := []*table.Column{table.NewColumn("c2", int32(0)), table.NewColumn("c3", table.TimeStamp(time.Now().Local()))}
+	mutateColumns := []*table.Column{table.NewColumn("c2", int32(0)), table.NewColumn("c3", table.TimeStamp(time.Now().Local().Truncate(time.Second)))}
 	affectRows, err := cli.Insert(
 		context.TODO(),
 		tableName,
@@ -52,7 +52,7 @@ func TestTTL_insert(t *testing.T) {
 
 	// 2. insert, conflict, not expired, ret=OB_ERR_PRIMARY_KEY_DUPLICATE
 	rowKey = []*table.Column{table.NewColumn("c1", int32(0))}
-	mutateColumns = []*table.Column{table.NewColumn("c2", int32(1)), table.NewColumn("c3", table.TimeStamp(time.Now().Local()))}
+	mutateColumns = []*table.Column{table.NewColumn("c2", int32(1)), table.NewColumn("c3", table.TimeStamp(time.Now().Local().Truncate(time.Second)))}
 	affectRows, err = cli.Insert(
 		context.TODO(),
 		tableName,
@@ -65,7 +65,7 @@ func TestTTL_insert(t *testing.T) {
 
 	// 3. insert, conflict, expired, delete old, insert new
 	rowKey = []*table.Column{table.NewColumn("c1", int32(0))}
-	mutateColumns = []*table.Column{table.NewColumn("c2", int32(1)), table.NewColumn("c3", table.TimeStamp(time.Now().Local()))}
+	mutateColumns = []*table.Column{table.NewColumn("c2", int32(1)), table.NewColumn("c3", table.TimeStamp(time.Now().Local().Truncate(time.Second)))}
 	affectRows, err = cli.Insert(
 		context.TODO(),
 		tableName,
@@ -94,7 +94,7 @@ func TestTTL_delete(t *testing.T) {
 
 	// 1. insert
 	rowKey := []*table.Column{table.NewColumn("c1", int32(0))}
-	mutateColumns := []*table.Column{table.NewColumn("c2", int32(0)), table.NewColumn("c3", table.TimeStamp(time.Now().Local()))}
+	mutateColumns := []*table.Column{table.NewColumn("c2", int32(0)), table.NewColumn("c3", table.TimeStamp(time.Now().Local().Truncate(time.Second)))}
 	affectRows, err := cli.Insert(
 		context.TODO(),
 		tableName,
@@ -116,7 +116,7 @@ func TestTTL_delete(t *testing.T) {
 
 	// 3. insert
 	rowKey = []*table.Column{table.NewColumn("c1", int32(0))}
-	mutateColumns = []*table.Column{table.NewColumn("c2", int32(0)), table.NewColumn("c3", table.TimeStamp(time.Now().Local()))}
+	mutateColumns = []*table.Column{table.NewColumn("c2", int32(0)), table.NewColumn("c3", table.TimeStamp(time.Now().Local().Truncate(time.Second)))}
 	affectRows, err = cli.Insert(
 		context.TODO(),
 		tableName,
@@ -156,7 +156,7 @@ func TestTTL_update(t *testing.T) {
 
 	// 1. insert
 	rowKey := []*table.Column{table.NewColumn("c1", int32(0))}
-	mutateColumns := []*table.Column{table.NewColumn("c2", int32(0)), table.NewColumn("c3", table.TimeStamp(time.Now().Local()))}
+	mutateColumns := []*table.Column{table.NewColumn("c2", int32(0)), table.NewColumn("c3", table.TimeStamp(time.Now().Local().Truncate(time.Second)))}
 	affectRows, err := cli.Insert(
 		context.TODO(),
 		tableName,
@@ -169,7 +169,7 @@ func TestTTL_update(t *testing.T) {
 	// 2. update, not expired, update successfully, affectRows = 1
 	ctx, _ := context.WithTimeout(context.Background(), 1000*time.Second) // 10s
 	rowKey = []*table.Column{table.NewColumn("c1", int32(0))}
-	mutateColumns = []*table.Column{table.NewColumn("c2", int32(1)), table.NewColumn("c3", table.TimeStamp(time.Now().Local()))}
+	mutateColumns = []*table.Column{table.NewColumn("c2", int32(1)), table.NewColumn("c3", table.TimeStamp(time.Now().Local().Truncate(time.Second)))}
 	affectRows, err = cli.Update(
 		ctx,
 		tableName,
@@ -184,7 +184,7 @@ func TestTTL_update(t *testing.T) {
 	// 3. update, expired, update failed, affectRows = 0
 	ctx, _ = context.WithTimeout(context.Background(), 1000*time.Second) // 10s
 	rowKey = []*table.Column{table.NewColumn("c1", int32(0))}
-	mutateColumns = []*table.Column{table.NewColumn("c2", int32(2)), table.NewColumn("c3", table.TimeStamp(time.Now().Local()))}
+	mutateColumns = []*table.Column{table.NewColumn("c2", int32(2)), table.NewColumn("c3", table.TimeStamp(time.Now().Local().Truncate(time.Second)))}
 	affectRows, err = cli.Update(
 		ctx,
 		tableName,
@@ -212,7 +212,7 @@ func TestTTL_replace(t *testing.T) {
 
 	// 1. insert
 	rowKey := []*table.Column{table.NewColumn("c1", int32(0))}
-	mutateColumns := []*table.Column{table.NewColumn("c2", int32(0)), table.NewColumn("c3", table.TimeStamp(time.Now().Local()))}
+	mutateColumns := []*table.Column{table.NewColumn("c2", int32(0)), table.NewColumn("c3", table.TimeStamp(time.Now().Local().Truncate(time.Second)))}
 	affectRows, err := cli.Insert(
 		context.TODO(),
 		tableName,
@@ -225,7 +225,7 @@ func TestTTL_replace(t *testing.T) {
 	// 2. replace, not expired, replace successfully, affectRows = 2
 	ctx, _ := context.WithTimeout(context.Background(), 1000*time.Second) // 10s
 	rowKey = []*table.Column{table.NewColumn("c1", int32(0))}
-	mutateColumns = []*table.Column{table.NewColumn("c2", int32(1)), table.NewColumn("c3", table.TimeStamp(time.Now().Local()))}
+	mutateColumns = []*table.Column{table.NewColumn("c2", int32(1)), table.NewColumn("c3", table.TimeStamp(time.Now().Local().Truncate(time.Second)))}
 	affectRows, err = cli.Replace(
 		ctx,
 		tableName,
@@ -240,7 +240,7 @@ func TestTTL_replace(t *testing.T) {
 	// 3. replace, expired, replace successfully, affectRows = 2
 	ctx, _ = context.WithTimeout(context.Background(), 1000*time.Second) // 10s
 	rowKey = []*table.Column{table.NewColumn("c1", int32(0))}
-	mutateColumns = []*table.Column{table.NewColumn("c2", int32(2)), table.NewColumn("c3", table.TimeStamp(time.Now().Local()))}
+	mutateColumns = []*table.Column{table.NewColumn("c2", int32(2)), table.NewColumn("c3", table.TimeStamp(time.Now().Local().Truncate(time.Second)))}
 	affectRows, err = cli.Replace(
 		ctx,
 		tableName,
@@ -325,7 +325,7 @@ func TestTTL_increment(t *testing.T) {
 
 	// 1. insert
 	rowKey := []*table.Column{table.NewColumn("c1", int32(0))}
-	mutateColumns := []*table.Column{table.NewColumn("c2", int32(0)), table.NewColumn("c3", table.TimeStamp(time.Now().Local()))}
+	mutateColumns := []*table.Column{table.NewColumn("c2", int32(0)), table.NewColumn("c3", table.TimeStamp(time.Now().Local().Truncate(time.Second)))}
 	affectRows, err := cli.Insert(
 		context.TODO(),
 		tableName,
@@ -386,7 +386,7 @@ func TestTTL_batch(t *testing.T) {
 
 	batchExecutor := cli.NewBatchExecutor(tableName)
 	rowKey := []*table.Column{table.NewColumn("c1", int32(0))}
-	mutateColumns := []*table.Column{table.NewColumn("c2", int32(0)), table.NewColumn("c3", table.TimeStamp(time.Now().Local()))}
+	mutateColumns := []*table.Column{table.NewColumn("c2", int32(0)), table.NewColumn("c3", table.TimeStamp(time.Now().Local().Truncate(time.Second)))}
 	err := batchExecutor.AddInsertOp(rowKey, mutateColumns)
 	assert.EqualValues(t, nil, err)
 

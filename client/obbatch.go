@@ -261,7 +261,7 @@ func (b *obBatchExecutor) partitionExecute(
 	partRes := protocol.NewObTableBatchOperationResponse()
 	err, needRetry = b.cli.executeInternal(ctx, b.tableName, partOp.tableParam.Table(), request, partRes)
 	if err != nil {
-		return errors.WithMessagef(err, "table execute, request:%s", request.String()), needRetry
+		return err, needRetry
 	}
 
 	// 3. Handle result
@@ -322,8 +322,6 @@ func (b *obBatchExecutor) executeInternal(ctx context.Context) (BatchOperationRe
 		wg.Wait()
 		if len(errArr) != 0 {
 			log.Warn("error occur when execute partition operations")
-			//return newObBatchOperationResult(res), errArr[0], needRetry
-			return nil, errArr[0], needRetry
 		}
 	} else {
 		for _, partOp := range partOpMap {

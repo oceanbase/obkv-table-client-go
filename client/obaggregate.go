@@ -19,8 +19,10 @@ package client
 
 import (
 	"context"
-	"github.com/oceanbase/obkv-table-client-go/protocol"
+
 	"github.com/pkg/errors"
+
+	"github.com/oceanbase/obkv-table-client-go/protocol"
 )
 
 func newObAggExecutor(queryExecutor *obQueryExecutor) *obAggExecutor {
@@ -86,7 +88,7 @@ func (q *obAggExecutor) Execute(ctx context.Context) (AggregateResult, error) {
 	}
 	res, err := resSet.Next()
 	if err != nil {
-		return nil, errors.WithMessagef(err, "get aggregate result failed")
+		return nil, err
 	}
 	return newObAggregateResult(res), nil
 }

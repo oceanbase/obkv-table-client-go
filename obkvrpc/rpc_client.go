@@ -109,7 +109,7 @@ func NewRpcClient(rpcClientOption *RpcClientOption) (*RpcClient, error) {
 		client.option.tenantName, client.option.databaseName, client.option.userName, client.option.password, client.option.maxConnectionAge, client.option.enableSLBLoadBalance)
 	connectionPool, err := NewConnectionPool(poolOption)
 	if err != nil {
-		return nil, errors.WithMessage(err, "create connection pool")
+		return nil, err
 	}
 
 	client.connectionPool = connectionPool
