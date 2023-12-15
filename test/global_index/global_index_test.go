@@ -45,7 +45,7 @@ const (
 	testGlobalUniqueIndex             = "testGlobalUniqueIndex"
 	testGlobalUniqueIndexCreateStat   = "CREATE TABLE IF NOT EXISTS `testGlobalUniqueIndex` (`C1` int NOT NULL,`C2` int NOT NULL,`C3` int NOT NULL,`C4` int NOT NULL,`C5` varchar(20) default NULL,PRIMARY KEY (`C1`),UNIQUE KEY `idx` (`C3`) GLOBAL partition by hash(`C3`) partitions 8) partition by key(`C1`) partitions 16;"
 	testGlobalIndexWithTTL            = "test_global_index_with_ttl"
-	testGlobalIndexWithTTLCreateStat  = "CREATE TABLE IF NOT EXISTS `test_global_index_with_ttl` (`c1` varchar(20) NOT NULL,`c2` bigint NOT NULL,`c3` bigint DEFAULT NULL,`c4` bigint DEFAULT NULL,`expired_ts` timestamp,PRIMARY KEY (`c1`, `c2`),KEY `idx`(`c1`, `c4`) local,KEY `idx2`(`c3`) global partition by hash(`c3`) partitions 4) TTL(expired_ts + INTERVAL 0 SECOND) partition by key(`c1`) partitions 4;"
+	testGlobalIndexWithTTLCreateStat  = "CREATE TABLE IF NOT EXISTS `test_global_index_with_ttl` (`c1` varchar(20) NOT NULL,`c2` bigint NOT NULL,`c3` bigint DEFAULT NULL,`c4` bigint DEFAULT NULL,`expired_ts` timestamp(6),PRIMARY KEY (`c1`, `c2`),KEY `idx`(`c1`, `c4`) local,KEY `idx2`(`c3`) global partition by hash(`c3`) partitions 4) TTL(expired_ts + INTERVAL 0 SECOND) partition by key(`c1`) partitions 4;"
 )
 
 func checkIndexTableRow(t *testing.T, indexTableName string, rowKey []*table.Column, mutateColumns []*table.Column, affectedCount int) {
