@@ -52,8 +52,11 @@ func (c *ObRpcResponseCode) SetCode(code oberror.ObErrorCode) {
 	c.code = code
 }
 
-func (c *ObRpcResponseCode) Msg() []byte {
-	return c.msg
+func (c *ObRpcResponseCode) Msg() string {
+	if len(c.msg) > 0 {
+		return string(c.msg[:len(c.msg)-1])
+	}
+	return string(c.msg)
 }
 
 func (c *ObRpcResponseCode) SetMsg(msg []byte) {

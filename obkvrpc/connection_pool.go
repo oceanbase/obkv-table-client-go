@@ -89,7 +89,7 @@ func NewConnectionPool(option *PoolOption) (*ConnectionPool, error) {
 		ctx, _ := context.WithTimeout(context.Background(), pool.option.connectTimeout)
 		connection, err := pool.CreateConnection(ctx)
 		if err != nil {
-			return nil, errors.WithMessage(err, "create connection")
+			return nil, err
 		}
 
 		pool.connections = append(pool.connections, connection)
@@ -142,7 +142,7 @@ func (p *ConnectionPool) RecreateConnection(ctx context.Context, connectionIdx i
 
 	connection, err := p.CreateConnection(ctx)
 	if err != nil {
-		return nil, errors.WithMessage(err, "create connection")
+		return nil, err
 	}
 
 	p.connections[connectionIdx] = connection
@@ -175,7 +175,7 @@ func (p *ConnectionPool) CreateConnection(ctx context.Context) (*Connection, err
 
 	err = connection.Login(ctx)
 	if err != nil {
-		return nil, errors.WithMessage(err, "connection login")
+		return nil, err
 	}
 	// put it to here to ensure connection should not expire during connect & login phase
 	if p.option.maxConnectionAge > 0 {

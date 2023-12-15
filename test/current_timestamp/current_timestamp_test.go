@@ -326,7 +326,7 @@ func TestCurrentTimestamp_fillValue(t *testing.T) {
 
 	// insert
 	fmt.Println("insert")
-	var now = time.Now().Local()
+	var now = time.Now().Local().Truncate(time.Second)
 	fmt.Println(now)
 	rowKey := []*table.Column{table.NewColumn("c1", int32(0))}
 	mutateColumns := []*table.Column{
@@ -360,7 +360,7 @@ func TestCurrentTimestamp_fillValue(t *testing.T) {
 	// update
 	time.Sleep(1 * time.Second)
 	fmt.Println("update")
-	now = time.Now().Local()
+	now = time.Now().Local().Truncate(time.Second)
 	fmt.Println(now)
 	mutateColumns = []*table.Column{
 		table.NewColumn("c2", int32(1)),
@@ -394,7 +394,7 @@ func TestCurrentTimestamp_fillValue(t *testing.T) {
 	// insertUp insert
 	time.Sleep(1 * time.Second)
 	fmt.Println("insertUp-insert")
-	now = time.Now().Local()
+	now = time.Now().Local().Truncate(time.Second)
 	fmt.Println(now)
 	rowKey = []*table.Column{table.NewColumn("c1", int32(1))}
 	mutateColumns = []*table.Column{
@@ -428,7 +428,7 @@ func TestCurrentTimestamp_fillValue(t *testing.T) {
 	// insertUp update
 	time.Sleep(1 * time.Second)
 	fmt.Println("insertUp-update")
-	now = time.Now().Local()
+	now = time.Now().Local().Truncate(time.Second)
 	fmt.Println(now)
 	mutateColumns = []*table.Column{
 		table.NewColumn("c2", int32(1)),
@@ -462,7 +462,7 @@ func TestCurrentTimestamp_fillValue(t *testing.T) {
 	// replace insert
 	time.Sleep(1 * time.Second)
 	fmt.Println("replace-insert")
-	now = time.Now().Local()
+	now = time.Now().Local().Truncate(time.Second)
 	fmt.Println(now)
 	rowKey = []*table.Column{table.NewColumn("c1", int32(2))}
 	mutateColumns = []*table.Column{
@@ -496,7 +496,7 @@ func TestCurrentTimestamp_fillValue(t *testing.T) {
 	// replace replace
 	time.Sleep(1 * time.Second)
 	fmt.Println("replace-replace")
-	now = time.Now().Local()
+	now = time.Now().Local().Truncate(time.Second)
 	fmt.Println(now)
 	mutateColumns = []*table.Column{
 		table.NewColumn("c2", int32(1)),
@@ -530,7 +530,7 @@ func TestCurrentTimestamp_fillValue(t *testing.T) {
 	// increment insert
 	time.Sleep(1 * time.Second)
 	fmt.Println("increment-insert")
-	now = time.Now().Local()
+	now = time.Now().Local().Truncate(time.Second)
 	fmt.Println(now)
 	rowKey = []*table.Column{table.NewColumn("c1", int32(3))}
 	mutateColumns = []*table.Column{
@@ -559,7 +559,7 @@ func TestCurrentTimestamp_fillValue(t *testing.T) {
 	// increment inc
 	time.Sleep(1 * time.Second)
 	fmt.Println("increment-inc")
-	now = time.Now().Local()
+	now = time.Now().Local().Truncate(time.Second)
 	fmt.Println(now)
 	mutateColumns = []*table.Column{
 		table.NewColumn("c2", int32(1)),
@@ -587,7 +587,7 @@ func TestCurrentTimestamp_fillValue(t *testing.T) {
 	// append insert
 	time.Sleep(1 * time.Second)
 	fmt.Println("append-insert")
-	now = time.Now().Local()
+	now = time.Now().Local().Truncate(time.Second)
 	fmt.Println(now)
 	rowKey = []*table.Column{table.NewColumn("c1", int32(4))}
 	mutateColumns = []*table.Column{
@@ -618,7 +618,7 @@ func TestCurrentTimestamp_fillValue(t *testing.T) {
 	// append append
 	time.Sleep(1 * time.Second)
 	fmt.Println("append-append")
-	now = time.Now().Local()
+	now = time.Now().Local().Truncate(time.Second)
 	fmt.Println(now)
 	mutateColumns = []*table.Column{
 		table.NewColumn("c6", "efg"),

@@ -23,8 +23,6 @@ import (
 	"sync"
 	"time"
 
-	"github.com/pkg/errors"
-
 	"github.com/oceanbase/obkv-table-client-go/obkvrpc"
 	"github.com/oceanbase/obkv-table-client-go/protocol"
 )
@@ -89,7 +87,7 @@ func (t *ObTable) Init(connPoolSize int, connectTimeout time.Duration, loginTime
 	)
 	cli, err := obkvrpc.NewRpcClient(opt)
 	if err != nil {
-		return errors.WithMessagef(err, "new rpc client, opt:%s", opt.String())
+		return err
 	}
 	t.rpcClient = cli
 	return nil

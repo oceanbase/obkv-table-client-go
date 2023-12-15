@@ -58,8 +58,11 @@ func (r *ObTableResponse) SetSqlState(sqlState []byte) {
 	r.sqlState = sqlState
 }
 
-func (r *ObTableResponse) Msg() []byte {
-	return r.msg
+func (r *ObTableResponse) Msg() string {
+	if len(r.msg) > 0 {
+		return string(r.msg[:len(r.msg)-1])
+	}
+	return string(r.msg)
 }
 
 func (r *ObTableResponse) SetMsg(msg []byte) {

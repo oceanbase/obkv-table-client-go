@@ -61,7 +61,7 @@ func NewClient(
 	}
 	err = cli.init()
 	if err != nil {
-		return nil, errors.WithMessagef(err, "init client, client:%s", cli.String())
+		return nil, err
 	}
 
 	return cli, nil
@@ -99,7 +99,7 @@ func NewOdpClient(
 	}
 	err = cli.initOdp()
 	if err != nil {
-		return nil, errors.WithMessagef(err, "init client, client:%s", cli.String())
+		return nil, err
 	}
 
 	return cli, nil
