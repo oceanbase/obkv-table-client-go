@@ -322,6 +322,7 @@ func (b *obBatchExecutor) executeInternal(ctx context.Context) (BatchOperationRe
 		wg.Wait()
 		if len(errArr) != 0 {
 			log.Warn("error occur when execute partition operations")
+			return nil, errArr[0], needRetry
 		}
 	} else {
 		for _, partOp := range partOpMap {
