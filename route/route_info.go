@@ -388,10 +388,9 @@ func (i *ObRouteInfo) ConstructIndexTableName(
 		}
 		// Store cache
 		i.tableLocations.Store(tableName, entry)
-	} else {
-		tableId = entry.TableId()
 	}
 
+	tableId = entry.TableId()
 	// [__idx_][data_table_id][_index_name]
 	return fmt.Sprintf("__idx_%d_%s", tableId, indexName), nil
 }
