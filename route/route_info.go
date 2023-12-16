@@ -376,11 +376,18 @@ func (i *ObRouteInfo) ConstructIndexTableName(
 	var err error
 	entry := i.getTableEntryFromCache(tableName)
 	if entry == nil { // do dml in sql, do query in obkv, entry is null
-		addr := i.serverRoster.GetServer()
-		tableId, err = GetTableIdFromRemote(ctx, addr, i.sysUA, i.tableRoster.tenantName, i.tableRoster.database, tableName)
+		key := NewObTableEntryKey(
+			i.clusterName,
+			i.tableRoster.tenantName,
+			i.tableRoster.database,
+			tableName,
+		)
+		entry, err = GetTableEntryFromRemote(ctx, i.serverRoster.GetServer(), i.sysUA, key)
 		if err != nil {
-			return "", errors.WithMessagef(err, "get table id from remote, tableName:%s", tableName)
+			return "", errors.WithMessagef(err, "get table entry from remote, key:%s", key.String())
 		}
+		// Store cache
+		i.tableLocations.Store(tableName, entry)
 	} else {
 		tableId = entry.TableId()
 	}
