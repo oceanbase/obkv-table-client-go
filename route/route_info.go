@@ -374,23 +374,17 @@ func (i *ObRouteInfo) ConstructIndexTableName(
 
 	var tableId uint64
 	var err error
-	entry := i.getTableEntryFromCache(tableName)
-	if entry == nil { // do dml in sql, do query in obkv, entry is null
-		key := NewObTableEntryKey(
-			i.clusterName,
-			i.tableRoster.tenantName,
-			i.tableRoster.database,
-			tableName,
-		)
-		entry, err = GetTableEntryFromRemote(ctx, i.serverRoster.GetServer(), i.sysUA, key)
+	indexInfo := i.getIndexInfoFromCache(indexName)
+	if indexInfo == nil { // do dml in sql, do query in obkv, entry is null
+		addr := i.serverRoster.GetServer()
+		tableId, err = GetTableIdFromRemote(ctx, addr, i.sysUA, i.tableRoster.tenantName, i.tableRoster.database, tableName)
 		if err != nil {
-			return "", errors.WithMessagef(err, "get table entry from remote, key:%s", key.String())
+			return "", errors.WithMessagef(err, "get table id from remote, tableName:%s", tableName)
 		}
-		// Store cache
-		i.tableLocations.Store(tableName, entry)
+	} else {
+		tableId = indexInfo.dataTableId
 	}
 
-	tableId = entry.TableId()
 	// [__idx_][data_table_id][_index_name]
 	return fmt.Sprintf("__idx_%d_%s", tableId, indexName), nil
 }
@@ -435,7 +429,7 @@ func (i *ObRouteInfo) GetOrRefreshIndexInfo(
 	}
 
 	// 3. Store cache
-	i.tableLocations.Store(indexName, info)
+	i.indexRoster.Store(indexName, info)
 
 	return info, nil
 }
