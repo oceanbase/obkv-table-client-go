@@ -19,6 +19,7 @@ package client
 
 import (
 	"context"
+	"fmt"
 
 	"github.com/oceanbase/obkv-table-client-go/client/option"
 	"github.com/oceanbase/obkv-table-client-go/route"
@@ -202,8 +203,8 @@ func (q *obQueryExecutor) init(ctx context.Context) (*ObQueryResultIterator, err
 		if err != nil {
 			return nil, errors.WithMessage(err, "construct index table name")
 		}
-
-		info, err := q.cli.routeInfo.GetOrRefreshIndexInfo(ctx, q.tableQuery.IndexName(), indexTableName)
+		var indexInfoKey = fmt.Sprintf("%s_%s", q.tableName, q.tableQuery.IndexName())
+		info, err := q.cli.routeInfo.GetOrRefreshIndexInfo(ctx, indexInfoKey, indexTableName)
 		if err != nil {
 			return nil, errors.WithMessage(err, "get index info fail")
 		}

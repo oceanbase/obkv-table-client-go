@@ -374,7 +374,8 @@ func (i *ObRouteInfo) ConstructIndexTableName(
 
 	var tableId uint64
 	var err error
-	indexInfo := i.getIndexInfoFromCache(indexName)
+	var indexInfoKey = fmt.Sprintf("%s_%s", tableName, indexName)
+	indexInfo := i.getIndexInfoFromCache(indexInfoKey)
 	if indexInfo == nil { // do dml in sql, do query in obkv, entry is null
 		addr := i.serverRoster.GetServer()
 		tableId, err = GetTableIdFromRemote(ctx, addr, i.sysUA, i.tableRoster.tenantName, i.tableRoster.database, tableName)
@@ -389,8 +390,8 @@ func (i *ObRouteInfo) ConstructIndexTableName(
 	return fmt.Sprintf("__idx_%d_%s", tableId, indexName), nil
 }
 
-func (i *ObRouteInfo) getIndexInfoFromCache(indexName string) *ObIndexInfo {
-	v, ok := i.indexRoster.Load(indexName)
+func (i *ObRouteInfo) getIndexInfoFromCache(indexInfoKey string) *ObIndexInfo {
+	v, ok := i.indexRoster.Load(indexInfoKey)
 	if ok {
 		info, _ := v.(*ObIndexInfo)
 		return info
@@ -401,23 +402,23 @@ func (i *ObRouteInfo) getIndexInfoFromCache(indexName string) *ObIndexInfo {
 // GetOrRefreshIndexInfo get index info from cache or from remote
 func (i *ObRouteInfo) GetOrRefreshIndexInfo(
 	ctx context.Context,
-	indexName string,
+	indexInfoKey string,
 	indexTableName string) (*ObIndexInfo, error) {
 
 	var err error
 	// 1. Get entry from cache
-	info := i.getIndexInfoFromCache(indexName)
+	info := i.getIndexInfoFromCache(indexInfoKey)
 	if info != nil {
 		return info, nil
 	}
 
 	// 2. Cache not exist, get from remote
 	// 2.1 Lock table firstly
-	i.tableMutexes.Lock(indexName)
-	defer i.tableMutexes.Unlock(indexName)
+	i.tableMutexes.Lock(indexInfoKey)
+	defer i.tableMutexes.Unlock(indexInfoKey)
 
 	// 2.2 Double check whether we need to do fetch or not, other goroutine may have refreshed
-	info = i.getIndexInfoFromCache(indexName)
+	info = i.getIndexInfoFromCache(indexInfoKey)
 	if info != nil {
 		return info, nil
 	}
@@ -429,7 +430,7 @@ func (i *ObRouteInfo) GetOrRefreshIndexInfo(
 	}
 
 	// 3. Store cache
-	i.indexRoster.Store(indexName, info)
+	i.indexRoster.Store(indexInfoKey, info)
 
 	return info, nil
 }

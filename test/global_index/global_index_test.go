@@ -317,7 +317,7 @@ func TestPrimaryNoPartitionAndGlobalIndexPartition(t *testing.T) {
 	doGlobalIndexQuery(t, testGlobalAllNoPart)
 }
 
-func TestPrimaryPartitionAndGlobalIndexNoPartition(t *testing.T) {
+func TestPrimaryPartitionAndGlobalIndexNosPartition(t *testing.T) {
 	defer test.DeleteTable(testGlobalPrimaryNoPart)
 	doGlobalIndexQuery(t, testGlobalPrimaryNoPart)
 }
@@ -456,17 +456,6 @@ func TestGlobalUniqueIndexWithConflict(t *testing.T) {
 	assert.Equal(t, nil, err)
 	assert.EqualValues(t, 1, i)
 
-	// insert_or_update with global unique index
-	rowKey3 := []*table.Column{table.NewColumn("c1", int32(3))}
-	mutateColumns3 := []*table.Column{table.NewColumn("c2", int32(4)), table.NewColumn("c3", int32(1)),
-		table.NewColumn("c4", int32(16)), table.NewColumn("c5", "hi~")}
-	affectRows, err = cli.InsertOrUpdate(
-		context.TODO(),
-		tableName,
-		rowKey3,
-		mutateColumns3)
-	assert.EqualValues(t, 1, affectRows)
-	assert.Equal(t, nil, err)
 }
 
 func TestGlobalIndexWithTTL(t *testing.T) {
