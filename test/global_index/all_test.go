@@ -28,7 +28,6 @@ var cli client.Client
 
 func setup() {
 	test.CreateDB()
-	test.ExecStatement("set global ob_enable_index_direct_select = 1;")
 	test.CreateTable(testGlabalIndexCreateHashTable)
 	test.CreateTable(testGlabalIndexCreateKeyTable)
 	test.CreateTable(testGlobalIndexNoPartCreateStat)
@@ -58,6 +57,7 @@ func getGlobalIndexTableName(tableName string) []string {
 	if test.GlobalDB == nil {
 		panic("db is nil")
 	}
+	test.ExecStatement("set ob_enable_index_direct_select = 1;")
 	sql := fmt.Sprintf("select table_name from oceanbase.__all_virtual_table where data_table_id = (select table_id from oceanbase.__all_virtual_table where table_name = '%s');", tableName)
 	rows, err := test.GlobalDB.Query(sql)
 	if err != nil {
