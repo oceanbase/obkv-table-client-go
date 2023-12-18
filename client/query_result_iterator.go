@@ -229,7 +229,7 @@ func (q *ObQueryResultIterator) fetchNext(hasPrev bool) (error, bool) {
 		// execute
 		err, needRetry = q.queryExecutor.cli.executeInternal(q.ctx, q.queryExecutor.tableName, nextParam.Table(), asyncQueryRequest, result)
 		if err != nil {
-			return errors.WithMessagef(err, "execute request, request:%s", queryRequest.String()), needRetry
+			return err, needRetry
 		}
 		// deal with result, update status
 		cacheRows = result.ResultRowCount()

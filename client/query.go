@@ -186,6 +186,9 @@ func (q *obQueryExecutor) checkQueryParams() error {
 	if q.tableQuery == nil {
 		return errors.New("table query is nil")
 	}
+	if q.tableQuery.Limit() == -1 && q.tableQuery.Offset() != 0 {
+		return errors.New("unexpected offset without limit")
+	}
 	return nil
 }
 

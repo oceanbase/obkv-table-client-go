@@ -217,7 +217,7 @@ func (i *ObRouteInfo) ConstructTableRoster(
 		table := NewObTable(server.Ip(), server.SvrPort(), tenantName, userName, password, database)
 		err := table.Init(connPoolSize, connectTimeout, loginTimeout)
 		if err != nil {
-			return errors.WithMessagef(err, "init ob table, obTable:%s", table.String())
+			return err
 		}
 		i.tableRoster.Add(tcpAddr{ip: server.Ip(), port: server.SvrPort()}, table)
 	}
@@ -545,11 +545,7 @@ func (i *ObRouteInfo) Execute(
 	}
 
 	if err != nil {
-		if result.RemoteAddr() != nil {
-			return errors.WithMessagef(err, "obtable remote:[%s] execute", result.RemoteAddr().String()), needRetry
-		} else {
-			return errors.WithMessagef(err, "obtable (remote unknown) execute"), needRetry
-		}
+		return err, needRetry
 	}
 
 	return nil, false
@@ -571,7 +567,7 @@ func (i *ObRouteInfo) addTable(addr tcpAddr) error {
 	)
 	err := table.Init(i.tableRoster.connPoolSize, i.tableRoster.connectTimeout, i.tableRoster.loginTimeout)
 	if err != nil {
-		return errors.WithMessagef(err, "init ob table, obTable:%s", table.String())
+		return err
 	}
 	i.tableRoster.Add(addr, table)
 

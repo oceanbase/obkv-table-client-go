@@ -69,7 +69,7 @@ const (
 	ObPasswordWrong                          ObErrorCode = -4043
 	ObSkeyVersionWrong                       ObErrorCode = -4044
 	ObNotRegistered                          ObErrorCode = -4048
-	ObWaitqueueTimeout                       ObErrorCode = -4049
+	ObWaitQueueTimeout                       ObErrorCode = -4049
 	ObNotTheObject                           ObErrorCode = -4050
 	ObAlreadyRegistered                      ObErrorCode = -4051
 	ObLastLogRuinned                         ObErrorCode = -4052
@@ -718,10 +718,65 @@ const (
 	ObClusterNameNotEqual                    ObErrorCode = -9016
 	ObRsListInvaild                          ObErrorCode = -9017
 	ObAgentHasFailedTask                     ObErrorCode = -9018
+	ObKvCredentialNotMatch                   ObErrorCode = -10509
+	ObKvRowkeyCountNotMatch                  ObErrorCode = -10510
+	ObKvColumnTypeNotMatch                   ObErrorCode = -10511
+	ObKvCollationMismatch                    ObErrorCode = -10512
+	ObKvScanRangeMissing                     ObErrorCode = -10513
 )
+
+var ObErrorNames = map[ObErrorCode]string{
+	ObSuccess:                "ObSuccess",
+	ObErrUnknownTable:        "ObErrUnknownTable",
+	ObErrPrimaryKeyDuplicate: "ObErrPrimaryKeyDuplicate",
+	ObErrColumnNotFound:      "ObErrColumnNotFound",
+	ObObjTypeError:           "ObObjTypeError",
+	ObBadNullError:           "ObBadNullError",
+	ObLocationLeaderNotExist: "ObLocationLeaderNotExist",
+	ObNotMaster:              "ObNotMaster",
+	ObRsNotMaster:            "ObRsNotMaster",
+	ObRsShutdown:             "ObRsShutdown",
+	ObRpcConnectError:        "ObRpcConnectError",
+	ObPartitionIsStopped:     "ObPartitionIsStopped",
+	ObLocationNotExist:       "ObLocationNotExist",
+	ObServerIsInit:           "ObServerIsInit",
+	ObServerIsStopping:       "ObServerIsStopping",
+	ObTenantNotInServer:      "ObTenantNotInServer",
+	ObTransRpcTimeout:        "ObTransRpcTimeout",
+	ObNoReadableReplica:      "ObNoReadableReplica",
+	ObReplicaNotReadable:     "ObReplicaNotReadable",
+	ObTimeout:                "ObTimeout",
+	ObTransTimeout:           "ObTransTimeout",
+	ObWaitQueueTimeout:       "ObWaitQueueTimeout",
+	ObPartitionNotExist:      "ObPartitionNotExist",
+	ObKvCredentialNotMatch:   "ObKvCredentialNotMatch",
+	ObKvRowkeyCountNotMatch:  "ObKvRowkeyCountNotMatch",
+	ObKvColumnTypeNotMatch:   "ObKvColumnTypeNotMatch",
+	ObKvCollationMismatch:    "ObKvCollationMismatch",
+	ObKvScanRangeMissing:     "ObKvScanRangeMissing",
+	ObErrNoDefaultForField:   "ObErrNoDefaultForField",
+	ObTableNotExist:          "ObTableNotExist",
+	ObDataOutOfRange:         "ObDataOutOfRange",
+	ObOperateOverflow:        "ObOperateOverflow",
+	ObErrDataTooLong:         "ObErrDataTooLong",
+	ObNotSupported:           "ObNotSupported",
+	ObErrUpdateRowKeyColumn:  "ObErrUpdateRowKeyColumn",
+	ObTenantNotExist:         "ObTenantNotExist",
+	ObErrBadDatabase:         "ObErrBadDatabase",
+	ObErrUserNotExist:        "ObErrUserNotExist",
+	ObPasswordWrong:          "ObPasswordWrong",
+	ObErrBadFieldError:       "ObErrBadFieldError",
+}
 
 func (c ObErrorCode) IsRefreshTableErrorCode() bool {
 	return c == ObSchemaError ||
 		c == ObGTSNotReady ||
 		c == ObSchemaEagain
+}
+
+func (c ObErrorCode) GetErrorCodeName() string {
+	if name, ok := ObErrorNames[c]; ok {
+		return name
+	}
+	return "UnknownErrorCode"
 }

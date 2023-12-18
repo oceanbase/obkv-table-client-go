@@ -512,12 +512,11 @@ func (c *Connection) decodePacket(contentBuf []byte, response protocol.ObPayload
 		}
 
 		return moveResponse, protocol.NewProtocolError(
-			c.option.ip,
-			c.option.port,
+			c.RemoteAddr().String(),
 			rpcResponseCode.Code(),
+			rpcResponseCode.Msg(),
 			rpcHeader.TraceId1(),
 			rpcHeader.TraceId0(),
-			"",
 		)
 	} else {
 		// decode response
