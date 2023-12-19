@@ -526,7 +526,13 @@ func (c *obClient) NewAggExecutor(tableName string, rangePairs []*table.RangePai
 }
 
 func (c *obClient) Close() {
-	c.routeInfo.Close()
+	if c.routeInfo != nil {
+		c.routeInfo.Close()
+	}
+
+	if c.odpTable != nil {
+		c.odpTable.Close()
+	}
 }
 
 func (c *obClient) getOperationOptions(opts ...option.ObOperationOption) *option.ObOperationOptions {
