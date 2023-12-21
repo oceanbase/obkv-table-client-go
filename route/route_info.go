@@ -286,12 +286,8 @@ func (i *ObRouteInfo) GetPartitionIds(entry *ObTableEntry, rowKeyPair *table.Ran
 func (i *ObRouteInfo) GetTableParam(
 	ctx context.Context,
 	tableName string,
-	rowKey []*table.Column,
-	opdTable *ObTable) (*ObTableParam, error) {
-	// odp table
-	if opdTable != nil {
-		return NewObTableParam(opdTable, 0, 0), nil
-	}
+	rowKey []*table.Column) (*ObTableParam, error) {
+
 	entry, err := i.GetTableEntry(ctx, tableName)
 	if err != nil {
 		return nil, errors.WithMessagef(err, "get table entry, tableName:%s", tableName)

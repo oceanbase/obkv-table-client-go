@@ -24,10 +24,11 @@ import (
 )
 
 type ObProtocolError struct {
-	server  string
-	trace   string
-	errCode error2.ObErrorCode
-	errMsg  string
+	server      string
+	trace       string
+	errCode     error2.ObErrorCode
+	errCodeName string
+	errMsg      string
 }
 
 // NewProtocolError construct ObProtocolError
@@ -39,20 +40,20 @@ func NewProtocolError(
 	uniqueId uint64) *ObProtocolError {
 
 	trace := fmt.Sprintf("Y%X-%016X", uniqueId, sequence)
-	return &ObProtocolError{server, trace, code, errMsg}
+	errCodeName := code.GetErrorCodeName()
+	msg := errMsg
+	if errMsg == "" {
+		msg = "error occur in server"
+	}
+	return &ObProtocolError{server, trace, code, errCodeName, msg}
 }
 
 func (e *ObProtocolError) Error() string {
-	errCodeName := e.errCode.GetErrorCodeName()
-	errMsg := e.errMsg
-	if errMsg == "" {
-		errMsg = "error occur in server"
-	}
 	return fmt.Sprintf(
 		"errCode:%d, errCodeName:%s, errMsg:%s, server:%s, trace:%s",
 		e.errCode,
-		errCodeName,
-		errMsg,
+		e.errCodeName,
+		e.errMsg,
 		e.server,
 		e.trace,
 	)
