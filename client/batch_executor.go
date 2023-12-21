@@ -19,6 +19,7 @@ package client
 
 import (
 	"context"
+
 	"github.com/oceanbase/obkv-table-client-go/client/option"
 
 	"github.com/oceanbase/obkv-table-client-go/table"
@@ -32,6 +33,8 @@ type BatchExecutor interface {
 	AddUpdateOp(rowKey []*table.Column, mutateValues []*table.Column, opts ...option.ObOperationOption) error
 	// AddInsertOrUpdateOp add an insertOrUpdate operation to the batch executor
 	AddInsertOrUpdateOp(rowKey []*table.Column, mutateValues []*table.Column, opts ...option.ObOperationOption) error
+	// AddPutOp add a put operation to the batch executor
+	AddPutOp(rowKey []*table.Column, mutateValues []*table.Column, opts ...option.ObOperationOption) error
 	// AddReplaceOp add a replace operation to the batch executor
 	AddReplaceOp(rowKey []*table.Column, mutateValues []*table.Column, opts ...option.ObOperationOption) error
 	// AddIncrementOp add an increment operation to the batch executor

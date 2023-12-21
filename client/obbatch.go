@@ -135,6 +135,11 @@ func (b *obBatchExecutor) AddInsertOrUpdateOp(rowKey []*table.Column, mutateValu
 	return b.addDmlOp(protocol.ObTableOperationInsertOrUpdate, rowKey, mutateValues, opts...)
 }
 
+// AddPutOp add a put operation to the batch executor
+func (b *obBatchExecutor) AddPutOp(rowKey []*table.Column, mutateValues []*table.Column, opts ...option.ObOperationOption) error {
+	return b.addDmlOp(protocol.PUT, rowKey, mutateValues, opts...)
+}
+
 // AddReplaceOp add a replace operation to the batch executor
 func (b *obBatchExecutor) AddReplaceOp(rowKey []*table.Column, mutateValues []*table.Column, opts ...option.ObOperationOption) error {
 	return b.addDmlOp(protocol.ObTableOperationReplace, rowKey, mutateValues, opts...)

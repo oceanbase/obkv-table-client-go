@@ -353,6 +353,26 @@ func (c *obClient) InsertOrUpdate(
 	return res.AffectedRows(), nil
 }
 
+func (c *obClient) Put(
+	ctx context.Context,
+	tableName string,
+	rowKey []*table.Column,
+	mutateColumns []*table.Column,
+	opts ...option.ObOperationOption) (int64, error) {
+	operationOptions := c.getOperationOptions(opts...)
+	res, err := c.executeWithRetry(
+		ctx,
+		tableName,
+		protocol.PUT,
+		rowKey,
+		mutateColumns,
+		operationOptions)
+	if err != nil {
+		return -1, err
+	}
+	return res.AffectedRows(), nil
+}
+
 func (c *obClient) Replace(
 	ctx context.Context,
 	tableName string,

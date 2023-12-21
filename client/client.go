@@ -143,6 +143,10 @@ type Client interface {
 	// InsertOrUpdate insert or update a record by rowKey.
 	// insert if the primary key does not exist, update if it does.
 	InsertOrUpdate(ctx context.Context, tableName string, rowKey []*table.Column, mutateColumns []*table.Column, opts ...option.ObOperationOption) (int64, error)
+	// Put overwrite row to database.
+	// insert if the primary key does not exist, overwrite if the primary key exist.
+	// use default value if some column you not fill value.
+	Put(ctx context.Context, tableName string, rowKey []*table.Column, mutateColumns []*table.Column, opts ...option.ObOperationOption) (int64, error)
 	// Replace a record by rowKey.
 	Replace(ctx context.Context, tableName string, rowKey []*table.Column, mutateColumns []*table.Column, opts ...option.ObOperationOption) (int64, error)
 	// Increment a record by rowKey.

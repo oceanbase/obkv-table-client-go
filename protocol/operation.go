@@ -95,6 +95,9 @@ const (
 	ObTableOperationReplace
 	ObTableOperationIncrement
 	ObTableOperationAppend
+	SCAN
+	TTL
+	PUT
 )
 
 func (o *ObTableOperation) OpType() ObTableOperationType {
