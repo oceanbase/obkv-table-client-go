@@ -25,8 +25,13 @@ import (
 
 type ObTableEntity struct {
 	ObUniVersionHeader
-	rowKey     []*ObObject
-	properties map[string]*ObObject
+	rowKey          []*ObObject
+	properties      map[string]*ObObject
+	onlyEncodeValue bool
+}
+
+func (e *ObTableEntity) SetOnlyEncodeValue(onlyEncodeValue bool) {
+	e.onlyEncodeValue = onlyEncodeValue
 }
 
 func NewObTableEntity() *ObTableEntity {
@@ -105,7 +110,9 @@ func (e *ObTableEntity) PayloadContentLen() int {
 	totalLen += util.EncodedLengthByVi64(int64(len(e.properties)))
 
 	for key, value := range e.properties {
-		totalLen += util.EncodedLengthByVString(key)
+		if !e.onlyEncodeValue {
+			totalLen += util.EncodedLengthByVString(key)
+		}
 		totalLen += value.EncodedLength()
 	}
 
@@ -125,7 +132,9 @@ func (e *ObTableEntity) Encode(buffer *bytes.Buffer) {
 	util.EncodeVi64(buffer, int64(len(e.properties)))
 
 	for key, value := range e.properties {
-		util.EncodeVString(buffer, key)
+		if !e.onlyEncodeValue {
+			util.EncodeVString(buffer, key)
+		}
 		value.Encode(buffer)
 	}
 }

@@ -25,10 +25,10 @@ import (
 
 type ObTableBatchOperation struct {
 	ObUniVersionHeader
+	samePropertiesNames bool
 	obTableOperations   []*ObTableOperation
 	readOnly            bool
 	sameType            bool
-	samePropertiesNames bool
 }
 
 func NewObTableBatchOperation() *ObTableBatchOperation {
@@ -95,13 +95,18 @@ func (o *ObTableBatchOperation) PayloadLen() int {
 func (o *ObTableBatchOperation) PayloadContentLen() int {
 	totalLen := 0
 
+	totalLen += 1 // samePropertiesNames
+
 	totalLen += util.EncodedLengthByVi64(int64(len(o.obTableOperations)))
 
-	for _, tableOperation := range o.obTableOperations {
+	for i, tableOperation := range o.obTableOperations {
+		if o.samePropertiesNames && i != 0 {
+			tableOperation.entity.SetOnlyEncodeValue(true)
+		}
 		totalLen += tableOperation.PayloadLen()
 	}
 
-	totalLen += 3 // readOnly sameType samePropertiesNames
+	totalLen += 2 // readOnly sameType
 
 	o.ObUniVersionHeader.SetContentLength(totalLen)
 	return o.ObUniVersionHeader.ContentLength()
@@ -110,17 +115,20 @@ func (o *ObTableBatchOperation) PayloadContentLen() int {
 func (o *ObTableBatchOperation) Encode(buffer *bytes.Buffer) {
 	o.ObUniVersionHeader.Encode(buffer)
 
+	util.PutUint8(buffer, util.BoolToByte(o.samePropertiesNames))
+
 	util.EncodeVi64(buffer, int64(len(o.obTableOperations)))
 
-	for _, tableOperation := range o.obTableOperations {
+	for i, tableOperation := range o.obTableOperations {
+		if o.samePropertiesNames && i != 0 {
+			tableOperation.entity.SetOnlyEncodeValue(true)
+		}
 		tableOperation.Encode(buffer)
 	}
 
 	util.PutUint8(buffer, util.BoolToByte(o.readOnly))
 
 	util.PutUint8(buffer, util.BoolToByte(o.sameType))
-
-	util.PutUint8(buffer, util.BoolToByte(o.samePropertiesNames))
 }
 
 func (o *ObTableBatchOperation) Decode(buffer *bytes.Buffer) {

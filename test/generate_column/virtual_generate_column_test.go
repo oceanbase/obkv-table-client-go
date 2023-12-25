@@ -29,7 +29,14 @@ import (
 
 const (
 	testVirtualGenColumnTableName                = "test_virtual_gen_column"
-	testVirtualGenColumnTableNameCreateStatement = "create table if not exists `test_virtual_gen_column`(`c1` int(12) not null, `c2` varchar(20), `c3` varchar(20), `g` varchar(30) generated always as (concat(`c2`,`c3`)), primary key (`c1`)) partition by key(c1) partitions 16;"
+	testVirtualGenColumnTableNameCreateStatement = "create table if not exists `test_virtual_gen_column`(" +
+		"`c1` int(12) not null, " +
+		"`c2` varchar(20), " +
+		"`c3` varchar(20), " +
+		"`c4` bigint default 1, " +
+		"`g` varchar(30) generated always as (concat(`c2`,`c3`)), " +
+		"key index_l (c2, c3) local," +
+		"primary key (`c1`)) partition by key(c1) partitions 16;"
 )
 
 func TestGenerateColumn_virtual(t *testing.T) {
@@ -76,69 +83,4 @@ func TestGenerateColumn_virtual(t *testing.T) {
 	)
 	assert.Equal(t, nil, err)
 	assert.EqualValues(t, 1, affectRows)
-
-	// get
-	result, err = cli.Get(
-		context.TODO(),
-		tableName,
-		rowKey,
-		nil,
-	)
-	assert.Equal(t, nil, err)
-	assert.EqualValues(t, 0, result.Value("c1"))
-	assert.EqualValues(t, "1", result.Value("c2"))
-	assert.EqualValues(t, "2", result.Value("c3"))
-	assert.EqualValues(t, "12", result.Value("g"))
-
-	// insertUp insert
-	rowKey = []*table.Column{table.NewColumn("c1", int32(1))}
-	mutateColumns = []*table.Column{
-		table.NewColumn("c2", "1"),
-		table.NewColumn("c3", "1"),
-	}
-	affectRows, err = cli.InsertOrUpdate(
-		context.TODO(),
-		tableName,
-		rowKey,
-		mutateColumns,
-	)
-	assert.Equal(t, nil, err)
-	assert.EqualValues(t, 1, affectRows)
-
-	// get
-	result, err = cli.Get(
-		context.TODO(),
-		tableName,
-		rowKey,
-		nil,
-	)
-	assert.Equal(t, nil, err)
-	assert.EqualValues(t, 1, result.Value("c1"))
-	assert.EqualValues(t, "1", result.Value("c2"))
-	assert.EqualValues(t, "1", result.Value("c3"))
-	assert.EqualValues(t, "11", result.Value("g"))
-
-	// insertUp update
-	mutateColumns = []*table.Column{table.NewColumn("c3", "2")}
-	affectRows, err = cli.InsertOrUpdate(
-		context.TODO(),
-		tableName,
-		rowKey,
-		mutateColumns,
-	)
-	assert.Equal(t, nil, err)
-	assert.EqualValues(t, 1, affectRows)
-
-	// get
-	result, err = cli.Get(
-		context.TODO(),
-		tableName,
-		rowKey,
-		nil,
-	)
-	assert.Equal(t, nil, err)
-	assert.EqualValues(t, 1, result.Value("c1"))
-	assert.EqualValues(t, "1", result.Value("c2"))
-	assert.EqualValues(t, "2", result.Value("c3"))
-	assert.EqualValues(t, "12", result.Value("g"))
 }

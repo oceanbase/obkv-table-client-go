@@ -145,6 +145,53 @@ func TestInsertOrUpdateInt32(t *testing.T) {
 	assert.EqualValues(t, 1, result.Value("c2"))
 }
 
+func TestPutInt32(t *testing.T) {
+	tableName := testInt32TableName
+	defer test.DeleteTable(tableName)
+
+	rowKey := []*table.Column{table.NewColumn("c1", int32(1))}
+	mutateColumns := []*table.Column{table.NewColumn("c2", int32(1))}
+	affectRows, err := cli.Put(
+		context.TODO(),
+		tableName,
+		rowKey,
+		mutateColumns,
+	)
+	assert.Equal(t, nil, err)
+	assert.EqualValues(t, 1, affectRows)
+
+	selectColumns := []string{"c1", "c2"}
+	result, err := cli.Get(
+		context.TODO(),
+		tableName,
+		rowKey,
+		selectColumns,
+	)
+	assert.Equal(t, nil, err)
+	assert.EqualValues(t, 1, result.Value("c1"))
+	assert.EqualValues(t, 1, result.Value("c2"))
+
+	affectRows, err = cli.Put(
+		context.TODO(),
+		tableName,
+		rowKey,
+		mutateColumns,
+	)
+	assert.Equal(t, nil, err)
+	assert.EqualValues(t, 1, affectRows)
+
+	selectColumns = []string{"c1", "c2"}
+	result, err = cli.Get(
+		context.TODO(),
+		tableName,
+		rowKey,
+		selectColumns,
+	)
+	assert.Equal(t, nil, err)
+	assert.EqualValues(t, 1, result.Value("c1"))
+	assert.EqualValues(t, 1, result.Value("c2"))
+}
+
 func TestDeleteInt32(t *testing.T) {
 	tableName := testInt32TableName
 	defer test.DeleteTable(tableName)

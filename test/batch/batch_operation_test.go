@@ -30,7 +30,11 @@ import (
 
 const (
 	batchOpTableTableName       = "batchOpTable"
-	batchOpTableCreateStatement = "create table if not exists batchOpTable(`c1` bigint(20) not null, c2 bigint(20), c3 varchar(20) default 'hello', primary key (`c1`)) partition by hash(c1) partitions 15;"
+	batchOpTableCreateStatement = "create table if not exists batchOpTable(" +
+		"c1 bigint(20) not null, " +
+		"c2 bigint(20), " +
+		"c3 varchar(20) default 'hello', " +
+		"primary key (c1)) partition by hash(c1) partitions 15;"
 )
 
 var getColumns = []string{"c1", "c2"}
@@ -195,6 +199,31 @@ func TestBatch_MultiInsertOrUpdate(t *testing.T) {
 		rowKey := []*table.Column{table.NewColumn("c1", int64(i))}
 		insertUpColumns := []*table.Column{table.NewColumn("c2", int64(i+i))}
 		err := batchExecutor.AddInsertOrUpdateOp(rowKey, insertUpColumns)
+		assert.Equal(t, nil, err)
+	}
+
+	res, err := batchExecutor.Execute(context.TODO())
+	assert.Equal(t, nil, err)
+
+	assert.EqualValues(t, recordCount, res.Size())
+	for i := 0; i < res.Size(); i++ {
+		assert.EqualValues(t, 1, res.GetResults()[i].AffectedRows())
+	}
+}
+
+func TestBatch_MultiPut(t *testing.T) {
+	tableName := batchOpTableTableName
+	defer test.DeleteTable(tableName)
+
+	recordCount := 10
+	prepareRecord(recordCount)
+
+	batchExecutor := cli.NewBatchExecutor(tableName)
+
+	for i := 0; i < recordCount; i++ {
+		rowKey := []*table.Column{table.NewColumn("c1", int64(i))}
+		putColumns := []*table.Column{table.NewColumn("c2", int64(i+i))}
+		err := batchExecutor.AddPutOp(rowKey, putColumns)
 		assert.Equal(t, nil, err)
 	}
 
