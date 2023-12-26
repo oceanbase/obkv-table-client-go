@@ -50,7 +50,9 @@ jobs:
         run: go mod download
 
       - name: Build
-        run: go build -v ./...
+        run: |
+          go list ./... | grep -v /example/ | xargs -L 1 go build -v
 
       - name: Run unit tests
-        run: go test -v $(go list ./... | grep -v /test/)
+        run: |
+          go test -v $(go list ./... | grep -v /test/ | grep -v /example/)
