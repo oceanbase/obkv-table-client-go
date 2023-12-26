@@ -29,7 +29,7 @@ import (
 )
 
 const (
-	configUrl    = "..."
+	configUrl    = "...."
 	fullUserName = "..."
 	passWord     = ""
 	sysUserName  = "root"
