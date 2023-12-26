@@ -51,7 +51,7 @@ jobs:
 
       - name: Build
         run: |
-          go list ./... | grep -v /example/ | xargs -L 1 go build -v
+          go list ./... | grep -v /example/ | grep -v /test/ | xargs -L 1 go build -v
 
       - name: Run unit tests
         run: |
