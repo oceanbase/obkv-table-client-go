@@ -526,7 +526,13 @@ func (c *obClient) NewAggExecutor(tableName string, rangePairs []*table.RangePai
 }
 
 func (c *obClient) Close() {
-	c.routeInfo.Close()
+	if c.routeInfo != nil {
+		c.routeInfo.Close()
+	}
+
+	if c.odpTable != nil {
+		c.odpTable.Close()
+	}
 }
 
 func (c *obClient) getOperationOptions(opts ...option.ObOperationOption) *option.ObOperationOptions {
@@ -593,7 +599,7 @@ func (c *obClient) execute(
 
 	needRetry := false
 	// 1. Get table route
-	tableParam, err := c.routeInfo.GetTableParam(ctx, tableName, rowKey, c.odpTable)
+	tableParam, err := c.GetTableParam(ctx, tableName, rowKey)
 	if err != nil {
 		return nil, errors.WithMessagef(err, "get table param, tableName:%s, opType:%d", tableName, opType), needRetry
 	}
@@ -677,7 +683,7 @@ func (c *obClient) executeWithFilter(
 	needRetry := false
 
 	// 1. Get table route
-	tableParam, err := c.routeInfo.GetTableParam(ctx, tableName, rowKey, c.odpTable)
+	tableParam, err := c.GetTableParam(ctx, tableName, rowKey)
 	if err != nil {
 		return nil, errors.WithMessagef(err, "get table param, tableName:%s, opType:%d", tableName, opType), needRetry
 	}
@@ -732,4 +738,16 @@ func (c *obClient) executeInternal(
 
 	_, err := table.Execute(ctx, request, result)
 	return err, false
+}
+
+func (c *obClient) GetTableParam(
+	ctx context.Context,
+	tableName string,
+	rowKey []*table.Column) (*route.ObTableParam, error) {
+
+	if c.odpTable != nil {
+		return route.NewObTableParam(c.odpTable, 0, 0), nil
+	}
+
+	return c.routeInfo.GetTableParam(ctx, tableName, rowKey)
 }

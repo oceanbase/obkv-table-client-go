@@ -105,12 +105,27 @@ func (e *ObTableEntry) extractSubpartIdx(id uint64) uint64 {
 	return id & ObSubPartIdMask
 }
 
+// get part_id with PARTITION_LEVEL_TWO_MASK
+func (e *ObTableEntry) extractPartId(id uint64) uint64 {
+	return id >> ObPartIdShift
+}
+
+// get first part id
+func (e *ObTableEntry) extractPartIdx(id uint64) uint64 {
+	return e.extractPartId(id) & (0xfffffff)
+}
+
+// get part idx in second partition
+func (e *ObTableEntry) getPartIdx(id uint64) uint64 {
+	return e.extractPartIdx(id)*(uint64(e.partitionInfo.subPartDesc.PartNum())) + e.extractSubpartIdx(id)
+}
+
 // GetPartitionLocation get partition location by partId and consistency.
 func (e *ObTableEntry) GetPartitionLocation(partId uint64, consistency ObConsistency) (*obReplicaLocation, error) {
 	if util.ObVersion() >= 4 && e.IsPartitionTable() {
 		logicId := partId
 		if e.partitionInfo != nil && e.partitionInfo.level == PartLevelTwo {
-			logicId = e.extractSubpartIdx(partId)
+			logicId = e.getPartIdx(partId)
 		}
 		// In ob version 4.0 and above, get tabletId firstly.
 		// Because in version 4.0 and above we set up a relationship between tabletId and Location.

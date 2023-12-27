@@ -213,7 +213,7 @@ func (b *obBatchExecutor) constructPartOpMap(ctx context.Context) (map[uint64]*o
 		for i, v := range rowKeyValue {
 			rowKey = append(rowKey, table.NewColumn(b.rowKeyName[i], v))
 		}
-		tableParam, err := b.cli.routeInfo.GetTableParam(ctx, b.tableName, rowKey, b.cli.odpTable)
+		tableParam, err := b.cli.GetTableParam(ctx, b.tableName, rowKey)
 		if err != nil {
 			return nil, errors.WithMessagef(err, "get table param, tableName:%s, rowKeyValue:%s",
 				b.tableName, util.InterfacesToString(rowKeyValue))
@@ -337,6 +337,42 @@ func (b *obBatchExecutor) executeInternal(ctx context.Context) (BatchOperationRe
 	return newObBatchOperationResult(res), nil, needRetry
 }
 
+// executeWithOdp execute with odp mode
+func (b *obBatchExecutor) executeWithOdp(ctx context.Context) (BatchOperationResult, error) {
+	// 1. Get odp table param
+	tableParam := route.NewObTableParam(b.cli.odpTable, 0, 0)
+
+	b.batchOps.SetSamePropertiesNames(b.samePropertiesNames)
+
+	// 2 Construct batch operation request
+	request := protocol.NewObTableBatchOperationRequestWithParams(
+		b.tableName,
+		tableParam.TableId(),
+		tableParam.PartitionId(),
+		b.batchOps,
+		b.cli.config.OperationTimeOut,
+		b.cli.GetRpcFlag(),
+		b.entityType,
+	)
+
+	// 3. Execute
+	var err error
+	response := protocol.NewObTableBatchOperationResponse()
+	_, err = tableParam.Table().Execute(ctx, request, response)
+	if err != nil {
+		return nil, err
+	}
+
+	// 4. Handle result
+	resSize := len(response.ObTableOperationResponses())
+	res := make([]SingleResult, resSize)
+	for i := 0; i < resSize; i++ {
+		res[i] = operationResponse2SingleResult(response.ObTableOperationResponses()[i])
+	}
+
+	return newObBatchOperationResult(res), nil
+}
+
 // Execute a batch operation.
 // batch operation only ensures atomicity of a single partition.
 // BatchOperationResult contains the results of all operations.
@@ -350,6 +386,11 @@ func (b *obBatchExecutor) Execute(ctx context.Context) (BatchOperationResult, er
 
 	if _, ok := ctx.Deadline(); !ok {
 		ctx, _ = context.WithTimeout(ctx, b.cli.config.OperationTimeOut) // default timeout operation timeout
+	}
+
+	// odp mode
+	if b.cli.odpTable != nil {
+		return b.executeWithOdp(ctx)
 	}
 
 	res, err, needRetry := b.executeInternal(ctx)
