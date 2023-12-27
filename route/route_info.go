@@ -303,7 +303,11 @@ func (i *ObRouteInfo) GetTableParam(
 	}
 
 	if util.ObVersion() >= 4 && entry.IsPartitionTable() {
-		partId, err = entry.PartitionInfo().GetTabletId(partId)
+		logicId := partId
+		if entry.partitionInfo != nil && entry.partitionInfo.level == PartLevelTwo {
+			logicId = entry.getPartIdx(partId)
+		}
+		partId, err = entry.PartitionInfo().GetTabletId(logicId)
 		if err != nil {
 			return nil, errors.WithMessagef(err, "get tablet id, tableName:%s, tableEntry:%s, partId:%d",
 				tableName, entry.String(), partId)
