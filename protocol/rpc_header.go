@@ -367,7 +367,7 @@ func (h *ObRpcHeader) Encode(rpcHeaderBuffer *bytes.Buffer) {
 	util.PutUint64(rpcHeaderBuffer, h.sessionId)
 	util.PutUint64(rpcHeaderBuffer, h.traceId0)
 	util.PutUint64(rpcHeaderBuffer, h.traceId1)
-	util.PutUint64(rpcHeaderBuffer, uint64(h.timeout.Milliseconds()))
+	util.PutUint64(rpcHeaderBuffer, uint64(h.timeout.Microseconds()))
 	util.PutUint64(rpcHeaderBuffer, uint64(h.timestamp))
 
 	h.obRpcCostTime.Encode(rpcHeaderBuffer)
@@ -399,7 +399,7 @@ func (h *ObRpcHeader) Decode(buffer *bytes.Buffer) {
 	h.sessionId = util.Uint64(buffer)
 	h.traceId0 = util.Uint64(buffer)
 	h.traceId1 = util.Uint64(buffer)
-	h.timeout = time.Duration(util.Uint64(buffer)) * time.Millisecond
+	h.timeout = time.Duration(util.Uint64(buffer)) * time.Microsecond
 	h.timestamp = int64(util.Uint64(buffer))
 
 	// Maybe it would be better to use the version number to judge
