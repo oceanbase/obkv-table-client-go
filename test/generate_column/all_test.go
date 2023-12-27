@@ -34,6 +34,7 @@ func setup() {
 
 	test.CreateTable(testStoredGenColumnTableNameCreateStatement)
 	test.CreateTable(testVirtualGenColumnTableNameCreateStatement)
+	test.CreateTable(testVirtualGenColumnWithGlobalIndexTableNameCreateStatement)
 }
 
 func teardown() {
@@ -41,6 +42,7 @@ func teardown() {
 
 	test.DropTable(testVirtualGenColumnTableName)
 	test.DropTable(testStoredGenColumnTableName)
+	test.DropTable(testVirtualGenColumnWithGlobalIndexTableName)
 
 	test.CloseDB()
 }
