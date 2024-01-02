@@ -46,9 +46,7 @@ type ObRouteInfo struct {
 	tableRoster      ObTableRoster
 	serverRoster     ObServerRoster // all servers which contain current tenant
 	taskInfo         *ObRouteTaskInfo
-
-	indexMutexes sync.Map // map[indexName]sync.RWMutex
-	indexRoster  sync.Map // map[indexName]
+	indexRoster      sync.Map // map[indexName], store ObIndexInfo struct and it has index router info
 }
 
 // GetTable get table by partition id

@@ -19,7 +19,6 @@ package route
 
 import (
 	"context"
-	"fmt"
 	"math"
 	"sort"
 	"strconv"
@@ -92,6 +91,8 @@ const (
 		"FROM oceanbase.__all_virtual_proxy_sub_partition WHERE table_id = ? LIMIT ?;"
 	SubPartitionSqlV4 = "SELECT /*+READ_CONSISTENCY(WEAK)*/ sub_part_id, part_name, tablet_id, high_bound_val " +
 		"FROM oceanbase.__all_virtual_proxy_sub_partition WHERE tenant_name = ? and table_id = ? LIMIT ?;"
+	TableIdSql   = "SELECT /*+READ_CONSISTENCY(WEAK)*/ table_id FROM oceanbase.__all_virtual_proxy_schema WHERE tenant_name = ? and database_name = ? and table_name = ? limit 1;"
+	IndexTypeSql = "SELECT /*+READ_CONSISTENCY(WEAK)*/ data_table_id, table_id, index_type FROM oceanbase.__all_virtual_table WHERE table_name = ?;"
 )
 
 var (
@@ -774,11 +775,10 @@ func GetTableIdFromRemote(
 	}()
 
 	// 2. make sql
-	sql := fmt.Sprintf("select table_id from oceanbase.__all_virtual_proxy_schema "+
-		"where tenant_name = '%s' and database_name = '%s' and table_name = '%s' limit 1", tenantName, databaseName, tableName)
-	rows, err := db.QueryContext(ctx, sql)
+	rows, err := db.QueryContext(ctx, TableIdSql, tenantName, databaseName, tableName)
 	if err != nil {
-		return 0, errors.WithMessagef(err, "query table id sql:%s", sql)
+		return 0, errors.WithMessagef(err, "query table id: tenantName-%s, databaseName-%s, tableName-%s",
+			tenantName, databaseName, tableName)
 	}
 	defer func() {
 		_ = rows.Close()
@@ -825,10 +825,9 @@ func GetIndexInfoFromRemote(
 	}()
 
 	// 2. make sql
-	sql := fmt.Sprintf("select data_table_id, table_id, index_type from oceanbase.__all_virtual_table where table_name = '%s'", indexTableName)
-	rows, err := db.QueryContext(ctx, sql)
+	rows, err := db.QueryContext(ctx, IndexTypeSql, indexTableName)
 	if err != nil {
-		return nil, errors.WithMessagef(err, "query table id sql:%s", sql)
+		return nil, errors.WithMessagef(err, "query index table name:%s", indexTableName)
 	}
 	defer func() {
 		_ = rows.Close()
