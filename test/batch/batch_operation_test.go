@@ -20,10 +20,12 @@ package batch
 import (
 	"context"
 	"fmt"
+	"sync"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
 
+	"github.com/oceanbase/obkv-table-client-go/client/option"
 	"github.com/oceanbase/obkv-table-client-go/table"
 	"github.com/oceanbase/obkv-table-client-go/test"
 )
@@ -211,18 +213,20 @@ func TestBatch_MultiInsertOrUpdate(t *testing.T) {
 	}
 }
 
-func TestBatch_MultiPut(t *testing.T) {
+func task(t *testing.T) {
 	tableName := batchOpTableTableName
 	defer test.DeleteTable(tableName)
 
-	recordCount := 10
-	prepareRecord(recordCount)
+	recordCount := 1000
 
-	batchExecutor := cli.NewBatchExecutor(tableName)
+	batchExecutor := cli.NewBatchExecutor(tableName, option.WithBatchSamePropertiesNames(true))
 
 	for i := 0; i < recordCount; i++ {
 		rowKey := []*table.Column{table.NewColumn("c1", int64(i))}
-		putColumns := []*table.Column{table.NewColumn("c2", int64(i+i))}
+		putColumns := []*table.Column{
+			table.NewColumn("c2", int64(i+i)),
+			table.NewColumn("c3", "c3"),
+		}
 		err := batchExecutor.AddPutOp(rowKey, putColumns)
 		assert.Equal(t, nil, err)
 	}
@@ -234,6 +238,26 @@ func TestBatch_MultiPut(t *testing.T) {
 	for i := 0; i < res.Size(); i++ {
 		assert.EqualValues(t, 1, res.GetResults()[i].AffectedRows())
 	}
+}
+
+func TestBatch_MultiPut(t *testing.T) {
+	// 定义并发的goroutine数量。
+	const numGoroutines = 150
+
+	// 使用sync.WaitGroup来等待所有goroutine完成。
+	var wg sync.WaitGroup
+	wg.Add(numGoroutines)
+
+	// 启动多个goroutine并发访问模拟的HTTP服务器。
+	for i := 0; i < numGoroutines; i++ {
+		go func() {
+			defer wg.Done()
+			task(t)
+		}()
+	}
+
+	// 等待所有的goroutine完成。
+	wg.Wait()
 }
 
 func TestBatch_MultiIncrement(t *testing.T) {
