@@ -60,6 +60,7 @@ func setCompressType(compressTyepe string) error {
 func teardown() {
 	cli.Close()
 	test.DropTable(tableName)
+	setCompressType("none")
 	test.CloseDB()
 }
 

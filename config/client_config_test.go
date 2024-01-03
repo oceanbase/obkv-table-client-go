@@ -49,7 +49,7 @@ func TestClientConfig_String(t *testing.T) {
 	assert.Equal(t, "ClientConfig{"+
 		"ConnPoolMaxConnSize:1, "+
 		"ConnConnectTimeOut:1s, "+
-		"ConnLoginTimeout:1s, "+
+		"ConnLoginTimeout:5s, "+
 		"OperationTimeOut:10s, "+
 		"LogLevel:1, "+
 		"TableEntryRefreshLockTimeout:4s, "+

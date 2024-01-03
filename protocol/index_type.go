@@ -15,23 +15,26 @@
  * #L%
  */
 
-package route
+package protocol
 
-import (
-	"strconv"
-	"testing"
+type ObIndexType uint8
 
-	"github.com/stretchr/testify/assert"
+const (
+	IndexTypeIsNot ObIndexType = iota
+	IndexTypeNormalLocal
+	IndexTypeUniqueLocal
+	IndexTypeNormalGlobal
+	IndexTypeUniqueGlobal
+	IndexTypePrimary
+	IndexTypeDomainCtxcat
+	IndexTypeNormalGlobalLocalStorage
+	IndexTypeUniqueGlobalLocalStorage
+	IndexTypeSpatialLocal              = 10
+	IndexTypeSpatialGlobal             = 11
+	IndexTypeSpatialGlobalLocalStorage = 12
+	IndexTypeMax                       = 13
 )
 
-func TestNewDB(t *testing.T) {
-	const (
-		testUserName = "root"
-		testPassword = ""
-		testIp       = "127.0.0.1"
-		testSqlPort  = 41101
-		testDatabase = "test"
-	)
-	_, err := NewDB(testUserName, testPassword, testIp, strconv.Itoa(testSqlPort), testDatabase)
-	assert.NotEqual(t, nil, err)
+func (t ObIndexType) IsGlobalIndex() bool {
+	return t == IndexTypeNormalGlobal || t == IndexTypeUniqueGlobal || t == IndexTypeSpatialGlobal
 }

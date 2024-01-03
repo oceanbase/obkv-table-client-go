@@ -177,3 +177,24 @@ func EnableRerouting() {
 		panic(err.Error())
 	}
 }
+
+func ExecStatement(statement string) {
+	_, err := GlobalDB.Exec(statement)
+	if err != nil {
+		panic(err.Error())
+	}
+}
+
+func SetReroutingEnable(enable bool) {
+	var sql = "alter system set _obkv_feature_mode='rerouting=%s'"
+	var targetSql string
+	if enable {
+		targetSql = fmt.Sprintf(sql, "on")
+	} else {
+		targetSql = fmt.Sprintf(sql, "off")
+	}
+	_, err := GlobalDB.Exec(targetSql)
+	if err != nil {
+		panic(err.Error())
+	}
+}

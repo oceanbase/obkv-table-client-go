@@ -91,6 +91,8 @@ const (
 		"FROM oceanbase.__all_virtual_proxy_sub_partition WHERE table_id = ? LIMIT ?;"
 	SubPartitionSqlV4 = "SELECT /*+READ_CONSISTENCY(WEAK)*/ sub_part_id, part_name, tablet_id, high_bound_val " +
 		"FROM oceanbase.__all_virtual_proxy_sub_partition WHERE tenant_name = ? and table_id = ? LIMIT ?;"
+	TableIdSql   = "SELECT /*+READ_CONSISTENCY(WEAK)*/ table_id FROM oceanbase.__all_virtual_proxy_schema WHERE tenant_name = ? and database_name = ? and table_name = ? limit 1;"
+	IndexTypeSql = "SELECT /*+READ_CONSISTENCY(WEAK)*/ data_table_id, table_id, index_type FROM oceanbase.__all_virtual_table WHERE table_name = ?;"
 )
 
 var (
@@ -747,4 +749,114 @@ func fetchSubPart(ctx context.Context, db *DB, partFuncType obPartFuncType, entr
 		}
 	}
 	return nil
+}
+
+// GetTableIdFromRemote get table id from remote
+func GetTableIdFromRemote(
+	ctx context.Context,
+	addr *ObServerAddr,
+	sysUA *ObUserAuth,
+	tenantName string,
+	databaseName string,
+	tableName string) (uint64, error) {
+	// 1. Get db handle
+	db, err := NewDB(
+		sysUA.userName,
+		sysUA.password,
+		addr.ip,
+		strconv.Itoa(addr.sqlPort),
+		OceanBaseDatabase,
+	)
+	if err != nil {
+		return 0, errors.WithMessagef(err, "new db, sysUA:%s, addr:%s", sysUA.String(), addr.String())
+	}
+	defer func() {
+		_ = db.Close()
+	}()
+
+	// 2. make sql
+	rows, err := db.QueryContext(ctx, TableIdSql, tenantName, databaseName, tableName)
+	if err != nil {
+		return 0, errors.WithMessagef(err, "query table id: tenantName-%s, databaseName-%s, tableName-%s",
+			tenantName, databaseName, tableName)
+	}
+	defer func() {
+		_ = rows.Close()
+	}()
+
+	// 3. get result
+	var tableId uint64
+	isEmpty := true
+	for rows.Next() {
+		if isEmpty {
+			isEmpty = false
+		}
+		err = rows.Scan(&tableId)
+		if err != nil {
+			return 0, errors.WithMessagef(err, "scan row")
+		}
+	}
+	if isEmpty {
+		return 0, errors.Errorf("TableId not exist, tableName:%s", tableName)
+	}
+
+	return tableId, nil
+}
+
+// GetIndexInfoFromRemote get index info from remote
+func GetIndexInfoFromRemote(
+	ctx context.Context,
+	addr *ObServerAddr,
+	sysUA *ObUserAuth,
+	indexTableName string) (*ObIndexInfo, error) {
+	// 1. Get db handle
+	db, err := NewDB(
+		sysUA.userName,
+		sysUA.password,
+		addr.ip,
+		strconv.Itoa(addr.sqlPort),
+		OceanBaseDatabase,
+	)
+	if err != nil {
+		return nil, errors.WithMessagef(err, "new db, sysUA:%s, addr:%s", sysUA.String(), addr.String())
+	}
+	defer func() {
+		_ = db.Close()
+	}()
+
+	// 2. make sql
+	rows, err := db.QueryContext(ctx, IndexTypeSql, indexTableName)
+	if err != nil {
+		return nil, errors.WithMessagef(err, "query index table name:%s", indexTableName)
+	}
+	defer func() {
+		_ = rows.Close()
+	}()
+
+	// 3. get result
+	indexInfo := NewObIndexInfo()
+	var (
+		dateTableId  uint64
+		indexTableId uint64
+		indexType    uint8
+	)
+	isEmpty := true
+	for rows.Next() {
+		if isEmpty {
+			isEmpty = false
+		}
+		err = rows.Scan(&dateTableId, &indexTableId, &indexType)
+		if err != nil {
+			return nil, errors.WithMessagef(err, "scan row")
+		}
+		indexInfo.dataTableId = dateTableId
+		indexInfo.indexTableId = indexTableId
+		indexInfo.indexTableName = indexTableName
+		indexInfo.indexType = protocol.ObIndexType(indexType)
+	}
+	if isEmpty {
+		return nil, errors.Errorf("TableId not exist, indexTableName:%s", indexTableName)
+	}
+
+	return indexInfo, nil
 }
