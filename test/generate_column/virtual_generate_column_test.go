@@ -165,6 +165,39 @@ func TestGenerateColumn_virtual(t *testing.T) {
 	assert.EqualValues(t, "12", result.Value("g"))
 }
 
+func TestGenerateColumn_virtual_append(t *testing.T) {
+	tableName := testVirtualGenColumnTableName
+	defer test.DeleteTable(tableName)
+
+	// insert
+	rowKey := []*table.Column{table.NewColumn("c1", int32(0))}
+	mutateColumns := []*table.Column{
+		table.NewColumn("c2", "1"),
+		table.NewColumn("c3", "1"),
+	}
+	res, err := cli.Append(
+		context.TODO(),
+		tableName,
+		rowKey,
+		mutateColumns,
+	)
+	assert.Equal(t, nil, err)
+	assert.EqualValues(t, 1, res.AffectedRows())
+
+	// get
+	result, err := cli.Get(
+		context.TODO(),
+		tableName,
+		rowKey,
+		nil,
+	)
+	assert.Equal(t, nil, err)
+	assert.EqualValues(t, 0, result.Value("c1"))
+	assert.EqualValues(t, "1", result.Value("c2"))
+	assert.EqualValues(t, "1", result.Value("c3"))
+	assert.EqualValues(t, "11", result.Value("g"))
+}
+
 func TestGenerateColumn_virtual_with_index(t *testing.T) {
 	tableName := testVirtualGenColumnWithGlobalIndexTableName
 	defer test.DeleteTable(tableName)
