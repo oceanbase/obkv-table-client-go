@@ -182,7 +182,7 @@ func (i *ObRouteInfo) FetchServerRoster(clusterName, tenantName string) error {
 	replicaLocations := entry.TableLocation().ReplicaLocations()
 	for _, replicaLoc := range replicaLocations {
 		if !replicaLoc.SvrStatus().IsActive() {
-			log.Warn("server is not active",
+			log.Warn("Routine", nil, "server is not active",
 				log.String("server info", replicaLoc.SvrStatus().String()),
 				log.String("server addr", addr.String()))
 			continue
@@ -538,7 +538,7 @@ func (i *ObRouteInfo) Execute(
 	}
 
 	if needReroute {
-		log.Info(fmt.Sprintf("route, to:%s", moveRsp.ReplicaInfo().Server().String()))
+		log.Info("Routine", ctx.Value(log.ObkvTraceIdName), fmt.Sprintf("route, to:%s", moveRsp.ReplicaInfo().Server().String()))
 		err = i.reroute(ctx, moveRsp, request, result)
 	}
 
@@ -592,10 +592,10 @@ func (i *ObRouteInfo) runCreateConnPoolTask() {
 					addr := key.(tcpAddr)
 					err := i.addTable(addr)
 					if err != nil {
-						log.Warn("add table", log.String("server", addr.String()))
+						log.Warn("Routine", nil, "add table", log.String("server", addr.String()))
 					}
 					i.taskInfo.createConnPoolServers.Remove(key)
-					log.Info("[runCreateConnPoolTask] connection pool for server has been created", log.String("server", addr.String()))
+					log.Info("Routine", nil, "[runCreateConnPoolTask] connection pool for server has been created", log.String("server", addr.String()))
 				}()
 			}
 		})
@@ -613,14 +613,14 @@ func (i *ObRouteInfo) runDropConnPoolTask() {
 					addr := key.(tcpAddr)
 					i.dropTable(addr)
 					i.taskInfo.dropConnPoolServers.Remove(key)
-					log.Info("[runDropConnPoolTask] connection pool has been dropped", log.String("addr", addr.String()))
+					log.Info("Routine", nil, "[runDropConnPoolTask] connection pool has been dropped", log.String("addr", addr.String()))
 
 					// 2. refresh table locations which contain the dropping server
 					err := i.refreshTableLocations(&addr)
 					if err != nil {
-						log.Warn("refresh table locations", log.String("server", addr.String()))
+						log.Warn("Routine", nil, "refresh table locations", log.String("server", addr.String()))
 					}
-					log.Info("[runDropConnPoolTask] table contains server pool has been refreshed", log.String("server", addr.String()))
+					log.Info("Routine", nil, "[runDropConnPoolTask] table contains server pool has been refreshed", log.String("server", addr.String()))
 				}()
 			}
 		})
@@ -633,7 +633,7 @@ func (i *ObRouteInfo) refreshTableEntry(tableName string) error {
 	if ok {
 		entry, ok := value.(*ObTableEntry)
 		if ok && !entry.NeedRefresh() { // no need to refresh
-			log.Info("no need to refresh table", log.String("table", tableName))
+			log.Info("Routine", nil, "no need to refresh table", log.String("table", tableName))
 			return nil
 		}
 	}
@@ -645,7 +645,7 @@ func (i *ObRouteInfo) refreshTableEntry(tableName string) error {
 	ctx, _ := context.WithTimeout(context.Background(), refreshTableTimeout)
 	_, err := i.GetTableEntry(ctx, tableName)
 	if err != nil {
-		log.Warn("get table entry", log.String("tableName", tableName))
+		log.Warn("Routine", nil, "get table entry", log.String("tableName", tableName))
 		return err
 	}
 
@@ -660,10 +660,10 @@ func (i *ObRouteInfo) runRefreshTableTask() {
 			if swapped {
 				go func() {
 					tableName := key.(string)
-					log.Info("[runRefreshTableTask] refresh table entry", log.String("table", tableName))
+					log.Info("Routine", nil, "[runRefreshTableTask] refresh table entry", log.String("table", tableName))
 					err := i.refreshTableEntry(tableName)
 					if err != nil {
-						log.Warn("refresh table entry", log.String("tableName", tableName))
+						log.Warn("Routine", nil, "refresh table entry", log.String("tableName", tableName))
 					}
 					i.taskInfo.tables.Remove(key)
 				}()
@@ -676,17 +676,17 @@ func (i *ObRouteInfo) runCheckRslistTask() {
 	go func() {
 		newRslist, err := i.configServerInfo.FetchRslist()
 		if err != nil {
-			log.Warn("fetch rslist")
+			log.Warn("Routine", nil, "fetch rslist")
 		}
 		if !i.configServerInfo.rslist.Equal(newRslist) {
 			missServers := i.configServerInfo.rslist.FindMissingElements(newRslist)
-			log.Info(fmt.Sprintf("[runCheckRslistTask] missServers size:%d", len(missServers)))
+			log.Info("Routine", nil, fmt.Sprintf("[runCheckRslistTask] missServers size:%d", len(missServers)))
 			for _, server := range missServers {
-				log.Info(fmt.Sprintf("[runCheckRslistTask] missServer:%s", server.tcpAddr.String()))
+				log.Info("Routine", nil, fmt.Sprintf("[runCheckRslistTask] missServer:%s", server.tcpAddr.String()))
 				t, ok := i.tableRoster.Get(server.tcpAddr)
 				if ok {
 					if t.IsDisconnected() {
-						log.Info(fmt.Sprintf("[runCheckRslistTask] connection pool need close, pool:%s", t.String()))
+						log.Info("Routine", nil, fmt.Sprintf("[runCheckRslistTask] connection pool need close, pool:%s", t.String()))
 						isDropping := &atomic.Bool{}
 						isDropping.Store(false)
 						server := tcpAddr{t.ip, t.port}

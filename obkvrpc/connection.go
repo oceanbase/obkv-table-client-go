@@ -242,6 +242,7 @@ func (c *Connection) Execute(
 		c.mutex.Lock()
 		delete(c.pending, seq)
 		c.mutex.Unlock()
+		log.Error("BOOT", ctx.Value(log.ObkvTraceIdName), "wait send packet to channel", log.String("clientTrace", trace))
 		return nil, errors.WithMessage(ctx.Err(), "wait send packet to channel, trace: "+trace)
 	}
 
@@ -249,6 +250,7 @@ func (c *Connection) Execute(
 	select {
 	case call = <-call.signal:
 		if call.err != nil { // transport failed
+			log.Error("BOOT", ctx.Value(log.ObkvTraceIdName), "receive packet", log.String("clientTrace", trace))
 			return nil, errors.WithMessage(call.err, "receive packet, trace: "+trace)
 		}
 	case <-ctx.Done():
@@ -256,6 +258,7 @@ func (c *Connection) Execute(
 		c.mutex.Lock()
 		delete(c.pending, seq)
 		c.mutex.Unlock()
+		log.Error("BOOT", ctx.Value(log.ObkvTraceIdName), "wait send packet to channel", log.String("clientTrace", trace))
 		return nil, errors.WithMessage(ctx.Err(), "wait transport packet, trace: "+trace)
 	}
 
@@ -319,16 +322,16 @@ func (c *Connection) receivePacket() {
 	}
 
 	if strings.Contains(err.Error(), "use of closed network connection") {
-		log.Info("connection closed.", zap.Uint64("connection uniqueId", c.uniqueId))
+		log.Info("Monitor", nil, "connection closed.", log.Uint64("connection uniqueId", c.uniqueId))
 		return
 	}
 
 	if errors.Is(err, io.EOF) || errors.Is(err, io.ErrUnexpectedEOF) {
-		log.Info("connection closed.", zap.Error(err), zap.Uint64("connection uniqueId", c.uniqueId))
+		log.Info("Monitor", nil, "connection closed.", zap.Error(err), log.Uint64("connection uniqueId", c.uniqueId))
 		return
 	}
 
-	log.Warn("connection closed.", zap.Error(err), zap.Uint64("connection uniqueId", c.uniqueId))
+	log.Warn("Monitor", nil, "connection closed.", zap.Error(err), log.Uint64("connection uniqueId", c.uniqueId))
 }
 
 func (c *Connection) sendPacket() {
@@ -405,7 +408,7 @@ func (c *Connection) writerWrite(packet packet) {
 }
 
 func (c *Connection) Close() {
-	log.Info(fmt.Sprintf("close connection start, remote addr:%s", c.conn.RemoteAddr().String()))
+	log.Info("Monitor", nil, fmt.Sprintf("close connection start, remote addr:%s", c.conn.RemoteAddr().String()))
 	c.active.Store(false)
 	c.closeOnce.Do(func() {
 		close(c.packetChannelClose) // close packet channel
@@ -419,7 +422,7 @@ func (c *Connection) Close() {
 		}
 		c.mutex.Unlock()
 	})
-	log.Info(fmt.Sprintf("close connection success, remote addr:%s", c.conn.RemoteAddr().String()))
+	log.Info("Monitor", nil, fmt.Sprintf("close connection success, remote addr:%s", c.conn.RemoteAddr().String()))
 }
 
 func (c *Connection) encodePacket(seq uint32, request protocol.ObPayload) []byte {
@@ -486,7 +489,7 @@ func (c *Connection) decodePacket(contentBuf []byte, response protocol.ObPayload
 			return nil, err
 		}
 		contentBuffer = decompressBuffer
-		log.Debug(fmt.Sprintf("compressType: %s, compressLen: %d, originLen: %d\n",
+		log.Debug("Monitor", nil, fmt.Sprintf("compressType: %s, compressLen: %d, originLen: %d\n",
 			convertCompressTypeToString(rpcHeader.CompressType()), contentLen, rpcHeader.OriginalLen()))
 	}
 	// decode rpc response code
@@ -510,6 +513,8 @@ func (c *Connection) decodePacket(contentBuf []byte, response protocol.ObPayload
 		if rpcResponseCode.Code().IsRefreshTableErrorCode() {
 			response.SetFlag(response.Flag() | protocol.RpcBadRoutingFlag)
 		}
+		trace := fmt.Sprintf("Y%X-%016X", rpcHeader.TraceId0(), rpcHeader.TraceId1())
+		log.Error("Runtime", nil, "error occur in execute", log.String("observerTraceId", trace))
 
 		return moveResponse, protocol.NewProtocolError(
 			c.RemoteAddr().String(),
@@ -536,6 +541,6 @@ func (call *call) done() {
 	case call.signal <- call:
 		// ok
 	default:
-		log.Warn("rpc: discarding call reply due to insufficient signal chan capacity")
+		log.Warn("Monitor", nil, "rpc: discarding call reply due to insufficient signal chan capacity")
 	}
 }

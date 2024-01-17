@@ -34,7 +34,7 @@ func run(i int, done chan bool, wg *sync.WaitGroup, t *testing.T) {
 	for {
 		select {
 		case <-done:
-			log.Info(fmt.Sprintf("Finish %d worker, executeNum: %d", i, executeNum))
+			log.Info("Runtime", nil, fmt.Sprintf("Finish %d worker, executeNum: %d", i, executeNum))
 			return
 		default:
 			rowKey := []*table.Column{table.NewColumn("c1", fmt.Sprintf("key%d", i))}

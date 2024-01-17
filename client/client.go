@@ -19,11 +19,11 @@ package client
 
 import (
 	"context"
-
 	"github.com/pkg/errors"
 
 	"github.com/oceanbase/obkv-table-client-go/client/option"
 	"github.com/oceanbase/obkv-table-client-go/config"
+	"github.com/oceanbase/obkv-table-client-go/log"
 	"github.com/oceanbase/obkv-table-client-go/table"
 )
 
@@ -40,6 +40,11 @@ func NewClient(
 	sysUserName string,
 	sysPassWord string,
 	cliConfig *config.ClientConfig) (Client, error) {
+	// init log
+	err := initLogProcess(cliConfig)
+	if err != nil {
+		return nil, err
+	}
 	// 1. Check args
 	if configUrl == "" {
 		return nil, errors.New("config url is empty")
@@ -81,6 +86,12 @@ func NewOdpClient(
 	odpRpcPort int,
 	database string,
 	cliConfig *config.ClientConfig) (Client, error) {
+	// init log
+	err := initLogProcess(cliConfig)
+	if err != nil {
+		return nil, err
+	}
+
 	// 1. Check args
 	if fullUserName == "" {
 		return nil, errors.New("full user name is null")
@@ -111,6 +122,11 @@ func NewClientWithTomlConfig(configFilePath string) (Client, error) {
 	if err != nil {
 		return nil, errors.WithMessagef(err, "get client config from toml, configFilePath:%s", configFilePath)
 	}
+	// init log
+	err = initLogProcess(clientConfig.GetClientConfig())
+	if err != nil {
+		return nil, err
+	}
 	switch clientConfig.Mode {
 	case "direct":
 		return NewClient(
@@ -133,6 +149,21 @@ func NewClientWithTomlConfig(configFilePath string) (Client, error) {
 	default:
 		return nil, errors.Errorf("invalid mode:%s", clientConfig.Mode)
 	}
+}
+
+func initLogProcess(c *config.ClientConfig) error {
+	var logConfig log.LogConfig
+	if c != nil {
+		logConfig.LogFileName = c.LogFileName
+		logConfig.MaxAgeFileRem = c.MaxAgeFileRem
+		logConfig.MaxBackupFileSize = c.MaxBackupFileSize
+		logConfig.SingleFileMaxSize = c.SingleFileMaxSize
+		logConfig.Compress = c.Compress
+		logConfig.SlowQueryThreshold = c.SlowQueryThreshold
+	} else {
+		return errors.New("client config is null")
+	}
+	return log.InitLoggerWithConfig(logConfig)
 }
 
 type Client interface {

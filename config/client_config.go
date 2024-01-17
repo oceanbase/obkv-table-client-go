@@ -49,6 +49,14 @@ type ClientConfig struct {
 	// connection rebalance in ODP mode
 	MaxConnectionAge     time.Duration
 	EnableSLBLoadBalance bool
+
+	// log config
+	LogFileName        string // log file dir
+	SingleFileMaxSize  int    // log file size（MB）
+	MaxBackupFileSize  int    // Maximum number of old files to keep
+	MaxAgeFileRem      int    // Maximum number of days to keep old files
+	Compress           bool   // Whether to compress/archive old files
+	SlowQueryThreshold int64  // Slow query threshold
 }
 
 func NewDefaultClientConfig() *ClientConfig {
@@ -71,6 +79,12 @@ func NewDefaultClientConfig() *ClientConfig {
 		EnableRerouting:                  true,
 		MaxConnectionAge:                 time.Duration(0) * time.Second, // valid iff > 0
 		EnableSLBLoadBalance:             false,
+		LogFileName:                      "./",
+		SingleFileMaxSize:                256, // MB
+		MaxBackupFileSize:                10,
+		MaxAgeFileRem:                    30,
+		Compress:                         false,
+		SlowQueryThreshold:               40, // ms
 	}
 }
 

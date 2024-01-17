@@ -19,6 +19,10 @@ package client
 
 import (
 	"context"
+	"fmt"
+	"github.com/oceanbase/obkv-table-client-go/log"
+	"golang.org/x/sys/unix"
+	"runtime"
 	"strings"
 	"time"
 
@@ -271,6 +275,7 @@ func (c *obClient) Insert(
 	rowKey []*table.Column,
 	mutateColumns []*table.Column,
 	opts ...option.ObOperationOption) (int64, error) {
+	log.InitTraceId(&ctx)
 	operationOptions := c.getOperationOptions(opts...)
 	if operationOptions.TableFilter == nil {
 		res, err := c.executeWithRetry(
@@ -305,6 +310,7 @@ func (c *obClient) Update(
 	rowKey []*table.Column,
 	mutateColumns []*table.Column,
 	opts ...option.ObOperationOption) (int64, error) {
+	log.InitTraceId(&ctx)
 	operationOptions := c.getOperationOptions(opts...)
 	if operationOptions.TableFilter == nil {
 		res, err := c.executeWithRetry(
@@ -339,6 +345,7 @@ func (c *obClient) InsertOrUpdate(
 	rowKey []*table.Column,
 	mutateColumns []*table.Column,
 	opts ...option.ObOperationOption) (int64, error) {
+	log.InitTraceId(&ctx)
 	operationOptions := c.getOperationOptions(opts...)
 	res, err := c.executeWithRetry(
 		ctx,
@@ -359,6 +366,7 @@ func (c *obClient) Replace(
 	rowKey []*table.Column,
 	mutateColumns []*table.Column,
 	opts ...option.ObOperationOption) (int64, error) {
+	log.InitTraceId(&ctx)
 	operationOptions := c.getOperationOptions(opts...)
 	res, err := c.executeWithRetry(
 		ctx,
@@ -379,6 +387,7 @@ func (c *obClient) Increment(
 	rowKey []*table.Column,
 	mutateColumns []*table.Column,
 	opts ...option.ObOperationOption) (SingleResult, error) {
+	log.InitTraceId(&ctx)
 	operationOptions := c.getOperationOptions(opts...)
 	if operationOptions.TableFilter == nil {
 		res, err := c.executeWithRetry(
@@ -413,6 +422,7 @@ func (c *obClient) Append(
 	rowKey []*table.Column,
 	mutateColumns []*table.Column,
 	opts ...option.ObOperationOption) (SingleResult, error) {
+	log.InitTraceId(&ctx)
 	operationOptions := c.getOperationOptions(opts...)
 	if operationOptions.TableFilter == nil {
 		res, err := c.executeWithRetry(
@@ -446,6 +456,7 @@ func (c *obClient) Delete(
 	tableName string,
 	rowKey []*table.Column,
 	opts ...option.ObOperationOption) (int64, error) {
+	log.InitTraceId(&ctx)
 	operationOptions := c.getOperationOptions(opts...)
 	if operationOptions.TableFilter == nil {
 		res, err := c.executeWithRetry(
@@ -480,6 +491,7 @@ func (c *obClient) Get(
 	rowKey []*table.Column,
 	getColumns []string,
 	opts ...option.ObOperationOption) (SingleResult, error) {
+	log.InitTraceId(&ctx)
 	var columns = make([]*table.Column, 0, len(getColumns))
 	for _, columnName := range getColumns {
 		columns = append(columns, table.NewColumn(columnName, nil))
@@ -499,6 +511,7 @@ func (c *obClient) Get(
 }
 
 func (c *obClient) Query(ctx context.Context, tableName string, rangePairs []*table.RangePair, opts ...option.ObQueryOption) (QueryResultIterator, error) {
+	log.InitTraceId(&ctx)
 	queryOpts := c.getObQueryOptions(opts...)
 	queryExecutor := newObQueryExecutorWithParams(tableName, c)
 	queryExecutor.addKeyRanges(rangePairs)
@@ -533,6 +546,7 @@ func (c *obClient) Close() {
 	if c.odpTable != nil {
 		c.odpTable.Close()
 	}
+	_ = log.Sync()
 }
 
 func (c *obClient) getOperationOptions(opts ...option.ObOperationOption) *option.ObOperationOptions {
@@ -601,6 +615,8 @@ func (c *obClient) execute(
 	// 1. Get table route
 	tableParam, err := c.GetTableParam(ctx, tableName, rowKey)
 	if err != nil {
+		log.Error("Runtime", ctx.Value(log.ObkvTraceIdName), "error occur in execute",
+			log.Int64("opType", int64(opType)), log.String("tableName", tableName), log.String("tableParam", tableParam.String()))
 		return nil, errors.WithMessagef(err, "get table param, tableName:%s, opType:%d", tableName, opType), needRetry
 	}
 
@@ -618,6 +634,8 @@ func (c *obClient) execute(
 		c.GetRpcFlag(),
 	)
 	if err != nil {
+		log.Error("Runtime", ctx.Value(log.ObkvTraceIdName), "error occur in execute",
+			log.Int64("opType", int64(opType)), log.String("tableName", tableName), log.String("tableParam", tableParam.String()))
 		return nil, errors.WithMessagef(err, "new operation request, tableName:%s, tableParam:%s, opType:%d",
 			tableName, tableParam.String(), opType), needRetry
 	}
@@ -626,10 +644,14 @@ func (c *obClient) execute(
 	result := protocol.NewObTableOperationResponse()
 	err, needRetry = c.executeInternal(ctx, tableName, tableParam.Table(), request, result)
 	if err != nil {
+		trace := fmt.Sprintf("Y%X-%016X", result.UniqueId(), result.Sequence())
+		log.Error("Runtime", ctx.Value(log.ObkvTraceIdName), "error occur in execute", log.String("observerTraceId", trace))
 		return nil, err, needRetry
 	}
 
 	if oberror.ObErrorCode(result.Header().ErrorNo()) != oberror.ObSuccess {
+		trace := fmt.Sprintf("Y%X-%016X", result.UniqueId(), result.Sequence())
+		log.Error("Runtime", ctx.Value(log.ObkvTraceIdName), "error occur in execute", log.String("observerTraceId", trace))
 		return nil, protocol.NewProtocolError(
 			result.RemoteAddr().String(),
 			oberror.ObErrorCode(result.Header().ErrorNo()),
@@ -750,4 +772,18 @@ func (c *obClient) GetTableParam(
 	}
 
 	return c.routeInfo.GetTableParam(ctx, tableName, rowKey)
+}
+
+func MonitorSlowQuery(executeTime int64, slowQueryThreshold int64, tableName string, clientTraceId any) {
+	if executeTime > slowQueryThreshold {
+		pId := unix.Getpid()
+		buf := make([]byte, 64)
+		n := runtime.Stack(buf, false)
+		id := buf[:n]
+		var goroutineID uint64
+		fmt.Sscanf(string(id), "goroutine %d", &goroutineID)
+		log.Info("Monitor", clientTraceId, "SlowQuery", log.String("tableName", tableName),
+			log.Int64("executeTime", executeTime), log.Int64("slowQueryThreshold", slowQueryThreshold),
+			log.Int("pId", pId), log.Uint64("goroutineID", goroutineID))
+	}
 }

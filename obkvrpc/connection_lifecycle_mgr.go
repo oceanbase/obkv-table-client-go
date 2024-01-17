@@ -49,7 +49,7 @@ func NewConnectionLifeCycleMgr(connPool *ConnectionPool, maxConnectionAge time.D
 // check and reconnect timeout connections
 func (c *ConnectionLifeCycleMgr) run() {
 	if c.connPool == nil {
-		log.Error("connection pool is null")
+		log.Error("Monitor", nil, "connection pool is null")
 		return
 	}
 
@@ -63,9 +63,9 @@ func (c *ConnectionLifeCycleMgr) run() {
 	}
 
 	if len(expiredConnIds) > 0 {
-		log.Info(fmt.Sprintf("Find %d expired connections", len(expiredConnIds)))
+		log.Info("Monitor", nil, fmt.Sprintf("Find %d expired connections", len(expiredConnIds)))
 		for idx, connIdx := range expiredConnIds {
-			log.Info(fmt.Sprintf("%d: ip=%s, port=%d", idx, c.connPool.connections[connIdx].option.ip, c.connPool.connections[connIdx].option.port))
+			log.Info("Monitor", nil, fmt.Sprintf("%d: ip=%s, port=%d", idx, c.connPool.connections[connIdx].option.ip, c.connPool.connections[connIdx].option.port))
 		}
 	}
 
@@ -73,7 +73,7 @@ func (c *ConnectionLifeCycleMgr) run() {
 	maxReconnIdx := int(math.Ceil(float64(len(expiredConnIds)) / 3))
 	if maxReconnIdx > 0 {
 		c.lastExpireIdx = expiredConnIds[maxReconnIdx-1]
-		log.Info(fmt.Sprintf("Begin to refresh expired connections which idx less than %d", maxReconnIdx))
+		log.Info("Monitor", nil, fmt.Sprintf("Begin to refresh expired connections which idx less than %d", maxReconnIdx))
 	}
 	for i := 0; i < maxReconnIdx; i++ {
 		// no one can get expired connection
@@ -93,13 +93,13 @@ func (c *ConnectionLifeCycleMgr) run() {
 		for j := 0; len(pool[idx].pending) > 0; j++ {
 			time.Sleep(time.Duration(10) * time.Millisecond)
 			if j > 0 && j%100 == 0 {
-				log.Info(fmt.Sprintf("Wait too long time for the connection to end,"+
+				log.Info("Monitor", nil, fmt.Sprintf("Wait too long time for the connection to end,"+
 					"connection idx: %d, ip:%s, port:%d, current connection pending size: %d",
 					idx, pool[idx].option.ip, pool[idx].option.port, len(pool[idx].pending)))
 			}
 
 			if j > 3000 {
-				log.Warn("Wait too much time for the connection to end, stop ConnectionLifeCycleMgr")
+				log.Warn("Monitor", nil, "Wait too much time for the connection to end, stop ConnectionLifeCycleMgr")
 				return
 			}
 		}
@@ -112,11 +112,11 @@ func (c *ConnectionLifeCycleMgr) run() {
 		c.connPool.connections[expiredConnIds[i]].Close()
 		_, err := c.connPool.RecreateConnection(ctx, expiredConnIds[i])
 		if err != nil {
-			log.Warn("reconnect failed", zap.Error(err))
+			log.Warn("Monitor", nil, "reconnect failed", zap.Error(err))
 			return
 		}
 	}
 	if maxReconnIdx > 0 {
-		log.Info(fmt.Sprintf("Finish to refresh expired connections which idx less than %d", maxReconnIdx))
+		log.Info("Monitor", nil, fmt.Sprintf("Finish to refresh expired connections which idx less than %d", maxReconnIdx))
 	}
 }

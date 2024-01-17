@@ -79,7 +79,7 @@ func (d *ZlibDecompressor) Decompress(src *bytes.Buffer, originLen int32) (*byte
 	defer func(zlibReader io.ReadCloser) {
 		err := zlibReader.Close()
 		if err != nil {
-			log.Warn(fmt.Sprintf("fail to close the zlibReader, errMsg: %s", err.Error()))
+			log.Warn("BOOT", nil, fmt.Sprintf("fail to close the zlibReader, errMsg: %s", err.Error()))
 		}
 	}(zlibReader)
 

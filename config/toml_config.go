@@ -35,6 +35,7 @@ type ClientConfiguration struct {
 	RouteMetaDataConfig RouteMetaDataConfig
 	RsListConfig        RsListConfig
 	ExtraConfig         ExtraConfig
+	LogConfig           LogConfig
 	Mode                string
 }
 
@@ -88,6 +89,15 @@ type ExtraConfig struct {
 	EnableSLBLoadBalance bool
 }
 
+type LogConfig struct {
+	LogFileName        string // log file dir
+	SingleFileMaxSize  int    // log file size（MB）
+	MaxBackupFileSize  int    // Maximum number of old files to keep
+	MaxAgeFileRem      int    // Maximum number of days to keep old files
+	Compress           bool   // Whether to compress/archive old files
+	SlowQueryThreshold int64  // Slow query threshold
+}
+
 func (c *ClientConfiguration) checkClientConfiguration() error {
 	if c.Mode == "direct" {
 		if c.DirectClientConfig.ConfigUrl == "" {
@@ -108,6 +118,14 @@ func (c *ClientConfiguration) checkClientConfiguration() error {
 			return errors.New("database name is empty")
 		} else if c.OdpClientConfig.FullUserName == "" {
 			return errors.New("full user name is empty")
+		}
+	} else if c.Mode == "log" {
+		if c.LogConfig.LogFileName == "" {
+			return errors.New("should set log file name in toml config")
+		} else if c.LogConfig.SingleFileMaxSize == 0 {
+			return errors.New("single file maxSize is invalid")
+		} else if c.LogConfig.SlowQueryThreshold == 0 {
+			return errors.New("slow query threshold is invalid")
 		}
 	} else {
 		return errors.New("mode is invalid")
@@ -151,6 +169,12 @@ func (c *ClientConfiguration) GetClientConfig() *ClientConfig {
 		EnableRerouting:                  c.ExtraConfig.EnableRerouting,
 		MaxConnectionAge:                 time.Duration(c.ExtraConfig.MaxConnectionAge) * time.Millisecond,
 		EnableSLBLoadBalance:             c.ExtraConfig.EnableSLBLoadBalance,
+		LogFileName:                      c.LogConfig.LogFileName,
+		SingleFileMaxSize:                c.LogConfig.SingleFileMaxSize, // MB
+		MaxBackupFileSize:                c.LogConfig.MaxBackupFileSize,
+		MaxAgeFileRem:                    c.LogConfig.MaxAgeFileRem,
+		Compress:                         c.LogConfig.Compress,
+		SlowQueryThreshold:               c.LogConfig.SlowQueryThreshold, // ms
 	}
 }
 
