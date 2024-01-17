@@ -19,6 +19,7 @@ package client
 
 import (
 	"context"
+	"github.com/oceanbase/obkv-table-client-go/log"
 	"sync"
 	"time"
 
@@ -88,7 +89,7 @@ func (q *ObQueryResultIterator) Next() (QueryResult, error) {
 	if err != nil {
 		return nil, err
 	}
-
+	var startTime int64 = time.Now().UnixMilli()
 	// lock
 	q.lock.Lock()
 	defer q.lock.Unlock()
@@ -117,6 +118,9 @@ func (q *ObQueryResultIterator) Next() (QueryResult, error) {
 
 	// get next row from next server
 	err = q.fetchNextWithRetry(false)
+	endTime := time.Now().UnixMilli()
+	var duration int64 = endTime - startTime
+	MonitorSlowQuery(duration, log.SlowQueryThreshold, q.queryExecutor.tableName, q.ctx.Value(log.ObkvTraceIdName))
 	if err != nil {
 		return nil, err
 	}

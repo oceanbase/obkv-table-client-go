@@ -122,7 +122,7 @@ func getConfigServerResponseOrNull(
 	for times = 0; times < retryTimes; times++ {
 		httpResp, err = cli.Get(url)
 		if err != nil {
-			log.Warn("failed to http get", log.String("url", url), log.Int("times", times))
+			log.Warn("Monitor", nil, "failed to http get", log.String("url", url), log.Int("times", times))
 			time.Sleep(retryInternal)
 		} else {
 			break

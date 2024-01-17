@@ -58,14 +58,14 @@ func (c *ConnectionMgr) start() {
 			select {
 			case <-c.needStop:
 				ticker.Stop()
-				log.Info("Stop ConnectionMgr")
+				log.Info("Monitor", nil, "Stop ConnectionMgr")
 				return
 			case <-ticker.C:
 				c.run()
 			}
 		}
 	}()
-	log.Info("start ConnectionMgr, " + c.String())
+	log.Info("Monitor", nil, "start ConnectionMgr, "+c.String())
 }
 
 func (c *ConnectionMgr) run() {

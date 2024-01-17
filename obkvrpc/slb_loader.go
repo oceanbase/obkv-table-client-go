@@ -51,7 +51,7 @@ func (s *SLBLoader) refreshSLBList() (bool, error) {
 	s.mutex.Lock()
 	defer s.mutex.Unlock()
 	if changed {
-		log.Info(fmt.Sprint("SLB address changed, before: ", s.slbAddress, ", after: ", slbAddress))
+		log.Info("Monitor", nil, fmt.Sprint("SLB address changed, before: ", s.slbAddress, ", after: ", slbAddress))
 		s.slbAddress = slbAddress.List()
 	}
 	return changed, nil
@@ -73,7 +73,7 @@ func (s *SLBLoader) getNextSLBAddress() string {
 func (s *SLBLoader) run() {
 	changed, err := s.refreshSLBList()
 	if err != nil {
-		log.Warn("reconnect failed", zap.Error(err))
+		log.Warn("Monitor", nil, "reconnect failed", zap.Error(err))
 		return
 	}
 	if changed {

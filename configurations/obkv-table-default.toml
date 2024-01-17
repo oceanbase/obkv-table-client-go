@@ -1,5 +1,6 @@
 # Client Mode - `direct` or `proxy`
-mode = "proxy"
+# log is not use toml config
+mode = "log"
 
 ## Direct Mode
 [DirectClientConfig]
@@ -50,3 +51,11 @@ LogLevel = "info"
 EnableRerouting = false
 MaxConnectionAge = 0
 EnableSLBLoadBalance = false
+
+[LogConfig]
+LogFileName = "./"
+SingleFileMaxSize = 256   ## MB
+MaxBackupFileSize  = 10   ## 0 is not delete
+MaxAgeFileRem = 30        ## 30 day
+Compress = false          ## default not
+SlowQueryThreshold = 40   ## ms

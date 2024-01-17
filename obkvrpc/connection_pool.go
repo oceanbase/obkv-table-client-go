@@ -117,7 +117,7 @@ func (p *ConnectionPool) GetConnection() (*Connection, int) {
 			index = (index + i) % p.option.connPoolMaxConnSize
 			break
 		} else if i == p.option.connPoolMaxConnSize-1 {
-			log.Warn("All connections is expired, will pick a expired connection")
+			log.Warn("Monitor", nil, "All connections is expired, will pick a expired connection")
 		}
 	}
 
@@ -181,7 +181,7 @@ func (p *ConnectionPool) CreateConnection(ctx context.Context) (*Connection, err
 	if p.option.maxConnectionAge > 0 {
 		connection.expireTime = time.Now().Add(p.option.maxConnectionAge)
 	}
-	log.Info(fmt.Sprintf("connect success, remote addr:%s, expire time: %s",
+	log.Info("Monitor", nil, fmt.Sprintf("connect success, remote addr:%s, expire time: %s",
 		connection.conn.RemoteAddr().String(), connection.expireTime.String()))
 	return connection, nil
 }
@@ -201,7 +201,7 @@ func (p *ConnectionPool) getNextConnAddress() (string, int) {
 	port := p.option.port
 	if p.connMgr != nil && p.connMgr.slbLoader != nil {
 		ip = p.connMgr.slbLoader.getNextSLBAddress()
-		log.Info(fmt.Sprintf("Get a SLB address %s:%d", ip, port))
+		log.Info("Monitor", nil, fmt.Sprintf("Get a SLB address %s:%d", ip, port))
 	}
 
 	return ip, port

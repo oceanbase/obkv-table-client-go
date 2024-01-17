@@ -309,7 +309,7 @@ func (b *obBatchExecutor) executeInternal(ctx context.Context) (BatchOperationRe
 				defer wg.Done()
 				err, partNeedRetry := b.partitionExecute(ctx, partOp, res)
 				if err != nil {
-					log.Warn("failed to execute partition operations", log.String("partOp", partOp.String()), log.String("err", err.Error()))
+					log.Warn("Runtime", ctx.Value(log.ObkvTraceIdName), "failed to execute partition operations", log.String("partOp", partOp.String()), log.String("err", err.Error()))
 					errArrLock.Lock()
 					errArr = append(errArr, err)
 					if needRetry == false && partNeedRetry {
@@ -321,7 +321,7 @@ func (b *obBatchExecutor) executeInternal(ctx context.Context) (BatchOperationRe
 		}
 		wg.Wait()
 		if len(errArr) != 0 {
-			log.Warn("error occur when execute partition operations")
+			log.Warn("Runtime", ctx.Value(log.ObkvTraceIdName), "error occur when execute partition operations")
 			return nil, errArr[0], needRetry
 		}
 	} else {

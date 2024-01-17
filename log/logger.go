@@ -18,19 +18,43 @@
 package log
 
 import (
+	"context"
+	"fmt"
+	"github.com/google/uuid"
+	"github.com/pkg/errors"
+	"golang.org/x/sys/unix"
 	"io"
 	"os"
+	"strings"
 	"sync"
 	"time"
 
 	"go.uber.org/zap"
 	"go.uber.org/zap/zapcore"
+	"gopkg.in/natefinch/lumberjack.v2"
 )
+
+const ObkvTraceIdName = "_ObkvTraceIdName"
+
+// Size specifies the maximum amount of data the writer will buffered before flushing. Defaults to 256 kB if unspecified.
+const BufferSize = 4096
 
 var (
 	globalMutex         sync.Mutex
-	defaultGlobalLogger = NewLogger(os.Stderr, InfoLevel, AddCaller())
+	defaultGlobalLogger *Logger
+	TraceId             string
+	LogType             = "Default"
+	SlowQueryThreshold  int64
 )
+
+type LogConfig struct {
+	LogFileName        string // log file dir
+	SingleFileMaxSize  int    // log file size（MB）
+	MaxBackupFileSize  int    // Maximum number of old files to keep
+	MaxAgeFileRem      int    // Maximum number of days to keep old files
+	Compress           bool   // Whether to compress/archive old files
+	SlowQueryThreshold int64  // Slow query threshold
+}
 
 type Level zapcore.Level
 
@@ -99,15 +123,56 @@ var (
 	Duration    = zap.Duration
 	Durationp   = zap.Durationp
 	Any         = zap.Any
-
-	Info   = defaultGlobalLogger.Info
-	Warn   = defaultGlobalLogger.Warn
-	Error  = defaultGlobalLogger.Error
-	DPanic = defaultGlobalLogger.DPanic
-	Panic  = defaultGlobalLogger.Panic
-	Fatal  = defaultGlobalLogger.Fatal
-	Debug  = defaultGlobalLogger.Debug
 )
+
+func resetLogInfo(logType string, traceId any) {
+	if len(logType) == 0 {
+		logType = "Default"
+	} else {
+		LogType = logType
+	}
+	if traceId != nil {
+		TraceId = traceId.(string)
+	} else {
+		TraceId = ""
+	}
+}
+
+// Default
+func Info(logType string, traceId any, msg string, fields ...Field) {
+	resetLogInfo(logType, traceId)
+	defaultGlobalLogger.Info(msg, fields...)
+}
+
+func Error(logType string, traceId any, msg string, fields ...Field) {
+	resetLogInfo(logType, traceId)
+	defaultGlobalLogger.Error(msg, fields...)
+}
+
+func Warn(logType string, traceId any, msg string, fields ...Field) {
+	resetLogInfo(logType, traceId)
+	defaultGlobalLogger.Warn(msg, fields...)
+}
+
+func DPanic(logType string, traceId any, msg string, fields ...Field) {
+	resetLogInfo(logType, traceId)
+	defaultGlobalLogger.DPanic(msg, fields...)
+}
+
+func Panic(logType string, traceId any, msg string, fields ...Field) {
+	resetLogInfo(logType, traceId)
+	defaultGlobalLogger.Panic(msg, fields...)
+}
+
+func Fatal(logType string, traceId any, msg string, fields ...Field) {
+	resetLogInfo(logType, traceId)
+	defaultGlobalLogger.Fatal(msg, fields...)
+}
+
+func Debug(logType string, traceId any, msg string, fields ...Field) {
+	resetLogInfo(logType, traceId)
+	defaultGlobalLogger.Debug(msg, fields...)
+}
 
 var (
 	AddCaller     = zap.AddCaller
@@ -120,6 +185,75 @@ func init() {
 	globalMutex.Lock()
 	defaultGlobalLogger = NewLogger(os.Stderr, InfoLevel, AddCaller())
 	globalMutex.Unlock()
+}
+
+func InitLoggerWithConfig(cfg LogConfig) error {
+	err := checkLoggerConfigValidity(cfg)
+	if err != nil {
+		return err
+	}
+	initDefaultLogger(cfg)
+	return nil
+}
+
+func InitTraceId(ctx *context.Context) {
+	if (*ctx).Value(ObkvTraceIdName) == nil {
+		pid := uint64(unix.Getpid())
+		// uniqueId uint64, pid uint64
+		uniqueId := uuid.New().String()
+		uniqueId = strings.ReplaceAll(uniqueId, "-", "")
+		traceId := fmt.Sprintf("Y%s-%x", uniqueId, pid)
+		*ctx = context.WithValue((*ctx), ObkvTraceIdName, traceId)
+	}
+}
+
+func checkLoggerConfigValidity(cfg LogConfig) error {
+	if cfg.LogFileName == "" {
+		return errors.New("should set Log File Name in toml or client config")
+	} else if cfg.SingleFileMaxSize <= 0 {
+		return errors.New("Single File MaxSize is invalid")
+	} else if cfg.SlowQueryThreshold <= 0 {
+		return errors.New("Slow Query Threshold is invalid")
+	} else if cfg.MaxAgeFileRem < 0 {
+		return errors.New("Max Age File Remain is invalid")
+	} else if cfg.MaxBackupFileSize < 0 {
+		return errors.New("Max Backup File Size is invalid")
+	}
+	return nil
+}
+
+func initDefaultLogger(cfg LogConfig) {
+	defFilePath := cfg.LogFileName + "obclient-table-go.log"
+	SlowQueryThreshold = cfg.SlowQueryThreshold
+	defLogWriter := getLogRotationWriter(defFilePath, cfg)
+	globalMutex.Lock()
+	defaultGlobalLogger = NewLogger(defLogWriter, InfoLevel, AddCaller())
+	globalMutex.Unlock()
+}
+
+// rotation
+func getLogRotationWriter(filePath string, cfg LogConfig) zapcore.WriteSyncer {
+	asyncWrite := &zapcore.BufferedWriteSyncer{
+		WS: zapcore.AddSync(&lumberjack.Logger{
+			Filename:   filePath,
+			MaxSize:    cfg.SingleFileMaxSize,
+			MaxBackups: cfg.MaxBackupFileSize,
+			MaxAge:     cfg.MaxAgeFileRem,
+			Compress:   cfg.Compress,
+		}),
+		//Size specifies the maximum amount of data the writer will buffered before flushing. Defaults to 256 kB if unspecified.
+		Size: BufferSize, // async print buffer size
+	}
+	return asyncWrite
+}
+
+// no rotation
+func getLogWriter(filePath string) zapcore.WriteSyncer {
+	file, err := os.OpenFile(filePath, os.O_WRONLY|os.O_APPEND, 0666)
+	if err != nil && os.IsNotExist(err) {
+		file, _ = os.Create(filePath)
+	}
+	return zapcore.AddSync(file)
 }
 
 type Field = zap.Field
@@ -175,13 +309,10 @@ func NewLogger(writer io.Writer, level Level, opts ...Option) *Logger {
 	if writer == nil {
 		panic("the writer is nil")
 	}
-	cfg := zap.NewProductionConfig()
-	cfg.EncoderConfig.EncodeTime = func(t time.Time, enc zapcore.PrimitiveArrayEncoder) {
-		enc.AppendString(t.Format("2006-01-02T15:04:05.000Z0700"))
-	}
+	var CustomEncoder = NewCustomEncoder()
 
 	core := zapcore.NewCore(
-		zapcore.NewJSONEncoder(cfg.EncoderConfig),
+		zapcore.NewConsoleEncoder(CustomEncoder),
 		zapcore.AddSync(writer),
 		zapcore.Level(level),
 	)
@@ -191,6 +322,30 @@ func NewLogger(writer io.Writer, level Level, opts ...Option) *Logger {
 		level: level,
 	}
 	return logger
+}
+
+func NewCustomEncoder() zapcore.EncoderConfig {
+	// time
+	var customEncodeTime = func(t time.Time, enc zapcore.PrimitiveArrayEncoder) {
+		enc.AppendString(t.Format("[" + "2006-01-02T15:04:05.000Z0700" + "]"))
+	}
+	// level
+	customLevelEncoder := func(level zapcore.Level, enc zapcore.PrimitiveArrayEncoder) {
+		enc.AppendString("[" + level.CapitalString() + "]")
+		enc.AppendString("[" + LogType + "]")
+		enc.AppendString("[" + TraceId + "]")
+	}
+	encoderConf := zapcore.EncoderConfig{
+		TimeKey:        "ts",
+		LevelKey:       "level_name",
+		MessageKey:     "msg",
+		LineEnding:     zapcore.DefaultLineEnding,
+		EncodeTime:     customEncodeTime,
+		EncodeLevel:    customLevelEncoder,
+		EncodeDuration: zapcore.SecondsDurationEncoder,
+		EncodeName:     zapcore.FullNameEncoder,
+	}
+	return encoderConf
 }
 
 func MatchStr2LogLevel(level string) Level {
