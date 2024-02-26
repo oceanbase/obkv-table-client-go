@@ -32,7 +32,7 @@ import (
 
 const (
 	queryHashTableName            = "queryHashTable"
-	queryHashTableCreateStatement = "create table if not exists queryHashTable(`c1` bigint(20) not null, c2 bigint(20) not null, c3 varchar(20) default 'hello', index i1(`c1`, `c3`) local, primary key (`c1`, `c2`)) partition by key(c1) partitions 15;"
+	queryHashTableCreateStatement = "create table if not exists queryHashTable(`c1` bigint(20) not null, c2 bigint(20) not null, c3 varchar(20) default 'hello', index i1(`c1`, `c3`) local, primary key (`c1`, `c2`)) partition by hash(c1) partitions 15;"
 )
 
 func prepareHashRecord(recordCount int) {
