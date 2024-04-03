@@ -18,9 +18,11 @@
 package obkvrpc
 
 import (
+	"encoding/binary"
 	"fmt"
 	"io"
 	"net"
+	"strconv"
 	"sync"
 	"testing"
 	"time"
@@ -45,18 +47,6 @@ type MockCodec struct {
 	Test    *testing.T
 }
 
-type MockResp struct {
-	ID string
-}
-
-func (mp *MockResp) GetBytes() []byte {
-	return nil
-}
-
-func (mp *MockResp) GetID() string {
-	return mp.ID
-}
-
 func (mcs *MockCodec) ReadRequest(req *obkvrpc.Request) error {
 	if mcs.RunTime++; mcs.RunTime > MaxMsgNum {
 		// fmt.Println("ReadRequest return err", mcs.RunTime)
@@ -70,22 +60,22 @@ func (mcs *MockCodec) ReadRequest(req *obkvrpc.Request) error {
 	req.Args = append(req.Args, arg1)
 	req.Args = append(req.Args, arg2)
 	mcs.IDMap.Store(req.ID, true)
-	// fmt.Println("ReadRequest: ", req.ID)
+	// fmt.Println("ReadRequest: ", req.ID, obkvrpc.GetGID())
 	return nil
 }
 
 func (mcs *MockCodec) WriteResponse(resp *obkvrpc.Response) error {
-	_, ok := mcs.IDMap.Load((*resp).GetID())
+	_, ok := mcs.IDMap.Load(resp.ID)
 	assert.Equal(mcs.Test, true, ok)
-	mcs.IDMap.Delete((*resp).GetID())
-	// fmt.Println("WriteResponse: ", resp.ID)
+	mcs.IDMap.Delete(resp.ID)
+	// fmt.Println("WriteResponse: ", resp.ID, obkvrpc.GetGID())
 	return nil
 }
 
 func (mcs *MockCodec) Call(req *obkvrpc.Request, resp *obkvrpc.Response) error {
-	mp := MockResp{ID: req.ID}
-	*resp = &mp
-	// fmt.Println("Call: ", req.ID)
+	resp.ID = req.ID
+	resp.RspContent = []byte("content")
+	// fmt.Println("Call: ", req.ID, obkvrpc.GetGID())
 	return nil
 }
 
@@ -94,7 +84,7 @@ func (mcs *MockCodec) Close() {
 	mcs.Conn.Close()
 	mcs.Wg.Done()
 	mcs.IDMap.Range(func(key any, value any) bool {
-		mcs.Test.Error("IDMap is not empty when MockCodec closing")
+		mcs.Test.Error("IDMap is not empty when MockCodec closing", key)
 		return false
 	})
 }
@@ -106,7 +96,7 @@ func MockTCPServer(t *testing.T, lis net.Listener, doneChan chan struct{}) {
 	for {
 		conn, err := lis.Accept()
 		if err != nil {
-			// log.Print("fail to accept connection", err.Error())
+			fmt.Println("listener closed")
 			break
 		}
 		codec := MockCodec{Conn: conn, RunTime: 0, Wg: wg, Test: t}
@@ -124,7 +114,7 @@ func Dial(t *testing.T) {
 }
 
 func ServerAndClients(t *testing.T, maxMsgNum int, maxClientNum int) {
-	fmt.Println("start to test tcp server")
+	// fmt.Println("start to test tcp server")
 	MaxMsgNum = maxMsgNum
 	lis, err := net.Listen("tcp", "127.0.0.1:1234")
 	assert.Equal(t, nil, err)
@@ -138,8 +128,8 @@ func ServerAndClients(t *testing.T, maxMsgNum int, maxClientNum int) {
 	fmt.Println("finish test tcp server, isOpen = ", ok)
 }
 
-// need 60s to run test
 func TestRPCServer(t *testing.T) {
+	// defer goleak.VerifyNone(t)
 	// single message single client
 	ServerAndClients(t, 1, 1)
 	time.Sleep(time.Millisecond * 500)
@@ -153,6 +143,14 @@ func TestRPCServer(t *testing.T) {
 	time.Sleep(time.Millisecond * 500)
 
 	// multi message multi client
-	ServerAndClients(t, 10000, 1000)
-	time.Sleep(time.Millisecond * 500)
+	ServerAndClients(t, 39000, 256)
+	time.Sleep(time.Millisecond)
+}
+
+func TestCopy(t *testing.T) {
+	b := []byte("123")
+	data := binary.BigEndian.Uint16(b)
+	fmt.Println(data)
+	fmt.Println(string(b))
+	fmt.Println(strconv.Atoi(string(b)))
 }

@@ -369,7 +369,6 @@ func (c *obClient) InsertOrUpdateWithResult(
 	mutateColumns []*table.Column,
 	opts ...option.ObOperationOption) (SingleResult, error) {
 	operationOptions := c.getOperationOptions(opts...)
-
 	res, err := c.executeWithRetry(
 		ctx,
 		tableName,
