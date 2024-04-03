@@ -20,14 +20,15 @@ package log
 import (
 	"context"
 	"fmt"
-	"github.com/google/uuid"
-	"github.com/pkg/errors"
-	"golang.org/x/sys/unix"
 	"io"
 	"os"
 	"strings"
 	"sync"
 	"time"
+
+	"github.com/google/uuid"
+	"github.com/pkg/errors"
+	"golang.org/x/sys/unix"
 
 	"go.uber.org/zap"
 	"go.uber.org/zap/zapcore"
@@ -42,8 +43,6 @@ const BufferSize = 4096
 var (
 	globalMutex         sync.Mutex
 	defaultGlobalLogger *Logger
-	TraceId             string
-	LogType             = "Default"
 	SlowQueryThreshold  int64
 )
 
@@ -125,53 +124,46 @@ var (
 	Any         = zap.Any
 )
 
-func resetLogInfo(logType string, traceId any) {
+func AddInfo(logType string, traceId any, msg string) string {
 	if len(logType) == 0 {
 		logType = "Default"
-	} else {
-		LogType = logType
 	}
-	if traceId != nil {
-		TraceId = traceId.(string)
+	var traceStr string
+	if traceId == nil {
+		traceStr = ""
 	} else {
-		TraceId = ""
+		traceStr = traceId.(string)
 	}
+	return "[" + logType + "] " + "[" + traceStr + "] " + msg
 }
 
 // Default
 func Info(logType string, traceId any, msg string, fields ...Field) {
-	resetLogInfo(logType, traceId)
-	defaultGlobalLogger.Info(msg, fields...)
+	defaultGlobalLogger.Info(AddInfo(logType, traceId, msg), fields...)
 }
 
 func Error(logType string, traceId any, msg string, fields ...Field) {
-	resetLogInfo(logType, traceId)
-	defaultGlobalLogger.Error(msg, fields...)
+	defaultGlobalLogger.Error(AddInfo(logType, traceId, msg), fields...)
 }
 
 func Warn(logType string, traceId any, msg string, fields ...Field) {
-	resetLogInfo(logType, traceId)
-	defaultGlobalLogger.Warn(msg, fields...)
+	defaultGlobalLogger.Warn(AddInfo(logType, traceId, msg), fields...)
 }
 
 func DPanic(logType string, traceId any, msg string, fields ...Field) {
-	resetLogInfo(logType, traceId)
-	defaultGlobalLogger.DPanic(msg, fields...)
+	defaultGlobalLogger.DPanic(AddInfo(logType, traceId, msg), fields...)
 }
 
 func Panic(logType string, traceId any, msg string, fields ...Field) {
-	resetLogInfo(logType, traceId)
-	defaultGlobalLogger.Panic(msg, fields...)
+	defaultGlobalLogger.Panic(AddInfo(logType, traceId, msg), fields...)
 }
 
 func Fatal(logType string, traceId any, msg string, fields ...Field) {
-	resetLogInfo(logType, traceId)
-	defaultGlobalLogger.Fatal(msg, fields...)
+	defaultGlobalLogger.Fatal(AddInfo(logType, traceId, msg), fields...)
 }
 
 func Debug(logType string, traceId any, msg string, fields ...Field) {
-	resetLogInfo(logType, traceId)
-	defaultGlobalLogger.Debug(msg, fields...)
+	defaultGlobalLogger.Debug(AddInfo(logType, traceId, msg), fields...)
 }
 
 var (
@@ -332,8 +324,6 @@ func NewCustomEncoder() zapcore.EncoderConfig {
 	// level
 	customLevelEncoder := func(level zapcore.Level, enc zapcore.PrimitiveArrayEncoder) {
 		enc.AppendString("[" + level.CapitalString() + "]")
-		enc.AppendString("[" + LogType + "]")
-		enc.AppendString("[" + TraceId + "]")
 	}
 	encoderConf := zapcore.EncoderConfig{
 		TimeKey:        "ts",
