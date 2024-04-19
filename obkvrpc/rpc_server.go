@@ -22,9 +22,10 @@ import (
 	"runtime/debug"
 	"sync"
 
-	"github.com/oceanbase/obkv-table-client-go/log"
 	"github.com/panjf2000/ants/v2"
 	"go.uber.org/zap"
+
+	"github.com/oceanbase/obkv-table-client-go/log"
 )
 
 // CodecServer implement interfaces to read/decode request
@@ -35,6 +36,7 @@ type CodecServer interface {
 	Call(*Request, *Response) error
 	Close()
 	GetCloseChan() *chan struct{}
+	GetNormalErrMsg() []byte
 }
 
 // Server implement server frame
@@ -152,6 +154,11 @@ func (s *Server) RunWorker(wg *sync.WaitGroup, reqChan <-chan *Request, cServer 
 			if err := recover(); err != nil {
 				log.Error("RPCServer", nil, "RunWorker panic", log.Any("error", err), log.String("stack", string(debug.Stack())))
 			}
+			// try to send err msg to client, ignore error
+			resp := Response{ID: "", RspContent: cServer.GetNormalErrMsg()}
+			_ = cServer.WriteResponse(&resp)
+			closeChan := *cServer.GetCloseChan()
+			close(closeChan)
 		}()
 		for req := range reqChan {
 			resp := s.respObjPool.Get().(*Response)

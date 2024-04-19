@@ -639,7 +639,7 @@ func (c *obClient) execute(
 	tableParam, err := c.GetTableParam(ctx, tableName, rowKey)
 	if err != nil {
 		log.Error("Runtime", ctx.Value(log.ObkvTraceIdName), "error occur in execute",
-			log.Int64("opType", int64(opType)), log.String("tableName", tableName), log.String("tableParam", tableParam.String()))
+			log.Int64("opType", int64(opType)), log.String("tableName", tableName))
 		return nil, errors.WithMessagef(err, "get table param, tableName:%s, opType:%d", tableName, opType), needRetry
 	}
 
