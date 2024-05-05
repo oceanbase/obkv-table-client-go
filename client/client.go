@@ -198,4 +198,5 @@ type Client interface {
 	// Close closes the client.
 	// close will disconnect all connections and exit all goroutines.
 	Close()
+	Redis(ctx context.Context, tableName string, rowKey []*table.Column, mutateColumns []*table.Column, opts ...option.ObOperationOption) (SingleResult, error)
 }

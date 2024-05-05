@@ -533,6 +533,27 @@ func (c *obClient) Get(
 	return newObSingleResult(res.AffectedRows(), res.Entity(), res.Flags()), nil
 }
 
+func (c *obClient) Redis(
+	ctx context.Context,
+	tableName string,
+	rowKey []*table.Column,
+	mutateColumns []*table.Column,
+	opts ...option.ObOperationOption) (SingleResult, error) {
+	log.InitTraceId(&ctx)
+	operationOptions := c.getOperationOptions(opts...)
+	res, err := c.executeWithRetry(
+		ctx,
+		tableName,
+		protocol.ObTableOperationRedis,
+		rowKey,
+		mutateColumns,
+		operationOptions)
+	if err != nil {
+		return nil, err
+	}
+	return newObSingleResult(res.AffectedRows(), res.Entity()), nil
+}
+
 func (c *obClient) Query(ctx context.Context, tableName string, rangePairs []*table.RangePair, opts ...option.ObQueryOption) (QueryResultIterator, error) {
 	log.InitTraceId(&ctx)
 	queryOpts := c.getObQueryOptions(opts...)
