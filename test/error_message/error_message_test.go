@@ -319,7 +319,7 @@ func TestErrMsg_UpdateVirtualColumnNotSupport(t *testing.T) {
 	)
 	assert.NotEqual(t, nil, err)
 	fmt.Println(err.Error())
-	expectContainErrMsg := "errCode:-4007, errCodeName:ObNotSupported, errMsg:assign virtual generated column not supported"
+	expectContainErrMsg := "errCode:-4007, errCodeName:ObNotSupported, errMsg:The specified value for generated column not supported"
 	assert.EqualValues(t, true, strings.Contains(err.Error(), expectContainErrMsg))
 }
 

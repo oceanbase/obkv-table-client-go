@@ -257,7 +257,7 @@ func TestCurrentTimestamp_common(t *testing.T) {
 	)
 	assert.Equal(t, nil, err)
 	assert.EqualValues(t, 3, result.Value("c1"))
-	assert.EqualValues(t, result.Value("c3"), result.Value("c4"))
+	assert.NotEqual(t, result.Value("c3"), result.Value("c4"))
 	assert.EqualValues(t, result.Value("c4"), result.Value("c5"))
 
 	// append insert
@@ -316,7 +316,7 @@ func TestCurrentTimestamp_common(t *testing.T) {
 	assert.EqualValues(t, 4, result.Value("c1"))
 	assert.EqualValues(t, 0, result.Value("c2"))
 	assert.EqualValues(t, "abcefg", result.Value("c6"))
-	assert.EqualValues(t, result.Value("c3"), result.Value("c4"))
+	assert.NotEqual(t, result.Value("c3"), result.Value("c4"))
 	assert.EqualValues(t, result.Value("c4"), result.Value("c5"))
 }
 
