@@ -95,6 +95,7 @@ const (
 	ObTableOperationReplace
 	ObTableOperationIncrement
 	ObTableOperationAppend
+	ObTableOperationRedis = 13
 )
 
 func (o *ObTableOperation) OpType() ObTableOperationType {

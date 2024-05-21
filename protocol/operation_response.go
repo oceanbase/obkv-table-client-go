@@ -98,6 +98,9 @@ func (r *ObTableOperationResponse) Flags() uint64 {
 }
 
 func (r *ObTableOperationResponse) PCode() ObTablePacketCode {
+	if r.operationType == ObTableOperationRedis {
+		return ObTableApiRedis
+	}
 	return ObTableApiExecute
 }
 

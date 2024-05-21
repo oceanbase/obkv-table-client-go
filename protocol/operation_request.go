@@ -185,6 +185,9 @@ func (r *ObTableOperationRequest) SetReturnAffectedRows(returnAffectedRows bool)
 }
 
 func (r *ObTableOperationRequest) PCode() ObTablePacketCode {
+	if r.tableOperation.opType == ObTableOperationRedis {
+		return ObTableApiRedis
+	}
 	return ObTableApiExecute
 }
 
