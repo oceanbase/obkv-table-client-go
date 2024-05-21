@@ -551,7 +551,7 @@ func (c *obClient) Redis(
 	if err != nil {
 		return nil, err
 	}
-	return newObSingleResult(res.AffectedRows(), res.Entity()), nil
+	return newObSingleResult(res.AffectedRows(), res.Entity(), res.Flags()), nil
 }
 
 func (c *obClient) Query(ctx context.Context, tableName string, rangePairs []*table.RangePair, opts ...option.ObQueryOption) (QueryResultIterator, error) {
