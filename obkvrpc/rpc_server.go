@@ -119,7 +119,6 @@ func (s *Server) ReadRequest(reqChan chan<- *Request, cServer CodecServer) {
 		isStop := false
 		select {
 		case <-*closeChan:
-			cServer.Close()
 			close(reqChan)
 			return
 		default:
@@ -158,14 +157,7 @@ func (s *Server) RunWorker(wg *sync.WaitGroup, reqChan <-chan *Request, cServer 
 				// try to send err msg to client, ignore error
 				resp := Response{ID: "", RspContent: cServer.GetNormalErrMsg()}
 				_ = cServer.WriteResponse(&resp)
-				closeChan := *cServer.GetCloseChan()
-				close(closeChan)
 			}
-			// try to send err msg to client, ignore error
-			resp := Response{ID: "", RspContent: cServer.GetNormalErrMsg()}
-			_ = cServer.WriteResponse(&resp)
-			closeChan := *cServer.GetCloseChan()
-			close(closeChan)
 		}()
 		for req := range reqChan {
 			resp := s.respObjPool.Get().(*Response)
