@@ -2154,6 +2154,7 @@ const (
 	ObKvColumnTypeNotMatch                                                        ObErrorCode = -10511
 	ObKvCollationMismatch                                                         ObErrorCode = -10512
 	ObKvScanRangeMissing                                                          ObErrorCode = -10513
+	ObKvRedisParseError                                                           ObErrorCode = -10515
 	ObErrValuesClauseNeedHaveColumn                                               ObErrorCode = -11000
 	ObErrValuesClauseCannotUseDefaultValues                                       ObErrorCode = -11001
 	ObWrongPartitionName                                                          ObErrorCode = -11002
@@ -4303,6 +4304,7 @@ var ObErrorNames = map[ObErrorCode]string{
 	ObKvColumnTypeNotMatch:                                    "ObKvColumnTypeNotMatch",
 	ObKvCollationMismatch:                                     "ObKvCollationMismatch",
 	ObKvScanRangeMissing:                                      "ObKvScanRangeMissing",
+	ObKvRedisParseError:                                       "ObKvRedisParseError",
 	ObErrValuesClauseNeedHaveColumn:                           "ObErrValuesClauseNeedHaveColumn",
 	ObErrValuesClauseCannotUseDefaultValues:                   "ObErrValuesClauseCannotUseDefaultValues",
 	ObWrongPartitionName:                                      "ObWrongPartitionName",
