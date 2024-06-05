@@ -174,7 +174,8 @@ func (q *ObQueryResultIterator) fetchNextWithRetry(hasPrev bool) error {
 			return errors.WithMessage(err, "retry and timeout")
 		default:
 			// get and set route table again
-			targetParts, err := q.queryExecutor.getTableParams(q.ctx, q.queryExecutor.tableName, q.queryExecutor.keyRanges)
+			var targetParts []*route.ObTableParam
+			targetParts, err = q.queryExecutor.getTableParams(q.ctx, q.queryExecutor.tableName, q.queryExecutor.keyRanges)
 			if err != nil {
 				return err
 			}
