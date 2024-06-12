@@ -41,11 +41,15 @@ func NewDB(
 		"@tcp(", ip, ":", port, ")/", database, "?charset=utf8"}, "")
 	db, err := sql.Open("mysql", dsn)
 	if err != nil {
-		return nil, errors.WithMessagef(err, "open db, dsn:%s", dsn)
+		hidePass := strings.Join([]string{userName, ":[password]",
+			"@tcp(", ip, ":", port, ")/", database, "?charset=utf8"}, "")
+		return nil, errors.WithMessagef(err, "open db, dsn:%s", hidePass)
 	}
 	err = db.Ping()
 	if err != nil {
-		return nil, errors.WithMessagef(err, "ping db, dsn:%s", dsn)
+		hidePass := strings.Join([]string{userName, ":[password]",
+			"@tcp(", ip, ":", port, ")/", database, "?charset=utf8"}, "")
+		return nil, errors.WithMessagef(err, "ping db, dsn:%s", hidePass)
 	}
 	return db, nil
 }
