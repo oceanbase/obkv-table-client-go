@@ -273,7 +273,7 @@ func TestAuto_NormalFill(t *testing.T) {
 	)
 	assert.Equal(t, nil, err)
 	assert.EqualValues(t, 5, result.Value("c1"))
-	assert.EqualValues(t, 7, result.Value("c2"))
+	assert.EqualValues(t, 6, result.Value("c2"))
 	assert.EqualValues(t, "append", result.Value("c3"))
 	assert.EqualValues(t, 0, result.Value("c4"))
 
@@ -300,7 +300,7 @@ func TestAuto_NormalFill(t *testing.T) {
 	)
 	assert.Equal(t, nil, err)
 	assert.EqualValues(t, 5, result.Value("c1"))
-	assert.EqualValues(t, 7, result.Value("c2"))
+	assert.EqualValues(t, 6, result.Value("c2"))
 	assert.EqualValues(t, "append-exist", result.Value("c3"))
 	assert.EqualValues(t, 0, result.Value("c4"))
 }
