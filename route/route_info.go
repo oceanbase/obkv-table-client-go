@@ -440,13 +440,34 @@ func (i *ObRouteInfo) refreshTableLocations(addr *tcpAddr) error {
 	i.tableLocations.Range(func(key, value interface{}) bool {
 		tableName := key.(string)
 		entry := value.(*ObTableEntry)
-		for _, replica := range entry.tableLocation.replicaLocations {
-			if replica.addr.tcpAddr.Equal(addr) {
-				// trigger refresh table
-				isRefreshing := &atomic.Bool{}
-				isRefreshing.Store(false)
-				i.taskInfo.tables.AddIfAbsent(tableName, isRefreshing)
-				i.taskInfo.TriggerRefreshTable()
+		if !entry.IsPartitionTable() {
+			for _, replica := range entry.tableLocation.replicaLocations {
+				if replica.addr.tcpAddr.Equal(addr) {
+					// trigger refresh table
+					isRefreshing := &atomic.Bool{}
+					isRefreshing.Store(false)
+					i.taskInfo.tables.AddIfAbsent(tableName, isRefreshing)
+					i.taskInfo.TriggerRefreshTable()
+				}
+			}
+		} else {
+			for partId, partLocation := range entry.partLocationEntry.partLocations {
+				if partLocation != nil {
+					replica := partLocation.getReplica(ConsistencyStrong)
+					if replica != nil && replica.addr.tcpAddr.Equal(addr) {
+						// trigger refresh table
+						isRefreshing := &atomic.Bool{}
+						isRefreshing.Store(false)
+						i.taskInfo.tables.AddIfAbsent(tableName, isRefreshing)
+						i.taskInfo.TriggerRefreshTable()
+					} else if replica == nil {
+						log.Warn("Routine", nil, "partLocation leader replica is nil",
+							log.String("tableName", tableName), log.Uint64("partId", partId))
+					}
+				} else {
+					log.Warn("Routine", nil, "partLocation is nil",
+						log.String("tableName", tableName), log.Uint64("partId", partId))
+				}
 			}
 		}
 		return true
