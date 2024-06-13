@@ -61,10 +61,9 @@ func (i *ObRouteInfo) getTableWithRetry(ctx context.Context, server *ObServerAdd
 		for {
 			select {
 			case <-ctx.Done():
-				log.Warn("[Runtime]", nil, "catch ctx Done")
-				i.refreshTableLocations(&server.tcpAddr)
-				log.Warn("[Runtime]", nil, "get table fail and fail to refresh table location ",
+				log.Warn("[Runtime]", nil, "get table timeout and try to refresh table location ",
 					log.String("server", server.String()))
+				go i.refreshTableLocations(&server.tcpAddr)
 				return nil, errors.Errorf("get table, server:%s", server.String())
 			default:
 				t, ok = i.tableRoster.Get(server.tcpAddr)
