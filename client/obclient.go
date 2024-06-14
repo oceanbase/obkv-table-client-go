@@ -689,17 +689,19 @@ func (c *obClient) execute(
 	err, needRetry = c.executeInternal(ctx, tableName, tableParam.Table(), request, result)
 	if err != nil {
 		trace := fmt.Sprintf("Y%X-%016X", result.UniqueId(), result.Sequence())
+		addr := fmt.Sprintf("%s:%d", tableParam.Table().Ip(), tableParam.Table().Port())
 		log.Error("Runtime", ctx.Value(log.ObkvTraceIdName), "error occur in execute", log.String("observerTraceId", trace),
-			log.String("remote addr", result.RemoteAddr().String()))
+			log.String("remote addr", addr))
 		return nil, err, needRetry
 	}
 
 	if oberror.ObErrorCode(result.Header().ErrorNo()) != oberror.ObSuccess {
 		trace := fmt.Sprintf("Y%X-%016X", result.UniqueId(), result.Sequence())
+		addr := fmt.Sprintf("%s:%d", tableParam.Table().Ip(), tableParam.Table().Port())
 		log.Error("Runtime", ctx.Value(log.ObkvTraceIdName), "error occur in execute", log.String("observerTraceId", trace),
-			log.String("remote addr", result.RemoteAddr().String()))
+			log.String("remote addr", addr))
 		return nil, protocol.NewProtocolError(
-			result.RemoteAddr().String(),
+			addr,
 			oberror.ObErrorCode(result.Header().ErrorNo()),
 			result.Header().Msg(),
 			result.Sequence(),
