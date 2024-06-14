@@ -460,6 +460,7 @@ func (i *ObRouteInfo) refreshTableLocations(addr *tcpAddr) error {
 						isRefreshing.Store(false)
 						i.taskInfo.tables.AddIfAbsent(tableName, isRefreshing)
 						i.taskInfo.TriggerRefreshTable()
+						return true
 					} else if replica == nil {
 						log.Warn("Routine", nil, "partLocation leader replica is nil",
 							log.String("tableName", tableName), log.Uint64("partId", partId))
