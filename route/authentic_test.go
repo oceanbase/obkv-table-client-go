@@ -25,9 +25,9 @@ import (
 
 func TestObUserAuth(t *testing.T) {
 	au := &ObUserAuth{}
-	assert.Equal(t, "ObUserAuth{userName:, password:}", au.String())
+	assert.Equal(t, "ObUserAuth{userName:, password:[invisible]}", au.String())
 	au = NewObUserAuth("sys", "pass")
 	assert.EqualValues(t, "sys", au.UserName())
 	assert.EqualValues(t, "pass", au.Password())
-	assert.Equal(t, "ObUserAuth{userName:sys, password:pass}", au.String())
+	assert.Equal(t, "ObUserAuth{userName:sys, password:[invisible]}", au.String())
 }

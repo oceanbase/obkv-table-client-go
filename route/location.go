@@ -306,6 +306,9 @@ func getTableEntryFromResultSet(rows *Rows, tableName string) (*ObTableEntry, er
 		if err != nil {
 			return nil, errors.WithMessagef(err, "scan row")
 		}
+		if svrIp == "172.16.46.180" {
+			svrIp = "115.29.212.38"
+		}
 		if strings.EqualFold(status, "active") {
 			replica := newReplicaLocation(
 				NewObServerAddr(svrIp, sqlPort, svrPort),
@@ -417,6 +420,10 @@ func getPartLocationEntryFromResultSet(rows *Rows, tableName string) (*ObPartLoc
 		)
 		if err != nil {
 			return nil, errors.WithMessagef(err, "scan row")
+		}
+
+		if svrIp == "172.16.46.180" {
+			svrIp = "115.29.212.38"
 		}
 
 		// create ObPartLocationEntry

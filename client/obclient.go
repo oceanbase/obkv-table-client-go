@@ -20,11 +20,13 @@ package client
 import (
 	"context"
 	"fmt"
-	"github.com/oceanbase/obkv-table-client-go/log"
-	"golang.org/x/sys/unix"
 	"runtime"
 	"strings"
 	"time"
+
+	"golang.org/x/sys/unix"
+
+	"github.com/oceanbase/obkv-table-client-go/log"
 
 	"github.com/pkg/errors"
 
@@ -360,6 +362,27 @@ func (c *obClient) InsertOrUpdate(
 	return res.AffectedRows(), nil
 }
 
+func (c *obClient) InsertOrUpdateWithResult(
+	ctx context.Context,
+	tableName string,
+	rowKey []*table.Column,
+	mutateColumns []*table.Column,
+	opts ...option.ObOperationOption) (SingleResult, error) {
+	operationOptions := c.getOperationOptions(opts...)
+	res, err := c.executeWithRetry(
+		ctx,
+		tableName,
+		protocol.ObTableOperationInsertOrUpdate,
+		rowKey,
+		mutateColumns,
+		operationOptions)
+	if err != nil {
+		return nil, errors.WithMessagef(err, "execute insert or update, tableName:%s, rowKey:%s, mutateColumns:%s",
+			tableName, table.ColumnsToString(rowKey), table.ColumnsToString(mutateColumns))
+	}
+	return newObSingleResult(res.AffectedRows(), nil, res.Flags()), nil
+}
+
 func (c *obClient) Replace(
 	ctx context.Context,
 	tableName string,
@@ -400,7 +423,7 @@ func (c *obClient) Increment(
 		if err != nil {
 			return nil, err
 		}
-		return newObSingleResult(res.AffectedRows(), res.Entity()), nil
+		return newObSingleResult(res.AffectedRows(), res.Entity(), res.Flags()), nil
 	} else {
 		res, err := c.executeWithFilterAndRetry(
 			ctx,
@@ -412,7 +435,7 @@ func (c *obClient) Increment(
 		if err != nil {
 			return nil, err
 		}
-		return newObSingleResult(res.AffectedRows(), nil), nil
+		return newObSingleResult(res.AffectedRows(), nil, 0), nil
 	}
 }
 
@@ -435,7 +458,7 @@ func (c *obClient) Append(
 		if err != nil {
 			return nil, err
 		}
-		return newObSingleResult(res.AffectedRows(), res.Entity()), nil
+		return newObSingleResult(res.AffectedRows(), res.Entity(), res.Flags()), nil
 	} else {
 		res, err := c.executeWithFilterAndRetry(
 			ctx,
@@ -447,7 +470,7 @@ func (c *obClient) Append(
 		if err != nil {
 			return nil, err
 		}
-		return newObSingleResult(res.AffectedRows(), nil), nil
+		return newObSingleResult(res.AffectedRows(), nil, 0), nil
 	}
 }
 
@@ -507,7 +530,28 @@ func (c *obClient) Get(
 	if err != nil {
 		return nil, err
 	}
-	return newObSingleResult(res.AffectedRows(), res.Entity()), nil
+	return newObSingleResult(res.AffectedRows(), res.Entity(), res.Flags()), nil
+}
+
+func (c *obClient) Redis(
+	ctx context.Context,
+	tableName string,
+	rowKey []*table.Column,
+	mutateColumns []*table.Column,
+	opts ...option.ObOperationOption) (SingleResult, error) {
+	log.InitTraceId(&ctx)
+	operationOptions := c.getOperationOptions(opts...)
+	res, err := c.executeWithRetry(
+		ctx,
+		tableName,
+		protocol.ObTableOperationRedis,
+		rowKey,
+		mutateColumns,
+		operationOptions)
+	if err != nil {
+		return nil, err
+	}
+	return newObSingleResult(res.AffectedRows(), res.Entity(), res.Flags()), nil
 }
 
 func (c *obClient) Query(ctx context.Context, tableName string, rangePairs []*table.RangePair, opts ...option.ObQueryOption) (QueryResultIterator, error) {
@@ -616,7 +660,7 @@ func (c *obClient) execute(
 	tableParam, err := c.GetTableParam(ctx, tableName, rowKey)
 	if err != nil {
 		log.Error("Runtime", ctx.Value(log.ObkvTraceIdName), "error occur in execute",
-			log.Int64("opType", int64(opType)), log.String("tableName", tableName), log.String("tableParam", tableParam.String()))
+			log.Int64("opType", int64(opType)), log.String("tableName", tableName))
 		return nil, errors.WithMessagef(err, "get table param, tableName:%s, opType:%d", tableName, opType), needRetry
 	}
 
@@ -645,15 +689,19 @@ func (c *obClient) execute(
 	err, needRetry = c.executeInternal(ctx, tableName, tableParam.Table(), request, result)
 	if err != nil {
 		trace := fmt.Sprintf("Y%X-%016X", result.UniqueId(), result.Sequence())
-		log.Error("Runtime", ctx.Value(log.ObkvTraceIdName), "error occur in execute", log.String("observerTraceId", trace))
+		addr := fmt.Sprintf("%s:%d", tableParam.Table().Ip(), tableParam.Table().Port())
+		log.Error("Runtime", ctx.Value(log.ObkvTraceIdName), "error occur in execute", log.String("observerTraceId", trace),
+			log.String("remote addr", addr))
 		return nil, err, needRetry
 	}
 
 	if oberror.ObErrorCode(result.Header().ErrorNo()) != oberror.ObSuccess {
 		trace := fmt.Sprintf("Y%X-%016X", result.UniqueId(), result.Sequence())
-		log.Error("Runtime", ctx.Value(log.ObkvTraceIdName), "error occur in execute", log.String("observerTraceId", trace))
+		addr := fmt.Sprintf("%s:%d", tableParam.Table().Ip(), tableParam.Table().Port())
+		log.Error("Runtime", ctx.Value(log.ObkvTraceIdName), "error occur in execute", log.String("observerTraceId", trace),
+			log.String("remote addr", addr))
 		return nil, protocol.NewProtocolError(
-			result.RemoteAddr().String(),
+			addr,
 			oberror.ObErrorCode(result.Header().ErrorNo()),
 			result.Header().Msg(),
 			result.Sequence(),

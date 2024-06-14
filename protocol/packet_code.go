@@ -32,6 +32,7 @@ const (
 	ObTableApiExecuteAsyncQuery
 	ObTableApiMove
 	ObTableApiErrorPacket
+	ObTableApiRedis
 
 	ObTableApiNoSuch = -1
 )
@@ -45,6 +46,7 @@ const (
 	obTableApiExecuteAsyncQueryStr string = "ob table execute async query"
 	obTableApiMoveStr              string = "ob table route"
 	obTableApiErrorPacketStr       string = "ob table error"
+	obTableApiRedisStr             string = "ob table redis"
 )
 
 const (
@@ -55,6 +57,7 @@ const (
 	obTableApiPCodeQueryAndMute      uint32 = 0x1105
 	obTableApiPCodeExecuteAsyncQuery uint32 = 0x1106
 	obTableApiPCodeMove              uint32 = 0x1124
+	obTableApiPCodeRedisExecute      uint32 = 0x1126
 	obTableApiPCodeErrorPacket       uint32 = 0x010
 )
 
@@ -67,6 +70,7 @@ var obTablePacketCodeStrings = []string{
 	ObTableApiExecuteAsyncQuery: obTableApiExecuteAsyncQueryStr,
 	ObTableApiMove:              obTableApiMoveStr,
 	ObTableApiErrorPacket:       obTableApiErrorPacketStr,
+	ObTableApiRedis:             obTableApiRedisStr,
 }
 
 var obTablePacketCodePCodes = []uint32{
@@ -78,6 +82,7 @@ var obTablePacketCodePCodes = []uint32{
 	ObTableApiExecuteAsyncQuery: obTableApiPCodeExecuteAsyncQuery,
 	ObTableApiMove:              obTableApiPCodeMove,
 	ObTableApiErrorPacket:       obTableApiPCodeErrorPacket,
+	ObTableApiRedis:             obTableApiPCodeRedisExecute,
 }
 
 func (c ObTablePacketCode) Value() uint32 {
@@ -102,6 +107,8 @@ func (c ObTablePacketCode) ValueOf(pCode uint32) (ObTablePacketCode, error) { //
 		return ObTableApiMove, nil
 	case obTableApiPCodeErrorPacket:
 		return ObTableApiErrorPacket, nil
+	case obTableApiPCodeRedisExecute:
+		return ObTableApiRedis, nil
 	}
 	return ObTableApiNoSuch, errors.New("not match code")
 }

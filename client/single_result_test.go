@@ -26,7 +26,7 @@ import (
 )
 
 func TestSingleResult(t *testing.T) {
-	res := newObSingleResult(1, nil)
+	res := newObSingleResult(1, nil, 0)
 	assert.EqualValues(t, 1, res.AffectedRows())
 	assert.Equal(t, nil, res.Value("c1"))
 

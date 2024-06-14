@@ -24,7 +24,7 @@ import (
 )
 
 func TestObBatchOperationResult_Size(t *testing.T) {
-	result := newObSingleResult(1, nil)
+	result := newObSingleResult(1, nil, 0)
 	emptyResult := make([]SingleResult, 0)
 	batchResult := newObBatchOperationResult(emptyResult)
 	assert.EqualValues(t, 0, batchResult.Size())

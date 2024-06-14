@@ -39,6 +39,6 @@ func NewObUserAuth(userName string, password string) *ObUserAuth {
 func (a *ObUserAuth) String() string {
 	return "ObUserAuth{" +
 		"userName:" + a.userName + ", " +
-		"password:" + a.password +
+		"password:[invisible]" +
 		"}"
 }

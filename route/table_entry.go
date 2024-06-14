@@ -36,7 +36,7 @@ type ObTableEntry struct {
 	refreshTime       time.Time            // last refresh time
 	tableEntryKey     *ObTableEntryKey     // clusterName/tenantName/databaseName/tableName
 	partitionInfo     *obPartitionInfo     // partition key meta info
-	tableLocation     *ObTableLocation     // location of table, all replica information of table
+	tableLocation     *ObTableLocation     // all replica location for non-partition table
 	partLocationEntry *ObPartLocationEntry // all partition location of table
 }
 

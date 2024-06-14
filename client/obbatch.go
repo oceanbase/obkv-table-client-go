@@ -413,7 +413,7 @@ func (b *obBatchExecutor) Execute(ctx context.Context) (BatchOperationResult, er
 
 // operationResponse2SingleResult convert operation response to single result.
 func operationResponse2SingleResult(res *protocol.ObTableOperationResponse) SingleResult {
-	return newObSingleResult(res.AffectedRows(), res.Entity())
+	return newObSingleResult(res.AffectedRows(), res.Entity(), res.Flags())
 }
 
 type obPartOp struct {

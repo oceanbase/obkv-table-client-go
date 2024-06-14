@@ -70,11 +70,16 @@ func (i *ObConfigServerInfo) FetchRslist() (*ObRslist, error) {
 			return nil, errors.Errorf("fail to split ip and port, server:%s", server.Address)
 		}
 		ip := res[0]
+		if ip == "172.16.46.180" {
+			ip = "115.29.212.38"
+			println(ip)
+		}
 		svrPort, err := strconv.Atoi(res[1])
 		if err != nil {
 			return nil, errors.Errorf("fail to convert server port to int, port:%s", res[1])
 		}
 		serverAddr := NewObServerAddr(ip, server.SqlPort, svrPort)
+		println(serverAddr.String())
 		rslist.Append(serverAddr)
 	}
 
