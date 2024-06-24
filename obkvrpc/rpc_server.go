@@ -114,13 +114,15 @@ func (s *Server) Close() {
 
 // ReadRequest read requests until an error occurs
 func (s *Server) ReadRequest(reqChan chan<- *Request, cServer CodecServer) {
+	defer func() {
+		close(reqChan)
+	}()
 	closeChan := cServer.GetCloseChan()
+	isStop := false
 	for {
-		isStop := false
 		select {
 		case <-*closeChan:
-			close(reqChan)
-			return
+			isStop = true
 		default:
 			// ReadRequest may include read and encode, depend on the cServer
 			req := s.reqObjPool.Get().(*Request)
@@ -132,7 +134,6 @@ func (s *Server) ReadRequest(reqChan chan<- *Request, cServer CodecServer) {
 					log.Warn("RPCServer", req.ID, "fail to read command", zap.Error(err))
 				}
 				s.PutRequest(req)
-				close(reqChan)
 				isStop = true
 			} else {
 				reqChan <- req
@@ -180,11 +181,12 @@ func (s *Server) RunWorker(wg *sync.WaitGroup, reqChan <-chan *Request, cServer 
 func (s *Server) ServeCodec(cServer CodecServer, maxQueSize int) {
 	wg := new(sync.WaitGroup)
 	defer func() {
-		wg.Wait()
-		cServer.Close()
 		if err := recover(); err != nil {
 			log.Error("RPCServer", nil, "ServeCodec panic", log.Any("error", err), log.String("stack", string(debug.Stack())))
 		}
+		log.Debug("RPCServer", nil, "close CodecServer")
+		cServer.Close()
+		wg.Wait()
 	}()
 	reqChan := make(chan *Request, maxQueSize)
 	var err error
