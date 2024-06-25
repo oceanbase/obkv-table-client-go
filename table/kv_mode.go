@@ -23,4 +23,5 @@ const (
 	DynamicMode ObKeyValueMode = iota
 	ObTableMode
 	ObHBaseMode
+	ObRedisMode
 )

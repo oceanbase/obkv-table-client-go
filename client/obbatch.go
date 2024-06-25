@@ -42,7 +42,7 @@ func newObBatchExecutor(tableName string, cli *obClient) *obBatchExecutor {
 		cli:                 cli,
 		rowKeyName:          nil,
 		samePropertiesNames: false,
-		entityType:          protocol.ObTableEntityTypeDynamic,
+		entityType:          cli.entityType,
 	}
 }
 
@@ -57,15 +57,19 @@ type obBatchExecutor struct {
 
 func (b *obBatchExecutor) setBatchOptions(batchOptions *option.ObBatchOptions) {
 	b.samePropertiesNames = batchOptions.SamePropertiesNames
-	switch batchOptions.KeyValueMode {
-	case table.DynamicMode:
-		b.entityType = protocol.ObTableEntityTypeDynamic
-	case table.ObTableMode:
-		b.entityType = protocol.ObTableEntityTypeKV
-	case table.ObHBaseMode:
-		b.entityType = protocol.ObTableEntityTypeHKV
-	default:
-		b.entityType = protocol.ObTableEntityTypeDynamic
+	if b.entityType == protocol.ObTableEntityTypeDynamic {
+		switch batchOptions.KeyValueMode {
+		case table.DynamicMode:
+			b.entityType = protocol.ObTableEntityTypeDynamic
+		case table.ObTableMode:
+			b.entityType = protocol.ObTableEntityTypeKV
+		case table.ObHBaseMode:
+			b.entityType = protocol.ObTableEntityTypeHKV
+		case table.ObRedisMode:
+			b.entityType = protocol.ObTableEntityTypeRedis
+		default:
+			b.entityType = protocol.ObTableEntityTypeDynamic
+		}
 	}
 }
 

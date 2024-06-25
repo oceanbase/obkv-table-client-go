@@ -50,6 +50,7 @@ type obClient struct {
 	password     string
 	database     string
 	sysUA        *route.ObUserAuth
+	entityType   protocol.ObTableEntityType
 
 	// for odp client
 	odpTable   *route.ObTable
@@ -109,6 +110,14 @@ func newOdpClient(
 	cli.routeInfo = nil
 
 	return cli, nil
+}
+
+func (c *obClient) SetEntityType(entityType protocol.ObTableEntityType) {
+	c.entityType = entityType
+}
+
+func (c *obClient) GetEntityType() protocol.ObTableEntityType {
+	return c.entityType
 }
 
 func (c *obClient) String() string {
@@ -677,6 +686,7 @@ func (c *obClient) execute(
 		c.config.OperationTimeOut,
 		c.GetRpcFlag(),
 	)
+	request.SetEntityType(c.entityType)
 	if err != nil {
 		log.Error("Runtime", ctx.Value(log.ObkvTraceIdName), "error occur in execute",
 			log.Int64("opType", int64(opType)), log.String("tableName", tableName), log.String("tableParam", tableParam.String()))
@@ -769,6 +779,7 @@ func (c *obClient) executeWithFilter(
 		c.config.OperationTimeOut,
 		c.GetRpcFlag(),
 	)
+	request.SetEntityType(c.entityType)
 	if err != nil {
 		return nil, errors.WithMessagef(err, "new operation request, tableName:%s, tableParam:%s, opType:%d",
 			tableName, tableParam.String(), opType), needRetry
