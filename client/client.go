@@ -19,6 +19,7 @@ package client
 
 import (
 	"context"
+	"github.com/oceanbase/obkv-table-client-go/protocol"
 
 	"github.com/pkg/errors"
 
@@ -199,4 +200,6 @@ type Client interface {
 	// close will disconnect all connections and exit all goroutines.
 	Close()
 	Redis(ctx context.Context, tableName string, rowKey []*table.Column, mutateColumns []*table.Column, opts ...option.ObOperationOption) (SingleResult, error)
+	SetEntityType(entityType protocol.ObTableEntityType)
+	GetEntityType() protocol.ObTableEntityType
 }
