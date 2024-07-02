@@ -30,6 +30,7 @@ const (
 	ObTableEntityTypeDynamic ObTableEntityType = iota
 	ObTableEntityTypeKV
 	ObTableEntityTypeHKV
+	ObTableEntityTypeRedis
 )
 
 type ObScanOrder uint8

@@ -47,7 +47,7 @@ func newObQueryExecutorWithParams(tableName string, cli *obClient) *obQueryExecu
 		cli:        cli,
 		keyRanges:  nil,
 		tableQuery: protocol.NewObTableQueryWithParams(-1),
-		entityType: protocol.ObTableEntityTypeDynamic,
+		entityType: cli.entityType,
 	}
 }
 
@@ -93,15 +93,19 @@ func (q *obQueryExecutor) setQueryOptions(queryOptions *option.ObQueryOptions) {
 		q.entityType = protocol.ObTableEntityTypeHKV
 	} else {
 		q.tableQuery.SetIsHbaseQuery(queryOptions.IsHbaseQuery)
-		switch queryOptions.KeyValueMode {
-		case table.DynamicMode:
-			q.entityType = protocol.ObTableEntityTypeDynamic
-		case table.ObTableMode:
-			q.entityType = protocol.ObTableEntityTypeKV
-		case table.ObHBaseMode:
-			q.entityType = protocol.ObTableEntityTypeHKV
-		default:
-			q.entityType = protocol.ObTableEntityTypeDynamic
+		if q.entityType == protocol.ObTableEntityTypeDynamic {
+			switch queryOptions.KeyValueMode {
+			case table.DynamicMode:
+				q.entityType = protocol.ObTableEntityTypeDynamic
+			case table.ObTableMode:
+				q.entityType = protocol.ObTableEntityTypeKV
+			case table.ObHBaseMode:
+				q.entityType = protocol.ObTableEntityTypeHKV
+			case table.ObRedisMode:
+				q.entityType = protocol.ObTableEntityTypeRedis
+			default:
+				q.entityType = protocol.ObTableEntityTypeDynamic
+			}
 		}
 	}
 }
