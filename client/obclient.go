@@ -703,22 +703,21 @@ func (c *obClient) execute(
 		trace := fmt.Sprintf("Y%X-%016X", result.UniqueId(), result.Sequence())
 		addr := fmt.Sprintf("%s:%d", tableParam.Table().Ip(), tableParam.Table().Port())
 		log.Error("Runtime", ctx.Value(log.ObkvTraceIdName), "error occur in execute", log.String("observerTraceId", trace),
-			log.String("remote addr", addr))
+			log.String("remote addr", addr), log.String("err info", err.Error()))
 		return nil, err, needRetry
 	}
 
 	if oberror.ObErrorCode(result.Header().ErrorNo()) != oberror.ObSuccess {
-		trace := fmt.Sprintf("Y%X-%016X", result.UniqueId(), result.Sequence())
 		addr := fmt.Sprintf("%s:%d", tableParam.Table().Ip(), tableParam.Table().Port())
-		log.Error("Runtime", ctx.Value(log.ObkvTraceIdName), "error occur in execute", log.String("observerTraceId", trace),
-			log.String("remote addr", addr))
-		return nil, protocol.NewProtocolError(
+		err := protocol.NewProtocolError(
 			addr,
 			oberror.ObErrorCode(result.Header().ErrorNo()),
 			result.Header().Msg(),
 			result.Sequence(),
 			result.UniqueId(),
-		), needRetry
+		)
+		log.Error("Runtime", ctx.Value(log.ObkvTraceIdName), "error occur in execute", log.String("observerTraceId", err.Error()))
+		return nil, err, needRetry
 	}
 
 	return result, nil, needRetry

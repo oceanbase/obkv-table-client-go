@@ -179,6 +179,7 @@ func (c *Connection) Login(ctx context.Context) error {
 	loginResponse := protocol.NewObLoginResponse()
 	_, err := c.Execute(ctx, loginRequest, loginResponse)
 	if err != nil {
+		log.Warn("BOOT", ctx.Value(log.ObkvTraceIdName), "execute login error", log.String("error", err.Error()))
 		c.Close()
 		return errors.WithMessagef(err, "execute login, uniqueId: %d remote addr: %s tenantname: %s databasename: %s",
 			c.uniqueId, c.conn.RemoteAddr().String(), c.option.tenantName, c.option.databaseName)
@@ -496,8 +497,10 @@ func (c *Connection) decodePacket(contentBuf []byte, response protocol.ObPayload
 	rpcResponseCode := protocol.NewObRpcResponseCode()
 	rpcResponseCode.Decode(contentBuffer)
 
-	// set rpc flag
+	// set rpc flag and trace
 	response.SetFlag(rpcHeader.Flag())
+	response.SetUniqueId(rpcHeader.TraceId0())
+	response.SetSequence(rpcHeader.TraceId1())
 
 	if rpcResponseCode.Code() != oberror.ObSuccess { // error occur in observer
 		var moveResponse *protocol.ObTableMoveResponse = nil
@@ -513,20 +516,17 @@ func (c *Connection) decodePacket(contentBuf []byte, response protocol.ObPayload
 		if rpcResponseCode.Code().IsRefreshTableErrorCode() {
 			response.SetFlag(response.Flag() | protocol.RpcBadRoutingFlag)
 		}
-		trace := fmt.Sprintf("Y%X-%016X", rpcHeader.TraceId0(), rpcHeader.TraceId1())
-		log.Error("Runtime", nil, "error occur in execute", log.String("observerTraceId", trace))
-
-		return moveResponse, protocol.NewProtocolError(
+		err := protocol.NewProtocolError(
 			c.RemoteAddr().String(),
 			rpcResponseCode.Code(),
 			rpcResponseCode.Msg(),
 			rpcHeader.TraceId1(),
 			rpcHeader.TraceId0(),
 		)
+		log.Error("Runtime", nil, "error occur in execute", log.String("observerTraceId", err.Error()))
+		return moveResponse, err
 	} else {
 		// decode response
-		response.SetUniqueId(rpcHeader.TraceId0())
-		response.SetSequence(rpcHeader.TraceId1())
 		response.Decode(contentBuffer)
 	}
 	rpcHeader.Reset()
