@@ -20,6 +20,7 @@ package route
 import (
 	"context"
 	"fmt"
+	"runtime/debug"
 	"strconv"
 	"sync"
 	"sync/atomic"
@@ -699,6 +700,12 @@ func (i *ObRouteInfo) runRefreshTableTask() {
 
 func (i *ObRouteInfo) runCheckRslistTask() {
 	go func() {
+		defer func() {
+			if err := recover(); err != nil {
+				log.Error("Routine", nil, "runCheckRslistTask panic, fail to check rslist", log.Any("error", err),
+					log.String("stack", string(debug.Stack())))
+			}
+		}()
 		newRslist, err := i.configServerInfo.FetchRslist()
 		if err != nil {
 			log.Warn("Routine", nil, "fetch rslist")
