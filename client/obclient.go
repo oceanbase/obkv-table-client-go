@@ -615,9 +615,10 @@ func (c *obClient) execute(
 	// 1. Get table route
 	tableParam, err := c.GetTableParam(ctx, tableName, rowKey)
 	if err != nil {
+		isOdpMode := c.odpTable != nil
 		log.Error("Runtime", ctx.Value(log.ObkvTraceIdName), "error occur in execute",
-			log.Int64("opType", int64(opType)), log.String("tableName", tableName), log.String("tableParam", tableParam.String()))
-		return nil, errors.WithMessagef(err, "get table param, tableName:%s, opType:%d", tableName, opType), needRetry
+			log.Int64("opType", int64(opType)), log.String("tableName", tableName), log.Bool("isOdpMode", isOdpMode))
+		return nil, errors.WithMessagef(err, "get table param, tableName:%s, opType:%d, isOdpMode:%v", tableName, opType, isOdpMode), needRetry
 	}
 
 	// 2. Construct request.
