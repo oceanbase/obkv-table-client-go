@@ -38,16 +38,17 @@ const refreshTableTimeout = 5 * time.Second
 const rslistCheckInterval = 5 * time.Minute
 
 type ObRouteInfo struct {
-	clusterVersion   float32
-	clusterName      string
-	sysUA            *ObUserAuth
-	configServerInfo *ObConfigServerInfo
-	tableMutexes     ObTableMutexes
-	tableLocations   sync.Map // map[tableName]*route.ObTableEntry
-	tableRoster      ObTableRoster
-	serverRoster     ObServerRoster // all servers which contain current tenant
-	taskInfo         *ObRouteTaskInfo
-	indexRoster      sync.Map // map[indexName], store ObIndexInfo struct and it has index router info
+	clusterVersion              float32
+	clusterName                 string
+	sysUA                       *ObUserAuth
+	configServerInfo            *ObConfigServerInfo
+	tableMutexes                ObTableMutexes
+	tableLocations              sync.Map // map[tableName]*route.ObTableEntry
+	tableRoster                 ObTableRoster
+	serverRoster                ObServerRoster // all servers which contain current tenant
+	taskInfo                    *ObRouteTaskInfo
+	indexRoster                 sync.Map // map[indexName], store ObIndexInfo struct and it has index router info
+	needCalculateGenerateColumn bool
 }
 
 // GetTable get table by partition id
@@ -94,12 +95,13 @@ func (i *ObRouteInfo) ClusterVersion() float32 {
 	return i.clusterVersion
 }
 
-func NewRouteInfo(sysUA *ObUserAuth) *ObRouteInfo {
+func NewRouteInfo(sysUA *ObUserAuth, needCalculateGenerateColumn bool) *ObRouteInfo {
 	return &ObRouteInfo{
-		clusterVersion:   0.0,
-		sysUA:            sysUA,
-		configServerInfo: NewConfigServerInfo(),
-		taskInfo:         NewRouteTaskInfo(),
+		clusterVersion:              0.0,
+		sysUA:                       sysUA,
+		configServerInfo:            NewConfigServerInfo(),
+		taskInfo:                    NewRouteTaskInfo(),
+		needCalculateGenerateColumn: needCalculateGenerateColumn,
 	}
 }
 
@@ -177,7 +179,7 @@ func (i *ObRouteInfo) FetchServerRoster(clusterName, tenantName string) error {
 	if err != nil {
 		return err
 	}
-	entry, err := GetTableEntryFromRemote(context.TODO(), addr, i.sysUA, key)
+	entry, err := GetTableEntryFromRemote(context.TODO(), addr, i.sysUA, key, i.needCalculateGenerateColumn)
 	if err != nil {
 		return errors.WithMessagef(err, "dummy tenant server from remote, addr:%s, sysUA:%s, key:%s",
 			addr.String(), i.sysUA.String(), key.String())
@@ -357,7 +359,7 @@ func (i *ObRouteInfo) GetTableEntry(ctx context.Context, tableName string) (*ObT
 		i.tableRoster.database,
 		tableName,
 	)
-	entry, err := GetTableEntryFromRemote(ctx, i.serverRoster.GetServer(), i.sysUA, key)
+	entry, err := GetTableEntryFromRemote(ctx, i.serverRoster.GetServer(), i.sysUA, key, i.needCalculateGenerateColumn)
 	if err != nil {
 		return nil, errors.WithMessagef(err, "get table entry from remote, key:%s", key.String())
 	}
