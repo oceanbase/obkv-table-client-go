@@ -188,7 +188,8 @@ func GetTableEntryFromRemote(
 	ctx context.Context,
 	addr *ObServerAddr,
 	sysUA *ObUserAuth,
-	key *ObTableEntryKey) (*ObTableEntry, error) {
+	key *ObTableEntryKey,
+	needCalculateGenerateColumn bool) (*ObTableEntry, error) {
 	// 1. Get db handle
 	db, err := NewDB(
 		sysUA.userName,
@@ -231,7 +232,7 @@ func GetTableEntryFromRemote(
 
 	// 4. Fetch partition info
 	if entry.IsPartitionTable() {
-		info, err := getPartitionInfoFromRemote(ctx, db, key.tenantName, entry.tableId)
+		info, err := getPartitionInfoFromRemote(ctx, db, key.tenantName, entry.tableId, needCalculateGenerateColumn)
 		if err != nil {
 			return nil, errors.WithMessagef(err, "get partition info, key:%s", key.String())
 		}
@@ -456,7 +457,12 @@ func getPartLocationEntryFromResultSet(rows *Rows, tableName string) (*ObPartLoc
 }
 
 // getPartitionInfoFromRemote get the meta information for the partition key.
-func getPartitionInfoFromRemote(ctx context.Context, db *DB, tenantName string, tableId uint64) (*obPartitionInfo, error) {
+func getPartitionInfoFromRemote(
+	ctx context.Context,
+	db *DB,
+	tenantName string,
+	tableId uint64,
+	needCalculateGenerateColumn bool) (*obPartitionInfo, error) {
 	// 1. Do query with specific tenant name(ob version > 4), table id and limit.
 	var rows *Rows
 	var err error
@@ -474,7 +480,7 @@ func getPartitionInfoFromRemote(ctx context.Context, db *DB, tenantName string, 
 	}()
 
 	// 2. create obPartitionInfo by parsing query result set
-	info, err := getPartitionInfoFromResultSet(rows)
+	info, err := getPartitionInfoFromResultSet(rows, needCalculateGenerateColumn)
 	if err != nil {
 		return nil, errors.WithMessagef(err, "parse partition info from row, tableId: %d", tableId)
 	}
@@ -497,7 +503,7 @@ func getPartitionInfoFromRemote(ctx context.Context, db *DB, tenantName string, 
 // |          1 |        3 |         4 |          0 | `c1`, `c2`, `c3` | 5,22,22         |            0 |             0 |              0 |                     |               | c2            |            22 |            1 |                  |                      45 |
 // |          1 |        3 |         4 |          0 | `c1`, `c2`, `c3` | 5,22,22         |            0 |             0 |              0 |                     |               | c3            |            22 |            2 | substr(`c2`,1,4) |                      45 |
 // +------------+----------+-----------+------------+------------------+-----------------+--------------+---------------+----------------+---------------------+---------------+---------------+---------------+--------------+------------------+-------------------------+
-func getPartitionInfoFromResultSet(rows *Rows) (*obPartitionInfo, error) {
+func getPartitionInfoFromResultSet(rows *Rows, needCalculateGenerateColumn bool) (*obPartitionInfo, error) {
 	var info *obPartitionInfo = nil
 	var partColumns []obColumn
 	var firstPartColumnNames []string
@@ -587,19 +593,20 @@ func getPartitionInfoFromResultSet(rows *Rows) (*obPartitionInfo, error) {
 		partKeyExtra = strings.ReplaceAll(partKeyExtra, "`", "") // '`' is not supported by druid
 		partKeyExtra = strings.ReplaceAll(partKeyExtra, " ", "") // ' ' should be removed
 		var column obColumn
-		if partKeyExtra != "" {
-			return nil, errors.New("not support generate column now")
-		} else {
-			objType, err := protocol.NewObjType(protocol.ObObjTypeValue(partKeyType))
-			if err != nil {
-				return nil, errors.WithMessagef(err, "generate object type, partKeyType:%d", partKeyType)
-			}
-			column = newObSimpleColumn(
-				partKeyName,
-				objType,
-				protocol.ObCollationType(spare1),
-			)
+		// only redis table allow generate column as partition key
+		if partKeyExtra != "" && needCalculateGenerateColumn {
+			return nil, errors.New("not support calculate generate column now")
 		}
+		objType, err := protocol.NewObjType(protocol.ObObjTypeValue(partKeyType))
+		if err != nil {
+			return nil, errors.WithMessagef(err, "generate object type, partKeyType:%d", partKeyType)
+		}
+		column = newObSimpleColumn(
+			partKeyName,
+			objType,
+			protocol.ObCollationType(spare1),
+			partKeyExtra,
+		)
 		partColumns = append(partColumns, column)
 	}
 

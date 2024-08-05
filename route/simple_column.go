@@ -30,14 +30,16 @@ import (
 func newObSimpleColumn(
 	columnName string,
 	objType protocol.ObObjType,
-	collationType protocol.ObCollationType) *obSimpleColumn {
-	return &obSimpleColumn{columnName, objType, collationType}
+	collationType protocol.ObCollationType,
+	columnExtra string) *obSimpleColumn {
+	return &obSimpleColumn{columnName, objType, collationType, columnExtra}
 }
 
 type obSimpleColumn struct {
 	columnName    string
 	objType       protocol.ObObjType
 	collationType protocol.ObCollationType
+	columnExtra   string // generate column expr
 }
 
 func (c *obSimpleColumn) CollationType() protocol.ObCollationType {
@@ -50,6 +52,10 @@ func (c *obSimpleColumn) ObjType() protocol.ObObjType {
 
 func (c *obSimpleColumn) ColumnName() string {
 	return c.columnName
+}
+
+func (c *obSimpleColumn) ColumnExtra() string {
+	return c.columnExtra
 }
 
 // eval calculate simple column value

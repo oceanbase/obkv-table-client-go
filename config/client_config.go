@@ -57,6 +57,8 @@ type ClientConfig struct {
 	MaxAgeFileRem      int    // Maximum number of days to keep old files
 	Compress           bool   // Whether to compress/archive old files
 	SlowQueryThreshold int64  // Slow query threshold
+
+	NeedCalculateGenerateColumn bool
 }
 
 func NewDefaultClientConfig() *ClientConfig {
@@ -85,6 +87,7 @@ func NewDefaultClientConfig() *ClientConfig {
 		MaxAgeFileRem:                    30,
 		Compress:                         false,
 		SlowQueryThreshold:               40, // ms
+		NeedCalculateGenerateColumn:      true,
 	}
 }
 
@@ -108,5 +111,6 @@ func (c *ClientConfig) String() string {
 		"EnableRerouting:" + strconv.FormatBool(c.EnableRerouting) + ", " +
 		"MaxConnectionAge:" + c.MaxConnectionAge.String() + ", " +
 		"EnableSLBLoadBalance:" + strconv.FormatBool(c.EnableSLBLoadBalance) +
+		"NeedCalculateGenerateColumn:" + strconv.FormatBool(c.NeedCalculateGenerateColumn) +
 		"}"
 }

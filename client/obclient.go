@@ -83,7 +83,7 @@ func newObClient(
 	cli.password = passWord
 	cli.sysUA = route.NewObUserAuth(sysUserName, sysPassWord)
 	cli.config = cliConfig
-	cli.routeInfo = route.NewRouteInfo(cli.sysUA)
+	cli.routeInfo = route.NewRouteInfo(cli.sysUA, cliConfig.NeedCalculateGenerateColumn)
 	cli.entityType = protocol.ObTableEntityTypeKV
 
 	return cli, nil
@@ -688,13 +688,13 @@ func (c *obClient) execute(
 		c.config.OperationTimeOut,
 		c.GetRpcFlag(),
 	)
-	request.SetEntityType(c.entityType)
 	if err != nil {
 		log.Error("Runtime", ctx.Value(log.ObkvTraceIdName), "error occur in execute",
 			log.Int64("opType", int64(opType)), log.String("tableName", tableName), log.String("tableParam", tableParam.String()))
 		return nil, errors.WithMessagef(err, "new operation request, tableName:%s, tableParam:%s, opType:%d",
 			tableName, tableParam.String(), opType), needRetry
 	}
+	request.SetEntityType(c.entityType)
 
 	// 3. execute
 	result := protocol.NewObTableOperationResponse()
