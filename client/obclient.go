@@ -122,6 +122,10 @@ func (c *obClient) GetEntityType() protocol.ObTableEntityType {
 	return c.entityType
 }
 
+func (c *obClient) GetRouteInfo() *route.ObRouteInfo {
+	return c.routeInfo
+}
+
 func (c *obClient) String() string {
 	var configStr = "nil"
 	if c.config != nil {

@@ -733,3 +733,7 @@ func (i *ObRouteInfo) runCheckRslistTask() {
 		}
 	}()
 }
+
+func (i *ObRouteInfo) GetTenantServer() *ObServerAddr {
+	return i.serverRoster.GetServer()
+}
