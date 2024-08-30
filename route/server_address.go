@@ -45,6 +45,10 @@ type ObServerAddr struct {
 	sqlPort int
 }
 
+func (a *ObServerAddr) SqlPort() int {
+	return a.sqlPort
+}
+
 func (a *ObServerAddr) SvrPort() int {
 	return a.port
 }

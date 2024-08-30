@@ -19,7 +19,9 @@ package client
 
 import (
 	"context"
+
 	"github.com/oceanbase/obkv-table-client-go/protocol"
+	"github.com/oceanbase/obkv-table-client-go/route"
 
 	"github.com/pkg/errors"
 
@@ -202,4 +204,5 @@ type Client interface {
 	Redis(ctx context.Context, tableName string, rowKey []*table.Column, mutateColumns []*table.Column, opts ...option.ObOperationOption) (SingleResult, error)
 	SetEntityType(entityType protocol.ObTableEntityType)
 	GetEntityType() protocol.ObTableEntityType
+	GetRouteInfo() *route.ObRouteInfo
 }
