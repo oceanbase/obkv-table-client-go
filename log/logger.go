@@ -46,6 +46,8 @@ var (
 	SlowQueryThreshold  int64
 )
 
+type Level zapcore.Level
+
 type LogConfig struct {
 	LogFileName        string // log file dir
 	SingleFileMaxSize  int    // log file size（MB）
@@ -53,9 +55,8 @@ type LogConfig struct {
 	MaxAgeFileRem      int    // Maximum number of days to keep old files
 	Compress           bool   // Whether to compress/archive old files
 	SlowQueryThreshold int64  // Slow query threshold
+	LogLevel           Level  // Log level
 }
-
-type Level zapcore.Level
 
 type Logger struct {
 	l     *zap.Logger // zap ensure that zap.Logger is safe for concurrent use
@@ -219,7 +220,7 @@ func initDefaultLogger(cfg LogConfig) {
 	SlowQueryThreshold = cfg.SlowQueryThreshold
 	defLogWriter := getLogRotationWriter(defFilePath, cfg)
 	globalMutex.Lock()
-	defaultGlobalLogger = NewLogger(defLogWriter, InfoLevel, AddCaller())
+	defaultGlobalLogger = NewLogger(defLogWriter, cfg.LogLevel, AddCaller())
 	globalMutex.Unlock()
 }
 
