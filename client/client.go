@@ -160,6 +160,7 @@ func initLogProcess(c *config.ClientConfig) error {
 		logConfig.SingleFileMaxSize = c.SingleFileMaxSize
 		logConfig.Compress = c.Compress
 		logConfig.SlowQueryThreshold = c.SlowQueryThreshold
+		logConfig.LogLevel = c.LogLevel
 	} else {
 		return errors.New("client config is null")
 	}
