@@ -19,15 +19,17 @@ package util
 
 import (
 	"fmt"
-	"github.com/pkg/errors"
 	"math"
 	"regexp"
 	"strconv"
 	"strings"
 	"sync"
+
+	"github.com/pkg/errors"
 )
 
 var globalObVersion float32 = 0.0
+var globalOdpVersion float32 = 0.0
 var obVersionGuard sync.Mutex
 
 func ObVersion() float32 {
@@ -40,30 +42,57 @@ func SetObVersion(version float32) {
 	obVersionGuard.Unlock()
 }
 
+func SetOdpVersion(version float32) {
+	obVersionGuard.Lock()
+	globalOdpVersion = version
+	obVersionGuard.Unlock()
+}
+
+func OdpVersion() float32 {
+	return globalOdpVersion
+}
+
 // ParseObVerionFromLogin may be used in ODP mode
-func ParseObVerionFromLogin(serverVersion string) (float32, error) {
+func ParseObVerionFromLogin(serverVersion string) (float32, float32, error) {
 	pattern := ""
 	if strings.HasPrefix(serverVersion, "OceanBase_CE") {
-		// serverVersion is like "OceanBase_CE 4.0.0.0" in CE
-		pattern = "^OceanBase_CE\\s+(\\d+)\\.(\\d+)\\.(\\d+)\\.(\\d+)$"
+		// serverVersion in CE is like "OceanBase_CE 4.0.0.0 (+ Obproxy 4.3.6.0), content in () is optional and valid after Obproxy 4.3.5"
+		pattern = "^OceanBase_CE\\s+(\\d+)\\.(\\d+)\\.(\\d+)\\.(\\d+)(\\s+\\+\\s+(Obproxy)\\s+(\\d+)\\.(\\d+)\\.(\\d+)\\.(\\d+))?"
 	} else {
-		// serverVersion is like "OceanBase 4.0.0.0"
-		pattern = "^OceanBase\\s+(\\d+)\\.(\\d+)\\.(\\d+)\\.(\\d+)$"
+		// serverVersion is like "OceanBase 4.0.0.0 (+ Obproxy 4.3.6.0), content in () is optional and valid after Obproxy 4.3.5"
+		pattern = "^OceanBase\\s+(\\d+)\\.(\\d+)\\.(\\d+)\\.(\\d+)(\\s+\\+\\s+(Obproxy)\\s+(\\d+)\\.(\\d+)\\.(\\d+)\\.(\\d+))?"
 	}
 	re := regexp.MustCompile(pattern)
 	match := re.FindStringSubmatch(serverVersion)
-	if len(match) == 5 && match[0] == serverVersion {
-		// transform version into 4.000
+	if (len(match) == 5 || len(match) == 11) && match[0] == serverVersion {
+		// transform ob version into 4.000
 		subVersionStr := match[2] + match[3] + match[4]
 		subVersion, err := strconv.Atoi(subVersionStr)
 		if err != nil {
-			return 0, errors.WithMessagef(err, "parse version %s failed", serverVersion)
+			return 0, 0, errors.WithMessagef(err, "parse version %s failed", serverVersion)
 		}
 		mainVersion, err := strconv.Atoi(match[1])
 		if err != nil {
-			return 0, errors.WithMessagef(err, "parse version %s failed", serverVersion)
+			return 0, 0, errors.WithMessagef(err, "parse version %s failed", serverVersion)
 		}
-		return float32(mainVersion) + float32(subVersion)/float32(math.Pow10(len(subVersionStr))), nil
+		obVersion := float32(mainVersion) + float32(subVersion)/float32(math.Pow10(len(subVersionStr)))
+
+		// transform odp version into 4.360 if present
+		var odpVersion float32 = 0
+		if len(match) == 11 {
+			subOdpVersionStr := match[8] + match[9] + match[10]
+			subOdpVersion, err := strconv.Atoi(subOdpVersionStr)
+			if err != nil {
+				return 0, 0, errors.WithMessagef(err, "parse version %s failed", serverVersion)
+			}
+			mainOdpVersion, err := strconv.Atoi(match[7])
+			if err != nil {
+				return 0, 0, errors.WithMessagef(err, "parse version %s failed", serverVersion)
+			}
+			odpVersion = float32(mainOdpVersion) + float32(subOdpVersion)/float32(math.Pow10(len(subOdpVersionStr)))
+		}
+
+		return obVersion, odpVersion, nil
 	}
-	return 0, errors.New(fmt.Sprintf("parse version %s failed", serverVersion))
+	return 0, 0, errors.New(fmt.Sprintf("parse version %s failed", serverVersion))
 }
