@@ -64,7 +64,9 @@ func ParseObVerionFromLogin(serverVersion string) (float32, float32, error) {
 	}
 	re := regexp.MustCompile(pattern)
 	match := re.FindStringSubmatch(serverVersion)
-	if (len(match) == 5 || len(match) == 11) && match[0] == serverVersion {
+	// match length is always 11 when matched successfully (10 capture groups + match[0])
+	// match[5] is empty when Obproxy part is not present
+	if len(match) == 11 && match[0] == serverVersion {
 		// transform ob version into 4.000
 		subVersionStr := match[2] + match[3] + match[4]
 		subVersion, err := strconv.Atoi(subVersionStr)
@@ -77,9 +79,9 @@ func ParseObVerionFromLogin(serverVersion string) (float32, float32, error) {
 		}
 		obVersion := float32(mainVersion) + float32(subVersion)/float32(math.Pow10(len(subVersionStr)))
 
-		// transform odp version into 4.360 if present
+		// transform odp version if present
 		var odpVersion float32 = 0
-		if len(match) == 11 {
+		if match[5] != "" && match[6] != "" {
 			subOdpVersionStr := match[8] + match[9] + match[10]
 			subOdpVersion, err := strconv.Atoi(subOdpVersionStr)
 			if err != nil {
@@ -94,5 +96,5 @@ func ParseObVerionFromLogin(serverVersion string) (float32, float32, error) {
 
 		return obVersion, odpVersion, nil
 	}
-	return 0, 0, errors.New(fmt.Sprintf("parse version %s failed", serverVersion))
+	return 0, 0, errors.New(fmt.Sprintf("parse version %s failed 5", serverVersion))
 }
