@@ -96,5 +96,5 @@ func ParseObVerionFromLogin(serverVersion string) (float32, float32, error) {
 
 		return obVersion, odpVersion, nil
 	}
-	return 0, 0, errors.New(fmt.Sprintf("parse version %s failed 5", serverVersion))
+	return 0, 0, errors.New(fmt.Sprintf("parse version %s failed", serverVersion))
 }
