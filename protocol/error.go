@@ -58,3 +58,7 @@ func (e *ObProtocolError) Error() string {
 		e.trace,
 	)
 }
+
+func (e *ObProtocolError) ErrorCode() error2.ObErrorCode {
+	return e.errCode
+}
